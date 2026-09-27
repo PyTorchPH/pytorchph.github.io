@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { demoDashboard } from "../../../apps/pages-demo/app/demo-product-data";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -23,9 +24,9 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { AppShell } from "@pytorch-ph/domain-client/navigation";
+import { DemoShell as AppShell } from "../../../apps/pages-demo/app/demo-shell";
 import { DeveloperDiagnostics } from "@pytorch-ph/domain-client/organization";
-import { useCapabilities } from "@pytorch-ph/domain-client/onboarding";
+import { useCapabilities } from "../../../apps/pages-demo/app/demo-capabilities";
 import { ActivityTrendChart, CareerReadinessDonut, DepartmentLoadChart, SkillRadarChart } from "@pytorch-ph/domain-client/organization";
 import { KanbanBoard } from "@pytorch-ph/domain-client/organization";
 import { Badge } from "@pytorch-ph/design-system/badge";
@@ -131,7 +132,7 @@ function fallbackData(): ProductViewData {
 const DASHBOARD_FALLBACK = fallbackData();
 
 function DashboardContent() {
-  const query = useQuery({ queryKey: queryKeys.product("dashboard"), queryFn: () => fetchJson<ProductViewData>("/api/product/dashboard", { cache: "no-store" }) });
+  const query: { data: ProductViewData; error: Error | null } = { data: demoDashboard, error: null };
   const data = query.data || null;
   const error = query.error instanceof Error ? query.error.message : "";
   const resolved = data || DASHBOARD_FALLBACK;
