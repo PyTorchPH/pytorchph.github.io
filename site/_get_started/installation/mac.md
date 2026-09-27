@@ -1,53 +1,51 @@
-# macOS에서 설치하기
+# Installing on macOS
 {:.no_toc}
 
-PyTorch 는 macOS에서 설치 및 사용할 수 있습니다. PyTorch를 설치할 시스템과 사용할 수 있는 GPU 에 따라, Mac에서의 처리 속도 측면에서의 PyTorch 사용 경험은 사람마다 다를 수 있습니다.
+PyTorch can be installed and used on macOS. Depending on your system and GPU capabilities, your experience with PyTorch on macOS may vary in terms of processing time.
 
-## 요구 사항
+## Prerequisites
 {: #mac-prerequisites}
 
-### macOS 버전
+### macOS Version
 
-PyTorch는 macOS 10.15 (Catalina) 이후 macOS에서 설치할 수 있습니다.
+PyTorch is supported on macOS 10.15 (Catalina) or above.
 
 ### Python
 {: #mac-python}
 
-Python 3.10 ~ 3.14 사이의 버전을 사용하기를 권장합니다. 해당 버전은 아나콘다 패키지 관리자 (아래 [참조](#아나콘다)), [HomeBrew](https://brew.sh), [Python 웹사이트](https://www.python.org/downloads/mac-osx/) 에서 설치할 수 있습니다.
+It is recommended that you use Python 3.9 - 3.12.
+You can install Python either through [Homebrew](https://brew.sh/) or
+the [Python website](https://www.python.org/downloads/mac-osx/).
 
-### 패키지 관리자
+### Package Manager
 {: #mac-package-manager}
 
-PyTorch 바이너리는 [pip](https://pypi.org/project/pip/) 패키지 관리자를 통해 설치할 수 있습니다.
-
-
+To install the PyTorch binaries, you will need to use the supported package manager: [pip](https://pypi.org/project/pip/).
 #### pip
 
 *Python 3*
 
-Homebrew나 Python 웹사이트에서 Python을 설치했다면, `pip` 도 같이 설치됩니다.
-Python 3.x 를 설치했다면, `pip3` 를 사용합니다.
+If you installed Python via Homebrew or the Python website, `pip` was installed with it. If you installed Python 3.x, then you will be using the command `pip3`.
 
-> 팁: 심볼릭 링크를 통해 `pip3` 대신 `pip`을 사용할 수도 있습니다.
+> Tip: If you want to use just the command  `pip`, instead of `pip3`, you can symlink `pip` to the `pip3` binary.
 
-## 설치
+## Installation
 {: #mac-installation}
 
 ### pip
-{: #mac-anaconda}
+{: #mac-pip}
 
-pip을 사용할 경우, 아래와 같이 설치할 수 있습니다.
+To install PyTorch via pip, use the following command, depending on your Python version:
 
 ```bash
 # Python 3.x
 pip3 install torch torchvision
 ```
 
-## 검증
+## Verification
 {: #mac-verification}
 
-PyTorch가 제대로 설치되었는지 확인하기 위해, 아래와 같은 샘플 코드를 실행해 볼 수 있습니다.
-아래는 무작위로 초기화된 tensor를 생성해보는 샘플 코드입니다.
+To ensure that PyTorch was installed correctly, we can verify the installation by running sample PyTorch code. Here we will construct a randomly initialized tensor.
 
 ```python
 import torch
@@ -55,7 +53,7 @@ x = torch.rand(5, 3)
 print(x)
 ```
 
-출력 결과는 아래와 비슷한 형태여야 합니다.
+The output should be something similar to:
 
 ```
 tensor([[0.3380, 0.3845, 0.3217],
@@ -65,15 +63,15 @@ tensor([[0.3380, 0.3845, 0.3217],
         [0.4675, 0.3947, 0.1426]])
 ```
 
-## 소스에서 빌드
+## Building from source
 {: #mac-from-source}
 
-대부분의 PyTorch 사용자들은, 패키지 관리자를 통해 사전에 빌드된 바이너리를 사용하는 것이 제일 좋습니다. 정식으로 릴리즈 되지 않은 최신 PyTorch 코드를 사용하려고 하거나, PyTorch core에 대한 테스트나 개발을 하는 경우에는 직접 PyTorch를 빌드해야합니다.
+For the majority of PyTorch users, installing from a pre-built binary via a package manager will provide the best experience. However, there are times when you may want to install the bleeding edge PyTorch code, whether for testing or actual development on the PyTorch core. To install the latest PyTorch code, you will need to [build PyTorch from source](https://github.com/pytorch/pytorch#from-source).
 
-### 요구사항
+### Prerequisites
 {: #mac-prerequisites-2}
 
-1. [선택사항] [아나콘다](#아나콘다) 설치
-2. [https://github.com/pytorch/pytorch#from-source](https://github.com/pytorch/pytorch#from-source) 참조하여 빌드 (영문)
+1. [Optional] Install [pip](https://pypi.org/project/pip/)
+2. Follow the steps described here: [https://github.com/pytorch/pytorch#from-source](https://github.com/pytorch/pytorch#from-source)
 
-[위 섹션](#mac-verification)을 참조하여 잘 설치되었는지 검증 할 수 있습니다.
+You can verify the installation as described [above](#mac-verification).

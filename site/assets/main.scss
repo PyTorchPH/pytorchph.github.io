@@ -31,7 +31,6 @@ $baseurl:"{{ site.baseurl }}";
 @import "hub-search";
 @import "compact";
 @import "mobile";
-@import "deep-learning";
 @import "contributors";
 @import "enterprise";
 @import "events";
@@ -39,6 +38,7 @@ $baseurl:"{{ site.baseurl }}";
 @import "announcement";
 
 
-// Import for PyTorchKR
+// Community site additions
 @import "community";
 @import "coc";
+@import "ph";

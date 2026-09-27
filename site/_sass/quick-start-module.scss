@@ -25,7 +25,6 @@
     .row.package,
     .row.language,
     .row.cuda {
-      min-height: rem(20px);
       margin-bottom: rem(20px);
       @include desktop {
         margin-bottom: 0;
@@ -56,7 +55,6 @@
 
     .prev-versions-btn {
       margin-top: 30px;
-      margin-right: 10px;
     }
   }
 
@@ -111,14 +109,14 @@
 
   .block {
     margin-bottom: rem(1px);
-    height: rem(60px);
+    height: rem(40px);
     display: flex;
     align-items: center;
   }
 
   .title-block {
     margin: rem(1px);
-    height: rem(60px);
+    height: rem(40px);
     border: 2px solid $light_grey;
     font-size: rem(16px);
     color: $quick_start_grey;
@@ -162,10 +160,28 @@
     }
   }
 
+  #support-channel {
+    background-color: $light_grey;
+    cursor: default;
+    color: #4a4a4a;
+    
+    &:hover {
+      background-color: $light_grey;
+      color: #4a4a4a;
+    }
+    
+    a {
+      @include desktop {
+        &:hover {
+          color: $orange;
+        }
+      }
+    }
+  }
+
   .command-container {
     display: table;
     width: 100%;
-    padding: 0px;
     @include desktop {
       min-height: rem(84px);
     }
@@ -319,21 +335,16 @@
     content: url($baseurl + "/assets/images/microsoft-azure-logo.svg");
   }
 
+  &.lightning-studios:before {
+    content: url($baseurl + "/assets/images/lightning-studios-logo.svg");
+  }
+
   &.google-cloud:before {
     content: url($baseurl + "/assets/images/google-cloud-logo.svg");
   }
 
   &.colab:before {
     content: url($baseurl + "/assets/images/colab-logo.svg");
-  }
-
-  &.alibaba:before {
-    content: url($baseurl + "/assets/images/alibaba-logo.svg");
-    left: rem(12px);
-    top: 19px;
-    @include desktop {
-      left: rem(17px);
-    }
   }
 
   @include desktop {

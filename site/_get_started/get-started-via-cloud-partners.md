@@ -1,6 +1,6 @@
 ---
 layout: get_started
-title: 클라우드에서 시작하기
+title: Start via Cloud Partners
 permalink: /get-started/cloud-partners/
 background-class: get-started-background
 body-class: get-started
@@ -9,11 +9,11 @@ published: true
 get-started-via-cloud: true
 ---
 
-## 클라우드에서 시작하기
+## Start via Cloud Partners
 
 <div class="container-fluid quick-start-module quick-starts">
   <div class="cloud-options-col">
-    <p>클라우드 플랫폼은 딥러닝 모델을 학습하고 배포하기 위한 강력한 하드웨어와 인프라를 제공합니다. 아래에서 클라우드 플랫폼을 선택하여 PyTorch를 시작해보세요.</p>
+    <p>Cloud platforms provide powerful hardware and infrastructure for training and deploying deep learning models. Select a cloud platform below to get started with PyTorch.</p>
     {% include quick_start_cloud_options.html %}
   </div>
 </div>
@@ -32,11 +32,15 @@ get-started-via-cloud: true
 {% include_relative installation/google-cloud.md %}
 {% endcapture %}
 
+{% capture lightning-studios %}
+{% include_relative installation/lightning-studios.md %}
+{% endcapture %}
 
 <div id="cloud">
   <div class="platform aws">{{aws | markdownify }}</div>
   <div class="platform google-cloud">{{google-cloud | markdownify }}</div>
   <div class="platform microsoft-azure">{{azure | markdownify }}</div>
+  <div class="platform lightning-studios">{{lightning-studios | markdownify }}</div>
 </div>
 
 <script page-id="get-started-via-cloud-partners" src="{{ site.baseurl }}/assets/menu-tab-selection.js"></script>

@@ -1,10 +1,10 @@
 * {
-  font-family: Nanum Gothic, FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif;
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 400; /* normal - https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#Common_weight_name_mapping */
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: Nanum Gothic;
+  font-family: Montserrat, "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 p {
@@ -144,7 +144,7 @@ a, .btn {
   }
 
   &.about-background {
-    background-image: url($baseurl + "/assets/images/about-background.jpg");
+    background-image: url($baseurl + "/assets/images/features-background.jpg");
   }
 
   &.get-started-background {
@@ -152,7 +152,7 @@ a, .btn {
   }
 
   &.coc-background {
-    background-image: url($baseurl + "/assets/images/coc-background.jpg");
+    background-image: url($baseurl + "/assets/images/features-background.jpg");
   }
 
   &.style-guide {
