@@ -1,5 +1,6 @@
 # Generated artifacts (scraped data, media, screenshots, built resumes)
 /out/
+/apps/pages-demo/out/
 /.cache/
 /var/*
 !/var/README.md

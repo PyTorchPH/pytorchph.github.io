@@ -6,6 +6,7 @@ when the change crosses that boundary.
 
 | Logic ID | Decision boundary | Document |
 |---|---|---|
+| `development.pages-demo` | Static Pages export and fictional example accounts | [`development/pages-demo.md`](development/pages-demo.md) |
 | `identity.nationwide-membership` | Nationwide email eligibility with existing authorization gates | [`identity/nationwide-membership.md`](identity/nationwide-membership.md) |
 | `client-automation.evidence-extension` | MV3 presence, access gate, inventory, replay, preview | [`client-automation/evidence-extension.md`](client-automation/evidence-extension.md) |
 | `community.discord-access-and-safety` | Discord roles, tier gates, compact onboarding, safety, sync failure policy | [`community/discord-access-and-safety.md`](community/discord-access-and-safety.md) |

@@ -1,0 +1,2 @@
+:HL["/_next/static/chunks/18lu-jjc0_wal.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"screen","param":{"type":"c","key":"events","siblings":[]},"prefetchHints":4192,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}}}},"staleTime":300,"buildId":"WA66aZw60xvTX5699v7zU"}
