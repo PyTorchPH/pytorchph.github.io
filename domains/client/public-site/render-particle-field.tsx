@@ -109,7 +109,7 @@ export function ParticleField({ className, density = 76 }: { className?: string;
   return (
     <canvas
       aria-hidden="true"
-      className={cn("absolute inset-0 h-full w-full bg-[radial-gradient(circle_at_35%_20%,rgba(232,89,12,0.22),transparent_30%),#0B0B0C]", className)}
+      className={cn("absolute inset-0 h-full w-full bg-[radial-gradient(circle_at_35%_20%,rgb(var(--accent-rgb)/.1),transparent_30%),rgb(var(--surface-rgb))]", className)}
       ref={canvasRef}
     />
   );

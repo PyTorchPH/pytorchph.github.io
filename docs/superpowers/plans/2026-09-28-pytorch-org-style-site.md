@@ -1,6 +1,6 @@
 # PyTorch PH website: pytorch.org-style redesign
 
-Status: in progress (Phase 1 started 2026-09-28)
+Status: Phases 1 and 2 shipped 2026-09-28; free API pages are future work
 Owner decision: full pytorch.org visual style for both the public site and the member/officer portal,
 built by reusing open-source PyTorch community websites instead of designing from scratch.
 
@@ -13,8 +13,11 @@ built by reusing open-source PyTorch community websites instead of designing fro
 - **Fonts:** do not ship FreightSans (commercial; its files in those repos are not covered by the
   BSD license). Use Montserrat (headings) + Open Sans (body), which the current pytorch.org uses and
   which are free Google Fonts.
-- **Palette (from pytorch.org):** white `#ffffff`, light section `#f3f4f7`, PyTorch orange `#ee4c2c`,
-  text `#333333` / `#000000`, dark navigation bar.
+- **Palette (from pytorch.org):** white `#ffffff`, light section `#f3f4f7`, text `#262626`, dark navigation
+  bar. Orange text and fills use `#be2c10` (the brand `#ee4c2c` fails WCAG AA for text); logos keep the brand color.
+- **Information order** (site navigation and home page): Community (events grouped by type, blog),
+  News (community, research, PyTorch), Learn (materials, sample code, open-source projects), About (team).
+- **Accessibility:** WCAG 2.1 A/AA checked with axe-core on the public site and the portal demo.
 - **PyTorch FIT stays separate.** FIT is the school chapter project; nothing PH-related is published
   from the FIT repo, and no FIT/school wording appears on the PH site.
 - **Trademark:** the PyTorch name and logo follow PyTorch Foundation brand guidelines; confirm the
@@ -42,7 +45,10 @@ built by reusing open-source PyTorch community websites instead of designing fro
    Community (Discord preview + join), About/Code of Conduct, and a Portal link.
 6. GitHub Actions workflow for Jekyll + portal demo; switch Pages from branch to workflow source.
 
-### Phase 2: portal restyle
+### Phase 2: portal restyle (done)
+The portal keeps its app layout and uses the site's palette, fonts (Montserrat, Open Sans), and square
+cards through semantic tokens in `apps/portal/app/globals.css`; dark mode remains available via `.dark`.
+Original steps:
 1. Replace hard-coded dark hex values in portal/domain components with semantic tokens.
 2. Define light pytorch.org token values; keep charts and status colors legible.
 3. Screenshot review of member dashboard, officer command center, and workspaces; fix contrast.

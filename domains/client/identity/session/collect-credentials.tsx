@@ -18,9 +18,9 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
 function Field({ icon: Icon, className: _className, ...props }: FieldProps) {
   return (
     <div className="relative">
-      <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#FFF7ED]/30" size={16} />
+      <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" size={16} />
       <input
-        className="focus-ring w-full rounded-lg border border-white/10 bg-white/[0.04] py-3 pl-10 pr-4 text-[#FFF7ED] placeholder:text-[#FFF7ED]/30 transition-all duration-300 focus:border-[#e8590c]/50 focus:bg-white/[0.06]"
+        className="focus-ring w-full rounded-lg border border-border bg-elevated py-3 pl-10 pr-4 text-ink placeholder:text-muted transition-all duration-300 focus:border-accent/50 focus:bg-elevated"
         {...props}
       />
     </div>
@@ -66,7 +66,7 @@ export function LoginForm() {
           type="email"
           {...form.register("email")}
         />
-        {email && form.formState.errors.email && <p className="text-xs text-[#e8590c]">{form.formState.errors.email.message}</p>}
+        {email && form.formState.errors.email && <p className="text-xs text-accent">{form.formState.errors.email.message}</p>}
         <Field
           autoComplete="current-password"
           icon={Lock}
@@ -75,28 +75,28 @@ export function LoginForm() {
           type="password"
           {...form.register("password")}
         />
-        {form.formState.errors.password && <p className="text-xs text-[#e8590c]">{form.formState.errors.password.message}</p>}
+        {form.formState.errors.password && <p className="text-xs text-accent">{form.formState.errors.password.message}</p>}
         <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 text-[#FFF7ED]/60">
-            <input className="accent-[#e8590c]" type="checkbox" {...form.register("remember")} />
+          <label className="flex items-center gap-2 text-muted">
+            <input className="accent-accent" type="checkbox" {...form.register("remember")} />
             Remember device
           </label>
-          <a className="text-[#e8590c] hover:underline" href="#">Forgot?</a>
+          <a className="text-accent underline underline-offset-2" href="#">Forgot?</a>
         </div>
-        {error && <div className="flex items-start gap-2 rounded-lg border border-[#e8590c]/30 bg-[#e8590c]/10 p-3 text-xs text-[#e8590c]"><AlertCircle className="mt-0.5 flex-none" size={14} />{error}</div>}
+        {error && <div className="flex items-start gap-2 rounded-lg border border-accent/30 bg-accent/10 p-3 text-xs text-accent"><AlertCircle className="mt-0.5 flex-none" size={14} />{error}</div>}
         <button
-          className="focus-ring flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#e8590c] to-[#ff7a2d] py-3 text-white shadow-lg shadow-[#e8590c]/30 transition-all duration-300 hover:shadow-[#e8590c]/50 disabled:cursor-not-allowed disabled:opacity-55"
+          className="focus-ring flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-accent to-accent py-3 text-white shadow-lg shadow-accent/30 transition-all duration-300 hover:shadow-accent/50 disabled:cursor-not-allowed disabled:opacity-55"
           disabled={!form.formState.isValid || form.formState.isSubmitting}
           type="submit"
         >
           {form.formState.isSubmitting ? "Signing in…" : "Sign in"} <ArrowRight size={15} />
         </button>
       </form>
-      <div className="my-5 flex items-center gap-3 text-xs text-[#FFF7ED]/30"><span className="h-px flex-1 bg-white/10" />or<span className="h-px flex-1 bg-white/10" /></div>
-      <button className="focus-ring flex w-full items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/[0.04] py-3 text-sm font-semibold text-[#FFF7ED] hover:border-[#e8590c]/40" onClick={async () => { setError(""); try { const supabase = createSupabaseBrowserClient(); const result = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback?next=/membership` } }); if (result.error) throw result.error; } catch (reason) { setError(reason instanceof Error ? reason.message : "Google sign in failed."); } }} type="button"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-white font-bold text-[#4285f4]">G</span>Continue with Google</button>
-      <p className="mt-2 text-center text-xs leading-5 text-[#FFF7ED]/35">Your Google email is used for authentication and membership checks. It is hidden from member-facing rankings by default.</p>
-      <div className="mt-8 text-center text-sm text-[#FFF7ED]/50">
-        New to the community? <Link className="text-[#e8590c] hover:underline" href="/register">Register</Link>
+      <div className="my-5 flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-elevated" />or<span className="h-px flex-1 bg-elevated" /></div>
+      <button className="focus-ring flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-elevated py-3 text-sm font-semibold text-ink hover:border-accent/40" onClick={async () => { setError(""); try { const supabase = createSupabaseBrowserClient(); const result = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback?next=/membership` } }); if (result.error) throw result.error; } catch (reason) { setError(reason instanceof Error ? reason.message : "Google sign in failed."); } }} type="button"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-white font-bold text-[#4285f4]">G</span>Continue with Google</button>
+      <p className="mt-2 text-center text-xs leading-5 text-muted">Your Google email is used for authentication and membership checks. It is hidden from member-facing rankings by default.</p>
+      <div className="mt-8 text-center text-sm text-muted">
+        New to the community? <Link className="text-accent underline underline-offset-2" href="/register">Register</Link>
       </div>
     </AuthShell>
   );
@@ -131,9 +131,9 @@ export function RegisterForm() {
         })}
       >
         <Field autoComplete="name" icon={UserIcon} placeholder="Full name" required {...form.register("name")} />
-        {form.formState.errors.name && <p className="text-xs text-[#e8590c]">{form.formState.errors.name.message}</p>}
+        {form.formState.errors.name && <p className="text-xs text-accent">{form.formState.errors.name.message}</p>}
         <Field autoComplete="username" icon={AtSign} placeholder="Leaderboard username" required {...form.register("username")} />
-        {form.formState.errors.username && <p className="text-xs text-[#e8590c]">{form.formState.errors.username.message}</p>}
+        {form.formState.errors.username && <p className="text-xs text-accent">{form.formState.errors.username.message}</p>}
         <Field
           aria-invalid={Boolean(email && form.formState.errors.email)}
           autoComplete="email"
@@ -144,7 +144,7 @@ export function RegisterForm() {
           {...form.register("email", { onChange: () => setError("") })}
         />
         {email && (
-          <div className={`flex items-center gap-2 font-mono text-xs ${emailValid ? "text-green-400" : "text-[#e8590c]"}`}>
+          <div className={`flex items-center gap-2 font-mono text-xs ${emailValid ? "text-success" : "text-accent"}`}>
             {emailValid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
             {emailValid ? "Valid email format" : "Enter a valid email address"}
           </div>
@@ -166,27 +166,27 @@ export function RegisterForm() {
           type="password"
           {...form.register("confirm")}
         />
-        {form.formState.errors.confirm && <p className="text-xs text-[#e8590c]">{form.formState.errors.confirm.message}</p>}
+        {form.formState.errors.confirm && <p className="text-xs text-accent">{form.formState.errors.confirm.message}</p>}
         {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-[#e8590c]/30 bg-[#e8590c]/10 p-3 text-xs text-[#e8590c]">
+          <div className="flex items-start gap-2 rounded-lg border border-accent/30 bg-accent/10 p-3 text-xs text-accent">
             <AlertCircle className="mt-0.5 flex-none" size={14} />
             {error}
           </div>
         )}
-        <label className="flex items-start gap-2 text-xs leading-5 text-[#FFF7ED]/50">
-          <input className="mt-0.5 accent-[#e8590c]" required type="checkbox" {...form.register("terms")} />
+        <label className="flex items-start gap-2 text-xs leading-5 text-muted">
+          <input className="mt-0.5 accent-accent" required type="checkbox" {...form.register("terms")} />
           I agree to PyTorch Philippines community guidelines and consent to role-based visibility gates in this prototype.
         </label>
         <button
-          className="focus-ring flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#e8590c] to-[#ff7a2d] py-3 text-white shadow-lg shadow-[#e8590c]/30 transition-all duration-300 hover:shadow-[#e8590c]/50 disabled:cursor-not-allowed disabled:opacity-55"
+          className="focus-ring flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-accent to-accent py-3 text-white shadow-lg shadow-accent/30 transition-all duration-300 hover:shadow-accent/50 disabled:cursor-not-allowed disabled:opacity-55"
           disabled={!form.formState.isValid || form.formState.isSubmitting}
           type="submit"
         >
           {form.formState.isSubmitting ? "Creating account…" : "Create account"} <ArrowRight size={15} />
         </button>
       </form>
-      <div className="mt-8 text-center text-sm text-[#FFF7ED]/50">
-        Already a member? <Link className="text-[#e8590c] hover:underline" href="/login">Sign in</Link>
+      <div className="mt-8 text-center text-sm text-muted">
+        Already a member? <Link className="text-accent underline underline-offset-2" href="/login">Sign in</Link>
       </div>
     </AuthShell>
   );

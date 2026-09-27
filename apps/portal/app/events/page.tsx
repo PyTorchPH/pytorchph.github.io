@@ -125,7 +125,7 @@ function EventsContent() {
   const activeClaimIsExtension = activeClaim?.origin === "extension_scrape" || (!activeClaim?.origin && activeClaim?.source !== "manual");
 
   return <div className="space-y-8">
-    <section className="rounded-2xl border border-accent/30 bg-[radial-gradient(circle_at_top_right,rgba(232,89,12,.27),transparent_35%),#141416] p-6 lg:p-8">
+    <section className="rounded-2xl border border-accent/30 bg-[radial-gradient(circle_at_top_right,rgb(var(--accent-rgb)/.1),transparent_35%),rgb(var(--surface-rgb))] p-6 lg:p-8">
       <Badge variant="orange">External event intelligence</Badge><h1 className="mt-4 text-3xl font-extrabold">Events intake & approval pipeline</h1>
       <p className="mt-3 max-w-3xl leading-7 text-muted">Your local companion extracts a public link into reviewable JSON. AI proposes fields; departments and partner organizers remain the approval authorities.</p>
     </section>

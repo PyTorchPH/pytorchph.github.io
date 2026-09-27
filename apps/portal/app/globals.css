@@ -1,38 +1,62 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Light theme follows the pytorch.org palette used by the public site (site/_sass/_variables.scss).
+  Colors are RGB channels so Tailwind opacity modifiers such as bg-warning/10 work.
+  Text colors keep WCAG AA contrast (4.5:1) on both --surface and --canvas.
+*/
 :root {
-  --font-sans: "Plus Jakarta Sans";
-  --font-mono: "JetBrains Mono";
-  --canvas: #fafafa;
-  --surface: #ffffff;
-  --elevated: #f4f6f8;
-  --border: rgb(15 23 42 / 0.12);
-  --ink: #0f172a;
-  --muted: #64748b;
-  --accent: #e8590c;
-  --accent-soft: #fff7ed;
-  --success: #16a34a;
-  --warning: #ca8a04;
-  --danger: #dc2626;
-  --info: #2563eb;
+  --font-sans: "Open Sans";
+  --font-heading: "Montserrat";
+  --font-mono: "IBM Plex Mono";
+  --canvas-rgb: 243 244 247;
+  --surface-rgb: 255 255 255;
+  --elevated-rgb: 243 244 247;
+  --ink-rgb: 38 38 38;
+  --muted-rgb: 95 95 96;
+  --accent-rgb: 190 44 16;
+  --accent-soft-rgb: 248 234 231;
+  --success-rgb: 19 117 56;
+  --warning-rgb: 146 88 6;
+  --danger-rgb: 185 28 28;
+  --info-rgb: 29 78 216;
+  --border: rgb(0 0 0 / 0.14);
+  --chart-grid: rgb(0 0 0 / 0.08);
 }
 
 .dark {
-  --canvas: #0b0b0c;
-  --surface: #141416;
-  --elevated: #1c1c20;
+  --canvas-rgb: 11 11 12;
+  --surface-rgb: 20 20 22;
+  --elevated-rgb: 28 28 32;
+  --ink-rgb: 255 255 255;
+  --muted-rgb: 148 163 184;
+  --accent-rgb: 255 122 61;
+  --accent-soft-rgb: 60 28 12;
+  --success-rgb: 74 222 128;
+  --warning-rgb: 250 204 21;
+  --danger-rgb: 251 113 133;
+  --info-rgb: 96 165 250;
   --border: rgb(255 255 255 / 0.1);
-  --ink: #ffffff;
-  --muted: #7a8b9e;
-  --accent-soft: rgb(232 89 12 / 0.14);
-  --success: #4ade80;
-  --warning: #facc15;
-  --danger: #fb7185;
-  --info: #60a5fa;
+  --chart-grid: rgb(255 255 255 / 0.08);
+}
+
+:root,
+.dark {
+  --canvas: rgb(var(--canvas-rgb));
+  --surface: rgb(var(--surface-rgb));
+  --elevated: rgb(var(--elevated-rgb));
+  --ink: rgb(var(--ink-rgb));
+  --muted: rgb(var(--muted-rgb));
+  --accent: rgb(var(--accent-rgb));
+  --accent-soft: rgb(var(--accent-soft-rgb));
+  --success: rgb(var(--success-rgb));
+  --warning: rgb(var(--warning-rgb));
+  --danger: rgb(var(--danger-rgb));
+  --info: rgb(var(--info-rgb));
 }
 
 * {
@@ -50,6 +74,13 @@ body {
   color: var(--ink);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   text-rendering: geometricPrecision;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 a {
@@ -79,7 +110,7 @@ textarea {
 }
 
 .focus-ring:focus-visible {
-  box-shadow: 0 0 0 3px rgb(232 89 12 / 0.38);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.45);
 }
 
 .under-glow {
@@ -87,7 +118,7 @@ textarea {
 }
 
 .under-glow::after {
-  background: radial-gradient(circle, rgb(232 89 12 / 0.22), transparent 64%);
+  background: radial-gradient(circle, rgb(var(--accent-rgb) / 0.22), transparent 64%);
   bottom: -38px;
   content: "";
   height: 92px;
@@ -106,5 +137,15 @@ textarea {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.001ms !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

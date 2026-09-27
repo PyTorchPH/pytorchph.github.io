@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" className="dark" data-scroll-behavior="smooth"><body className="pb-12">
+  return <html lang="en" data-scroll-behavior="smooth"><body className="pb-12">
     <AppProviders>{children}<FeedbackReporter /></AppProviders>
     <DemoBar />
   </body></html>;

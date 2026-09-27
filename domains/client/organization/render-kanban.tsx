@@ -36,7 +36,7 @@ export function KanbanBoard({ data = kanbanEvents, state }: { data?: DashboardAn
 
   return (
     <div className="relative">
-      {state === "unavailable" && <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"><span className="rounded-full border border-white/10 bg-[#0d0d0d]/85 px-5 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted shadow-xl">Data unavailable</span></div>}
+      {state === "unavailable" && <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"><span className="rounded-full border border-border bg-canvas/85 px-5 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted shadow-xl">Data unavailable</span></div>}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold tracking-[-0.02em]">PyTorch Event Management</h2>
