@@ -9,7 +9,9 @@ type Fixture = { status: number; body: unknown };
 type Fixtures = Record<DemoAudience, Record<string, Fixture>>;
 
 const AUDIENCE_KEY = "pytorch-ph-demo-audience";
-const FIXTURES_URL = "/demo-api/fixtures.json";
+// Empty on the root PH site; "/pytorch-fit-system" on the FIT project site.
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const FIXTURES_URL = `${BASE_PATH}/demo-api/fixtures.json`;
 const READ_ONLY_MESSAGE = "This is a static demo, so nothing was saved. Explore freely—no data leaves your browser.";
 const listeners = new Set<() => void>();
 
@@ -29,7 +31,7 @@ export function enterAs(audience: DemoAudience, path = "/dashboard/") {
   }
   listeners.forEach(listener => listener());
   // A full navigation resets cached capabilities for the newly chosen example account.
-  window.location.assign(path);
+  window.location.assign(`${BASE_PATH}${path}`);
 }
 
 export function useDemoAudience(): DemoAudience | null {
@@ -78,7 +80,10 @@ function installDemoApi() {
   (window as { __phDemoApi?: boolean }).__phDemoApi = true;
   const originalFetch = window.fetch.bind(window);
   let fixtures: Promise<Fixtures> | undefined;
-  const loadFixtures = () => (fixtures ??= originalFetch(FIXTURES_URL).then(response => response.json() as Promise<Fixtures>));
+  // Captured data links synthetic media as "/demo/..."; project sites serve it under the base path.
+  const loadFixtures = () => (fixtures ??= originalFetch(FIXTURES_URL)
+    .then(response => response.text())
+    .then(text => JSON.parse(BASE_PATH ? text.replaceAll("\"/demo/", `"${BASE_PATH}/demo/`) : text) as Fixtures));
 
   window.fetch = async (input, init) => {
     const url = requestUrl(input);

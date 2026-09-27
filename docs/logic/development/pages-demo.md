@@ -7,6 +7,7 @@ code_paths:
   - apps/pages-demo/app/layout.tsx
   - apps/pages-demo/next.config.mjs
   - apps/pages-demo/public/demo-api/fixtures.json
+  - development/pages-demo/finalize-out.mjs
   - development/pages-demo/publish-export.mjs
 tests:
   - development/pages-demo/verify.mjs
@@ -32,8 +33,11 @@ app shell, member dashboard, officer command center, and workspaces—without sc
 - The example account lives in `sessionStorage`; no cookies or authenticated sessions are created.
 - All numbers, names, events, and roles are fictional. A persistent demo bar discloses demo status
   and switches between the example member and officer.
-- Root export uses the GitHub Pages `main` / `/` source and `.nojekyll`. Only built static output,
-  the portal's synthetic `/demo/` media, and flat aliases for segment-prefetch payloads are copied;
+- The build finishes `apps/pages-demo/out` with the portal's synthetic `/demo/` media, flat aliases
+  for segment-prefetch payloads, and `.nojekyll`, so any static host can serve it unchanged.
+- Project sites build with `PAGES_BASE_PATH` (the FIT Pages workflow uses `/pytorch-fit-system`);
+  the demo prefixes its fixtures, navigation, and media with that base path.
+- Root export uses the GitHub Pages `main` / `/` source. Only built static output is copied;
   generated ownership is recorded before later builds may overwrite a file.
 - Refresh fixtures after portal data changes by capturing `/api/*` from `npm run dev` while signed in
   as each example account, then scan them for school-specific text and sensitive values.
