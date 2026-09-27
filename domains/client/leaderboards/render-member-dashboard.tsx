@@ -44,7 +44,7 @@ export function MemberDashboard() {
       <section aria-labelledby="standing-heading" className="space-y-4" data-tour="member-standing">
         <h2 className="font-heading text-xl font-semibold" id="standing-heading">Standing against peers</h2>
         <div className="grid gap-4 lg:grid-cols-[.8fr_1.2fr]">
-          <Card className="bg-surface">
+          <Card className="min-w-0 bg-surface">
             <div className="flex items-center justify-between"><p className="text-sm text-muted">Season rank</p><Trophy aria-hidden="true" className="text-accent" size={24} /></div>
             <p className="mt-2 font-mono text-5xl font-bold">{rank ? `#${rank}` : "—"}<span className="ml-2 text-base font-normal text-muted">{peers ? `of ${peers.total}` : ""}</span></p>
             <p className="mt-2 text-sm font-semibold">{tier ? `${tier.tier} ${tier.division}` : "Unranked"}{peers ? ` · Top ${peers.topPercent}%` : ""}</p>
@@ -53,7 +53,7 @@ export function MemberDashboard() {
             <p className="mt-2 text-xs text-muted">{tier?.ceiling && data ? `${tier.ceiling - data.summary.points} verified points to the next division` : tier ? "Top division reached" : ""}</p>
             <Link className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-accent underline underline-offset-2" href="/leaderboards">See the full leaderboard <ArrowRight aria-hidden="true" size={14} /></Link>
           </Card>
-          <Card className="bg-surface">
+          <Card className="min-w-0 bg-surface">
             {peers ? <PeerScorecard summary={peers} /> : <p className="text-sm text-muted">{ladder.isError ? "Peer comparison is unavailable right now." : ladder.isLoading ? "Loading peer comparison…" : "Earn your first verified points to appear on the ladder and compare with your peers."}</p>}
           </Card>
         </div>
@@ -62,10 +62,10 @@ export function MemberDashboard() {
       <section aria-labelledby="development-heading" className="space-y-4" data-tour="member-development">
         <h2 className="font-heading text-xl font-semibold" id="development-heading">Personal development</h2>
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="bg-surface"><h3 className="font-bold">12-week verified activity</h3><p className="mt-1 text-sm text-muted">Only your weighted point events.</p><PersonalActivityChart data={data?.activity || []} /></Card>
-          <Card className="bg-surface"><h3 className="font-bold">Verified skill points</h3><p className="mt-1 text-sm text-muted">Approved taxonomy links from verified point events.</p><SkillPointsChart data={data?.skillPoints || []} /></Card>
-          <Card className="bg-surface"><h3 className="font-bold">Readiness checklist</h3><p className="mt-1 text-sm text-muted">Readiness is evidence-based; unknowns remain open.</p><ul className="mt-5 space-y-3">{data?.prerequisites.map((item) => <li className="flex items-center justify-between border border-border p-3" key={item.label}><span>{item.label}</span><Badge variant={item.ready ? "success" : "warning"}>{item.ready ? "Ready" : "Needs evidence"}</Badge></li>)}</ul></Card>
-          <Card className="bg-surface"><div className="flex items-center gap-2"><Sparkles aria-hidden="true" className="text-accent" /><h3 className="font-bold">Recommended next moves</h3></div><ul className="mt-5 space-y-3">{data?.recommendations.map((item) => <li className="border border-border p-3 text-sm leading-6" key={item}>{item}</li>)}</ul></Card>
+          <Card className="min-w-0 bg-surface"><h3 className="font-bold">12-week verified activity</h3><p className="mt-1 text-sm text-muted">Only your weighted point events.</p><PersonalActivityChart data={data?.activity || []} /></Card>
+          <Card className="min-w-0 bg-surface"><h3 className="font-bold">Verified skill points</h3><p className="mt-1 text-sm text-muted">Approved taxonomy links from verified point events.</p><SkillPointsChart data={data?.skillPoints || []} /></Card>
+          <Card className="min-w-0 bg-surface"><h3 className="font-bold">Readiness checklist</h3><p className="mt-1 text-sm text-muted">Readiness is evidence-based; unknowns remain open.</p><ul className="mt-5 space-y-3">{data?.prerequisites.map((item) => <li className="flex items-center justify-between border border-border p-3" key={item.label}><span>{item.label}</span><Badge variant={item.ready ? "success" : "warning"}>{item.ready ? "Ready" : "Needs evidence"}</Badge></li>)}</ul></Card>
+          <Card className="min-w-0 bg-surface"><div className="flex items-center gap-2"><Sparkles aria-hidden="true" className="text-accent" /><h3 className="font-bold">Recommended next moves</h3></div><ul className="mt-5 space-y-3">{data?.recommendations.map((item) => <li className="border border-border p-3 text-sm leading-6" key={item}>{item}</li>)}</ul></Card>
         </div>
       </section>
     </>}
