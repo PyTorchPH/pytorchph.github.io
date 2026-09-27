@@ -9,7 +9,7 @@ type Fixture = { status: number; body: unknown };
 type Fixtures = Record<DemoAudience, Record<string, Fixture>>;
 
 const AUDIENCE_KEY = "pytorch-ph-demo-audience";
-// Empty on the root PH site; "/pytorch-fit-system" on the FIT project site.
+// Empty on the root PH site; set for project sites served under a path.
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const FIXTURES_URL = `${BASE_PATH}/demo-api/fixtures.json`;
 const READ_ONLY_MESSAGE = "This is a static demo, so nothing was saved. Explore freely—no data leaves your browser.";
