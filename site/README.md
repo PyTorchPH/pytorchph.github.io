@@ -1,6 +1,6 @@
 # PyTorch Philippines public site
 
-Jekyll site served at the root of <https://pytorchph.github.io>. The member portal demo is built from
+Jekyll site served at the root of <https://pytorch.ph>. The member portal demo is built from
 `apps/pages-demo` and served under `/portal/` by the same GitHub Pages workflow
 (`.github/workflows/deploy-pages.yml`). See [`NOTICE.md`](NOTICE.md) for attribution.
 

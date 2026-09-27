@@ -30,7 +30,7 @@ npm run build
 
 ## GitHub Pages
 
-https://pytorchph.github.io serves the public site from `site/` and a static member portal demo at
+https://pytorch.ph serves the public site from `site/` and a static member portal demo at
 `/portal/`, built and deployed by `.github/workflows/deploy-pages.yml` on every push to `main`.
 See [`site/README.md`](site/README.md) for local preview.
 
