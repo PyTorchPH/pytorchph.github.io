@@ -62,7 +62,9 @@ export function AddExternalEvent() {
   const [draft, setDraft] = useState<EventPackage | null>(null);
   const [extracting, setExtracting] = useState(false);
   const source = automaticEventSource(url);
-  const names = automaticEventSources.map((item) => item.name).join(" and ");
+  const sourceNames = automaticEventSources.map((item) => item.name);
+  const names = sourceNames.join(" and ");
+  const eitherName = sourceNames.join(" or ");
 
   const submit = useMutation({
     mutationFn: (value: EventPackage) => fetchJson<ExternalEvent>("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(value) }),
@@ -121,10 +123,10 @@ export function AddExternalEvent() {
       <div className="md:col-span-2"><Button disabled={submit.isPending} type="submit"><PencilLine size={16} />{submit.isPending ? "Submitting…" : "Submit event for review"}</Button></div>
     </form> : <div className="mt-5">
       <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
-        <div><Label htmlFor="event-url">{names} event link</Label><Input aria-describedby="event-url-help" className="mt-1" id="event-url" onChange={(event) => setUrl(event.target.value)} placeholder="https://lu.ma/your-event" type="url" value={url} /></div>
+        <div><Label htmlFor="event-url">{eitherName} event link</Label><Input aria-describedby="event-url-help" className="mt-1" id="event-url" onChange={(event) => setUrl(event.target.value)} placeholder="https://lu.ma/your-event" type="url" value={url} /></div>
         <Button className="self-end" disabled={!source || extracting} onClick={extract} type="button"><ScanSearch size={17} />{extracting ? "Reading the page…" : "Retrieve details with AI"}</Button>
       </div>
-      <p className="mt-2 text-sm text-muted" id="event-url-help" role="status">{!url ? `Paste a ${names} link.` : source ? `${source} link recognized.` : `This link is not from ${names}. Choose “Fill in the details” to add it yourself.`}</p>
+      <p className="mt-2 text-sm text-muted" id="event-url-help" role="status">{!url ? `Paste a ${eitherName} link.` : source ? `${source} link recognized.` : `This link is not from ${eitherName}. Choose “Fill in the details” to add it yourself.`}</p>
       {draft && <div className="mt-4 border border-success/30 bg-success/10 p-4">
         <div className="flex items-center justify-between gap-3"><div><p className="font-bold">{draft.title}</p><p className="mt-1 text-sm text-muted">{draft.organizer} · confidence {Math.round(draft.confidence * 100)}%</p></div><Badge variant="success"><FileJson size={14} />Details retrieved</Badge></div>
         <p className="mt-3 text-sm leading-6">{draft.summary}</p>
