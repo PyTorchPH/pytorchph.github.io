@@ -1,0 +1,126 @@
+diff --git a/ui-v2/package.json b/ui-v2/package.json
+index bf3c77a..0cb57a1 100644
+--- a/ui-v2/package.json
++++ b/ui-v2/package.json
+@@ -70,6 +70,7 @@
+     "react": "19.2.8",
+     "react-day-picker": "^10.0.1",
+     "react-dom": "19.2.8",
++    "react-joyride": "^3.2.0",
+     "react-hook-form": "^7.83.0",
+     "react-markdown": "^10.1.0",
+     "recharts": "^3.5.1",
+diff --git a/ui-v2/src/components/layouts/MainLayout.tsx b/ui-v2/src/components/layouts/MainLayout.tsx
+index b738076..3e2474d 100644
+--- a/ui-v2/src/components/layouts/MainLayout.tsx
++++ b/ui-v2/src/components/layouts/MainLayout.tsx
+@@ -1,5 +1,6 @@
+ import { AppSidebar } from "@/components/ui/app-sidebar";
+ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
++import { ProcessLabTour } from "@/components/process-lab-tour";
+ import { useColorMode } from "@/hooks/use-color-mode";
+ import { ThemeProvider } from "../ui/theme-provider";
+ 
+@@ -17,6 +18,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
+ 					<SidebarTrigger className="sticky top-0 z-10 mb-4 md:hidden" />
+ 					{children}
+ 				</main>
++				<ProcessLabTour />
+ 			</SidebarProvider>
+ 		</ThemeProvider>
+ 	);
+diff --git a/ui-v2/src/components/process-lab-tour.tsx b/ui-v2/src/components/process-lab-tour.tsx
+new file mode 100644
+index 0000000..3c05cc5
+--- /dev/null
++++ b/ui-v2/src/components/process-lab-tour.tsx
+@@ -0,0 +1,89 @@
++import { EVENTS, Joyride, type Step } from "react-joyride";
++import { useEffect, useMemo, useState } from "react";
++
++const storageKey = "pytorch-ph-prefect-tour-v1";
++
++export function ProcessLabTour() {
++	const [run, setRun] = useState(false);
++	const steps = useMemo<Step[]>(
++		() => [
++			{
++				target: "main",
++				title: "Your workflow DAG",
++				content: "This graph documents the ordinary member journey. Lines show dependencies; human-gate nodes describe writes that the lab deliberately does not perform.",
++				placement: "center",
++			},
++			{
++				target: 'a[href="/runs"]',
++				title: "Runs",
++				content: "A run is one execution. Start here when you want status, logs, timing, retries, and the exact DAG for a specific execution.",
++			},
++			{
++				target: 'a[href="/flows"]',
++				title: "Flows",
++				content: "Flows are reusable workflow definitions. The Process Lab creates focused flows plus the major member-experience overview.",
++			},
++			{
++				target: 'a[href="/work-pools"]',
++				title: "Work Pools",
++				content: "Pools and queues decide where work runs. Interactive, pipeline, and diagnostic queues are configured for you.",
++			},
++			{
++				target: 'a[href="/blocks"]',
++				title: "Blocks",
++				content: "Blocks hold typed local service endpoints and the reviewable safety policy. They never contain developer passwords.",
++			},
++			{
++				target: 'a[href="/variables"]',
++				title: "Variables",
++				content: "Variables contain non-secret defaults such as the standard workflow, page limits, and safe execution mode.",
++			},
++			{
++				target: 'a[href="/automations"]',
++				title: "Automations",
++				content: "Failure automations launch bounded diagnostics. They do not approve evidence, send applications, or bypass human gates.",
++			},
++			{
++				target: 'a[href="/events"]',
++				title: "Event Feed",
++				content: "The event feed explains what happened across flows, deployments, routes, artifacts, and explicit human-controlled stops.",
++			},
++			{
++				target: 'a[href="/concurrency-limits"]',
++				title: "Concurrency",
++				content: "Concurrency limits prevent duplicate browser control, model planning, scraping, and artifact work from colliding.",
++			},
++		],
++		[],
++	);
++
++	useEffect(() => {
++		const requested = new URLSearchParams(window.location.search).get("tour") === "1";
++		setRun(requested || window.localStorage.getItem(storageKey) !== "complete");
++	}, []);
++
++	return (
++		<>
++			<Joyride
++				continuous
++				run={run}
++				steps={steps}
++				scrollToFirstStep
++				onEvent={(event) => {
++					if (event.type === EVENTS.TOUR_END) {
++						window.localStorage.setItem(storageKey, "complete");
++						setRun(false);
++					}
++				}}
++				options={{ blockTargetInteraction: true, buttons: ["back", "close", "primary", "skip"], showProgress: true }}
++			/>
++			<button
++				type="button"
++				onClick={() => setRun(true)}
++				className="fixed bottom-4 right-4 z-40 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-lg"
++			>
++				Start tour
++			</button>
++		</>
++	);
++}

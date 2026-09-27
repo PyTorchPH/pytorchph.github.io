@@ -1,0 +1,65 @@
+@startuml web-saas
+title Department 05 — Web / SaaS ("CareerLens" prototype)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+actor "Browser / User" as User
+
+package "FastAPI app (web/app.py)" {
+  class WebApp <<FastAPI>> {
+    .. pages ..
+    GET /
+    GET /prototype
+    GET /developer/scraping
+    GET /build-form
+    POST /build
+    GET /healthz
+    .. auth ..
+    GET /api/auth/status
+    GET /auth/{provider}/start
+    GET /auth/{provider}/callback
+    POST /api/auth/disconnect/{provider}
+    .. resumes + advisor ..
+    GET /api/resumes
+    POST /api/cdo/advisor/analyze
+    .. social login ..
+    POST /api/social-login/{vendor}
+    GET /api/social-login/jobs/{job_id}
+    POST /api/social-login/{vendor}/disconnect
+  }
+}
+
+package "Web support modules (web/)" {
+  class WebAuthSettings {
+    +github / google / microsoft OAuth
+    scopes: read:user, user:email
+  }
+  class CdoAdvisor {
+    +analyze(resume) : injection/compliance check
+  }
+  class MockData <<prototype fixtures>>
+  class "templates/ (Jinja2)" as Templates
+  class "static/ (CSS/JS)" as Static
+}
+
+WebApp --> WebAuthSettings : OAuth flows
+WebApp --> CdoAdvisor : /api/cdo/advisor/analyze
+WebApp --> MockData : prototype data
+WebApp --> Templates : HTML pages
+WebApp --> Static : assets
+
+User --> WebApp : HTTP
+
+' --- wraps the core ---
+WebApp ..> "Dept 01: Pipeline.run()" : POST /build
+WebApp ..> "Dept 02: social-login\n(browser_login / auth)" : POST /api/social-login
+
+note bottom of WebApp
+  Prototype layer. Wraps the CLI pipeline
+  behind a UI. OAuth here is for IDENTITY
+  (read:user, user:email) — used to pre-fill
+  social login, not to act on the user's behalf.
+  NOT YET: user DB, billing, rate limiting.
+end note
+@enduml

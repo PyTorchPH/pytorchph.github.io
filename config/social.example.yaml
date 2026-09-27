@@ -1,0 +1,21 @@
+# Social-media middleman config. Copy to social.yaml and pass via --social.
+#
+# Secrets stay in env vars, not here:
+#   FB_COOKIE="c_user=...; xs=..."   # required for Facebook
+#   LI_COOKIE="<li_at value>"        # optional for LinkedIn (public-only without)
+#   IG_COOKIE="<sessionid value>"    # optional for Instagram
+#   NITTER_HOST="https://nitter..."  # optional; pin a private nitter instance
+
+full_name: "Your Name"
+enabled_vendors:
+  - facebook
+  - linkedin
+  - twitter
+  - instagram
+cache_ttl_seconds: 21600
+per_vendor_limit: 30
+handles:
+  facebook: your.facebook.handle
+  linkedin: your-linkedin-handle
+  twitter: yourtwitterhandle
+  instagram: yourinstagramhandle

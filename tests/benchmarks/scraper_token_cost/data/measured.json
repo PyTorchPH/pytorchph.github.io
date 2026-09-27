@@ -1,0 +1,59 @@
+{
+  "_about": "Empirical data captured while comparing the agent-tool-calling scraper vs the AgenticCrawler pipeline on quotes.toscrape.com pages 1-5. Each field is tagged measured|assumed so claims are auditable. Captured 2026-07-01 via two general-purpose subagents that fetched the live pages and ran the repo's real functions (build_dom_inventory, fingerprint, apply_tag_rules) + tiktoken cl100k_base.",
+  "target": {
+    "seed": "https://quotes.toscrape.com/",
+    "pages": [
+      "https://quotes.toscrape.com/",
+      "https://quotes.toscrape.com/page/2/",
+      "https://quotes.toscrape.com/page/3/",
+      "https://quotes.toscrape.com/page/4/",
+      "https://quotes.toscrape.com/page/5/"
+    ]
+  },
+  "tokenizer": "tiktoken cl100k_base",
+
+  "measured": {
+    "pages": [
+      {"url": "https://quotes.toscrape.com/",        "raw_html_chars": 11021, "raw_html_tokens": 2880, "dom_inventory_chars": 25988, "fingerprint": "0e66a692", "cache_hit": false, "pipeline_extracted_chars": 1500},
+      {"url": "https://quotes.toscrape.com/page/2/", "raw_html_chars": 13699, "raw_html_tokens": 3584, "dom_inventory_chars": 28275, "fingerprint": "8fb5de97", "cache_hit": false, "pipeline_extracted_chars": 3270},
+      {"url": "https://quotes.toscrape.com/page/3/", "raw_html_chars": 9987,  "raw_html_tokens": 2563, "dom_inventory_chars": 19749, "fingerprint": "8fb5de97", "cache_hit": true,  "pipeline_extracted_chars": 1668},
+      {"url": "https://quotes.toscrape.com/page/4/", "raw_html_chars": 10283, "raw_html_tokens": 2674, "dom_inventory_chars": 21466, "fingerprint": "8fb5de97", "cache_hit": true,  "pipeline_extracted_chars": 1289},
+      {"url": "https://quotes.toscrape.com/page/5/", "raw_html_chars": 9970,  "raw_html_tokens": 2581, "dom_inventory_chars": 20531, "fingerprint": "8fb5de97", "cache_hit": true,  "pipeline_extracted_chars": 1320}
+    ],
+    "distinct_fingerprints": 2,
+    "agent_output": {
+      "shape": "structured per-field JSON: {text, author, tags[]}",
+      "records": 50,
+      "per_page": 10,
+      "extras_captured": ["pagination Next links", "per-quote /author/* links", "per-tag /tag/* links", "Top Ten tags sidebar", "/login link"]
+    },
+    "pipeline_output": {
+      "shape": "flat concatenated text blob per page: '“<quote>” by <author> (about) Tags: t1 t2'",
+      "fields_separated": false,
+      "links_kept": ["pager / pagination only (ul.pager got the crawl action)"],
+      "links_dropped": ["/author/* profile URLs", "/tag/* URLs (tag words survive as text, URLs do not)"],
+      "needs_second_pass_to_get": "{text, author, tags[]} structured records"
+    },
+    "pipeline_llm_calls": [
+      {"call": "rule_inference", "fingerprint": "0e66a692", "input_chars": 27434, "input_tokens": 7824, "note": "seed / page 1 (li.next only)"},
+      {"call": "rule_inference", "fingerprint": "8fb5de97", "input_chars": 29728, "input_tokens": 8565, "note": "page 2 layout (li.next + li.previous); pages 3,4,5 reuse this => cache hits, 0 tokens"},
+      {"call": "link_selection", "fingerprint": "0e66a692", "input_chars": 1003,  "input_tokens": 221,  "note": "seed; recurs once per crawled page with candidates"}
+    ],
+    "pipeline_total_input_tokens": 16610
+  },
+
+  "assumed": {
+    "_note": "NOT measured against a live LLM. The pipeline rule-learning was role-played by an AI subagent; no real billing was observed. These constants feed the cost model only.",
+    "agent_system_prompt_tokens": 600,
+    "agent_output_tokens_per_page": 400,
+    "pipeline_rule_output_tokens_per_layout": 250,
+    "pipeline_link_output_tokens_per_page": 125
+  },
+
+  "derived_constants": {
+    "_note": "Computed from measured.pages for the cost model in benchmark.py.",
+    "avg_raw_html_tokens_per_page": 2856.4,
+    "avg_rule_inference_input_tokens_per_layout": 8194.5,
+    "link_selection_input_tokens_per_page": 221
+  }
+}

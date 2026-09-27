@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Career profile setup</title>
+  <link rel="stylesheet" href="/static/onboarding.css">
+  <script id="onboarding-state" type="application/json">{{ initial_state | tojson }}</script>
+  <script defer src="/static/onboarding.js"></script>
+</head>
+<body>
+  <main class="setup-shell">
+    <header class="setup-header">
+      <p class="eyebrow">Career automation setup</p>
+      <h1>One clear decision at a time.</h1>
+      <p>Your existing resume evidence is loaded automatically. You only see information that must be verified before safe automation can begin.</p>
+    </header>
+
+    <nav class="steps" aria-label="Setup progress">
+      <span data-step="resume_source">1 <b>Resume</b></span>
+      <span data-step="correction">2 <b>Verify</b></span>
+      <span data-step="job_preferences">3 <b>Goal</b></span>
+      <span data-step="ready">4 <b>Dashboard</b></span>
+    </nav>
+
+    <section class="source-panel" aria-label="Loaded resume artifacts">
+      <div>
+        <p class="eyebrow">Read-only source</p>
+        <h2 data-source-label>Loading resume artifacts…</h2>
+        <p data-profile-summary></p>
+      </div>
+      <div class="resume-grid" data-resume-grid></div>
+    </section>
+
+    <section class="decision-card" data-decision-card aria-live="polite"></section>
+    <p class="setup-error" data-error role="alert"></p>
+  </main>
+</body>
+</html>

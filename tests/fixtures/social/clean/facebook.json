@@ -1,0 +1,16 @@
+[
+  {
+    "url": "https://www.facebook.com/feutechpytorch/posts/1234567890",
+    "posted_at": "2026-03-14T09:30:00",
+    "text": "Spoke at the FEU Tech PyTorch chapter on training CNNs from scratch.",
+    "media_urls": [
+      "https://scontent.fmnl.example/image1.jpg"
+    ]
+  },
+  {
+    "url": "https://www.facebook.com/feutechpytorch/posts/1234567891",
+    "posted_at": "2026-02-01T14:00:00",
+    "text": "Won 2nd place at the inter-university CTF representing FEU Tech.",
+    "media_urls": []
+  }
+]

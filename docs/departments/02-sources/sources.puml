@@ -1,0 +1,105 @@
+@startuml sources
+title Department 02 — Sources / Data Collection
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "Source interface (sources/base.py)" {
+  abstract class SourceCollector {
+    +name: str
+    +{abstract} collect(**kwargs): Any
+  }
+}
+
+package "Simple sources (sources/)" {
+  class GitHubSource {
+    +collect(user, include_readme): list[Repo]
+    .. uses `gh` CLI ..
+  }
+  class DocumentSource {
+    +collect(path): list[RawDocument]
+    .. parses PDF / DOCX / TeX / MD ..
+  }
+}
+SourceCollector <|-- GitHubSource
+SourceCollector <|-- DocumentSource
+
+package "Social subsystem (sources/social/)" #LightCyan {
+
+  class SocialAggregator {
+    -registry: dict[str, VendorFactory]
+    -cache_dir: Path
+    -max_workers: int = 4
+    +register(name, factory)
+    +available_vendors(): list[str]
+    +collect(config: ScrapeConfig): CollectResult
+    -_collect_one(name, config)
+    -_dedupe_posts() / _dedupe_mentions()
+    -_read_cache() / _write_cache()  (TTL 6h, chmod 600)
+  }
+
+  class CollectResult {
+    +posts: list[SocialPost]
+    +mentions: list[SocialMention]
+    +failures: dict[str, str]
+  }
+
+  class ScrapeConfig {
+    +full_name: str
+    +enabled_vendors: tuple[str]
+    +handles: dict[str, str]
+    +cache_ttl_seconds: int = 21600
+    +per_vendor_limit: int = 50
+  }
+
+  abstract class SocialVendor {
+    +name: str
+    +{abstract} fetch_own_posts(handle, limit): list[SocialPost]
+    +{abstract} search_mentions(full_name, limit): list[SocialMention]
+  }
+
+  class FacebookVendor
+  class LinkedInVendor
+  class TwitterVendor
+  class InstagramVendor
+  SocialVendor <|-- FacebookVendor
+  SocialVendor <|-- LinkedInVendor
+  SocialVendor <|-- TwitterVendor
+  SocialVendor <|-- InstagramVendor
+
+  package "Visible-first browser tooling (playwright_*.py)" #Lavender {
+    class HeadlessBrowser <<session pool>>
+    class PlaywrightOverlay <<non-destructive highlights>>
+    class PlaywrightStep <<step-through debugger>>
+    class PlaywrightPicker <<click-to-pick selector>>
+    class BrowserLogin <<visible sign-in>>
+  }
+
+  SocialAggregator o--> "registry" SocialVendor : dispatches in parallel
+  SocialAggregator --> CollectResult : produces
+  SocialAggregator --> ScrapeConfig : consumes
+  FacebookVendor ..> HeadlessBrowser
+  FacebookVendor ..> PlaywrightOverlay
+  FacebookVendor ..> PlaywrightStep
+  FacebookVendor ..> PlaywrightPicker
+  FacebookVendor ..> BrowserLogin
+}
+
+note right of SocialAggregator
+  Never re-raises a vendor failure.
+  One broken handler => empty result
+  for that vendor only (failures map).
+  Dedupe by (vendor,id) then content hash.
+end note
+
+note bottom of FacebookVendor
+  FB posts are NOT role=article.
+  Detect by permalink/timestamp anchor.
+  Highlight the post UNIT, not the tiny anchor.
+end note
+
+' --- output contract to Dept 01 ---
+GitHubSource --> "Dept 01: Repo[]" : >
+DocumentSource --> "Dept 01: RawDocument[]" : >
+SocialAggregator --> "Dept 01: CollectResult" : >
+@enduml

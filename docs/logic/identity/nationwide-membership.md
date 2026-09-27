@@ -1,0 +1,33 @@
+---
+logic_id: identity.nationwide-membership
+code_paths:
+  - domains/protocol/identity/credential-shape.ts
+  - domains/client/identity/session/collect-credentials.tsx
+  - apps/portal/app/page.tsx
+tests:
+  - apps/portal/tests/nationwide-membership.test.ts
+feedback_events:
+  - local_auth.session_created
+  - local_auth.session_rejected
+related_logic: []
+---
+
+# Nationwide membership
+
+PyTorch Philippines serves learners, practitioners, researchers, educators, and contributors
+throughout the Philippines, independently of any school affiliation.
+
+- Login and registration accept a syntactically valid email from any domain. Input is trimmed;
+  malformed addresses, weak passwords, mismatched confirmation, and missing consent remain invalid.
+- Email-format validation never claims ownership verification. Supabase confirmation establishes
+  ownership; authentication errors remain visible without logging credentials.
+- Removing the school-domain allowlist never grants membership, officer status, or administrative
+  access. Existing server-side role checks, membership gates, and database RLS remain authoritative.
+- Local synthetic accounts remain loopback-only; production, Vercel, and CI select Supabase.
+- PH uses its own package namespace, runtime paths, local session cookie, and `PYTORCH_PH_*`
+  settings. Existing FIT runtime data, credentials, and deployment configuration are not copied.
+- Public branding, signup instructions, and synthetic community examples do not imply school
+  affiliation. Optional academic-evidence adapters describe their source, not membership eligibility.
+
+Acceptance checks cover non-school addresses, malformed input, password/consent enforcement,
+unchanged tier and host-based authorization decisions, and school-neutral public copy.

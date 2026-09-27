@@ -1,0 +1,8 @@
+project_id = "pytorch-ph-system"
+
+[db]
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]

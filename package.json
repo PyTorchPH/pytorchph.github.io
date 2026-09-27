@@ -1,0 +1,37 @@
+{
+  "name": "pytorch-ph-workspace",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0 <25"
+  },
+  "workspaces": [
+    "apps/academic-records",
+    "apps/evidence-extension",
+    "apps/portal",
+    "domains/client",
+    "domains/server",
+    "domains/protocol",
+    "design-system",
+    "development/local-access",
+    "development/local-workspace",
+    "development/prefect-dashboard"
+  ],
+  "scripts": {
+    "setup": "npm ci --ignore-scripts --no-audit --no-fund",
+    "dev": "node development/local-workspace/start-website.mjs",
+    "dev:portal": "npm run dev --workspace @pytorch-ph/portal -- --hostname 127.0.0.1 --port 3100",
+    "dev:manual-login": "node development/local-workspace/start.mjs --manual-login",
+    "dev:process-lab": "node development/local-workspace/start-process-lab.mjs",
+    "build": "npm run build --workspace @pytorch-ph/portal",
+    "start": "npm run start --workspace @pytorch-ph/portal",
+    "typecheck": "npm run typecheck --workspace @pytorch-ph/portal",
+    "test:boundaries": "node --test tests/node/workspace-boundaries.test.mjs tests/node/logic-doc-contracts.test.mjs tests/node/observability-project.test.mjs tests/node/production-preview.test.mjs",
+    "test:grades": "npm run test --workspace @pytorch-ph/academic-records",
+    "grades:login": "npm run login --workspace @pytorch-ph/academic-records --",
+    "grades:scrape": "npm run scrape --workspace @pytorch-ph/academic-records --",
+    "grades:inject": "npm run inject --workspace @pytorch-ph/academic-records --",
+    "test": "npm run test:boundaries && npm run test:portal-hosts --workspace @pytorch-ph/portal && npm run test:capabilities --workspace @pytorch-ph/portal && npm run test:product --workspace @pytorch-ph/portal && npm run test:nationwide",
+    "dev:workspace": "node development/local-workspace/start.mjs",
+    "test:nationwide": "npm run test:nationwide --workspace @pytorch-ph/portal"
+  }
+}

@@ -1,0 +1,15 @@
+development/
+src/
+tools/
+platform/
+docs/
+tests/
+.schemathesis/
+out/
+.cache/
+var/
+.careerlens-chrome-cdp/
+apps/portal/.next*/
+**/*-trace.zip
+**/*.spec.ts
+**/*.test.ts

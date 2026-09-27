@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ resume.contact.name or "Resume" }} — {{ resume.role.label }}</title>
+<style>
+  :root{
+    --ink:#16181d;          /* primary text */
+    --muted:#5b6270;        /* secondary text */
+    --faint:#8a90a0;        /* tertiary / dates */
+    --accent:#243b6b;       /* deep slate-navy */
+    --rule:#c7ccd6;         /* section divider hairline */
+    --bg:#ffffff;
+    --maxw:200mm;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#eef0f4;color:var(--ink);}
+  body{
+    font-family:"Georgia","Iowan Old Style",Cambria,"Times New Roman",serif;
+    font-size:10.7pt; line-height:1.34;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .sheet{
+    max-width:var(--maxw); margin:18px auto; background:var(--bg);
+    padding:14mm 16mm; box-shadow:0 1px 6px rgba(20,24,29,.12);
+  }
+  /* ---- header: role label is the dominant element; name + contacts on one line ---- */
+  header{border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:4px;}
+  .role-title{
+    font-family:"Helvetica Neue",Arial,system-ui,sans-serif;
+    font-size:23pt; font-weight:700; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--ink); margin:0 0 3px; line-height:1.1;
+  }
+  .contact{
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:9pt;
+    color:var(--muted); display:flex; flex-wrap:wrap; gap:4px 10px;
+    align-items:center; margin-top:4px;
+  }
+  .contact .name{color:var(--ink); font-weight:700; font-size:11pt; line-height:1.1;}
+  .contact a{color:var(--muted); text-decoration:none; display:inline-flex; align-items:center; gap:3px;}
+  .contact a:hover{color:var(--accent);}
+  .contact .sep{color:var(--faint);}
+  .brand-icon,
+  .contact svg,
+  .entry .source svg{
+    display:inline-block; flex:0 0 auto; width:1em; height:1em;
+    object-fit:contain; vertical-align:-0.12em; margin-right:3px;
+  }
+  /* ---- sections: simple vertical flow, each scoped by a horizontal divider ---- */
+  section{margin:0; padding:9px 0 10px; border-top:1px solid var(--rule);}
+  section:first-of-type{border-top:none;}
+  h2{
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:9.5pt;
+    font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 6px;
+  }
+  p{margin:0 0 4px;}
+  .summary{color:var(--ink);}
+  /* ---- achievements (emphasis) ---- */
+  .ach{margin:0 0 5px; padding-left:15px; position:relative; break-inside:avoid;}
+  .ach::before{content:"▸"; position:absolute; left:0; top:0; color:var(--accent); font-size:9pt;}
+  .ach .top{display:flex; justify-content:space-between; gap:12px; align-items:baseline;}
+  .ach .title{
+    font-family:"Helvetica Neue",Arial,sans-serif; font-weight:700;
+    font-size:10.5pt; color:var(--ink);
+  }
+  .ach .title a{color:var(--ink); text-decoration:none;}
+  .ach .meta{
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:8.5pt;
+    color:var(--faint); white-space:nowrap; text-transform:uppercase; letter-spacing:.05em;
+  }
+  .ach .detail{color:var(--muted); font-size:10pt; margin-top:0;}
+  /* ---- projects / experience ---- */
+  .entry{margin:0 0 7px; break-inside:avoid;}
+  .entry:last-child{margin-bottom:0;}
+  .entry .row{display:flex; justify-content:space-between; gap:12px; align-items:baseline;}
+  .entry .lead{
+    font-family:"Helvetica Neue",Arial,sans-serif; font-weight:700; font-size:10.5pt;
+  }
+  .entry .lead a{color:var(--ink); text-decoration:none;}
+  .entry .when{font-family:"Helvetica Neue",Arial,sans-serif; font-size:8.5pt; color:var(--faint); white-space:nowrap;}
+  .entry .source{font-family:"Helvetica Neue",Arial,sans-serif; font-size:8.5pt; color:var(--faint); white-space:nowrap;}
+  .entry .source a{color:var(--faint); text-decoration:none; display:inline-flex; align-items:center; gap:2px;}
+  .entry .tech{font-size:9pt; color:var(--accent); font-style:italic; margin:1px 0 2px;}
+  .entry .desc{color:var(--muted); margin:1px 0 3px;}
+  .impact{color:var(--ink); margin:1px 0 3px;}
+  .impact.qual{color:var(--muted);}
+  ul.bullets{margin:1px 0 0; padding-left:16px;}
+  ul.bullets li{margin:0 0 1px; color:var(--ink);}
+  /* ---- education / certifications ---- */
+  .edu{margin:0 0 5px; break-inside:avoid;}
+  .edu:last-child{margin-bottom:0;}
+  .edu .row{display:flex; justify-content:space-between; gap:12px; align-items:baseline;}
+  .edu .school{font-family:"Helvetica Neue",Arial,sans-serif; font-weight:700; font-size:10.5pt;}
+  .edu .degree{color:var(--muted);}
+  .edu .when{font-family:"Helvetica Neue",Arial,sans-serif; font-size:8.5pt; color:var(--faint); white-space:nowrap;}
+  /* ---- skills ---- */
+  .skills{font-family:"Helvetica Neue",Arial,sans-serif; font-size:9.5pt; color:var(--ink); line-height:1.5;}
+  .skill-grid{display:grid; grid-template-columns:repeat(var(--skill-columns),minmax(0,1fr)); gap:4px 14px;}
+  .skill-group{break-inside:avoid;}
+  .skill-group strong{display:block;}
+  .skill-group span{color:var(--muted);}
+  .skills .chip{white-space:nowrap;}
+  .skills .dot{color:var(--faint); margin:0 6px;}
+  /* ---- print ---- */
+  @media print{
+    html,body{background:#fff;}
+    .sheet{box-shadow:none; margin:0; max-width:none; padding:0;}
+    @page{size:A4; margin:14mm;}
+    a{color:inherit !important;}
+    /* Sections may flow across pages; individual entries stay whole (no mid-bleed). */
+    .ach, .entry, .edu{break-inside:avoid;}
+    section{break-inside:auto;}
+    header{break-after:avoid;}
+    h2{break-after:avoid;}
+    ul.bullets li{break-inside:avoid;}
+    p, li{orphans:2; widows:2;}
+  }
+</style>
+</head>
+<body>
+<main class="sheet">
+
+  <header>
+    {# Role label is the dominant heading; name + all contact info on a single line below. #}
+    <h1 class="role-title">{{ (resume.role.label if resume.role and resume.role.label else None) or "Your Target Role" }}</h1>
+    <div class="contact">
+      <span class="name">{{ resume.contact.name or "Your Name" }}</span>
+      {% if resume.contact.email %}<span class="sep">·</span><span>{{ resume.contact.email }}</span>{% endif %}
+      {% if resume.contact.phone %}<span class="sep">·</span><span>{{ resume.contact.phone }}</span>{% endif %}
+      {% if resume.contact.github %}
+        {% set _gh = declutter_link(resume.contact.github, "github") %}
+        <span class="sep">·</span>
+        <a href="{{ resume.contact.github if resume.contact.github.startswith('http') else 'https://github.com/' ~ resume.contact.github }}">{{ brand_svg("github", 11) }}<span>{{ _gh[1] or resume.contact.github }}</span></a>
+      {% endif %}
+      {% if resume.contact.linkedin %}
+        {% set _li = declutter_link(resume.contact.linkedin, "linkedin") %}
+        <span class="sep">·</span>
+        <a href="{{ resume.contact.linkedin if resume.contact.linkedin.startswith('http') else 'https://www.linkedin.com/in/' ~ resume.contact.linkedin }}">{{ brand_svg("linkedin", 11) }}<span>{{ _li[1] or resume.contact.linkedin }}</span></a>
+      {% endif %}
+      {% if resume.contact.facebook %}
+        <span class="sep">·</span>
+        <span>{{ brand_svg("facebook", 11) }}{{ resume.contact.facebook }}</span>
+      {% endif %}
+      {% if resume.contact.website %}
+        {% set _ws = declutter_link(resume.contact.website, "website") %}
+        <span class="sep">·</span>
+        <a href="{{ resume.contact.website }}">{{ brand_svg("website", 11) }}<span>{{ _ws[1] or resume.contact.website }}</span></a>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if resume.summary %}
+  <section>
+    <h2>Summary</h2>
+    <p class="summary">{{ resume.summary }}</p>
+  </section>
+  {% endif %}
+
+  {% if resume.skill_groups or resume.skills %}
+  <section>
+    <h2>Skills</h2>
+    {% if resume.skill_groups %}
+    {% set skill_layout = plan_skill_layout(resume.skill_groups) %}
+    <div class="skills skill-grid" style="--skill-columns:{{ skill_layout.columns }}">
+      {% for group in skill_layout.groups %}
+      <div class="skill-group"><strong>{{ group.name }}</strong><span>{{ group.items | join(", ") }}</span></div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="skills">
+      {% for s in resume.skills | compact_skills %}<span class="chip">{{ s }}</span>{% if not loop.last %}<span class="dot">·</span>{% endif %}{% endfor %}
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if resume.experience %}
+  <section>
+    <h2>Experience</h2>
+    {% for x in resume.experience %}
+    <div class="entry">
+      <div class="row">
+        <span class="lead">{{ x.role }}{% if x.company %} — {{ x.company }}{% endif %}</span>
+        {% if x.start or x.end %}<span class="when">{{ x.start or "" }} – {{ x.end or "Present" }}</span>{% endif %}
+      </div>
+      {% if x.location %}<div class="desc">{{ x.location }}</div>{% endif %}
+      {% if x.bullets %}<ul class="bullets">{% for b in x.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if resume.projects %}
+  <section>
+    <h2>Projects</h2>
+    {% for p in resume.projects %}
+    <div class="entry">
+      <div class="row">
+        <span class="lead">{% if p.url %}<a href="{{ p.url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</span>
+        {% if p.url %}
+        {% if p.display_url %}
+        {% set _proj_provider = p.source_icon or "website" %}
+        {% set _proj_path = p.display_url | replace("github/", "") if p.source_icon == "github" else p.display_url %}
+        {% else %}
+        {% set _dt = declutter_link(p.url) %}
+        {% set _proj_provider = _dt[0] or "website" %}
+        {% set _proj_path = _dt[1] %}
+        {% endif %}
+        {% if _proj_path %}
+        <span class="source">
+          <a href="{{ p.url }}">{{ brand_svg(_proj_provider, 10) }}<span>{{ _proj_path }}</span></a>
+        </span>
+        {% endif %}
+        {% endif %}
+      </div>
+      {% if p.tech %}<div class="tech">{{ p.tech | join(" · ") }}</div>{% endif %}
+      {# Each fact/context sentence stays separate so it can be removed independently. #}
+      {% if p.quantitative_impact or p.description or p.qualitative_impact or p.bullets %}
+      <ul class="bullets">
+        {% for q in p.quantitative_impact %}<li class="impact quant">{{ q }}</li>{% endfor %}
+        {% if p.description %}<li class="desc">{{ p.description }}</li>{% endif %}
+        {% for ql in p.qualitative_impact %}<li class="impact qual">{{ ql }}</li>{% endfor %}
+        {% for b in p.bullets %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if resume.achievements %}
+  <section>
+    <h2>Achievements &amp; Recognition</h2>
+    {% for a in resume.achievements %}
+    {% set detail = a.snippet %}
+    {% if detail and a.title and detail.startswith(a.title) %}{% set detail = detail[a.title|length:] %}{% endif %}
+    {% set detail = detail.lstrip(" .:;-—") if detail else "" %}
+    <div class="ach">
+      <div class="top">
+        {# Facebook-source achievements are text only — no hyperlink. #}
+        {% if a.url and a.source != "facebook" and a.source_icon != "facebook" %}
+        <span class="title"><a href="{{ a.url }}">{{ a.title }}</a></span>
+        {% else %}
+        <span class="title">{{ a.title }}</span>
+        {% endif %}
+        {% if a.date or a.source %}<span class="meta">{% if a.date %}{{ a.date }}{% endif %}{% if a.date and a.source %} · {% endif %}{% if a.source %}{{ a.source }}{% endif %}</span>{% endif %}
+      </div>
+      {% if detail %}<div class="detail">{{ detail }}</div>{% endif %}
+      {% for q in a.quantitative_impact %}<div class="detail">{{ q }}</div>{% endfor %}
+      {% for ql in a.qualitative_impact %}<div class="detail">{{ ql }}</div>{% endfor %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if resume.academic_highlights %}
+  <section>
+    <h2>Academic Highlights</h2>
+    {% for item in resume.academic_highlights %}
+    <div class="edu"><div class="row"><span class="school">{{ item.label }}</span><span class="degree">{{ item.value }}</span></div></div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if resume.certifications %}
+  <section>
+    <h2>Certifications</h2>
+    {% for c in resume.certifications %}
+    <div class="edu">
+      <div class="row">
+        <span class="school">{{ c.name }}</span>
+        {% if c.date %}<span class="when">{{ c.date }}</span>{% endif %}
+      </div>
+      {% if c.issuer %}<div class="degree">{{ c.issuer }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if resume.education %}
+  <section>
+    <h2>Education</h2>
+    {% for e in resume.education %}
+    <div class="edu">
+      <div class="row">
+        <span class="school">{{ e.school }}</span>
+        {% if e.start and e.end %}<span class="when">{{ e.start }} – {{ e.end }}</span>{% elif e.end %}<span class="when">Expected {{ e.end }}</span>{% elif e.start %}<span class="when">{{ e.start }} – Present</span>{% endif %}
+      </div>
+      {% if e.degree or e.field %}<div class="degree">{{ e.degree }}{% if e.field %} · {{ e.field }}{% endif %}</div>{% endif %}
+      {% if e.notes %}<ul class="bullets">{% for n in e.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+</main>
+</body>
+</html>

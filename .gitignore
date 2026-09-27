@@ -1,0 +1,61 @@
+# Generated artifacts (scraped data, media, screenshots, built resumes)
+/out/
+/.cache/
+/var/*
+!/var/README.md
+
+# Personal inputs (CV, source documents) — never commit
+/private/
+
+# Local social profile config (real handles/IDs)
+/config/social.yaml
+/config/social.local.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environment
+.venv/
+venv/
+
+# Test / coverage caches
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
+.schemathesis/
+.coverage
+htmlcov/
+
+# Secrets / local env
+.env
+.env.local
+.env.*.local
+
+# Node / Next.js
+node_modules
+.next*/
+.next-dev*.log
+coverage/
+*.tsbuildinfo
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+
+# Superpowers brainstorming artifacts
+.superpowers/
+
+# Chrome CDP user-data cache directories (never commit)
+.careerlens-chrome-cdp/
+*-chrome-cdp/
+
+# Claude Code worktrees (temporary agent sandboxes — never commit)
+.claude/worktrees/
+
+# stray submission doc, kept on disk only
+/AI Campus Hackathon – Day 1 Submission (1).docx

@@ -1,0 +1,117 @@
+@startuml core-pipeline
+title Department 01 — Core / Orchestration
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "Domain Models (models.py) — THE CONSTITUTION" #LightYellow {
+  enum Mode {
+    AI
+    STATIC
+  }
+
+  class RoleSpec {
+    +id: str
+    +label: str
+    +keywords: list[str]
+    +must_have_skills: list[str]
+    +nice_to_have: list[str]
+    +summary_hint: str?
+  }
+
+  class Resume {
+    +role: RoleSpec
+    +contact: ContactInfo
+    +summary: str
+    +skills: list[str]
+    +experience: list[ResumeExperience]
+    +projects: list[ResumeProject]
+    +education: list[ResumeEducation]
+    +certifications: list[ResumeCertification]
+    +achievements: list[ResumeAchievement]
+    +generated_on: date
+  }
+
+  class Repo
+  class RawDocument
+  class Evidence
+  class ContactInfo
+  class ResumeProject
+  class ResumeExperience
+  class ResumeAchievement
+}
+
+package "Role Picking (role/)" {
+  abstract class RolePicker {
+    +{abstract} pick(selection: str): RoleSpec
+    +list_available(): list[RoleSpec]
+  }
+  class StaticRolePicker
+  class AIRolePicker
+  RolePicker <|-- StaticRolePicker
+  RolePicker <|-- AIRolePicker
+}
+
+package "Orchestration (pipeline.py)" {
+  class BuildInputs {
+    +gh_user: str
+    +role_selection: str
+    +docs_path: Path?
+    +formats: list[str]
+    +output_dir: Path
+    +social_config_path: Path?
+  }
+
+  class PipelineResult {
+    +resume: Resume
+    +output_paths: list[Path]
+  }
+
+  class Pipeline {
+    -mode: Mode
+    -llm: LLMProvider
+    -role_picker: RolePicker
+    -extractor: Extractor
+    -synthesizer: Synthesizer
+    -github: GitHubSource
+    -docs: DocumentSource
+    -social: SocialAggregator
+    +run(inputs: BuildInputs): PipelineResult
+    +render_only(resume, formats, dir): list[Path]
+    -_make_role_picker(): RolePicker
+    -_make_extractor(): Extractor
+    -_make_synthesizer(): Synthesizer
+    -_resolve_llm(mode, settings): LLMProvider
+  }
+}
+
+package "Config (config.py / principles.py)" {
+  class Settings {
+    +roles_path
+    +regex_patterns_path
+    +templates_dir
+  }
+  class HARVARD_PRINCIPLES << (C,#DDDDDD) const >>
+}
+
+' --- relationships ---
+Pipeline --> Mode : selects impl by
+Pipeline --> RolePicker : Stage 1
+Pipeline ..> "Dept 02: SourceCollector" : Stage 2
+Pipeline ..> "Dept 03: Extractor" : Stage 3
+Pipeline ..> "Dept 03: Synthesizer" : Stage 4
+Pipeline ..> "Dept 04: Renderer" : Stage 5
+Pipeline --> Settings : reads paths
+Pipeline ..> HARVARD_PRINCIPLES : injects into LLM system prompt
+Pipeline --> BuildInputs : consumes
+Pipeline --> PipelineResult : produces
+RolePicker --> RoleSpec : produces
+Pipeline --> Resume : assembles + filters by role
+
+note bottom of Pipeline
+  Pipeline is the ONLY module that knows about Mode.
+  Everything else depends on abstract interfaces.
+  run() also performs role-aware re-filtering of
+  projects + achievements (static keyword gate or AI verdict).
+end note
+@enduml

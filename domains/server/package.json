@@ -1,0 +1,26 @@
+{
+  "name": "@pytorch-ph/domain-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./academic-records": "./career-evidence/academic-records/index.ts",
+    "./career-evidence": "./career-evidence/index.ts",
+    "./discord-community": "./discord-community/index.ts",
+    "./identity": "./identity/index.ts",
+    "./job-discovery": "./job-discovery/index.ts",
+    "./leaderboards": "./leaderboards/index.ts",
+    "./organization": "./organization/index.ts",
+    "./privacy-feedback": "./privacy-feedback/index.ts",
+    "./resumes": "./resumes/index.ts"
+  },
+  "dependencies": {
+    "@pytorch-ph/domain-protocol": "0.1.0",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.3",
+    "jspdf": "^4.2.1",
+    "next": "^16.3.1",
+    "playwright": "^1.45.0",
+    "zod": "^3.25.76"
+  }
+}
