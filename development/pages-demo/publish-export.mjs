@@ -13,7 +13,7 @@ const walk = directory => readdirSync(directory, { withFileTypes: true }).flatMa
   return entry.isDirectory() ? walk(path) : [path];
 });
 const allowed = name => /^(?:index\.html|index\.txt|404\.html|\.nojekyll|__next\.[\w.-]+\.txt)$/.test(name)
-  || /^(?:404|_not-found|login|register|dashboard|admin|events|leaderboards|career|connections|jobs|membership|reports|settings|trust|demo-api|demo)\//.test(name)
+  || /^(?:404|_not-found|login|register|dashboard|admin|events|leaderboards|career|connections|jobs|membership|reports|settings|trust|demo-api|demo|community-preview)\//.test(name)
   || name.startsWith("_next/static/");
 function destination(name) {
   const path = resolve(root, name);

@@ -29,7 +29,8 @@
     "demo:seed": "tsx scripts/demo-data.ts seed",
     "demo:reset": "tsx scripts/demo-data.ts reset --confirm",
     "test:tours:e2e": "node tests/product-tour.e2e.mjs",
-    "test:nationwide": "tsx --test tests/nationwide-membership.test.ts"
+    "test:nationwide": "tsx --test tests/nationwide-membership.test.ts",
+    "test:community": "tsx --test tests/community-demo.test.ts"
   },
   "dependencies": {
     "@pytorch-ph/design-system": "0.1.0",
