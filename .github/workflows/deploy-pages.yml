@@ -4,6 +4,8 @@ name: Deploy site to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 22 * * *' # daily at 06:00 Philippine time, to refresh PyTorch news
   workflow_dispatch:
 
 permissions:
@@ -52,6 +54,7 @@ jobs:
           mkdir -p assets/vendor
           cp node_modules/jquery/dist/jquery.min.js node_modules/@popperjs/core/dist/umd/popper.min.js node_modules/anchor-js/anchor.min.js assets/vendor/
           cp node_modules/bootstrap/dist/js/bootstrap.bundle.min.js assets/vendor/bootstrap.min.js
+          node scripts/fetch-pytorch-news.mjs
           bundle exec jekyll build
 
       - name: Assemble the Pages artifact

@@ -1,0 +1,88 @@
+{%- comment -%}
+  Learn: learning materials, sample code, and open-source projects (_data/learn.yml), plus the
+  official PyTorch install selector on the full Learn page.
+{%- endcomment -%}
+{%- if include.full %}{% assign material_limit = 99 %}{% assign project_limit = 99 %}{% else %}{% assign material_limit = 3 %}{% assign project_limit = 2 %}{% endif %}
+{%- assign org_repos = site.github.public_repositories | default: empty | where_exp: "repo", "repo.name != '.github' and repo.name != 'pytorchph.github.io'" | where: "archived", false -%}
+<section class="ph-section" aria-labelledby="learn-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="learn-heading">Learn</h2>
+        <p>Start with PyTorch using official materials, runnable sample code, and open-source projects you can build on.</p>
+      </div>
+      {%- unless include.full %}
+      <a href="{{ site.baseurl }}/learn/" class="btn btn-lg with-right-arrow module-button">Start learning</a>
+      {%- endunless %}
+    </div>
+
+    <h3 class="ph-subheading" id="materials">Materials</h3>
+    <div class="row ph-card-grid">
+      {%- for material in site.data.learn.materials limit: material_limit %}
+      <div class="col-md-4">
+        <article class="ph-card">
+          <h4><a class="ph-card-link" href="{{ material.url }}">{{ material.title }}</a></h4>
+          <p>{{ material.summary }}</p>
+        </article>
+      </div>
+      {%- endfor %}
+    </div>
+
+    {%- if include.full %}
+    <h3 class="ph-subheading" id="sample-code">Sample code</h3>
+    <div class="row ph-card-grid">
+      <div class="col-lg-4">
+        <article class="ph-card">
+          <h4>Tensors</h4>
+          <p>Create tensors, do math, and move work to a GPU.</p>
+          <pre class="ph-code" tabindex="0" aria-label="Tensors example"><code class="language-python">{% capture code %}{% include sample_code/tensors.py %}{% endcapture %}{{ code | escape }}</code></pre>
+        </article>
+      </div>
+      <div class="col-lg-4">
+        <article class="ph-card">
+          <h4>Autograd</h4>
+          <p>Let PyTorch compute gradients for you.</p>
+          <pre class="ph-code" tabindex="0" aria-label="Autograd example"><code class="language-python">{% capture code %}{% include sample_code/autograd.py %}{% endcapture %}{{ code | escape }}</code></pre>
+        </article>
+      </div>
+      <div class="col-lg-4">
+        <article class="ph-card">
+          <h4>Train a model</h4>
+          <p>Fit a linear model with a standard training loop.</p>
+          <pre class="ph-code" tabindex="0" aria-label="Training loop example"><code class="language-python">{% capture code %}{% include sample_code/train.py %}{% endcapture %}{{ code | escape }}</code></pre>
+        </article>
+      </div>
+    </div>
+    {%- endif %}
+
+    <h3 class="ph-subheading" id="projects">Open-source projects</h3>
+    <div class="row ph-card-grid">
+      <div class="col-md-4">
+        <article class="ph-card">
+          <h4><a class="ph-card-link" href="{{ site.external_urls.repo_org }}">PyTorch Philippines on GitHub</a></h4>
+          <p>Community learning materials, projects, and event resources you can use and contribute to.</p>
+        </article>
+      </div>
+      {%- for repo in org_repos limit: project_limit %}
+      <div class="col-md-4">
+        <article class="ph-card">
+          <h4><a class="ph-card-link" href="{{ repo.html_url }}">{{ repo.name }}</a></h4>
+          <p>{{ repo.description | default: "A PyTorch Philippines project." }}</p>
+        </article>
+      </div>
+      {%- endfor %}
+      {%- for project in site.data.learn.projects limit: project_limit %}
+      <div class="col-md-4">
+        <article class="ph-card">
+          <h4><a class="ph-card-link" href="{{ project.url }}">{{ project.title }}</a></h4>
+          <p>{{ project.summary }}</p>
+        </article>
+      </div>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+
+{%- if include.full %}
+{% include quick_start_module.html %}
+{%- endif %}

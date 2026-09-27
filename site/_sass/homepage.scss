@@ -47,7 +47,7 @@
           text-decoration: none;
 
           &:hover {
-            color: #ee4c2c;
+            color: $orange;
           }
         }
       }
@@ -60,7 +60,7 @@
       }
 
       .read-more-link {
-        color: #ee4c2c;
+        color: $orange;
         font-weight: 600;
         font-size: 0.875rem;
         text-decoration: none;

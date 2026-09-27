@@ -1,0 +1,66 @@
+{%- comment -%}
+  Community: events grouped by type (_data/event_groups.yml + _events/), then the latest blog posts.
+  include.full = true renders the full Community page; otherwise a home-page summary.
+{%- endcomment -%}
+{%- assign now = site.time | date: '%s' | plus: 0 -%}
+<section class="ph-section" aria-labelledby="community-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="community-heading">Community</h2>
+        <p>Workshops, hackathons, study groups, and meetups organized by and for the PyTorch community across the Philippines.</p>
+      </div>
+      {%- unless include.full %}
+      <a href="{{ site.baseurl }}/community/" class="btn btn-lg with-right-arrow module-button">See all events</a>
+      {%- endunless %}
+    </div>
+
+    <h3 class="ph-subheading" id="events">Events</h3>
+    <div class="row ph-card-grid">
+      {%- for group in site.data.event_groups %}
+      {%- assign group_events = site.events | where: "type", group.key | sort: "date" %}
+      <div class="col-md-6 col-lg-3">
+        <article class="ph-card" id="{{ group.key }}" aria-labelledby="{{ group.key }}-title">
+          <h4 id="{{ group.key }}-title">{{ group.title }}</h4>
+          <p>{{ group.summary }}</p>
+          {%- assign shown = 0 %}
+          <ul class="ph-event-list">
+            {%- for event in group_events %}
+            {%- assign starts = event.date | date: '%s' | plus: 0 %}
+            {%- if starts >= now and shown < 3 %}
+            <li>
+              <time datetime="{{ event.date | date_to_xmlschema }}">{{ event.date | date: "%B %-d, %Y" }}{% if event.location %} · {{ event.location }}{% endif %}</time>
+              {% if event.link %}<a href="{{ event.link }}">{{ event.title }}</a>{% else %}{{ event.title }}{% endif %}
+            </li>
+            {%- assign shown = shown | plus: 1 %}
+            {%- endif %}
+            {%- endfor %}
+          </ul>
+          {%- if shown == 0 %}
+          <p class="ph-empty">No upcoming {{ group.title | downcase }} yet. <a href="{{ site.baseurl }}/portal/register/">Join</a> to hear first.</p>
+          {%- endif %}
+        </article>
+      </div>
+      {%- endfor %}
+    </div>
+
+    <h3 class="ph-subheading" id="blog">From the blog</h3>
+    {%- assign recent_posts = site.posts | sort: "date" | reverse %}
+    <div class="row ph-card-grid">
+      {%- for post in recent_posts limit: 3 %}
+      <div class="col-md-4">
+        <article class="ph-card">
+          <span class="ph-card-meta"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time></span>
+          <h4><a class="ph-card-link" href="{{ post.url | relative_url }}">{{ post.title }}</a></h4>
+          <p>{{ post.excerpt | strip_html | strip | truncatewords: 25 }}</p>
+        </article>
+      </div>
+      {%- else %}
+      <div class="col-12">
+        <p class="ph-empty">No posts yet. Community stories, event recaps, and tutorials will appear here.</p>
+      </div>
+      {%- endfor %}
+    </div>
+    <p><a href="{{ site.baseurl }}/blog/" class="with-right-arrow">Read the blog</a>{% if include.full %} · <a href="{{ site.baseurl }}/portal/community-preview/" class="with-right-arrow">Preview the community space</a>{% endif %}</p>
+  </div>
+</section>

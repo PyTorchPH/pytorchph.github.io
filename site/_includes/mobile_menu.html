@@ -10,13 +10,13 @@
 
   <div class="mobile-main-menu-links-container">
 
-    <div class="main-menu">
+    <nav class="main-menu" aria-label="Main">
       <ul>
         {% for item in site.data.navigation.main_menu %}
           <li class="main-menu-item {% if item.key and (current[1] == item.key or (item.key == 'blog' and page.url contains '/blog')) %}active{% endif %}{% if item.has_dropdown %} {{ item.key }}-mobile-dropdown{% endif %}">
             {% if item.has_dropdown %}
-              <a href="#" class="{{ item.key }}-mobile-toggle">{{ item.title }}</a>
-              <ul class="{{ item.key }}-mobile-menu" style="display: none;">
+              <a href="{% if item.url %}{{ site.baseurl }}{{ item.url }}{% else %}#{% endif %}" class="{{ item.key }}-mobile-toggle">{{ item.title }}</a>
+              <ul class="{{ item.key }}-mobile-menu ph-mobile-submenu">
                 {% for dropdown_item in item.dropdown_items %}
                   {% if dropdown_item.url_type == "baseurl" %}
                     {% assign final_url = site.baseurl | append: dropdown_item.url %}
@@ -46,7 +46,7 @@
           </li>
         {% endfor %}
       </ul>
-    </div>
+    </nav>
 
   </div>
 </div>

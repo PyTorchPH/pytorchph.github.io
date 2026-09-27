@@ -1,0 +1,13 @@
+# Event types shown on the Community page, in order. Events live in _events/ with a matching `type`.
+- key: workshop
+  title: Workshops
+  summary: Hands-on sessions where you build and train models with PyTorch, guided by community mentors.
+- key: hackathon
+  title: Hackathons
+  summary: Team challenges to prototype useful machine learning projects in a day or a weekend.
+- key: study-group
+  title: Study Groups
+  summary: Recurring small-group sessions that work through courses, papers, and PyTorch tutorials together.
+- key: talk
+  title: Talks &amp; Meetups
+  summary: Lightning talks, research presentations, and meetups across Luzon, Visayas, and Mindanao.
