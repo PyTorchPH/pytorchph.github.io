@@ -8,7 +8,8 @@ const share = (value: number, leader: number) => (leader > 0 ? Math.round((value
 export function PeerScorecard({ summary }: { summary: PeerSummary }) {
   const scope = summary.total > summary.comparedWith ? `the top ${summary.comparedWith} of ${summary.total} members` : `all ${summary.total} ranked members`;
   return (
-    <div className="overflow-x-auto">
+    // Positioned so visually hidden text inside the table is clipped with it; focusable so keyboards can scroll it.
+    <div aria-label="Comparison with peers" className="relative overflow-x-auto" role="region" tabIndex={0}>
       <table className="w-full min-w-[30rem] text-left text-sm">
         <caption className="mb-3 text-left text-sm text-muted">Compared with {scope} this season.</caption>
         <thead>
