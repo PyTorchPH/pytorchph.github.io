@@ -111,7 +111,7 @@
   }
 
   &:nth-child(1n) {
-    h3 {
+    h3, h4 {
       color: #B73BC9;
     }
 
@@ -121,7 +121,7 @@
   }
 
   &:nth-child(2n) {
-    h3 {
+    h3, h4 {
       color: #D92F4C;
     }
 
@@ -130,7 +130,7 @@
   }
 
   &:nth-child(3n) {
-    h3 {
+    h3, h4 {
       color: #8038E0;
     }
 
@@ -297,7 +297,7 @@
     z-index: 3;
     padding-bottom: 10px;
 
-    h3 {
+    h3, h4 {
       color: $purple;
       font-size: 18px;
       font-weight: 600;

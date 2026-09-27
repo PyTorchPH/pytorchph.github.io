@@ -11,6 +11,8 @@
         </div>
     </div>
 
+    <main id="main-content" tabindex="-1">
+
     <div class="jumbotron jumbotron-fluid blog-detail-jumbotron">
         <div class="container blog-detail-container">
             <p class="featured-post">{{ page.date | date: '%B %d, %Y' }}</p>
@@ -38,6 +40,7 @@
         </div>
     </div>
 
+    </main>
     {% include footer.html %}
 
     {% if page.math %}

@@ -1,0 +1,70 @@
+{%- comment -%}
+  About: mission and what we do, then the team (_members/, pytorch.kr maintainer cards).
+{%- endcomment -%}
+{%- assign members = site.members | sort: "order" -%}
+<section class="ph-section ph-section-grey ph-team" aria-labelledby="about-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="about-heading">About us</h2>
+        <p>PyTorch Philippines is a nationwide, community-led network for people who learn, teach, research, and build with PyTorch and the broader machine learning ecosystem.</p>
+      </div>
+      {%- unless include.full %}
+      <a href="{{ site.baseurl }}/about/" class="btn btn-lg with-right-arrow module-button">Meet the team</a>
+      {%- endunless %}
+    </div>
+
+    {%- if include.full %}
+    <div class="row ph-card-grid">
+      <div class="col-md-6">
+        <article class="ph-card">
+          <h4>Our mission</h4>
+          <p>Make practical machine learning education and collaboration more accessible throughout the Philippines. We help people turn knowledge into responsible research, useful technology, open-source contributions, and measurable community impact.</p>
+        </article>
+      </div>
+      <div class="col-md-6">
+        <article class="ph-card">
+          <h4>What we do</h4>
+          <ul>
+            <li>Organize talks, workshops, study groups, and hands-on learning activities.</li>
+            <li>Support open-source projects, technical demonstrations, and educational resources.</li>
+            <li>Connect practitioners and researchers for mentorship, collaboration, and knowledge sharing.</li>
+            <li>Create opportunities for communities across the country to participate and lead.</li>
+            <li>Encourage responsible, reproducible, and inclusive machine learning practice.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+    {%- endif %}
+
+    <h3 class="ph-subheading" id="team">Team</h3>
+    <div class="row maintainers-row">
+      <div class="maintainer-content">
+        <div class="row">
+          {%- for member in members %}
+          <div class="col-xl-2 col-lg-3 col-md-3 col-sm-4 col-6">
+            <div class="maintainer">
+              <a class="active" href="{{ member.link_github }}"><img src="{{ site.baseurl }}/assets/images/maintainers/{{ member._id }}.png" alt="{{ member.name }}" width="240" height="240"></a>
+              <div class="member-info">
+                <h4>{{ member.name }}</h4>
+                <p class="title">{{ member.title }}</p>
+                {%- if member.bio %}<p class="team">{{ member.bio }}</p>{% endif %}
+                {%- if member.link_github %}
+                <a href="{{ member.link_github }}" aria-label="{{ member.name }} on GitHub"><i class="fa fa-2x fa-github" aria-hidden="true"></i></a>
+                {%- endif %}
+                {%- if member.link_linkedin %}
+                <a href="{{ member.link_linkedin }}" aria-label="{{ member.name }} on LinkedIn"><i class="fa fa-2x fa-linkedin" aria-hidden="true"></i></a>
+                {%- endif %}
+                {%- if member.link_homepage %}
+                <a href="{{ member.link_homepage }}" aria-label="{{ member.name }}'s website"><i class="fa fa-2x fa-home" aria-hidden="true"></i></a>
+                {%- endif %}
+              </div>
+            </div>
+          </div>
+          {%- endfor %}
+        </div>
+      </div>
+    </div>
+    <p>We are an independent user group; see <a href="{{ site.external_urls.org_www }}">pytorch.org</a> for official PyTorch information. Read our <a href="{{ site.baseurl }}/code-of-conduct/">Code of Conduct</a>.</p>
+  </div>
+</section>

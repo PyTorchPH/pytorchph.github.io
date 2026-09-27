@@ -75,12 +75,13 @@ collections:
   contributors:
     output: true
   events:
-    output: true
-    permalink: /events/:path/
+    output: false
   features:
     output: false
   get_started:
     output: true
+  members:
+    output: false
   news:
     output: true
     permalink: /news/:title/

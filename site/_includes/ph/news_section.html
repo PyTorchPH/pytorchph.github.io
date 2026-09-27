@@ -1,0 +1,64 @@
+{%- comment -%}
+  News: community news and research from our posts (category "community" or "research"), then the
+  latest official PyTorch news from the pytorch.org feed fetched at build time (_data/pytorch_news.json).
+{%- endcomment -%}
+{%- assign pytorch_news = site.data.pytorch_news | default: empty -%}
+{%- assign community_posts = site.categories.community | default: empty -%}
+{%- assign research_posts = site.categories.research | default: empty -%}
+<section class="ph-section ph-section-grey" aria-labelledby="news-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="news-heading">News</h2>
+        <p>Community updates, new research and findings, and the latest from the PyTorch project.</p>
+      </div>
+      {%- unless include.full %}
+      <a href="{{ site.baseurl }}/news/" class="btn btn-lg with-right-arrow module-button">All news</a>
+      {%- endunless %}
+    </div>
+
+    <div class="row ph-card-grid">
+      <div class="col-md-6">
+        <h3 class="ph-subheading" id="community-news">Community news</h3>
+        {%- for post in community_posts limit: 3 %}
+        <article class="ph-card mb-3">
+          <span class="ph-card-meta"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time></span>
+          <h4><a class="ph-card-link" href="{{ post.url | relative_url }}">{{ post.title }}</a></h4>
+        </article>
+        {%- else %}
+        <p class="ph-empty">No community news yet.</p>
+        {%- endfor %}
+      </div>
+      <div class="col-md-6">
+        <h3 class="ph-subheading" id="research">Research &amp; findings</h3>
+        {%- for post in research_posts limit: 3 %}
+        <article class="ph-card mb-3">
+          <span class="ph-card-meta"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time></span>
+          <h4><a class="ph-card-link" href="{{ post.url | relative_url }}">{{ post.title }}</a></h4>
+        </article>
+        {%- else %}
+        <p class="ph-empty">No research posts yet. Share your PyTorch work with the community through the <a href="{{ site.baseurl }}/portal/login/">member portal</a>.</p>
+        {%- endfor %}
+      </div>
+    </div>
+
+    <h3 class="ph-subheading" id="pytorch-news">PyTorch news</h3>
+    {%- if include.full %}{% assign news_limit = 6 %}{% else %}{% assign news_limit = 3 %}{% endif %}
+    <div class="row ph-card-grid">
+      {%- for item in pytorch_news limit: news_limit %}
+      <div class="col-md-4">
+        <article class="ph-card">
+          <span class="ph-card-meta"><time datetime="{{ item.date }}">{{ item.date | date: "%B %-d, %Y" }}</time>{% if item.categories.size > 0 %} · {{ item.categories | join: ", " }}{% endif %}</span>
+          <h4><a class="ph-card-link" href="{{ item.url }}">{{ item.title }}</a></h4>
+          <p>{{ item.excerpt }}</p>
+        </article>
+      </div>
+      {%- else %}
+      <div class="col-12">
+        <p class="ph-empty">Latest PyTorch news is available on the <a href="https://pytorch.org/blog/">PyTorch blog</a>.</p>
+      </div>
+      {%- endfor %}
+    </div>
+    <p>Source: <a href="https://pytorch.org/blog/">pytorch.org/blog</a></p>
+  </div>
+</section>

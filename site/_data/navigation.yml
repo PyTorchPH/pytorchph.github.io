@@ -1,64 +1,81 @@
 main_menu:
+  - title: "Community"
+    key: "community"
+    url: "/community/"
+    has_dropdown: true
+    dropdown_items:
+      - title: "Events"
+        url: "/community/#events"
+        url_type: "baseurl"
+      - title: "Workshops"
+        url: "/community/#workshop"
+        url_type: "baseurl"
+      - title: "Hackathons"
+        url: "/community/#hackathon"
+        url_type: "baseurl"
+      - title: "Study Groups"
+        url: "/community/#study-group"
+        url_type: "baseurl"
+      - title: "Talks & Meetups"
+        url: "/community/#talk"
+        url_type: "baseurl"
+      - title: "Blog"
+        url: "/blog/"
+        url_type: "baseurl"
+      - title: "Community Preview"
+        url: "/portal/community-preview/"
+        url_type: "baseurl"
+
+  - title: "News"
+    key: "news"
+    url: "/news/"
+    has_dropdown: true
+    dropdown_items:
+      - title: "Community News"
+        url: "/news/#community-news"
+        url_type: "baseurl"
+      - title: "Research & Findings"
+        url: "/news/#research"
+        url_type: "baseurl"
+      - title: "PyTorch News"
+        url: "/news/#pytorch-news"
+        url_type: "baseurl"
+
   - title: "Learn"
-    key: "get-started"
+    key: "learn"
+    url: "/learn/"
     has_dropdown: true
     dropdown_items:
       - title: "Get Started"
         url: "/get-started/locally/"
         url_type: "baseurl"
-        external: false
-      - title: "Learn the Basics"
-        url: "https://docs.pytorch.org/tutorials/beginner/basics/intro.html"
-        external: true
-        target: "_blank"
-      - title: "PyTorch Tutorials"
-        url: "https://docs.pytorch.org/tutorials/"
-        external: true
-        target: "_blank"
+      - title: "Materials"
+        url: "/learn/#materials"
+        url_type: "baseurl"
+      - title: "Sample Code"
+        url: "/learn/#sample-code"
+        url_type: "baseurl"
+      - title: "Open-source Projects"
+        url: "/learn/#projects"
+        url_type: "baseurl"
       - title: "PyTorch Docs"
         url: "https://docs.pytorch.org/docs/"
         external: true
-        target: "_blank"
-
-  - title: "Community"
-    key: "community"
-    has_dropdown: true
-    dropdown_items:
-      - title: "Events"
-        url: "/events/"
-        url_type: "baseurl"
-        external: false
-      - title: "Community Preview"
-        url: "/portal/community-preview/"
-        url_type: "baseurl"
-        external: false
-      - title: "GitHub"
-        url: "https://github.com/PyTorchPH"
-        external: true
-        target: "_blank"
-      - title: "PyTorch Forums"
-        url: "https://discuss.pytorch.org/"
-        external: true
-        target: "_blank"
-
-  - title: "Blog"
-    key: "blog"
-    url: "/blog/"
-    url_type: "baseurl"
-    has_dropdown: false
 
   - title: "About"
     key: "about"
+    url: "/about/"
     has_dropdown: true
     dropdown_items:
-      - title: "About PyTorch Philippines"
+      - title: "About Us"
         url: "/about/"
         url_type: "baseurl"
-        external: false
+      - title: "Team"
+        url: "/about/#team"
+        url_type: "baseurl"
       - title: "Code of Conduct"
         url: "/code-of-conduct/"
         url_type: "baseurl"
-        external: false
 
   - title: "Member Portal"
     key: "portal"

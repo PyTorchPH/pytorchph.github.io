@@ -32,3 +32,210 @@
     margin-top: rem(12px);
   }
 }
+
+// Section blocks shared by the home page and the Community, News, Learn, and About pages.
+// They follow the pytorch.org module structure: heading with a module button, then a card grid.
+.ph-section {
+  padding: rem(64px) 0 rem(48px);
+
+  &.ph-section-grey {
+    background-color: $light_grey;
+  }
+
+  .ph-section-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: rem(16px);
+    margin-bottom: rem(32px);
+
+    h2 {
+      margin: 0;
+    }
+
+    p {
+      margin: rem(8px) 0 0;
+      max-width: 48rem;
+      color: $dark_grey;
+    }
+  }
+
+  h3.ph-subheading {
+    font-size: rem(20px);
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: $orange;
+    margin: rem(8px) 0 rem(20px);
+  }
+}
+
+// Card with the pytorch.org ecosystem-card look, sized to its content.
+.ph-card {
+  position: relative;
+  height: 100%;
+  padding: rem(25px) rem(30px);
+  background-color: $light_grey;
+  border: 0;
+  border-radius: 0;
+  @include animated_border_hover_state;
+
+  .ph-section-grey & {
+    background-color: $white;
+  }
+
+  h4 {
+    color: $slate;
+    font-size: rem(20px);
+    margin-bottom: rem(12px);
+  }
+
+  p,
+  li {
+    color: $dark_grey;
+    font-size: rem(16px);
+    line-height: rem(24px);
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  .ph-card-meta {
+    display: block;
+    color: $dark_grey;
+    font-size: rem(14px);
+    margin-bottom: rem(8px);
+  }
+
+  a.ph-card-link {
+    color: $slate;
+    text-decoration: none;
+
+    // The whole card is the link target; the heading carries the accessible name.
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+    }
+
+    &:hover,
+    &:focus-visible {
+      color: $orange;
+    }
+  }
+
+  &:focus-within {
+    outline: 2px solid $orange;
+    outline-offset: 2px;
+  }
+}
+
+.ph-card-grid > [class*="col-"] {
+  margin-bottom: rem(24px);
+}
+
+.ph-event-list {
+  list-style: none;
+  padding: 0;
+  margin: rem(12px) 0 0;
+
+  li + li {
+    margin-top: rem(8px);
+  }
+
+  time {
+    display: block;
+    font-size: rem(13px);
+    color: $dark_grey;
+  }
+}
+
+.ph-empty {
+  font-style: italic;
+}
+
+// Sample code blocks reuse the site code styling with readable wrapping on small screens.
+.ph-code {
+  background-color: $white;
+  padding: rem(20px);
+  margin: 0;
+  overflow-x: auto;
+  font-size: rem(14px);
+  line-height: rem(20px);
+}
+
+// Team cards reuse the pytorch.kr maintainer card; center the two-person grid.
+.ph-team .row {
+  justify-content: flex-start;
+}
+
+// Accessibility: a skip link for keyboard users and visible focus for interactive elements.
+.ph-skip-link {
+  position: absolute;
+  left: rem(16px);
+  top: -100px;
+  z-index: 10000;
+  padding: rem(10px) rem(16px);
+  background-color: $orange;
+  color: $white;
+  font-weight: 600;
+
+  &:focus {
+    top: rem(16px);
+    color: $white;
+  }
+}
+
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid $orange;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// Dropdowns for any menu key (upstream styles only cover their own keys). They open on hover and
+// on keyboard focus; the parent link also leads to the section page.
+.ph-dropdown-menu {
+  @extend .community-dropdown-menu;
+}
+
+.ph-dropdown:hover .ph-dropdown-menu,
+.ph-dropdown:focus-within .ph-dropdown-menu {
+  display: block;
+}
+
+// Mobile submenus stay expanded so every destination is reachable without extra scripts.
+.mobile-main-menu .ph-mobile-submenu {
+  list-style: none;
+  padding-left: rem(16px);
+  margin: rem(8px) 0 rem(16px);
+
+  a {
+    font-size: rem(18px);
+    color: $dark_grey;
+  }
+}
+
+// Links inside running text are underlined so they do not rely on color alone (WCAG 1.4.1).
+main p a:not(.btn):not(.ph-card-link),
+main li a:not(.btn):not(.ph-card-link):not(.nav-link):not(.page-link),
+.ph-empty a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+// Disabled pagination keeps AA contrast on its grey background.
+.page-item.disabled .page-link {
+  color: #c62e10;
+}

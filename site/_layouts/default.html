@@ -3,6 +3,7 @@
   {% include head.html %}
   <body class="{{ page.body-class }}">
     {% include header.html %}
+    <main id="main-content" tabindex="-1">
 
     <div class="main-background {{ page.background-class }}">
       {% if page.background-class == 'home-page-background' %}
@@ -18,6 +19,7 @@
 
     {{ content }}
 
+    </main>
     {% include footer.html %}
   </body>
 </html>

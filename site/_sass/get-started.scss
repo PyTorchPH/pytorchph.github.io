@@ -57,7 +57,7 @@
 
   .nav-link {
     font-size: rem(18px);
-    color: #8c8c8c;
+    color: $dark_grey;
 
     &:hover {
       color: $orange;
@@ -223,7 +223,7 @@
     line-height: 36px;
 
     a {
-      color: #8c8c8c;
+      color: $dark_grey;
       &.active,
       &:hover {
         color: $orange;
@@ -258,7 +258,7 @@
     line-height: 36px;
 
     a {
-      color: #8c8c8c;
+      color: $dark_grey;
       &.active,
       &:hover {
         color: $orange;

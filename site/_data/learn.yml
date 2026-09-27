@@ -1,0 +1,40 @@
+# Learning materials, sample code, and open-source projects for the Learn page.
+materials:
+  - title: Learn the Basics
+    summary: The official step-by-step introduction to tensors, datasets, models, training, and saving.
+    url: https://docs.pytorch.org/tutorials/beginner/basics/intro.html
+  - title: Introduction to PyTorch (video series)
+    summary: The official YouTube series that walks through PyTorch fundamentals with notebooks.
+    url: https://docs.pytorch.org/tutorials/beginner/introyt.html
+  - title: PyTorch Tutorials
+    summary: Official tutorials for vision, text, audio, reinforcement learning, and deployment.
+    url: https://docs.pytorch.org/tutorials/
+  - title: PyTorch Recipes
+    summary: Short, focused examples for specific tasks such as saving models or profiling code.
+    url: https://docs.pytorch.org/tutorials/recipes/recipes_index.html
+  - title: PyTorch Documentation
+    summary: The complete API reference for torch and its domain libraries.
+    url: https://docs.pytorch.org/docs/stable/index.html
+  - title: PyTorch Forums
+    summary: Ask questions and learn from the global PyTorch community.
+    url: https://discuss.pytorch.org/
+
+projects:
+  - title: torchvision
+    summary: Datasets, pretrained models, and image transforms for computer vision.
+    url: https://github.com/pytorch/vision
+  - title: PyTorch Lightning
+    summary: Organizes PyTorch code to train models at scale with less boilerplate.
+    url: https://github.com/Lightning-AI/pytorch-lightning
+  - title: Hugging Face Transformers
+    summary: Pretrained models for text, vision, and audio, with PyTorch support.
+    url: https://github.com/huggingface/transformers
+  - title: PyTorch Geometric
+    summary: Deep learning on graphs, point clouds, and other irregular data.
+    url: https://github.com/pyg-team/pytorch_geometric
+  - title: timm
+    summary: A large collection of image models, layers, and training utilities.
+    url: https://github.com/huggingface/pytorch-image-models
+  - title: Captum
+    summary: Model interpretability and understanding for PyTorch.
+    url: https://github.com/pytorch/captum

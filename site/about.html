@@ -20,42 +20,5 @@ body-class: features
 </div>
 
 <div class="main-content-wrapper">
-  <div class="main-content">
-    <div class="container">
-      <div class="row features-row">
-        <div class="col-md-12">
-          <h2>Our mission</h2>
-          <p>Make practical machine learning education and collaboration more accessible throughout the
-            Philippines. We help people turn knowledge into responsible research, useful technology,
-            open-source contributions, and measurable community impact.</p>
-        </div>
-      </div>
-
-      <div class="row features-row">
-        <div class="col-md-12">
-          <h2>What we do</h2>
-          <ul>
-            <li>Organize talks, workshops, study groups, and hands-on learning activities.</li>
-            <li>Support open-source projects, technical demonstrations, and educational resources.</li>
-            <li>Connect practitioners and researchers for mentorship, collaboration, and knowledge sharing.</li>
-            <li>Create opportunities for communities across the country to participate and lead.</li>
-            <li>Encourage responsible, reproducible, and inclusive machine learning practice.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="row features-row">
-        <div class="col-md-12">
-          <h2>Who can participate</h2>
-          <p>PyTorch Philippines welcomes people at every experience level: first-time learners, educators,
-            researchers, software and machine learning engineers, community organizers, and experienced
-            contributors. Participation is open to anyone who wants to learn, share, build, mentor, or help
-            strengthen the Philippine machine learning community. Respectful collaboration and meaningful
-            contribution guide how we work together.</p>
-          <p>We are an independent user group. For official PyTorch news, releases, and documentation, visit
-            <a href="{{ site.external_urls.org_www }}">pytorch.org</a>.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% include ph/about_section.html full=true %}
 </div>
