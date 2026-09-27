@@ -9,7 +9,7 @@ export const demoPersonas = [
 ] as const;
 
 const events = [
-  { id: "event-ignite", title: "PyTorch Ignite", date: "Aug 22, 2026", department: "Academic Affairs", type: "Orientation", seats: 120, registered: true, learningObjective: "Understand what PyTorch is and how the chapter supports student growth.", output: "Personal learning pathway and chapter orientation checklist." },
+  { id: "event-ignite", title: "PyTorch Ignite", date: "Aug 22, 2026", department: "Learning Programs", type: "Orientation", seats: 120, registered: true, learningObjective: "Understand what PyTorch is and how the chapter supports student growth.", output: "Personal learning pathway and chapter orientation checklist." },
   { id: "event-models", title: "Models from First Principles", date: "Aug 29, 2026", department: "Engineering", type: "Pseudo-workshop", seats: 48, registered: false, learningObjective: "Explain a model, data, training, and evaluation without assuming prior ML experience.", output: "A small hand-worked model exercise and reflection." },
   { id: "event-vision", title: "Computer Vision Build Lab", date: "Sep 12, 2026", department: "Research", type: "Workshop", seats: 36, registered: false, learningObjective: "Build and evaluate a bounded image-classification prototype.", output: "Repository, evaluation note, and demo recording." },
   { id: "event-career", title: "Evidence-to-Resume Clinic", date: "Sep 19, 2026", department: "Career Development", type: "Clinic", seats: 32, registered: false, learningObjective: "Translate verified work into role-specific resume evidence.", output: "Reviewed evidence record and one targeted resume draft." },
@@ -79,7 +79,7 @@ const common = {
     experience: [{ title: "Workshop Facilitator", organization: "AI Study Circles", dateLabel: "May 2026", bullets: ["Facilitated a hands-on model-training workshop and resolved participant setup issues."] }],
     projects: [{ title: "Campus Vision Demo", summary: "Image-classification prototype presented to a mixed technical audience.", bullets: ["Evaluated the prototype on 1,200 labelled images from the approved project dataset.", "Explained the training workflow and evaluation results during a community showcase."] }, { title: "Responsible Sensor Prototype", summary: "Collaborative hackathon prototype with documented limitations and data-handling constraints.", bullets: ["Connected implementation decisions with an explicit responsible-use review."] }],
     skillGroups: [{ name: "Python", items: ["PyTorch", "FastAPI"] }, { name: "JavaScript", items: ["React", "Next.js"] }, { name: "Data", items: ["PostgreSQL", "Supabase"] }],
-    education: [{ school: "Metro Technology College", program: "BS Computer Science", dateLabel: "Expected 2027" }],
+    education: [],
   },
   operations: {
     goalLabel: "Reviewed applications",
