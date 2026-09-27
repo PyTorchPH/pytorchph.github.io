@@ -76,12 +76,11 @@ collections:
     output: true
   events:
     output: false
-  features:
-    output: false
   get_started:
     output: true
   members:
-    output: false
+    output: true
+    permalink: /about/:name/
   news:
     output: true
     permalink: /news/:title/
@@ -114,3 +113,12 @@ external_urls:
   previous_pytorch_versions: https://pytorch.org/get-started/previous-versions/
   repo_org: https://github.com/PyTorchPH
   repo_www: https://github.com/PyTorchPH/PyTorchPH.github.io
+
+# Team profile pages
+defaults:
+  - scope:
+      path: ""
+      type: members
+    values:
+      layout: profile
+      body-class: ph-profile-page

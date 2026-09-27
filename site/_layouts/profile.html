@@ -1,0 +1,22 @@
+---
+layout: ph
+---
+<section class="ph-section ph-profile" aria-label="Profile">
+  <div class="container">
+    <p><a href="{{ site.baseurl }}/about/#team" class="with-left-arrow">Back to the team</a></p>
+    <div class="ph-profile-body">
+      {{ content }}
+    </div>
+    <ul class="ph-profile-links">
+      {%- if page.link_github %}
+      <li><a class="btn btn-lg with-right-arrow" href="{{ page.link_github }}">GitHub</a></li>
+      {%- endif %}
+      {%- if page.link_linkedin %}
+      <li><a class="btn btn-lg with-right-arrow" href="{{ page.link_linkedin }}">LinkedIn</a></li>
+      {%- endif %}
+      {%- if page.link_homepage %}
+      <li><a class="btn btn-lg with-right-arrow" href="{{ page.link_homepage }}">Website</a></li>
+      {%- endif %}
+    </ul>
+  </div>
+</section>

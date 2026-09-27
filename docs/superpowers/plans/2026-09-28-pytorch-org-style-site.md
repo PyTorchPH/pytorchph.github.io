@@ -15,8 +15,12 @@ built by reusing open-source PyTorch community websites instead of designing fro
   which are free Google Fonts.
 - **Palette (from pytorch.org):** white `#ffffff`, light section `#f3f4f7`, text `#262626`, dark navigation
   bar. Orange text and fills use `#be2c10` (the brand `#ee4c2c` fails WCAG AA for text); logos keep the brand color.
-- **Information order** (site navigation and home page): Community (events grouped by type, blog),
-  News (community, research, PyTorch), Learn (materials, sample code, open-source projects), About (team).
+- **Information order** (site navigation): Community (events grouped by type), News & Blog (community,
+  research, blog, PyTorch news on their own page), Learn (materials, sample code, open-source projects),
+  About (team, with a profile page per member). The home page is the community landing page.
+- **Filipino identity, kept subtle:** one short Filipino phrase per page with its meaning (for example
+  "Mabuhay!", "Bayanihan", "Tuloy po kayo"), and hero artwork of the Philippine archipelago drawn as a
+  connected network in PyTorch orange.
 - **Accessibility:** WCAG 2.1 A/AA checked with axe-core on the public site and the portal demo.
 - **PyTorch FIT stays separate.** FIT is the school chapter project; nothing PH-related is published
   from the FIT repo, and no FIT/school wording appears on the PH site.

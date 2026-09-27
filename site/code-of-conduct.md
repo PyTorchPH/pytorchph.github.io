@@ -1,10 +1,12 @@
 ---
-layout: general_with_newline
+layout: ph_article
 title: Code of Conduct
-subtitle: The shared commitments that keep PyTorch Philippines welcoming and safe for everyone.
 permalink: /code-of-conduct/
-background-class: coc-background
-body-class: coc
+body-class: ph-coc
+hero_kicker: "Pakikisama"
+hero_kicker_meaning: "getting along and treating one another well"
+hero_title: "Code of Conduct"
+hero_lead: "The shared commitments that keep PyTorch Philippines welcoming and safe for everyone."
 ---
 
 PyTorch Philippines adopts the [PyTorch Foundation Code of Conduct]({{ site.external_urls.org_coc }}) for

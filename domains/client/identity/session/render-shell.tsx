@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Flame } from "lucide-react";
+import { FilipinoPhrase } from "@pytorch-ph/design-system/filipino-phrase";
 
 export function AuthShell({ children, title, sub }: { children: ReactNode; title: string; sub: string }) {
   return (
@@ -15,7 +16,7 @@ export function AuthShell({ children, title, sub }: { children: ReactNode; title
             <div className="font-mono tracking-tight text-ink">PYTORCH PH</div>
           </Link>
           <div>
-            <div className="mb-4 font-mono text-xs uppercase tracking-widest text-accent">// community access</div>
+            <FilipinoPhrase className="mb-4 text-base" meaning="Come in. You are welcome here." phrase="Tuloy po kayo" />
             <div className="text-[2.5rem] font-bold leading-[1.05] text-ink">
               Empowering the next
               <br />
@@ -41,6 +42,7 @@ export function AuthShell({ children, title, sub }: { children: ReactNode; title
             </div>
             <div className="font-mono text-ink">PYTORCH PH</div>
           </Link>
+          <FilipinoPhrase className="mb-4 lg:hidden" meaning="Come in. You are welcome here." phrase="Tuloy po kayo" />
           <div className="mb-2 font-mono text-xs uppercase tracking-widest text-accent">{sub}</div>
           <h1 className="mb-8 text-3xl font-bold tracking-[-0.02em] text-ink">{title}</h1>
           {children}

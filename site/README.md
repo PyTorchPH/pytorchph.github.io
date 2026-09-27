@@ -20,7 +20,8 @@ Open http://localhost:4000. `/portal/` links resolve only in the deployed site o
 
 ## Content
 
-The home page and navigation follow one order: Community, News, Learn, About.
+The navigation follows one order: Community, News & Blog, Learn, About. The home page is the community
+landing page (events, then Learn and About summaries); news and blog posts live on `/news/`.
 
 | To change | Edit |
 |---|---|
@@ -30,7 +31,9 @@ The home page and navigation follow one order: Community, News, Learn, About.
 | Blog post | add `_posts/YYYY-MM-DD-title.md`; use category `community` or `research` to also list it under News |
 | Learning materials and open-source projects | `_data/learn.yml` |
 | Sample code | `_includes/sample_code/*.py` |
-| Team profile | add `_members/<id>.md` and `assets/images/maintainers/<id>.png` |
+| Team profile | add `_members/<first-last>.md` (front matter `name`, `role`, `image`, links, `hero_*`; the body is the bio) and a square photo in `assets/images/maintainers/`. The profile page is `/about/<first-last>/`. |
+| Page hero | front matter `hero_kicker` (a short Filipino phrase), `hero_kicker_meaning`, `hero_title`, `hero_lead`, `hero_actions`; layout `ph` or `ph_article` |
+| Hero artwork | `node scripts/generate-archipelago.mjs` rewrites `assets/images/ph-network.svg` from the Natural Earth outline in `scripts/data/` |
 | Section layouts | `_includes/ph/*_section.html` |
 | PyTorch Philippines styles | `_sass/ph.scss` (upstream styles stay unchanged where possible) |
 
@@ -40,6 +43,7 @@ refresh them from upstream when PyTorch releases a new version.
 
 ## Accessibility
 
-Pages are checked with axe-core against WCAG 2.1 A/AA. Keep text contrast at 4.5:1 or higher (use
-`$orange` for orange text, not the brand `#ee4c2c`; the portal uses the same value as `--accent-rgb`), keep one `h1` per page with headings in order, and
+Pages are checked with axe-core against WCAG 2.1 A/AA and at phone width (390px). Page heroes size to
+their content; do not use the upstream fixed-height `jumbotron` for new pages. Keep text contrast at 4.5:1 or higher (use
+`$orange` for orange text on light backgrounds and `$orange_on_dark` on dark ones, not the brand `#ee4c2c`; the portal uses the same value as `--accent-rgb`), keep one `h1` per page with headings in order, and
 give every image and icon link a text alternative.

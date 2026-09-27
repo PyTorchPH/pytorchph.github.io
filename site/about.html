@@ -1,24 +1,12 @@
 ---
-layout: default
+layout: ph
 title: About
-permalink: about/
-background-class: about-background
-body-class: features
+permalink: /about/
+body-class: ph-about
+hero_kicker: "Kilalanin kami"
+hero_kicker_meaning: "Get to know us"
+hero_title: "About us"
+hero_lead: "PyTorch Philippines is a nationwide, community-led network for people who learn, teach, research, and build with PyTorch and the broader machine learning ecosystem."
 ---
 
-<div class="jumbotron jumbotron-fluid">
-  <div class="container">
-    <h1>Mabuhay!</h1>
-
-    <p class="lead">PyTorch Philippines is a nationwide, community-led network for people who learn, teach,
-      research, and build with PyTorch and the broader machine learning ecosystem.</p>
-
-    <a href="{{ site.baseurl }}/portal/register/" class="btn btn-lg with-right-arrow btn-white" data-cta="join">
-      Join the community
-    </a>
-  </div>
-</div>
-
-<div class="main-content-wrapper">
-  {% include ph/about_section.html full=true %}
-</div>
+{% include ph/about_section.html full=true %}

@@ -13,7 +13,7 @@
     <nav class="main-menu" aria-label="Main">
       <ul>
         {% for item in site.data.navigation.main_menu %}
-          <li class="main-menu-item {% if item.key and (current[1] == item.key or (item.key == 'blog' and page.url contains '/blog')) %}active{% endif %}{% if item.has_dropdown %} {{ item.key }}-mobile-dropdown{% endif %}">
+          <li class="main-menu-item {% if item.key and (current[1] == item.key or (item.key == 'news' and page.url contains '/blog')) %}active{% endif %}{% if item.has_dropdown %} {{ item.key }}-mobile-dropdown{% endif %}">
             {% if item.has_dropdown %}
               <a href="{% if item.url %}{{ site.baseurl }}{{ item.url }}{% else %}#{% endif %}" class="{{ item.key }}-mobile-toggle">{{ item.title }}</a>
               <ul class="{{ item.key }}-mobile-menu ph-mobile-submenu">

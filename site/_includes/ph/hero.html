@@ -1,0 +1,38 @@
+{%- comment -%}
+  Page hero. It sizes to its content, so long headings never collide with the header on small screens.
+  Front matter: hero_kicker (a short Filipino phrase), hero_kicker_meaning (its English meaning, for
+  screen readers and hover), hero_title, hero_lead, hero_actions [{label, url}], hero_wave, hero_image.
+{%- endcomment -%}
+<section class="ph-hero{% if page.hero_image %} ph-hero-profile{% endif %}{% if page.hero_wave %} ph-hero-with-wave{% endif %}" aria-labelledby="hero-heading">
+  <div class="ph-hero-art" aria-hidden="true"></div>
+  <div class="container ph-hero-content">
+    {%- if page.hero_image %}
+    <img class="ph-hero-photo" src="{{ page.hero_image | relative_url }}" alt="{{ page.hero_title | default: page.title }}" width="480" height="480">
+    {%- endif %}
+    <div>
+      {%- if page.hero_kicker %}
+      <p class="ph-hero-kicker"><span lang="fil"{% if page.hero_kicker_meaning %} title="{{ page.hero_kicker_meaning }}"{% endif %}>{{ page.hero_kicker }}</span>{% if page.hero_kicker_meaning %}<span class="ph-visually-hidden"> ({{ page.hero_kicker_meaning }})</span>{% endif %}</p>
+      {%- endif %}
+      <h1 id="hero-heading">{{ page.hero_title | default: page.title }}</h1>
+      {%- if page.hero_lead %}
+      <p class="lead">{{ page.hero_lead }}</p>
+      {%- endif %}
+      {%- if page.hero_actions %}
+      <div class="ph-hero-actions">
+        {%- for action in page.hero_actions %}
+        <a href="{% if action.url contains '://' %}{{ action.url }}{% else %}{{ site.baseurl }}{{ action.url }}{% endif %}" class="btn btn-lg with-right-arrow">{{ action.label }}</a>
+        {%- endfor %}
+      </div>
+      {%- endif %}
+    </div>
+  </div>
+  {%- if page.hero_wave %}
+  <div class="ph-hero-wave" aria-hidden="true">
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
+      <path d="M0,50L60,45C120,40 240,30 360,35C480,40 600,60 720,70C840,80 960,80 1080,75C1140,72.5 1170,67.5 1185,65L1200,62.5L1200,200L0,200Z" fill="#ffffff" fill-opacity="0.3"></path>
+      <path d="M0,20L80,25C160,30 320,40 480,50C640,60 800,70 960,65C1040,62.5 1120,52.5 1160,47.5L1200,42.5L1200,200L0,200Z" fill="#ffffff" fill-opacity="0.5"></path>
+      <path d="M0,90L50,88C100,86 200,82 300,85C400,88 500,95 600,92C700,89 800,77 900,82C1000,87 1100,93 1150,96L1200,100L1200,200L0,200Z" fill="#ffffff" fill-opacity="1"></path>
+    </svg>
+  </div>
+  {%- endif %}
+</section>

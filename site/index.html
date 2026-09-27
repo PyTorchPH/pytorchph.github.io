@@ -1,26 +1,18 @@
 ---
-layout: default
-background-class: home-page-background
-body-class: homepage
-display-news-banner: true
+layout: ph
+body-class: ph-home
+hero_kicker: "Mabuhay!"
+hero_kicker_meaning: "Welcome — a Filipino greeting that wishes you a long life"
+hero_title: "Let's build, learn, and connect."
+hero_lead: "A nationwide, community-led network for people who learn, teach, research, and build with PyTorch across Luzon, Visayas, and Mindanao."
+hero_wave: true
+hero_actions:
+  - label: "Join the community"
+    url: "/portal/register/"
+  - label: "Get started with PyTorch"
+    url: "/get-started/locally/"
 ---
 
-<div class="jumbotron jumbotron-fluid on-dark-background">
-  <div class="container">
-    <h1>Build.<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Learn.<br />Connect.</h1>
-    <p class="lead">A nationwide, community-led network for people who learn, teach, research, and build with PyTorch across Luzon, Visayas, and Mindanao.</p>
-    <a href="{{ site.baseurl }}/portal/register/" class="btn btn-lg with-right-arrow" data-cta="join">
-      Join the community
-    </a>
-    <a href="{{ site.baseurl }}/get-started/" class="btn btn-lg with-right-arrow" data-cta="get-started">
-      Get started with PyTorch
-    </a>
-  </div>
-</div>
-
-<div class="main-content-wrapper">
-  {% include ph/community_section.html %}
-  {% include ph/news_section.html %}
-  {% include ph/learn_section.html %}
-  {% include ph/about_section.html %}
-</div>
+{% include ph/community_section.html %}
+{% include ph/learn_section.html %}
+{% include ph/about_section.html %}

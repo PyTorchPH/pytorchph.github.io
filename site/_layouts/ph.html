@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang }}">
+  {% include head.html %}
+  <body class="ph-page {{ page.body-class }}">
+    <div class="container-fluid header-holder ph-header">
+      <div class="container">
+        {% include nav.html %}
+      </div>
+    </div>
+    <main id="main-content" tabindex="-1">
+      {% include ph/hero.html %}
+      {{ content }}
+    </main>
+    {% include footer.html %}
+  </body>
+</html>
