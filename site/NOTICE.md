@@ -7,3 +7,6 @@ This site is a fork of the PyTorch Korea User Group website,
 
 Both are distributed under the BSD 3-Clause License reproduced in [`LICENSE`](LICENSE). Korea-specific
 content (blog translations, members, Korean model hub, and its code of conduct) was not imported.
+
+The Philippine archipelago artwork is generated from [Natural Earth](https://www.naturalearthdata.com/)
+1:50m country outlines, which are in the public domain.

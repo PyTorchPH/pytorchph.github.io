@@ -1,5 +1,6 @@
 {%- comment -%}
-  About: mission and what we do, then the team (_members/, pytorch.kr maintainer cards).
+  About: mission and what we do, then the team. Each member in _members/ also gets a profile page
+  at /about/<file name>/ (pytorch.kr maintainer cards).
 {%- endcomment -%}
 {%- assign members = site.members | sort: "order" -%}
 <section class="ph-section ph-section-grey ph-team" aria-labelledby="about-heading">
@@ -42,22 +43,14 @@
       <div class="maintainer-content">
         <div class="row">
           {%- for member in members %}
-          <div class="col-xl-2 col-lg-3 col-md-3 col-sm-4 col-6">
+          <div class="col-xl-3 col-lg-3 col-md-4 col-sm-6 col-6">
             <div class="maintainer">
-              <a class="active" href="{{ member.link_github }}"><img src="{{ site.baseurl }}/assets/images/maintainers/{{ member._id }}.png" alt="{{ member.name }}" width="240" height="240"></a>
+              <a class="active" href="{{ member.url | relative_url }}" aria-label="{{ member.name }}'s profile"><img src="{{ member.image | relative_url }}" alt="" width="240" height="240"></a>
               <div class="member-info">
                 <h4>{{ member.name }}</h4>
-                <p class="title">{{ member.title }}</p>
+                <p class="title">{{ member.role }}</p>
                 {%- if member.bio %}<p class="team">{{ member.bio }}</p>{% endif %}
-                {%- if member.link_github %}
-                <a href="{{ member.link_github }}" aria-label="{{ member.name }} on GitHub"><i class="fa fa-2x fa-github" aria-hidden="true"></i></a>
-                {%- endif %}
-                {%- if member.link_linkedin %}
-                <a href="{{ member.link_linkedin }}" aria-label="{{ member.name }} on LinkedIn"><i class="fa fa-2x fa-linkedin" aria-hidden="true"></i></a>
-                {%- endif %}
-                {%- if member.link_homepage %}
-                <a href="{{ member.link_homepage }}" aria-label="{{ member.name }}'s website"><i class="fa fa-2x fa-home" aria-hidden="true"></i></a>
-                {%- endif %}
+                <a class="ph-profile-link" href="{{ member.url | relative_url }}">View profile<span class="ph-visually-hidden">: {{ member.name }}</span></a>
               </div>
             </div>
           </div>

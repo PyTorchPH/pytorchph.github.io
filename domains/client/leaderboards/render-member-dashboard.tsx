@@ -10,6 +10,7 @@ import { Card } from "@pytorch-ph/design-system/card";
 import { Progress } from "@pytorch-ph/design-system/progress";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import { rankForPoints, type MemberOverview } from "@pytorch-ph/domain-protocol/leaderboards";
+import { FilipinoPhrase } from "@pytorch-ph/design-system/filipino-phrase";
 
 export function MemberDashboard() {
   const query = useQuery({ queryKey: ["member-overview"], queryFn: () => fetchJson<MemberOverview>("/api/member/overview", { cache: "no-store" }) });
@@ -20,7 +21,7 @@ export function MemberDashboard() {
     ["Verified evidence", data.summary.verifiedEvidence, ShieldCheck], ["Ready resumes", data.summary.readyResumes, FileCheck2], ["Registered events", data.summary.registeredEvents, CalendarCheck2], ["Active opportunities", data.summary.activeOpportunities, BriefcaseBusiness],
   ] as const : [];
   return <AppShell><div className="space-y-4">
-    <section className="rounded-2xl border border-border bg-surface p-5 lg:p-7" data-testid="member-dashboard" data-tour="member-overview"><div className="flex flex-wrap items-start justify-between gap-4"><div><Badge className="text-accent" variant="orange">Personal command center</Badge><h1 className="mt-4 text-3xl font-extrabold tracking-[-0.02em]">Your evidence, momentum, and next move.</h1><p className="mt-3 max-w-2xl leading-7 text-muted">This owner-only view combines verified career readiness with your competitive season standing.</p></div><Badge variant={data?.meta.mode === "local_demo" ? "warning" : query.isError ? "warning" : "success"}>{query.isError ? "Live data unavailable" : data?.meta.label || "Loading private overview"}</Badge></div></section>
+    <section className="rounded-2xl border border-border bg-surface p-5 lg:p-7" data-testid="member-dashboard" data-tour="member-overview"><div className="flex flex-wrap items-start justify-between gap-4"><div><Badge className="text-accent" variant="orange">Personal command center</Badge><FilipinoPhrase className="mt-4" meaning="Welcome back, builder." phrase="Mabuhay!" /><h1 className="mt-1 text-3xl font-extrabold tracking-[-0.02em]">Your evidence, momentum, and next move.</h1><p className="mt-3 max-w-2xl leading-7 text-muted">This owner-only view combines verified career readiness with your competitive season standing.</p></div><Badge variant={data?.meta.mode === "local_demo" ? "warning" : query.isError ? "warning" : "success"}>{query.isError ? "Live data unavailable" : data?.meta.label || "Loading private overview"}</Badge></div></section>
     {query.isError ? <Card className="bg-surface p-8 text-center"><h2 className="font-bold">Personal overview unavailable</h2><p className="mt-2 text-sm text-muted">No synthetic values are substituted in live mode.</p></Card> : <>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" data-tour="member-metrics">{metrics.map(([label,value,Icon]) => <Card className="bg-surface" key={label}><Icon className="text-accent" size={20}/><p className="mt-5 text-3xl font-bold">{value}</p><p className="mt-1 text-sm text-muted">{label}</p></Card>)}</section>
       <section className="grid gap-4 lg:grid-cols-[.85fr_1.15fr]" data-tour="member-standing">

@@ -1,19 +1,16 @@
 ---
-layout: default
+layout: ph
 title: Community
 permalink: /community/
-background-class: features-background
-body-class: features
+body-class: ph-community
 redirect_from: "/events/"
+hero_kicker: "Bayanihan"
+hero_kicker_meaning: "the Filipino tradition of neighbors working together to help one another"
+hero_title: "Community"
+hero_lead: "Workshops, hackathons, study groups, and meetups organized by and for the PyTorch community across the Philippines."
+hero_actions:
+  - label: "Join the community"
+    url: "/portal/register/"
 ---
 
-<div class="jumbotron jumbotron-fluid">
-  <div class="container">
-    <h1>Community</h1>
-    <p class="lead">Events, workshops, hackathons, and stories from the PyTorch Philippines community.</p>
-  </div>
-</div>
-
-<div class="main-content-wrapper">
-  {% include ph/community_section.html full=true %}
-</div>
+{% include ph/community_section.html full=true %}

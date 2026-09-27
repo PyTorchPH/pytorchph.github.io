@@ -1,19 +1,12 @@
 ---
-layout: default
-title: News
+layout: ph
+title: News & Blog
 permalink: /news/
-background-class: features-background
-body-class: features
-
+body-class: ph-news
+hero_kicker: "Balita"
+hero_kicker_meaning: "news"
+hero_title: "News & Blog"
+hero_lead: "Community updates and stories, new research and findings, and the latest from the PyTorch project."
 ---
 
-<div class="jumbotron jumbotron-fluid">
-  <div class="container">
-    <h1>News</h1>
-    <p class="lead">Community updates, new research and findings, and the latest from the PyTorch project.</p>
-  </div>
-</div>
-
-<div class="main-content-wrapper">
-  {% include ph/news_section.html full=true %}
-</div>
+{% include ph/news_section.html full=true %}

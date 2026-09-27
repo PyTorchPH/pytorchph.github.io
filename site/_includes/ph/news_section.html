@@ -1,5 +1,6 @@
 {%- comment -%}
-  News: community news and research from our posts (category "community" or "research"), then the
+  News and blog: community news and research from our posts (category "community" or "research"),
+  the latest blog posts, then the
   latest official PyTorch news from the pytorch.org feed fetched at build time (_data/pytorch_news.json).
 {%- endcomment -%}
 {%- assign pytorch_news = site.data.pytorch_news | default: empty -%}
@@ -9,8 +10,8 @@
   <div class="container">
     <div class="ph-section-header">
       <div>
-        <h2 id="news-heading">News</h2>
-        <p>Community updates, new research and findings, and the latest from the PyTorch project.</p>
+        <h2 id="news-heading">News &amp; Blog</h2>
+        <p>Community updates and stories, new research and findings, and the latest from the PyTorch project.</p>
       </div>
       {%- unless include.full %}
       <a href="{{ site.baseurl }}/news/" class="btn btn-lg with-right-arrow module-button">All news</a>
@@ -41,6 +42,27 @@
         {%- endfor %}
       </div>
     </div>
+
+    <h3 class="ph-subheading" id="blog">From the blog</h3>
+    {%- assign recent_posts = site.posts | sort: "date" | reverse %}
+    <div class="row ph-card-grid">
+      {%- for post in recent_posts limit: 6 %}
+      <div class="col-md-4">
+        <article class="ph-card">
+          <span class="ph-card-meta"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time></span>
+          <h4><a class="ph-card-link" href="{{ post.url | relative_url }}">{{ post.title }}</a></h4>
+          <p>{{ post.excerpt | strip_html | strip | truncatewords: 25 }}</p>
+        </article>
+      </div>
+      {%- else %}
+      <div class="col-12">
+        <p class="ph-empty">No posts yet. Community stories, event recaps, and tutorials will appear here.</p>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- if recent_posts.size > 6 %}
+    <p><a href="{{ site.baseurl }}/blog/" class="with-right-arrow">All blog posts</a></p>
+    {%- endif %}
 
     <h3 class="ph-subheading" id="pytorch-news">PyTorch news</h3>
     {%- if include.full %}{% assign news_limit = 6 %}{% else %}{% assign news_limit = 3 %}{% endif %}

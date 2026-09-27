@@ -1,19 +1,15 @@
 ---
-layout: default
+layout: ph
 title: Learn
 permalink: /learn/
-background-class: features-background
-body-class: features
-
+body-class: ph-learn
+hero_kicker: "Tara, aral tayo!"
+hero_kicker_meaning: "Come on, let's learn together!"
+hero_title: "Learn"
+hero_lead: "Materials, sample code, and open-source projects to get started with PyTorch."
+hero_actions:
+  - label: "Install PyTorch"
+    url: "/get-started/locally/"
 ---
 
-<div class="jumbotron jumbotron-fluid">
-  <div class="container">
-    <h1>Learn</h1>
-    <p class="lead">Materials, sample code, and open-source projects to get started with PyTorch.</p>
-  </div>
-</div>
-
-<div class="main-content-wrapper">
-  {% include ph/learn_section.html full=true %}
-</div>
+{% include ph/learn_section.html full=true %}

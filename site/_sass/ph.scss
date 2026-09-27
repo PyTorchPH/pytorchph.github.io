@@ -23,15 +23,6 @@
   }
 }
 
-// Two hero actions side by side, stacking on small screens.
-.homepage .jumbotron .btn + .btn {
-  margin-left: rem(12px);
-
-  @media (max-width: 575px) {
-    margin-left: 0;
-    margin-top: rem(12px);
-  }
-}
 
 // Section blocks shared by the home page and the Community, News, Learn, and About pages.
 // They follow the pytorch.org module structure: heading with a module button, then a card grid.
@@ -215,17 +206,6 @@ button:focus-visible,
   display: block;
 }
 
-// Mobile submenus stay expanded so every destination is reachable without extra scripts.
-.mobile-main-menu .ph-mobile-submenu {
-  list-style: none;
-  padding-left: rem(16px);
-  margin: rem(8px) 0 rem(16px);
-
-  a {
-    font-size: rem(18px);
-    color: $dark_grey;
-  }
-}
 
 // Links inside running text are underlined so they do not rely on color alone (WCAG 1.4.1).
 main p a:not(.btn):not(.ph-card-link),
@@ -238,4 +218,326 @@ main li a:not(.btn):not(.ph-card-link):not(.nav-link):not(.page-link),
 // Disabled pagination keeps AA contrast on its grey background.
 .page-item.disabled .page-link {
   color: #c62e10;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Page shell for PyTorch Philippines pages (_layouts/ph.html): solid dark header and a hero that
+// sizes to its content, so nothing overlaps on small screens.
+// ---------------------------------------------------------------------------------------------
+$orange_on_dark: #ff8a66; // 6.5:1 on #262626; $orange is for light backgrounds only
+$hero_kicker: #ffb59e;
+
+.ph-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.header-holder.ph-header {
+  background-color: $not_quite_black;
+
+  .main-menu ul li.active > a,
+  .main-menu ul li a:hover,
+  .main-menu ul li a.with-down-orange-arrow {
+    color: $orange_on_dark;
+  }
+
+  .header-logo {
+    width: 232px;
+    height: 32px;
+    max-width: calc(100vw - 110px);
+    background-position: left center;
+
+    @include full-nav-menu-desktop {
+      width: 320px;
+      height: 44px;
+      top: -6px;
+    }
+  }
+}
+
+.ph-page .main-content-wrapper {
+  margin-top: 0;
+}
+
+.ph-hero {
+  position: relative;
+  overflow: hidden;
+  margin-top: $mobile_header_height;
+  padding: rem(44px) 0 rem(52px);
+  color: $white;
+  background-color: #888;
+  background-image: linear-gradient(rgba(38, 38, 38, 0.66), rgba(38, 38, 38, 0.66)), url($baseurl + "/assets/images/home-background.jpg");
+  background-blend-mode: normal, luminosity;
+  background-size: cover;
+  background-position: 80% center;
+
+  @include desktop {
+    padding: rem(80px) 0 rem(88px);
+  }
+
+  @include full-nav-menu-desktop {
+    margin-top: $desktop_header_height;
+  }
+
+  &.ph-hero-with-wave {
+    padding-bottom: rem(96px);
+
+    @include desktop {
+      padding-bottom: rem(150px);
+    }
+  }
+
+  .ph-hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ph-hero-kicker {
+    margin: 0 0 rem(8px);
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: rem(20px);
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: $hero_kicker;
+
+    @include desktop {
+      font-size: rem(26px);
+    }
+  }
+
+  h1 {
+    margin: 0 0 rem(16px);
+    max-width: 18ch;
+    font-size: rem(34px);
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: 1.08px;
+    text-transform: uppercase;
+    text-wrap: balance;
+    color: $white;
+
+    @include desktop {
+      font-size: rem(60px);
+    }
+  }
+
+  .lead {
+    max-width: 38rem;
+    margin: 0 0 rem(24px);
+    font-size: rem(18px);
+    line-height: rem(28px);
+    font-weight: 400;
+    color: $white;
+  }
+
+  .ph-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem(12px);
+
+    .btn {
+      margin: 0;
+      padding: rem(9px) rem(36px) rem(9px) rem(16px);
+      border-radius: 0;
+      background-color: $white;
+      color: $not_quite_black;
+      background-position: right rem(14px) center;
+    }
+  }
+}
+
+// The Philippine archipelago as a connected network (scripts/generate-archipelago.mjs).
+.ph-hero-art {
+  position: absolute;
+  top: -4%;
+  bottom: -4%;
+  right: -22%;
+  width: 90%;
+  background: url($baseurl + "/assets/images/ph-network.svg") no-repeat right center;
+  background-size: contain;
+  opacity: 0.3;
+  pointer-events: none;
+
+  @include desktop {
+    right: 3%;
+    width: 44%;
+    opacity: 0.5;
+  }
+}
+
+.ph-hero-wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: rem(48px);
+
+  @include desktop {
+    height: rem(90px);
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.ph-hero-profile .ph-hero-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: rem(24px) rem(40px);
+
+  h1 {
+    max-width: none;
+    font-size: rem(30px);
+
+    @include desktop {
+      font-size: rem(48px);
+    }
+  }
+}
+
+.ph-hero-photo {
+  width: rem(132px);
+  height: rem(132px);
+  object-fit: cover;
+  border: 3px solid $white;
+
+  @include desktop {
+    width: rem(200px);
+    height: rem(200px);
+  }
+}
+
+.ph-profile {
+  .ph-profile-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem(12px);
+    padding: 0;
+    margin: rem(24px) 0 0;
+    list-style: none;
+  }
+
+  .ph-profile-body {
+    max-width: 46rem;
+    font-size: rem(18px);
+    line-height: rem(30px);
+    color: $dark_grey;
+  }
+}
+
+// Team cards link to profile pages; keep the whole card readable on small screens.
+.ph-team .maintainer {
+  .member-info h4 {
+    letter-spacing: 1px;
+    overflow-wrap: anywhere;
+  }
+
+  a.ph-profile-link {
+    display: inline-block;
+    margin-top: rem(8px);
+    font-size: rem(15px);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+
+// Orange links sit on dark bands in the footer; use the lighter orange there for contrast.
+.docs-tutorials-resources a,
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  color: $orange_on_dark;
+}
+
+// Mobile menu: section links are larger than their sub-links, and the menu scrolls when it is long.
+.mobile-main-menu.open {
+  overflow-y: auto;
+
+  // Upstream centers a fixed-height list, which hides the first items when the list is long.
+  .mobile-main-menu-links-container {
+    display: block;
+    height: auto;
+    margin-top: 0;
+    padding: rem(16px) rem(30px) rem(48px);
+    overflow: visible;
+
+    .main-menu {
+      height: auto;
+    }
+  }
+
+  .main-menu > ul > li {
+    margin-bottom: rem(12px);
+  }
+
+  .main-menu > ul > li > a {
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: rem(24px);
+    line-height: rem(44px);
+  }
+
+  ul li.active > a {
+    color: $orange_on_dark;
+  }
+
+  .ph-mobile-submenu {
+    padding-left: rem(16px);
+    margin: 0 0 rem(8px);
+    border-left: 2px solid rgba(255, 255, 255, 0.2);
+
+    li a {
+      font-size: rem(17px);
+      line-height: rem(36px);
+      color: #d6d6d6;
+    }
+  }
+}
+
+// Team photos stay in color: the upstream hover-to-color effect never triggers on touch screens.
+.ph-team .maintainer a img {
+  -webkit-filter: none;
+  filter: none;
+  height: auto;
+}
+
+.ph-article {
+  max-width: 46rem;
+  font-size: rem(18px);
+  line-height: rem(30px);
+}
+
+// Get Started tabs wrap instead of pushing the page wider than small screens.
+.get-started .navbar-nav {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+// Code samples scroll inside their block on small screens.
+.ph-page pre,
+.pytorch-article pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.mobile-main-menu .header-logo {
+  width: 232px;
+  height: 32px;
+  max-width: calc(100vw - 110px);
+  background-position: left center;
+}
+
+// Keep the southern islands clear of the wave at the bottom of the home hero.
+.ph-hero-with-wave .ph-hero-art {
+  top: 2%;
+  bottom: 14%;
 }
