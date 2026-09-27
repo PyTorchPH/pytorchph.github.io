@@ -5,7 +5,7 @@
 {%- assign members = site.members | sort: "order" -%}
 <section class="ph-section ph-section-grey ph-team" aria-labelledby="about-heading">
   <div class="container">
-    <div class="ph-section-header">
+    <div class="ph-section-header{% if include.full %} ph-visually-hidden{% endif %}">
       <div>
         <h2 id="about-heading">About us</h2>
         <p>PyTorch Philippines is a nationwide, community-led network for people who learn, teach, research, and build with PyTorch and the broader machine learning ecosystem.</p>

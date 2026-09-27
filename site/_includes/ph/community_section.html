@@ -5,7 +5,7 @@
 {%- assign now = site.time | date: '%s' | plus: 0 -%}
 <section class="ph-section" aria-labelledby="community-heading">
   <div class="container">
-    <div class="ph-section-header">
+    <div class="ph-section-header{% if include.full %} ph-visually-hidden{% endif %}">
       <div>
         <h2 id="community-heading">Community</h2>
         <p>Workshops, hackathons, study groups, and meetups organized by and for the PyTorch community across the Philippines.</p>

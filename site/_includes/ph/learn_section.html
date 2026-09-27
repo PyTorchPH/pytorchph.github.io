@@ -6,7 +6,7 @@
 {%- assign org_repos = site.github.public_repositories | default: empty | where_exp: "repo", "repo.name != '.github' and repo.name != 'pytorchph.github.io'" | where: "archived", false -%}
 <section class="ph-section" aria-labelledby="learn-heading">
   <div class="container">
-    <div class="ph-section-header">
+    <div class="ph-section-header{% if include.full %} ph-visually-hidden{% endif %}">
       <div>
         <h2 id="learn-heading">Learn</h2>
         <p>Start with PyTorch using official materials, runnable sample code, and open-source projects you can build on.</p>
