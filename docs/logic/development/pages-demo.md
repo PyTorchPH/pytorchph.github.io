@@ -7,19 +7,21 @@ code_paths:
   - apps/pages-demo/app/layout.tsx
   - apps/pages-demo/next.config.mjs
   - apps/pages-demo/public/demo-api/fixtures.json
+  - development/pages-demo/build-portal-demo.mjs
+  - development/pages-demo/portal-base-path.mjs
   - development/pages-demo/finalize-out.mjs
-  - development/pages-demo/publish-export.mjs
+  - .github/workflows/deploy-pages.yml
 tests:
   - development/pages-demo/verify.mjs
 feedback_events:
-  - pages_demo.export.completed
+  - pages_demo.out.finalized
   - pages_demo.verify.completed
 related_logic: []
 ---
 
 # GitHub Pages demo
 
-Purpose: publish a static, explicitly fictional preview that renders the real portal UI—the same
+Purpose: publish a static, explicitly fictional member portal preview beside the public site that renders the real portal UI—the same
 app shell, member dashboard, officer command center, and workspaces—without school-specific text.
 
 - Next.js static export builds a separate application whose routes re-export the portal pages.
@@ -35,10 +37,10 @@ app shell, member dashboard, officer command center, and workspaces—without sc
   and switches between the example member and officer.
 - The build finishes `apps/pages-demo/out` with the portal's synthetic `/demo/` media, flat aliases
   for segment-prefetch payloads, and `.nojekyll`, so any static host can serve it unchanged.
-- Project sites (served under a path) build with `PAGES_BASE_PATH`, for example `/pytorch-demo`;
-  the demo prefixes its fixtures, navigation, and media with that base path.
-- Root export uses the GitHub Pages `main` / `/` source. Only built static output is copied;
-  generated ownership is recorded before later builds may overwrite a file.
+- The demo is built with `PAGES_BASE_PATH=/portal` (`npm run build:pages`) and prefixes its fixtures,
+  navigation, and media with that base path; `/portal/` itself forwards to the portal login.
+- `.github/workflows/deploy-pages.yml` builds the public Jekyll site (`site/`) at `/`, copies the demo
+  to `/portal/`, and deploys one Pages artifact. No generated files are committed to the repository.
 - Refresh fixtures after portal data changes by capturing `/api/*` from `npm run dev` while signed in
   as each example account, then scan them for school-specific text and sensitive values.
 - Browser checks cover both example accounts, portal login, read-only writes, static routes,
