@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang }}">
+{% include head.html %}
+
+<body class="{{ page.body-class }}">
+  {% include tag_manager_script.html %}
+  {% include header.html %}
+
+  <div class="main-background blog-background"></div>
+
+  {% assign posts = paginator.posts %}
+  {% assign display_post_categories = site.posts | map: 'categories' | join: ',' | replace: '-', ' ' | split: ',' | uniq | sort %}
+  {% assign current_page = page.url | downcase | remove: ".html" | split: '/'  %}
+  {% assign post_categories = site.posts | map: 'categories' | join: ',' | split: ',' | uniq | sort %}
+
+  <div class="jumbotron jumbotron-fluid">
+    <div class="container">
+      <h1>블로그</h1>
+      <p class="lead">파이토치 한국 사용자 모임에서 공유하는 최신 기술 동향, 튜토리얼, 연구 성과 및 커뮤니티 소식을 만나보세요.
+      </p>
+    </div>
+  </div>
+
+  <div class="main-content-wrapper">
+    <div class="main-content">
+      <div class="container">
+        <div class="row blog-vertical">
+
+          {% for post in posts %}
+            <div class="vertical-blog-container">
+              <div class="col-md-4">
+                <p class="blog-date">{{ post.date | date: '%B %d, %Y' }}</p>
+                <h4>
+                  <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
+                </h4>
+                <p>{{ post.content | strip_html | strip | truncatewords: 50 | escape }}</p>
+                <!-- <img src="{{ post.image }}" class="img-fluid"> -->
+              </div>
+              <a href="{{ site.baseurl }}{{ post.url }}" class="btn">
+                더 읽어보기 →
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+
+        {% include pagination_buttons.html %}
+      </div>
+    </div>
+  </div>
+
+  {% include quick_start_module.html %}
+
+  {% include footer.html %}
+
+</body>
+</html>

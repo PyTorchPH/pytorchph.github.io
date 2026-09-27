@@ -1,0 +1,460 @@
+.get-started article {
+  margin-bottom: rem(80px);
+}
+
+.get-started .quick-start-guides {
+  ul {
+    margin-bottom: 0;
+    padding-left: 0;
+  }
+}
+
+.get-started .main-background {
+  height: 275px;
+
+  @include desktop {
+    height: 380px;
+  }
+}
+
+.get-started .main-content-wrapper {
+  margin-top: 275px;
+  @include desktop {
+    margin-top: 260px + $desktop_header_height;
+  }
+}
+
+.get-started .jumbotron {
+  height: 190px;
+  @include desktop {
+    height: 260px;
+  }
+}
+
+.get-started .main-content .navbar {
+  background-color: #f3f4f7;
+
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-top: 0;
+
+  @media (min-width: 992px) {
+    li:first-of-type {
+      padding-left: rem(55px);
+    }
+
+    .nav-item {
+      padding: 1.2rem;
+      cursor: pointer;
+    }
+
+    .nav-link {
+      position: relative;
+      top: 10%;
+      transform: translateY(-50%);
+    }
+  }
+
+  .nav-select {
+    background-color: $white;
+    .nav-link {
+      color: $orange;
+      font-weight: 500;
+    }
+  }
+
+  .nav-link {
+    font-size: rem(15px);
+    color: #8c8c8c;
+    @include desktop {
+      margin-left: rem(12px);
+      margin-right: rem(12px);
+    }
+    &:hover {
+      color: $orange;
+    }
+  }
+
+  .get-started-nav-link {
+    padding-left: rem(8px);
+    padding-right: rem(8px);
+
+    @include desktop {
+      padding-left: rem(8px);
+      padding-right: rem(8px);
+    }
+  }
+
+  .nav-item {
+    padding-top: rem(15px);
+    padding-bottom: rem(15px);
+    @include desktop {
+      padding-bottom: 0;
+      padding-top: 2rem;
+    }
+    @include small-desktop {
+      padding-bottom: 0;
+      padding-top: 2rem;
+    }
+    @media (max-width: 990px) {
+      padding-bottom: rem(10px);
+      padding-top: 1rem;
+    }
+  }
+
+  .navbar-toggler {
+    margin-left: rem(40px);
+  }
+}
+
+.get-started .main-content {
+  padding-top: 0;
+  @include desktop {
+    padding-top: 1.9rem;
+  }
+}
+
+.get-started .quick-start-module {
+  padding-bottom: 0;
+  padding-top: 0;
+  background-color: $white;
+
+  .option,
+  #command {
+    border: 2px solid $white;
+    background: $light_grey;
+  }
+
+  .title-block {
+    border: 2px solid $white;
+  }
+
+  .selected {
+    background-color: $orange;
+  }
+
+  h1 {
+    font-size: rem(32px);
+    letter-spacing: 1.78px;
+    line-height: rem(40px);
+    text-transform: uppercase;
+    margin-bottom: rem(24px);
+  }
+}
+
+.get-started .nav-menu-wrapper {
+  background-color: $light_grey;
+}
+
+.get-started .navbar-nav {
+  flex-direction: row;
+}
+
+#installation .os {
+  display: none;
+}
+
+#installation .selected {
+  display: block;
+}
+
+#cloud .platform {
+  display: none;
+}
+
+#cloud .selected {
+  display: block;
+}
+
+.screencast {
+  iframe {
+    width: 100% !important;
+  }
+  display: none;
+}
+
+.get-started {
+  .quick-starts {
+    .row.ptbuild,
+    .row.os,
+    .row.package,
+    .row.language,
+    .row.cuda {
+      margin-bottom: rem(20px);
+      @include desktop {
+        margin-bottom: 0;
+      }
+    }
+
+    @include small-desktop {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+
+    @include desktop {
+      margin-bottom: rem(40px);
+
+      .row {
+        margin-bottom: 0;
+      }
+    }
+
+    @include max-width-desktop {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.get-started .get-started-locally-sidebar {
+  padding-top: rem(40px);
+  padding-bottom: rem(40px);
+  top: 15%;
+
+  @include desktop {
+    padding-top: 0;
+  }
+
+  ul {
+    padding-left: 0;
+  }
+
+  li {
+    list-style-type: none;
+    line-height: 36px;
+
+    a {
+      color: #8c8c8c;
+      text-decoration: none;
+      display: block;
+      transition: color 0.2s ease;
+
+      &.active,
+      &:hover {
+        color: $orange;
+      }
+    }
+
+    .subitem {
+      padding-left: rem(20px);
+    }
+  }
+
+  li.subitem {
+    padding-left: rem(20px);
+  }
+
+  // H2 토글 기능 스타일
+  li.sidebar-h2 {
+    .sidebar-h2-link {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      font-weight: 500;
+
+      .toggle-icon {
+        display: inline-block;
+        width: rem(16px);
+        margin-right: rem(8px);
+        font-size: rem(12px);
+        transition: transform 0.2s ease;
+        cursor: pointer;
+        color: #8c8c8c;
+        flex-shrink: 0;
+      }
+
+      .menu-text {
+        flex: 1;
+      }
+
+      &:hover {
+        .toggle-icon {
+          color: $orange;
+        }
+      }
+    }
+
+    &.expanded {
+      > .sidebar-h2-link {
+        color: $orange;
+        font-weight: 600;
+      }
+    }
+  }
+
+  // H3 서브 아이템 스타일
+  li.sidebar-h3 {
+    display: none; // 기본적으로 숨김
+    line-height: 32px;
+    font-size: rem(14px);
+
+    a {
+      padding-left: rem(24px);
+      font-weight: 400;
+
+      &:hover {
+        padding-left: rem(26px);
+        transition: padding-left 0.2s ease;
+      }
+    }
+  }
+}
+
+.cloud-nav {
+  display: none;
+}
+
+.get-started .get-started-cloud-sidebar {
+  padding-top: rem(50px);
+  padding-bottom: rem(40px);
+  top: 15%;
+
+  ul {
+    padding-left: 0;
+  }
+
+  li {
+    list-style-type: none;
+    line-height: 36px;
+
+    a {
+      color: #8c8c8c;
+      &.active,
+      &:hover {
+        color: $orange;
+      }
+    }
+
+    .subitem {
+      padding-left: rem(20px);
+    }
+  }
+
+  li.subitem {
+    padding-left: rem(20px);
+  }
+}
+
+// Version compatibility page improvements
+.get-started {
+  // Table styles
+  .version-table {
+    font-size: rem(16px);
+
+    @include desktop {
+      font-size: rem(18px);
+    }
+
+    th, td {
+      white-space: nowrap;
+      padding: rem(12px);
+      text-align: center !important;
+      vertical-align: middle;
+
+      @include desktop {
+        padding: rem(16px) rem(20px);
+      }
+    }
+
+    th {
+      font-weight: 700;
+
+      a {
+        font-weight: 700;
+      }
+    }
+
+    th:first-child {
+      text-align: center !important;
+    }
+  }
+
+  // Make version-table scrollable and extend beyond container
+  .table-responsive,
+  table.version-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    @include desktop {
+      width: calc(100% + 16rem);
+      margin-left: -8rem;
+      margin-right: -8rem;
+    }
+  }
+
+  table.version-table {
+    min-width: 100%;
+
+    @include desktop {
+      width: max-content !important;
+    }
+  }
+
+  // h3 size adjustment
+  article h3 {
+    font-size: rem(22px);
+  }
+
+  // ul/li left padding
+  article ul {
+    padding-left: rem(37.6px); // 2.35rem
+  }
+
+  // QnA Table styles
+  table.QnATable {
+    font-size: 12px !important;
+    border-collapse: collapse;
+    width: 100%;
+
+    tr {
+      border-bottom: 1px solid #ddd;
+    }
+
+    td, th {
+      padding: rem(12px) rem(16px);
+      vertical-align: top;
+      text-align: left;
+      font-size: 12px !important;
+    }
+
+    // Header row
+    tr:first-child {
+      background-color: #f3f4f7;
+
+      td {
+        font-weight: 600;
+        color: #333;
+        font-size: 12px !important;
+      }
+    }
+
+    // Data rows
+    tr:not(:first-child) {
+      td {
+        line-height: 1.6;
+        font-size: 12px !important;
+      }
+    }
+
+    // Links styling
+    a {
+      color: #0066cc;
+      text-decoration: none;
+      font-size: 12px !important;
+
+      &:hover {
+        color: $orange;
+        text-decoration: underline;
+      }
+    }
+
+    // Bold text in cells
+    b {
+      font-weight: 600;
+      color: #333;
+      font-size: 12px !important;
+    }
+  }
+}
