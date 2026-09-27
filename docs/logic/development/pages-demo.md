@@ -35,7 +35,7 @@ app shell, member dashboard, officer command center, and workspaces—without sc
   and switches between the example member and officer.
 - The build finishes `apps/pages-demo/out` with the portal's synthetic `/demo/` media, flat aliases
   for segment-prefetch payloads, and `.nojekyll`, so any static host can serve it unchanged.
-- Project sites build with `PAGES_BASE_PATH` (the FIT Pages workflow uses `/pytorch-fit-system`);
+- Project sites (served under a path) build with `PAGES_BASE_PATH`, for example `/pytorch-demo`;
   the demo prefixes its fixtures, navigation, and media with that base path.
 - Root export uses the GitHub Pages `main` / `/` source. Only built static output is copied;
   generated ownership is recorded before later builds may overwrite a file.

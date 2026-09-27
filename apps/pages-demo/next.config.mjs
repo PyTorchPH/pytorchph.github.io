@@ -1,4 +1,4 @@
-// Project-site hosts (for example the FIT Pages site) build with PAGES_BASE_PATH=/pytorch-fit-system.
+// Project-site hosts served under a path build with PAGES_BASE_PATH, for example /pytorch-demo.
 const basePath = process.env.PAGES_BASE_PATH || "";
 if (basePath && !/^\/[\w-]+$/.test(basePath)) throw new Error(`Invalid PAGES_BASE_PATH: ${basePath}`);
 
