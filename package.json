@@ -34,7 +34,7 @@
     "test": "npm run test:boundaries && npm run test:portal-hosts --workspace @pytorch-ph/portal && npm run test:capabilities --workspace @pytorch-ph/portal && npm run test:product --workspace @pytorch-ph/portal && npm run test:nationwide && npm run test:community --workspace @pytorch-ph/portal",
     "dev:workspace": "node development/local-workspace/start.mjs",
     "test:nationwide": "npm run test:nationwide --workspace @pytorch-ph/portal",
-    "build:pages": "npm run build --workspace @pytorch-ph/pages-demo && node development/pages-demo/publish-export.mjs",
+    "build:pages": "node development/pages-demo/build-portal-demo.mjs",
     "test:pages": "node development/pages-demo/verify.mjs"
   }
 }

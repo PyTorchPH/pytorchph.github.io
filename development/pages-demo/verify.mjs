@@ -1,23 +1,34 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, resolve } from "node:path";
 import { chromium } from "playwright";
+import { PORTAL_BASE_PATH } from "./portal-base-path.mjs";
 
+// Serves the Pages layout: the public site (site/_site, when built) at / and the portal demo under /portal/.
 const root = resolve(import.meta.dirname, "../..");
-const artifacts = JSON.parse(readFileSync(resolve(import.meta.dirname, "artifacts.json"), "utf8"));
-assert.ok(Object.hasOwn(artifacts, ".nojekyll"));
-assert.ok(!Object.keys(artifacts).some(name => /(?:^|\/)(?:api|node_modules|var|supabase)(?:\/|$)|\.map$/.test(name)));
-const mime = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".txt": "text/plain", ".woff2": "font/woff2", ".webp": "image/webp", ".svg": "image/svg+xml" };
+const portalOut = resolve(root, "apps/pages-demo/out");
+const siteOut = resolve(root, "site/_site");
+assert.ok(existsSync(resolve(portalOut, ".nojekyll")), "Run npm run build:pages first.");
+const mime = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".txt": "text/plain", ".woff2": "font/woff2", ".webp": "image/webp", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg" };
+const fileFor = pathname => {
+  const [dir, rest] = pathname.startsWith(`${PORTAL_BASE_PATH}/`) ? [portalOut, pathname.slice(PORTAL_BASE_PATH.length + 1)] : [siteOut, pathname.slice(1)];
+  if (rest.includes("..")) return null;
+  for (const candidate of [rest, `${rest}index.html`, `${rest}/index.html`]) {
+    const path = resolve(dir, candidate);
+    if (path.startsWith(dir) && existsSync(path) && statSync(path).isFile()) return path;
+  }
+  return null;
+};
 const server = createServer((request, response) => {
-  let name = decodeURIComponent(new URL(request.url, "http://localhost").pathname).slice(1);
-  if (!name || name.endsWith("/")) name += "index.html";
-  if (!Object.hasOwn(artifacts, name)) { response.writeHead(404); response.end("Not found"); return; }
-  response.writeHead(200, { "Content-Type": mime[extname(name)] || "application/octet-stream" });
-  response.end(readFileSync(resolve(root, name)));
+  const path = fileFor(decodeURIComponent(new URL(request.url, "http://localhost").pathname));
+  if (!path) { response.writeHead(404); response.end("Not found"); return; }
+  response.writeHead(200, { "Content-Type": mime[extname(path)] || "application/octet-stream" });
+  response.end(readFileSync(path));
 });
 await new Promise(resolveReady => server.listen(0, "127.0.0.1", resolveReady));
-const url = `http://127.0.0.1:${server.address().port}`;
+const origin = `http://127.0.0.1:${server.address().port}`;
+const url = `${origin}${PORTAL_BASE_PATH}`;
 const chrome = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const schoolText = /\b(?:FEU|Far Eastern|Tamaraw|SADO|campus|students?|university|faculty|college)\b|fit\.edu/i;
 const memberHeading = "Your evidence, momentum, and next move.";
@@ -29,11 +40,16 @@ try {
   const page = await context.newPage();
   const errors = [], externalRequests = [], missingAssets = [];
   page.on("pageerror", error => errors.push(error.message));
-  page.on("request", request => { if (new URL(request.url()).origin !== url) externalRequests.push(request.url()); });
-  page.on("response", response => { if (response.status() >= 400 && !new URL(response.url()).pathname.startsWith("/api/")) missingAssets.push(`${response.status()} ${response.url()}`); });
+  page.on("request", request => { if (new URL(request.url()).origin !== origin) externalRequests.push(request.url()); });
+  page.on("response", response => {
+    const { pathname } = new URL(response.url());
+    if (response.status() >= 400 && !pathname.startsWith("/api/") && pathname !== "/favicon.ico" && pathname.startsWith(PORTAL_BASE_PATH)) missingAssets.push(`${response.status()} ${pathname}`);
+  });
   const heading = name => page.getByRole("heading", { name, exact: true }).first().waitFor();
 
-  await page.goto(url, { waitUntil: "networkidle" });
+  // The portal root forwards to the login screen.
+  await page.goto(`${url}/`, { waitUntil: "networkidle" });
+  await page.waitForURL(`**${PORTAL_BASE_PATH}/login/`);
   assert.match(await page.title(), /PyTorch Philippines.*Demo/);
 
   // Demo bar enters the real portal views as the example member, then the example officer.
@@ -53,19 +69,20 @@ try {
   await page.locator('input[type="password"]').first().fill("demo-password");
   await page.getByRole("button", { name: /^Sign in/ }).click();
   await heading(memberHeading);
+  assert.ok(new URL(page.url()).pathname.startsWith(PORTAL_BASE_PATH), "Navigation must stay under the portal base path");
 
   // Writes are answered locally with a read-only notice.
   const write = await page.evaluate(() => fetch("/api/feedback", { method: "POST", body: "{}" }).then(response => response.status));
   assert.equal(write, 403);
 
-  const routes = ["/", "/login/", "/register/", "/dashboard/", "/dashboard/profile/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/events/", "/leaderboards/", "/membership/", "/trust/", "/settings/"];
+  const routes = ["/login/", "/register/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/events/", "/leaderboards/", "/membership/", "/trust/", "/settings/"];
   for (const path of routes) {
     await page.goto(`${url}${path}`, { waitUntil: "networkidle" });
     await page.getByRole("complementary", { name: "Demo notice" }).waitFor();
-    if (path !== "/") assert.doesNotMatch(await page.locator("body").innerText(), schoolText, `School-specific text on ${path}`);
+    assert.doesNotMatch(await page.locator("body").innerText(), schoolText, `School-specific text on ${path}`);
   }
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const path of ["/", "/login/", "/dashboard/", "/events/", "/leaderboards/"]) {
+  for (const path of ["/login/", "/dashboard/", "/events/", "/leaderboards/"]) {
     await page.goto(`${url}${path}`, { waitUntil: "networkidle" });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `Mobile overflow: ${path}`);
   }
@@ -73,7 +90,7 @@ try {
   assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request)), []);
   assert.deepEqual(missingAssets, []);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
+  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["portal-entry-redirect", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
 } finally {
   await browser?.close();
   await new Promise(resolveClosed => server.close(resolveClosed));

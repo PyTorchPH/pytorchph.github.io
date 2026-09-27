@@ -28,6 +28,12 @@ npm test
 npm run build
 ```
 
+## GitHub Pages
+
+https://pytorchph.github.io serves the public site from `site/` and a static member portal demo at
+`/portal/`, built and deployed by `.github/workflows/deploy-pages.yml` on every push to `main`.
+See [`site/README.md`](site/README.md) for local preview.
+
 ## Production
 
 The Next.js application needs Node.js-compatible hosting; GitHub Pages cannot run its server routes.
@@ -40,7 +46,9 @@ No live deployment or data migration is included in this adaptation.
 
 | Path | Purpose |
 |---|---|
-| `apps/portal` | Public website and member/officer portals |
+| `site` | Public website (Jekyll fork of the PyTorch Korea and pytorch.org sites) |
+| `apps/portal` | Member/officer portals |
+| `apps/pages-demo` | Static portal demo served under `/portal/` on GitHub Pages |
 | `domains` | Shared protocols, server decisions, and client features |
 | `design-system` | Shared visual components |
 | `development` | Local launchers and optional automation tools |

@@ -37,6 +37,7 @@ exclude: [
     package.json,
     package-lock.json,
     Makefile,
+    NOTICE.md,
     scripts,
     docs,
     install.sh,

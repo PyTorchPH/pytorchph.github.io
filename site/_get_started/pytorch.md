@@ -429,7 +429,7 @@ docker run --gpus all -it ghcr.io/pytorch/pytorch-nightly:latest /bin/bash
 
 ## Getting Started
 
-Please read Mark Saroufim’s [full blog post](/blog/Accelerating-Hugging-Face-and-TIMM-models/) where he walks you through a tutorial and real models for you to try PyTorch 2.0 today.
+Please read Mark Saroufim’s [full blog post](https://pytorch.org/blog/Accelerating-Hugging-Face-and-TIMM-models/) where he walks you through a tutorial and real models for you to try PyTorch 2.0 today.
 
 Our goal with PyTorch was to build a breadth-first compiler that would speed up the vast majority of actual models people run in open source. The Hugging Face Hub ended up being an extremely valuable benchmarking tool for us, ensuring that any optimization we work on actually helps accelerate models people want to run.
 

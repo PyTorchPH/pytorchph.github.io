@@ -1,0 +1,76 @@
+name: Deploy site to GitHub Pages
+
+# Public site (Jekyll, site/) at / and the static member portal demo (Next.js) at /portal/.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            site/package-lock.json
+
+      - name: Build the member portal demo
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build:pages
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.5'
+          bundler-cache: true
+          working-directory: site
+
+      - name: Build the public site
+        working-directory: site
+        env:
+          JEKYLL_ENV: production
+          JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm ci --no-audit --no-fund
+          mkdir -p assets/vendor
+          cp node_modules/jquery/dist/jquery.min.js node_modules/@popperjs/core/dist/umd/popper.min.js node_modules/anchor-js/anchor.min.js assets/vendor/
+          cp node_modules/bootstrap/dist/js/bootstrap.bundle.min.js assets/vendor/bootstrap.min.js
+          bundle exec jekyll build
+
+      - name: Assemble the Pages artifact
+        run: |
+          test ! -e site/_site/portal
+          cp -r apps/pages-demo/out site/_site/portal
+          touch site/_site/.nojekyll
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site/_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
