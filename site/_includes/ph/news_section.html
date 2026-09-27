@@ -8,7 +8,7 @@
 {%- assign research_posts = site.categories.research | default: empty -%}
 <section class="ph-section ph-section-grey" aria-labelledby="news-heading">
   <div class="container">
-    <div class="ph-section-header">
+    <div class="ph-section-header{% if include.full %} ph-visually-hidden{% endif %}">
       <div>
         <h2 id="news-heading">News &amp; Blog</h2>
         <p>Community updates and stories, new research and findings, and the latest from the PyTorch project.</p>
