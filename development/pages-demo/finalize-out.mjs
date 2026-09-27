@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
 
-// Completes apps/pages-demo/out so any static host (root PH site or FIT project site) can serve it as-is.
+// Completes apps/pages-demo/out so any static host (root site or a path-based project site) can serve it as-is.
 const root = resolve(import.meta.dirname, "../..");
 const output = resolve(root, "apps/pages-demo/out");
 const portalDemoMedia = resolve(root, "apps/portal/public/demo");
