@@ -1,0 +1,63 @@
+[project]
+# Legacy engine package for the PyTorch PH System (AI Career Intelligence Platform).
+# The platform itself is being built fresh on Next.js + Supabase (see docs/SPECIFICATION.md);
+# this Python package is retained as the reference AI-pipeline prototype.
+name = "pytorch-ph-system"
+version = "0.1.0"
+description = "PyTorch PH System — AI Career Intelligence Platform. (This package holds the legacy resume-pipeline engine kept as reference.)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Drew" }]
+dependencies = [
+    "typer>=0.12",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "jinja2>=3.1",
+    "pypdf>=4.2",
+    "python-docx>=1.1",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "anthropic>=0.40",
+    "reportlab>=4.2",
+    "python-multipart>=0.0.9",
+    "pymongo>=4.10",
+    "pyyaml>=6.0",
+    "requests>=2.32",
+    "lxml>=5",
+    "playwright>=1.45",
+    "openai>=1.40",
+    "litellm>=1.75",
+]
+
+[project.optional-dependencies]
+social = ["curl_cffi>=0.7"]
+dev = [
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+    "pytest-mock>=3.14",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+resume-build = "resume_builder.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["legacy/python/resume_builder"]
+
+[tool.pytest.ini_options]
+pythonpath = ["legacy/python"]
+testpaths = ["tests"]
+cache_dir = "var/cache/test-tools/pytest"
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: tests that need external tooling (e.g. a headless browser)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+cache-dir = "var/cache/test-tools/ruff"

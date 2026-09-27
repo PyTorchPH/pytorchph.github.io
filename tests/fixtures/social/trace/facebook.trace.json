@@ -1,0 +1,46 @@
+{
+  "run": {
+    "vendor": "facebook",
+    "url": "https://www.facebook.com/feutechpytorch",
+    "post_selector": "div:has(a[href*='/posts/'])"
+  },
+  "visited": [
+    {
+      "post": 1,
+      "role": "post",
+      "decision": "SCRAPED",
+      "tag": "div",
+      "css_path": "div>div:nth-of-type(3)>div",
+      "text_preview": "Spoke at the FEU Tech PyTorch chapter on training CNNs",
+      "rect": {"x": 0, "y": 120, "w": 500, "h": 640}
+    },
+    {
+      "post": 1,
+      "role": "comment",
+      "decision": "SKIPPED",
+      "tag": "div",
+      "aria_label": "Comment by Juan Dela Cruz"
+    },
+    {
+      "post": 1,
+      "role": "media",
+      "decision": "RETRIEVED_PICTURE",
+      "tag": "img",
+      "src": "https://scontent.fmnl.example/image1.jpg"
+    },
+    {
+      "post": 1,
+      "role": "text",
+      "decision": "RETRIEVED_TEXT",
+      "tag": "div",
+      "text_preview": "Spoke at the FEU Tech PyTorch chapter on training CNNs"
+    },
+    {
+      "post": 1,
+      "role": "shared",
+      "decision": "PRESERVED",
+      "tag": "div",
+      "aria_label": "Original post by PyTorch"
+    }
+  ]
+}

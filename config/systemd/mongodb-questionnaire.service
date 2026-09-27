@@ -1,0 +1,16 @@
+[Unit]
+Description=MongoDB questionnaire document store
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/bin/podman rm -f pytorch-ph-mongodb
+ExecStart=/usr/bin/podman run --name pytorch-ph-mongodb --rm --pull=never --publish 127.0.0.1:27017:27017 --volume pytorch-ph-mongodb-data:/data/db --entrypoint /usr/bin/mongod docker.io/mongodb/mongodb-community-server:7.0-ubi9 --bind_ip_all
+ExecStop=/usr/bin/podman stop --time 15 pytorch-ph-mongodb
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target

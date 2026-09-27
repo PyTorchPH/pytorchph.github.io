@@ -1,0 +1,9 @@
+{
+  "name": "@pytorch-ph/prefect-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build-dashboard.mjs"
+  }
+}

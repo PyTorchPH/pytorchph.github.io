@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job Finder Control Center</title>
+  <link rel="stylesheet" href="/static/job_finder_control.css?v=20260811-brave-recovery">
+  <script defer src="/static/job_finder_control.js?v=20260811-brave-recovery"></script>
+</head>
+<body>
+  <main class="control-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Local browser companion</p>
+        <h1>Job Finder Control Center</h1>
+        <p class="lede">Set one confirmed-application goal and watch every Indeed page move through the live queues.</p>
+      </div>
+      <div class="top-actions">
+        <button class="button ghost view-back" type="button" data-view-back hidden>← Back</button>
+        <span class="connection" data-connection><i></i> Connecting</span>
+        <button class="button ghost" type="button" data-open-settings>Settings</button>
+        <button class="button" type="button" data-refresh>Refresh</button>
+      </div>
+    </header>
+
+    <nav class="module-nav" aria-label="Control Center modules">
+      <button class="module-link active" type="button" data-view-link="overview">Overview</button>
+      <button class="module-link" type="button" data-view-link="automation">Automation</button>
+      <button class="module-link" type="button" data-view-link="analytics">Salary &amp; Funnel Analytics</button>
+      <button class="module-link" type="button" data-view-link="opportunities">Opportunities &amp; Interviews</button>
+      <button class="module-link" type="button" data-view-link="resumes">Resumes</button>
+      <button class="module-link" type="button" data-view-link="connections">Connections &amp; Sessions</button>
+    </nav>
+
+    <section class="module-view active" data-view="overview" aria-label="Overview">
+      <div class="view-heading">
+        <div><p class="eyebrow">General overview</p><h2>Your application mission at a glance</h2></div>
+        <p>Open one focused workspace at a time. Browser Back returns here without losing goal state.</p>
+      </div>
+      <div class="summary" aria-label="Job finder summary">
+      <article><span>Requested</span><strong data-goal-target>0</strong></article>
+      <article><span>Confirmed</span><strong data-count-confirmed>0</strong></article>
+      <article><span>Remaining</span><strong data-goal-remaining>0</strong></article>
+      <article><span>Reserved at Review</span><strong data-goal-reserved>0</strong></article>
+      <article><span>Automatic work</span><strong data-count-automatic>0</strong></article>
+      <article><span>Needs you</span><strong class="attention" data-count-interventions>0</strong></article>
+      <article><span>Run status</span><strong class="status-text" data-run-status>Not started</strong></article>
+      <article><span>Process</span><strong class="status-text" data-process-status>Stopped</strong></article>
+      </div>
+      <div class="module-launch-grid">
+        <button type="button" data-view-link="automation"><span>Run</span><strong>Automation</strong><small>Goal, live tabs, queues, and interventions</small></button>
+        <button type="button" data-view-link="analytics"><span>Measure</span><strong>Salary analytics</strong><small>Target versus actual by band and level</small></button>
+        <button type="button" data-view-link="opportunities"><span>Improve</span><strong>Market fit</strong><small>Opportunities, funnel, and interviews</small></button>
+        <button type="button" data-view-link="resumes"><span>Route</span><strong>Resumes</strong><small>Evidence-backed artifacts and matching</small></button>
+        <button type="button" data-view-link="connections"><span>Access</span><strong>Connections</strong><small>Accounts and the shared browser session</small></button>
+      </div>
+    </section>
+
+    <section class="panel goal-panel module-view" data-view="automation">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Confirmed-application quota</p>
+          <h2>Start an Indeed goal</h2>
+        </div>
+        <p>Skipped or blocked jobs do not reduce the target.</p>
+      </div>
+      <form class="goal-form" data-goal-form>
+        <label><span>Applications needed</span><input type="number" min="1" value="20" required data-goal-input></label>
+        <fieldset>
+          <legend>Countries · defaults to Philippines when empty</legend>
+          <label><input type="checkbox" value="Philippines" data-country checked> Philippines</label>
+          <label><input type="checkbox" value="Australia" data-country> Australia</label>
+          <label><input type="checkbox" value="Canada" data-country> Canada</label>
+        </fieldset>
+        <label><span>Work mode</span><select disabled><option>Remote</option></select></label>
+        <label><span>Job types</span><select disabled><option>Full-time · Contract · Internship</option></select></label>
+        <label><span>Career level</span><select disabled><option>Junior · Entry-level · Internship</option></select></label>
+        <div class="goal-actions">
+          <button class="button" type="submit">Start goal</button>
+          <button class="button ghost" type="button" data-resume-goal>Resume</button>
+          <button class="button danger" type="button" data-cancel-goal>Cancel</button>
+        </div>
+      </form>
+      <p class="goal-id" data-goal-id>No active goal.</p>
+      <p class="goal-id" data-site-counts></p>
+      <p class="goal-id" data-search-inventory>No candidate inventory yet.</p>
+      <p class="goal-id" data-planner-status>Dynamic layout planner: configuration deferred.</p>
+    </section>
+
+    <section class="panel analytics-panel module-view" data-view="analytics" aria-label="Salary and funnel analytics">
+      <div class="section-heading">
+        <div><p class="eyebrow">20 confirmed applications · enforced mix</p><h2>Salary &amp; Funnel Analytics</h2></div>
+        <p>Unknown salary stays visible but never fills a quota slot.</p>
+      </div>
+      <div class="salary-grid" data-salary-analytics></div>
+      <div class="analytics-split">
+        <section><p class="eyebrow">Role level</p><h3>Junior vs internship discovery</h3><div class="level-grid" data-level-analytics></div></section>
+        <section><p class="eyebrow">Funnel</p><h3>Application transitions</h3><div class="conversion-grid" data-analytics-conversions></div></section>
+      </div>
+      <section class="analytics-detail" data-analytics-detail>
+        <div class="empty">Select a salary band to inspect its jobs and funnel state.</div>
+      </section>
+    </section>
+
+    <section class="panel market-fit-panel module-view" data-view="opportunities" aria-label="Market Fit and Interviews">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Research-grounded validation loop</p>
+          <h2>Market Fit &amp; Interviews</h2>
+        </div>
+        <div class="goal-actions">
+          <button class="button ghost" type="button" data-market-sync>Sync confirmed applications</button>
+          <button class="button ghost" type="button" data-market-refresh>Refresh outcomes</button>
+        </div>
+      </div>
+
+      <div class="market-mission">
+        <form class="market-campaign-form" data-market-campaign-form>
+          <label><span>Mission name</span><input name="name" required></label>
+          <label><span>Start</span><input name="start_date" type="date" required></label>
+          <label><span>Deadline</span><input name="end_date" type="date" required></label>
+          <label><span>Ghost after days</span><input name="ghost_after_days" type="number" min="1" required></label>
+          <label><span>Full-time %</span><input name="full_time_mix" type="number" min="0" max="100" required></label>
+          <label><span>Contract %</span><input name="contract_mix" type="number" min="0" max="100" required></label>
+          <label><span>Freelance %</span><input name="freelance_mix" type="number" min="0" max="100" required></label>
+          <label><span>Automated %</span><input name="automated_mix" type="number" min="0" max="100" required></label>
+          <label><span>Manual-tailored %</span><input name="manual_mix" type="number" min="0" max="100" required></label>
+          <button class="button" type="submit">Save campaign</button>
+        </form>
+        <div class="market-goals" data-market-goals></div>
+      </div>
+
+      <div class="conversion-grid" data-market-conversions></div>
+      <details class="market-segments">
+        <summary>Conversion segments by track, handling mode, and verified fit profile</summary>
+        <div class="conversion-grid" data-market-segments></div>
+      </details>
+      <p class="market-recommendation" data-market-recommendation></p>
+
+      <div class="market-workspace">
+        <section>
+          <div class="section-heading compact">
+            <div><p class="eyebrow">Persistent funnel</p><h2>Opportunities</h2></div>
+            <small>Fit remains unknown until job demands are reviewed.</small>
+          </div>
+          <form class="opportunity-form" data-market-opportunity-form>
+            <label><span>Company</span><input name="company" required></label>
+            <label><span>Job title</span><input name="job_title" required></label>
+            <label><span>Track</span><select name="track"><option value="full_time">A · Full-time</option><option value="contract_project" selected>B · Contract / Project</option><option value="freelance">C · Freelance</option></select></label>
+            <label><span>Application mode</span><select name="application_mode"><option value="automated">Automated</option><option value="manual_tailored">Manual-tailored</option></select></label>
+            <label><span>Resume filename</span><input name="resume_file" placeholder="automation-data.pdf"></label>
+            <label><span>Source URL</span><input name="source_url" type="url"></label>
+            <label class="wide"><span>Saved job description</span><textarea name="description" rows="5" required></textarea></label>
+            <button class="button" type="submit">Add opportunity</button>
+          </form>
+          <div class="market-opportunity-list" data-market-opportunities></div>
+        </section>
+
+        <section class="market-detail" data-market-detail>
+          <div class="empty">Select an opportunity to review its fit and interview plan.</div>
+        </section>
+      </div>
+    </section>
+
+    <section class="panel resume-routing-panel module-view" data-view="resumes">
+      <div class="section-heading compact">
+        <div>
+          <p class="eyebrow">Generated artifacts · deterministic matching</p>
+          <h2>Resume routing</h2>
+        </div>
+        <small data-resume-directory></small>
+      </div>
+      <div class="resume-route-grid" data-resume-routes></div>
+    </section>
+
+    <section class="panel sessions-panel module-view" data-view="connections">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Accounts and browser sessions</p>
+          <h2>Sign in or disconnect</h2>
+        </div>
+        <p>Credentials stay in the provider's visible login page.</p>
+      </div>
+      <p class="goal-id" data-question-bank-status>Question bank status unavailable.</p>
+      <div class="session-grid" data-sessions aria-live="polite"></div>
+    </section>
+
+    <section class="panel live-panel module-view" data-view="automation">
+      <div class="section-heading compact">
+        <div><p class="eyebrow">Brave CDP · live previews</p><h2>Website pages</h2></div>
+        <small>Click a preview to focus its real browser tab.</small>
+      </div>
+      <div class="live-groups" data-live-pages></div>
+    </section>
+
+    <section class="work-area module-view" data-view="automation">
+      <div class="tabs" role="tablist" aria-label="Job work queues">
+        <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="automatic">
+          Automatic Work <span data-tab-automatic-count>0</span>
+        </button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="interventions">
+          Needs Human Intervention <span class="attention-badge" data-tab-intervention-count>0</span>
+        </button>
+      </div>
+
+      <section class="panel tab-panel active" role="tabpanel" data-panel="automatic">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">No action required</p>
+            <h2>Live work queue</h2>
+          </div>
+          <small data-run-detail>No run artifact yet.</small>
+        </div>
+        <div class="work-list" data-automatic-list></div>
+        <div class="work-list goal-items" data-goal-items></div>
+      </section>
+
+      <section class="panel tab-panel" role="tabpanel" data-panel="interventions" hidden>
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Grouped by action, then website</p>
+            <h2>What you need to do</h2>
+          </div>
+          <small><span data-access-intervention-count>0</span> access gate(s) auto-recheck · <span data-question-intervention-count>0</span> question review(s) require your click.</small>
+        </div>
+        <div class="intervention-groups" data-intervention-groups></div>
+        <div class="work-list goal-items" data-goal-intervention-items></div>
+      </section>
+    </section>
+
+    <p class="toast" role="status" aria-live="polite" data-toast></p>
+  </main>
+
+  <dialog class="modal" data-disconnect-dialog>
+    <form method="dialog" data-disconnect-form>
+      <p class="eyebrow">Session action</p>
+      <h2>Disconnect <span data-disconnect-name></span>?</h2>
+      <p class="modal-copy">Website logout can affect other tabs using the same browser account.</p>
+      <label class="choice">
+        <input type="radio" name="disconnect-mode" value="local" checked>
+        <span><strong>Disconnect locally</strong><small>Remove only CareerLens' reusable session.</small></span>
+      </label>
+      <label class="choice">
+        <input type="radio" name="disconnect-mode" value="website">
+        <span><strong>Also open website logout</strong><small>Use the provider's normal visible logout flow.</small></span>
+      </label>
+      <label class="remember"><input type="checkbox" data-remember-disconnect> Don't show this again</label>
+      <div class="modal-actions">
+        <button class="button ghost" value="cancel">Cancel</button>
+        <button class="button danger" value="confirm" data-confirm-disconnect>Continue</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" data-settings-dialog>
+    <form method="dialog">
+      <p class="eyebrow">Control center</p>
+      <h2>Settings</h2>
+      <label class="settings-field">
+        <span>Default disconnect behavior</span>
+        <select data-disconnect-setting>
+          <option value="ask">Ask every time</option>
+          <option value="local">Disconnect locally</option>
+          <option value="website">Also open website logout</option>
+        </select>
+      </label>
+      <p class="modal-copy">This preference is stored only in this browser. No credentials are stored here.</p>
+      <div class="modal-actions">
+        <button class="button" value="close">Close</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

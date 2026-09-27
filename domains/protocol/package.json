@@ -1,0 +1,20 @@
+{
+  "name": "@pytorch-ph/domain-protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./career-evidence": "./career-evidence/index.ts",
+    "./discord-community": "./discord-community/index.ts",
+    "./identity": "./identity/index.ts",
+    "./job-discovery": "./job-discovery/index.ts",
+    "./leaderboards": "./leaderboards/index.ts",
+    "./organization": "./organization/index.ts",
+    "./organization/workflow": "./organization/workflow-shape.ts",
+    "./privacy-feedback": "./privacy-feedback/index.ts",
+    "./resumes": "./resumes/index.ts"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  }
+}

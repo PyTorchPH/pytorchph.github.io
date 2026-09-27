@@ -1,0 +1,117 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=0.6in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\usepackage{enumitem}
+% Each section heading is followed by a full-width horizontal rule that scopes it.
+\titleformat{\section}{\large\bfseries\scshape}{}{0pt}{}[\titlerule]
+\titlespacing*{\section}{0pt}{8pt}{4pt}
+\setlist[itemize]{leftmargin=*,nosep,topsep=1pt}
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+\linespread{0.99}
+\pagestyle{empty}
+
+\begin{document}
+
+% Job title is the dominant header element; the name is a secondary, muted line.
+\begin{center}
+  {\LARGE \textbf{<< resume.role.label | tex_escape >>}}\\[3pt]
+  {\large << resume.contact.name | tex_escape >>}(* if resume.contact.location *) $\cdot$ << resume.contact.location | tex_escape >>(* endif *)\\[1pt]
+  << resume.contact.email | tex_escape >>(* if resume.contact.phone *) $\cdot$ << resume.contact.phone | tex_escape >>(* endif *)(* if resume.contact.github *) $\cdot$ << (resume.contact.github if resume.contact.github.startswith('http') else 'github.com/' ~ resume.contact.github) | tex_escape >>(* endif *)(* if resume.contact.linkedin *) $\cdot$ << (resume.contact.linkedin if resume.contact.linkedin.startswith('http') else 'linkedin.com/in/' ~ resume.contact.linkedin) | tex_escape >>(* endif *)(* if resume.contact.website *) $\cdot$ << resume.contact.website | tex_escape >>(* endif *)
+\end{center}
+
+(* if resume.summary *)
+\section*{Summary}
+<< resume.summary | tex_escape >>
+(* endif *)
+
+(* if resume.skill_groups or resume.skills *)
+\section*{Skills}
+(* if resume.skill_groups *)
+(* for group in resume.skill_groups *)
+\textbf{<< group.name | tex_escape >>}: << group.items | join(", ") | tex_escape >>(* if not loop.last *) $\cdot$ (* endif *)
+(* endfor *)
+(* else *)
+<< resume.skills | compact_skills | join(" $\\cdot$ ") | tex_escape >>
+(* endif *)
+(* endif *)
+
+(* if resume.experience *)
+\section*{Experience}
+(* for x in resume.experience *)
+\textbf{<< x.role | tex_escape >>} --- << x.company | tex_escape >>(* if x.location *), << x.location | tex_escape >>(* endif *)(* if x.start or x.end *) \hfill \textit{<< (x.start or "") | tex_escape >> -- << (x.end or "Present") | tex_escape >>}(* endif *)
+(* if x.bullets *)
+\begin{itemize}
+(* for b in x.bullets *)
+  \item << b | tex_escape >>
+(* endfor *)
+\end{itemize}
+(* endif *)
+(* endfor *)
+(* endif *)
+
+(* if resume.projects *)
+\section*{Projects}
+(* for p in resume.projects *)
+\textbf{<< p.name | tex_escape >>}(* if p.display_url *) --- \href{<< p.url or "#" >>}{(* if p.source_icon == "github" *)GitHub (* elif p.source_icon == "linkedin" *)LinkedIn (* elif p.source_icon == "facebook" *)Facebook (* else *)Source (* endif *)<< p.display_url | replace("github/", "/") | tex_escape >>}(* elif p.url *) --- \href{<< p.url >>}{<< p.url | tex_escape >>}(* endif *)\\
+(* if p.tech *)\textit{<< p.tech | join(", ") | tex_escape >>}\\(* endif *)
+\begin{itemize}
+(* for q in p.quantitative_impact *)
+  \item << q | tex_escape >>
+(* endfor *)
+(* if p.description *)  \item << p.description | tex_escape >>
+(* endif *)
+(* for ql in p.qualitative_impact *)
+  \item << ql | tex_escape >>
+(* endfor *)
+(* for b in p.bullets *)
+  \item << b | tex_escape >>
+(* endfor *)
+\end{itemize}
+\\[2pt]
+(* endfor *)
+(* endif *)
+
+(* if resume.achievements *)
+\section*{Achievements}
+\begin{itemize}
+(* for a in resume.achievements *)
+  \item \textbf{<< a.title | tex_escape >>}(* if a.date *) \textit{(<< a.date | tex_escape >>)}(* endif *) --- \textit{<< a.source | tex_escape >>}(* if a.snippet *): << a.snippet | tex_escape >>(* endif *)(* for q in a.quantitative_impact *) << q | tex_escape >>(* endfor *)(* for ql in a.qualitative_impact *) << ql | tex_escape >>(* endfor *)
+(* endfor *)
+\end{itemize}
+(* endif *)
+
+(* if resume.academic_highlights *)
+\section*{Academic Highlights}
+\begin{itemize}
+(* for item in resume.academic_highlights *)
+  \item \textbf{<< item.label | tex_escape >>}: << item.value | tex_escape >>
+(* endfor *)
+\end{itemize}
+(* endif *)
+
+(* if resume.certifications *)
+\section*{Certifications}
+\begin{itemize}
+(* for c in resume.certifications *)
+  \item \textbf{<< c.name | tex_escape >>}(* if c.issuer *) --- << c.issuer | tex_escape >>(* endif *)(* if c.date *) (<< c.date | tex_escape >>)(* endif *)
+(* endfor *)
+\end{itemize}
+(* endif *)
+
+(* if resume.education *)
+\section*{Education}
+(* for e in resume.education *)
+\textbf{<< e.school | tex_escape >>}(* if e.degree *) --- << e.degree | tex_escape >>(* endif *)(* if e.field *) in << e.field | tex_escape >>(* endif *)(* if e.start and e.end *) \hfill \textit{<< e.start | tex_escape >> -- << e.end | tex_escape >>}(* elif e.end *) \hfill \textit{Expected << e.end | tex_escape >>}(* elif e.start *) \hfill \textit{<< e.start | tex_escape >> -- Present}(* endif *)
+(* if e.notes *)
+\begin{itemize}
+(* for n in e.notes *)
+  \item << n | tex_escape >>
+(* endfor *)
+\end{itemize}
+(* endif *)
+(* endfor *)
+(* endif *)
+
+\end{document}

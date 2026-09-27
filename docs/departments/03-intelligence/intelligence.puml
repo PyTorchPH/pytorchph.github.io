@@ -1,0 +1,74 @@
+@startuml intelligence
+title Department 03 — Intelligence (Extract + Synthesize + LLM)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "Extraction (extractors/)" {
+  abstract class Extractor {
+    +{abstract} extract(repos: list[Repo], role: RoleSpec): list[Evidence]
+  }
+  class StaticExtractor {
+    .. regex keyword scoring ..
+    +extract(repos, role): list[Evidence]
+  }
+  class AIExtractor {
+    .. LLM relevance + bullets ..
+    +extract(repos, role): list[Evidence]
+  }
+  Extractor <|-- StaticExtractor
+  Extractor <|-- AIExtractor
+}
+
+package "Synthesis (synthesizers/)" {
+  abstract class Synthesizer {
+    +{abstract} build(role, repos, evidence, documents): Resume
+  }
+  class StaticSynthesizer {
+    .. template-based assembly ..
+  }
+  class AISynthesizer {
+    .. LLM content generation ..
+  }
+  Synthesizer <|-- StaticSynthesizer
+  Synthesizer <|-- AISynthesizer
+}
+
+package "LLM providers (llm/)" #LightYellow {
+  abstract class LLMProvider {
+    +name: str
+    +{abstract} complete(prompt, system, max_tokens): str
+    +structured(prompt, schema, system, max_tokens): T
+  }
+  class AnthropicProvider <<Claude>>
+  class OpenAIProvider <<GPT-4o-mini>>
+  class ClaudeSessionProvider <<clipboard paste, no API key>>
+  class NullProvider <<no-op, static mode>>
+  LLMProvider <|-- AnthropicProvider
+  LLMProvider <|-- OpenAIProvider
+  LLMProvider <|-- ClaudeSessionProvider
+  LLMProvider <|-- NullProvider
+
+  class "get_provider() / registry" as Registry << factory >>
+  Registry ..> LLMProvider : selects by settings/env
+}
+
+' --- dependencies ---
+AIExtractor --> LLMProvider : uses
+AISynthesizer --> LLMProvider : uses
+StaticExtractor ..> "regex_patterns.json" : reads
+
+' --- data contract ---
+Extractor --> "Evidence[]\n(Dept 01)" : produces
+Synthesizer --> "Resume\n(Dept 01)" : produces
+Synthesizer ..> "Dept 02: Repo[] / RawDocument[]" : consumes
+
+note bottom of LLMProvider
+  structured() default = ask for JSON,
+  tolerant-parse into pydantic schema.
+  Providers may override with native
+  tool-use / structured output.
+  Swapping providers is a registry concern,
+  NOT a stage concern.
+end note
+@enduml

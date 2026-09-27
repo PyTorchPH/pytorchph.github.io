@@ -1,0 +1,116 @@
+# {{ resume.role.label or "Your Target Role" }}
+
+{% set _gh_link = declutter_link(resume.contact.github, "github") if resume.contact.github else None %}
+{% set _li_link = declutter_link(resume.contact.linkedin, "linkedin") if resume.contact.linkedin else None %}
+{% set _ws_link = declutter_link(resume.contact.website, "website") if resume.contact.website else None %}
+**{{ resume.contact.name or "Your Name" }}**{% if resume.contact.email %} · {{ resume.contact.email }}{% endif %}{% if resume.contact.phone %} · {{ resume.contact.phone }}{% endif %}{% if _gh_link %} · [github/{{ _gh_link[1] or '' }}]({{ resume.contact.github if resume.contact.github.startswith('http') else 'https://github.com/' ~ resume.contact.github }}){% endif %}{% if _li_link %} · [linkedin/{{ _li_link[1] or '' }}]({{ resume.contact.linkedin if resume.contact.linkedin.startswith('http') else 'https://www.linkedin.com/in/' ~ resume.contact.linkedin }}){% endif %}{% if resume.contact.facebook %} · facebook/{{ resume.contact.facebook }}{% endif %}{% if _ws_link %} · [{{ _ws_link[1] or resume.contact.website }}]({{ resume.contact.website }}){% endif +%}
+
+---
+
+## Summary
+
+{{ resume.summary }}
+
+{% if resume.skill_groups or resume.skills %}
+---
+
+## Skills
+
+{% if resume.skill_groups %}
+{% for group in resume.skill_groups %}
+- **{{ group.name }}:** {{ group.items | join(", ") }}
+{% endfor %}
+{% else %}
+{{ resume.skills | compact_skills | join(" · ") }}
+{% endif %}
+
+{% endif %}
+{% if resume.experience %}
+---
+
+## Experience
+
+{% for x in resume.experience %}
+### {{ x.role }}{% if x.company %} — {{ x.company }}{% endif %}{% if x.location %}, {{ x.location }}{% endif +%}
+{% if x.start or x.end %}*{{ x.start or "" }} – {{ x.end or "Present" }}*
+{% endif %}
+{% for b in x.bullets %}
+- {{ b }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% if resume.projects %}
+---
+
+## Projects
+
+{% for p in resume.projects %}
+### {{ p.name }}{% if p.display_url %} — [{{ p.display_url }}]({{ p.url }}){% elif p.url %} — [{{ p.url }}]({{ p.url }}){% endif +%}
+{% if p.tech %}*{{ p.tech | join(" · ") }}*
+{% endif %}
+{% for q in p.quantitative_impact %}
+- {{ q }}
+{% endfor %}
+{% if p.description %}- {{ p.description }}
+{% endif %}
+{% for ql in p.qualitative_impact %}
+- {{ ql }}
+{% endfor %}
+{% for b in p.bullets %}
+- {{ b }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% if resume.achievements %}
+---
+
+## Achievements
+
+{% for a in resume.achievements %}
+{% if a.url and a.source != "facebook" and a.source_icon != "facebook" %}
+- **[{{ a.title }}]({{ a.url }})**{% if a.date %} *({{ a.date }})*{% endif %} — *{{ a.source }}*{% if a.snippet %}: {{ a.snippet }}{% endif +%}
+{% else %}
+- **{{ a.title }}**{% if a.date %} *({{ a.date }})*{% endif %} — *{{ a.source }}*{% if a.snippet %}: {{ a.snippet }}{% endif +%}
+{% endif %}
+{% endfor %}
+
+{% endif %}
+{% if resume.academic_highlights %}
+---
+
+## Academic Highlights
+
+{% for item in resume.academic_highlights %}
+- **{{ item.label }}:** {{ item.value }}
+{% endfor %}
+
+{% endif %}
+{% if resume.certifications %}
+---
+
+## Certifications
+
+{% for c in resume.certifications %}
+- **{{ c.name }}**{% if c.issuer %} — {{ c.issuer }}{% endif %}{% if c.date %} ({{ c.date }}){% endif +%}
+{% endfor %}
+
+{% endif %}
+{% if resume.education %}
+---
+
+## Education
+
+{% for e in resume.education %}
+### {{ e.school }}{% if e.degree %} — {{ e.degree }}{% endif %}{% if e.field %} in {{ e.field }}{% endif +%}
+{% if e.start and e.end %}*{{ e.start }} – {{ e.end }}*
+{% elif e.end %}*Expected {{ e.end }}*
+{% elif e.start %}*{{ e.start }} – Present*
+{% endif %}
+{% for n in e.notes %}
+- {{ n }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}

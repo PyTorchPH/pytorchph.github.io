@@ -1,0 +1,15 @@
+{
+  "_note": "PLACEHOLDER. Replace with the real template the user will provide. This is just the SLOT the DocumentInjector renders into. Fields are illustrative {{mustache}} placeholders mapped from ActivityContext.facts + DepartmentBrief.",
+  "templateId": "competitive-programming.secretariat",
+  "format": "TBD (DOCX | PDF | Google Doc | HTML — depends on the provided template)",
+  "recipientLine": "To: {{recipient}}",
+  "subject": "Endorsement Request — {{title}}",
+  "body": [
+    "Respectfully submitted for approval:",
+    "Activity: {{title}} ({{category}}, {{scope}})",
+    "Summary: {{summary}}",
+    "Required content: {{requiredContent}}",
+    "Source: {{sourceUrl}}"
+  ],
+  "signoff": "Prepared by the {{department}} — PyTorch Philippines Chapter"
+}

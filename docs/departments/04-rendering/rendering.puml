@@ -1,0 +1,65 @@
+@startuml rendering
+title Department 04 — Rendering / Output
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "Renderer interface (renderers/base.py)" {
+  abstract class Renderer {
+    +extension: str
+    +{abstract} render(resume: Resume): str | bytes
+    +write(resume, out_dir, stem="resume"): Path
+  }
+}
+
+package "Concrete renderers (renderers/)" {
+  class LatexRenderer {
+    +extension = "tex"
+  }
+  class HtmlRenderer {
+    +extension = "html"
+  }
+  class MarkdownRenderer {
+    +extension = "md"
+  }
+  class JsonRenderer {
+    +extension = "json"
+  }
+  class PdfRenderer {
+    +extension = "pdf"
+    .. ReportLab 2-column ..
+  }
+  Renderer <|-- LatexRenderer
+  Renderer <|-- HtmlRenderer
+  Renderer <|-- MarkdownRenderer
+  Renderer <|-- JsonRenderer
+  Renderer <|-- PdfRenderer
+}
+
+package "Lookup (renderers/registry.py)" {
+  class "get_renderer(fmt, templates_dir)" as Registry << factory >>
+  Registry ..> Renderer : returns by format
+}
+
+package "Templates (config/templates/)" #LightYellow {
+  class "resume.latex.j2" << Jinja2 >>
+  class "resume.html.j2" << Jinja2 >>
+  class "resume.md.j2" << Jinja2 >>
+}
+
+LatexRenderer ..> "resume.latex.j2"
+HtmlRenderer ..> "resume.html.j2"
+MarkdownRenderer ..> "resume.md.j2"
+
+' --- input contract ---
+"Dept 01: Resume" --> Renderer : the ONLY input
+Renderer --> "files in out/" : write() returns Path
+
+note bottom of Renderer
+  write() is shared base logic:
+  - mkdir -p out_dir
+  - choose wb/utf-8 by content type
+  - write <stem>.<extension>
+  Subclasses implement render() only.
+end note
+@enduml

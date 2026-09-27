@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Result · resume-build-chopper</title>
+  <style>
+    body { background: #0f1115; color: #e8ecf3; font-family: ui-sans-serif, system-ui;
+           margin: 0; padding: 2rem; }
+    main { max-width: 720px; margin: 0 auto; }
+    .panel { background: #171a21; border: 1px solid #232734; border-radius: 12px; padding: 1.25rem; }
+    a { color: #7aa2ff; }
+    .error { color: #ff6f6f; }
+    ul { padding-left: 1.25rem; }
+    .back { display: inline-block; margin-top: 1rem; color: #8a93a6; }
+  </style>
+</head>
+<body>
+<main>
+  {% if error %}
+    <div class="panel">
+      <h2 class="error">Build failed</h2>
+      <pre>{{ error }}</pre>
+    </div>
+  {% else %}
+    <div class="panel">
+      <h2>Generated</h2>
+      {% if resume %}
+        <p><b>Role:</b> {{ resume.role.label }}</p>
+        <p><b>Projects:</b> {{ resume.projects | length }} included</p>
+      {% endif %}
+      <ul>
+        {% for f in files %}
+        <li><a href="{{ f.url }}">{{ f.name }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+  <a class="back" href="/">&larr; build another</a>
+</main>
+</body>
+</html>

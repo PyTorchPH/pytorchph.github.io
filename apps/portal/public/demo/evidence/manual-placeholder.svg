@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title description">
+  <title id="title">Career evidence placeholder</title>
+  <desc id="description">Abstract document and verification marks for manually entered evidence.</desc>
+  <rect width="1200" height="900" fill="#111827"/>
+  <circle cx="210" cy="170" r="260" fill="#e8590c" opacity=".18"/>
+  <rect x="300" y="150" width="600" height="600" rx="42" fill="#fff7ed"/>
+  <rect x="390" y="270" width="420" height="34" rx="17" fill="#e8590c"/>
+  <rect x="390" y="360" width="330" height="22" rx="11" fill="#94a3b8"/>
+  <rect x="390" y="420" width="390" height="22" rx="11" fill="#cbd5e1"/>
+  <rect x="390" y="480" width="350" height="22" rx="11" fill="#cbd5e1"/>
+  <circle cx="765" cy="620" r="76" fill="#16a34a"/>
+  <path d="m730 620 25 25 48-58" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="22"/>
+</svg>

@@ -1,0 +1,60 @@
+{
+  "roles": [
+    {
+      "id": "cybersecurity-blueteam",
+      "label": "Cybersecurity — Blue Team / SOC",
+      "keywords": [
+        "SIEM", "IDS", "IPS", "incident response", "SOC", "Splunk", "Wazuh",
+        "ELK", "threat hunting", "DFIR", "EDR", "blue team"
+      ],
+      "must_have_skills": ["log analysis", "threat detection", "incident response"],
+      "nice_to_have": ["MITRE ATT&CK", "YARA", "Sigma rules", "Suricata"],
+      "summary_hint": "Defensive security focus — detection engineering and incident response."
+    },
+    {
+      "id": "cybersecurity-redteam",
+      "label": "Cybersecurity — Red Team / Offensive",
+      "keywords": [
+        "penetration testing", "pentest", "red team", "exploit", "CVE",
+        "Burp Suite", "Metasploit", "nmap", "Nessus", "OWASP"
+      ],
+      "must_have_skills": ["web app pentesting", "exploit development"],
+      "nice_to_have": ["OSCP", "CRTO", "reverse engineering", "fuzzing"],
+      "summary_hint": "Offensive security focus — pentesting and vulnerability research."
+    },
+    {
+      "id": "fullstack-web",
+      "label": "Full-Stack Web Developer",
+      "keywords": [
+        "react", "next.js", "node.js", "typescript", "express", "fastapi",
+        "django", "postgres", "rest api", "graphql"
+      ],
+      "must_have_skills": ["frontend", "backend", "databases"],
+      "nice_to_have": ["docker", "ci/cd", "aws", "vercel"],
+      "summary_hint": "End-to-end web product builder."
+    },
+    {
+      "id": "ml-engineer",
+      "label": "Machine Learning Engineer",
+      "keywords": [
+        "pytorch", "tensorflow", "scikit-learn", "transformers", "LLM",
+        "fine-tuning", "RAG", "embeddings", "MLOps"
+      ],
+      "must_have_skills": ["python", "model training", "evaluation"],
+      "nice_to_have": ["distributed training", "vector db", "Triton"],
+      "summary_hint": "Applied ML — from training to production serving."
+    },
+    {
+      "id": "systems-compilers",
+      "label": "Systems / Compilers / Languages Engineer",
+      "keywords": [
+        "compiler", "interpreter", "parser", "lexer", "AST", "code generation",
+        "bytecode", "virtual machine", "C++", "CMake", "assembly",
+        "systems programming", "language design", "low-level"
+      ],
+      "must_have_skills": ["C/C++", "systems programming", "data structures"],
+      "nice_to_have": ["LLVM", "reverse engineering", "operating systems"],
+      "summary_hint": "Low-level systems and language tooling — compilers, interpreters, and performance-critical C/C++."
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { currentViewer } from "@pytorch-ph/domain-server/identity";
+import { readExternalEvents, submitExternalEvent } from "@pytorch-ph/domain-server/organization";
+export async function GET() { try { return NextResponse.json(await readExternalEvents(await currentViewer()), { headers: { "Cache-Control": "private, no-store" } }); } catch (error) { const message = error instanceof Error ? error.message : "Unavailable"; return NextResponse.json({ error: message }, { status: message.includes("Authentication") ? 401 : 503 }); } }
+export async function POST(request: Request) { try { return NextResponse.json(await submitExternalEvent(await currentViewer(), await request.json()), { status: 201, headers: { "Cache-Control": "private, no-store" } }); } catch (error) { const message = error instanceof Error ? error.message : "Submission failed"; return NextResponse.json({ error: message }, { status: message.includes("Authentication") ? 401 : 422 }); } }

@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CareerLens AI Prototype</title>
+  <link rel="stylesheet" href="/static/prototype.css">
+  <script id="advisor-demo-payload" type="application/json">{{ data.advisor_demo | tojson }}</script>
+  <script defer src="/static/prototype.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">CL</div>
+      <span>CareerLens AI</span>
+    </div>
+    <nav class="nav" aria-label="Application navigation">
+      <button class="active" type="button" data-page-target="dashboard">Dashboard</button>
+      <button type="button" data-page-target="evidence">Evidence Map</button>
+      <button type="button" data-page-target="resume">Resume Studio</button>
+      <button type="button" data-page-target="advisor">CDO Advisor</button>
+    </nav>
+  </aside>
+
+  <main class="main" id="app-main">
+    <section class="page-panel active" id="dashboard" data-page-panel="dashboard" aria-label="Dashboard">
+      <div class="topbar">
+        <div>
+          <p class="eyebrow">AI Campus Hackathon prototype</p>
+          <h1 class="page-title">Career intelligence workspace</h1>
+          <p class="subtitle">
+            Reconstruct student achievements from approved digital sources and turn
+            verified evidence into role-targeted resumes.
+          </p>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="button" data-page-target="resume">Open Resume Studio</button>
+        </div>
+      </div>
+
+      <div class="hero-grid">
+        <div class="overview">
+          <div class="profile-row">
+            <div>
+              <p class="eyebrow">Student profile</p>
+              <h2 class="student-name">{{ data.student.name }}</h2>
+              <p class="profile-meta">
+                {{ data.student.program }} | {{ data.student.school }}<br>
+                Target: {{ data.student.target_role }}
+              </p>
+            </div>
+            <div class="score" aria-label="Resume readiness score {{ data.student.readiness_score }} percent">
+              <div>
+                <strong>{{ data.student.readiness_score }}%</strong>
+                <span>ready</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="metrics" aria-label="Profile metrics">
+            <div class="metric">
+              <strong>{{ data.sources | sum(attribute="count") }}</strong>
+              <span>career signals found</span>
+            </div>
+            <div class="metric">
+              <strong>{{ data.career_nodes | length }}</strong>
+              <span>evidence nodes</span>
+            </div>
+            <div class="metric">
+              <strong>{{ data.recommendations | length }}</strong>
+              <span>next actions</span>
+            </div>
+          </div>
+        </div>
+
+        <figure class="concept" aria-label="CareerLens AI concept visual">
+          <img src="/static/careerlens-concept.png" alt="CareerLens AI dashboard concept visual">
+        </figure>
+      </div>
+
+      <section class="auth-panel get-started" aria-label="Let's Get Started">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Let's Get Started</p>
+            <h2>Connect identity first, then approve social sessions</h2>
+          </div>
+          <button class="btn" type="button" data-auth-refresh>Refresh status</button>
+        </div>
+
+        <div class="auth-grid">
+          <section>
+            <div class="section-header compact">
+              <h3>Identity providers</h3>
+              <span class="section-label">Stored email for future provider reuse</span>
+            </div>
+            <div class="auth-list">
+              {% for provider in data.auth.identity_providers %}
+              <article class="auth-card" data-provider-card="{{ provider.id }}">
+                <div>
+                  <h4>{{ provider.name }}</h4>
+                  <p>{{ provider.detail }}</p>
+                  <small data-provider-status="{{ provider.id }}">Checking status...</small>
+                </div>
+                <div class="auth-actions">
+                  <a class="btn primary" href="/auth/{{ provider.id }}/start">Sign in</a>
+                  <button class="btn" type="button" data-disconnect-provider="{{ provider.id }}">Disconnect</button>
+                </div>
+              </article>
+              {% endfor %}
+            </div>
+          </section>
+
+          <section>
+            <div class="section-header compact">
+              <h3>Social scraping sessions</h3>
+              <span class="section-label">User-approved visible login</span>
+            </div>
+            <div class="auth-list">
+              {% for vendor in data.auth.social_vendors %}
+              <article class="auth-card" data-social-card="{{ vendor.id }}">
+                <div>
+                  <h4>{{ vendor.name }}</h4>
+                  <p>{{ vendor.detail }}</p>
+                  <small data-social-status="{{ vendor.id }}">Checking status...</small>
+                </div>
+                <div class="auth-actions">
+                  <button class="btn primary" type="button" data-social-login="{{ vendor.id }}">Connect</button>
+                  <button class="btn" type="button" data-disconnect-social="{{ vendor.id }}">Disconnect</button>
+                </div>
+              </article>
+              {% endfor %}
+            </div>
+          </section>
+        </div>
+
+        <div class="auth-log" data-auth-log>No login job has been started.</div>
+      </section>
+    </section>
+
+    <section class="page-panel" id="evidence" data-page-panel="evidence" aria-label="Evidence Map">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Extraction layer</p>
+          <h1 class="page-title">Evidence Map</h1>
+          <p class="subtitle">
+            Career evidence is normalized into achievements, projects, skills, leadership, and certifications.
+          </p>
+        </div>
+      </div>
+      <div class="section-grid">
+        <div class="section">
+          <div class="graph">
+            <div class="graph-center">{{ data.student.name }} professional profile</div>
+            {% for node in data.career_nodes %}
+            <article class="row-item">
+              <div>
+                <h3>{{ node.label }}</h3>
+                <p>{{ node.type }}</p>
+              </div>
+              <span class="confidence">{{ node.confidence }}%</span>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="source-list">
+            {% for source in data.sources %}
+            <article class="row-item">
+              <div>
+                <h3>{{ source.name }}</h3>
+                <p>{{ source.signal }}</p>
+              </div>
+              <span class="pill green">{{ source.status }} | {{ source.count }}</span>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel" id="resume" data-page-panel="resume" aria-label="Resume Studio">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Resume Studio</p>
+          <h1 class="page-title">{{ data.student.resume_version }}</h1>
+          <p class="subtitle">{{ data.student.target_role }}</p>
+        </div>
+      </div>
+      <div class="workspace">
+        <div class="resume-preview" aria-label="Resume preview">
+          <header>
+            <h2>{{ data.student.name }}</h2>
+            <p>{{ data.student.resume_version }} | {{ data.student.target_role }}</p>
+          </header>
+          <h3>Summary</h3>
+          <p>
+            Computer Science student focused on full-stack product development,
+            hackathon execution, and campus technology leadership.
+          </p>
+          <h3>Selected Projects</h3>
+          <ul>
+            <li>Built a campus event platform using React, FastAPI, and PostgreSQL.</li>
+            <li>Created a repository-backed resume builder that filters projects by target role.</li>
+            <li>Led a student organization workflow tool from prototype to pilot release.</li>
+          </ul>
+          <h3>Skills</h3>
+          <p>Python, JavaScript, React, FastAPI, PostgreSQL, GitHub Actions, UI prototyping.</p>
+        </div>
+
+        <div class="studio-side">
+          <section class="section-panel">
+            <div class="section-header compact">
+              <h2>Format preview controls</h2>
+              <span class="section-label">Preview only</span>
+            </div>
+            <div class="resume-list">
+              {% for control in data.resume_studio.format_controls %}
+              <article class="row-item">
+                <div>
+                  <h3>{{ control.label }}</h3>
+                  <p>{{ control.value }}</p>
+                </div>
+              </article>
+              {% endfor %}
+            </div>
+          </section>
+
+          <section class="section-panel">
+            <div class="section-header compact">
+              <h2>Injection JSON slots</h2>
+              <span class="section-label">Not executed yet</span>
+            </div>
+            <pre class="json-preview">{
+{% for slot in data.resume_studio.injection_slots %}  "{{ slot.key }}": "{{ slot.value }}"{% if not loop.last %},{% endif %}
+{% endfor %}}</pre>
+          </section>
+
+          <section class="section-panel">
+            <div class="section-header compact">
+              <h2>Generated resumes</h2>
+              <span class="section-label">Loaded from out/resumes</span>
+            </div>
+            <div class="resume-list" data-resume-list>Loading generated resumes...</div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel" id="advisor" data-page-panel="advisor" aria-label="CDO Advisor">
+      <div class="cdo-band">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Career Development Office</p>
+            <h1>Advisor snapshot for {{ data.cdo.advisor }}</h1>
+          </div>
+          <span class="pill blue">JSON injection testing</span>
+        </div>
+        <p>{{ data.cdo.insight }}</p>
+        <div class="cdo-grid">
+          <div class="cdo-stat">
+            <strong>{{ data.cdo.queue }}</strong>
+            <span>students in queue</span>
+          </div>
+          <div class="cdo-stat">
+            <strong>{{ data.cdo.ready }}</strong>
+            <span>resume-ready</span>
+          </div>
+          <div class="cdo-stat">
+            <strong>{{ data.cdo.needs_review }}</strong>
+            <span>need review</span>
+          </div>
+          <div class="cdo-stat">
+            <strong>{{ data.cdo.at_risk }}</strong>
+            <span>at risk</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-grid">
+        <section class="section-panel">
+          <div class="section-header compact">
+            <h2>Advisor AI interpretation</h2>
+            <button class="btn primary" type="button" data-advisor-run>Run demo analysis</button>
+          </div>
+          <p class="band-copy">
+            AI returns tags and MCQ questions as JSON. Readiness scores are computed by the deterministic advisor algorithm.
+          </p>
+          <div class="recommendation-list" data-advisor-summary>
+            {% for item in data.recommendations %}
+            <article class="row-item">
+              <div>
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.detail }}</p>
+              </div>
+              <span class="pill {% if item.priority == 'High' %}red{% else %}gold{% endif %}">
+                {{ item.priority }}
+              </span>
+            </article>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="section-panel">
+          <div class="section-header compact">
+            <h2>Injection response</h2>
+            <span class="section-label">JSON only</span>
+          </div>
+          <pre class="json-preview" data-advisor-output>{
+  "status": "ready",
+  "action": "Run demo analysis"
+}</pre>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

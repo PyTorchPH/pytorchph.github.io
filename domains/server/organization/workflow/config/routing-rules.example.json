@@ -1,0 +1,10 @@
+[
+  { "category": "competitive-programming", "scope": "external", "requiredDepartments": ["secretariat", "treasurer", "academics"] },
+  { "category": "competitive-programming", "scope": "internal", "requiredDepartments": ["secretariat"] },
+  { "category": "hackathons", "scope": "external", "requiredDepartments": ["secretariat", "treasurer", "external-relations"] },
+  { "category": "hackathons", "scope": "internal", "requiredDepartments": ["secretariat"] },
+  { "category": "workshops", "scope": "external", "requiredDepartments": ["secretariat", "external-relations"] },
+  { "category": "workshops", "scope": "internal", "requiredDepartments": ["secretariat"] },
+  { "category": "events", "scope": "external", "requiredDepartments": ["secretariat", "treasurer", "external-relations", "executive"] },
+  { "category": "events", "scope": "internal", "requiredDepartments": ["secretariat", "executive"] }
+]

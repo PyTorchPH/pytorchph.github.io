@@ -1,0 +1,51 @@
+{
+  "categories": {
+    "security_tools": {
+      "patterns": [
+        "(?i)\\b(burp\\s*suite|metasploit|nmap|wireshark|nessus|nikto|sqlmap|hydra|john\\s*the\\s*ripper|hashcat)\\b"
+      ],
+      "weight": 2.0
+    },
+    "defensive_tools": {
+      "patterns": [
+        "(?i)\\b(splunk|wazuh|elk|elastic|kibana|grafana|suricata|snort|zeek|osquery|crowdstrike|sentinelone)\\b"
+      ],
+      "weight": 2.0
+    },
+    "cve_references": {
+      "patterns": ["CVE-\\d{4}-\\d{4,7}"],
+      "weight": 3.0
+    },
+    "frameworks_web": {
+      "patterns": [
+        "(?i)\\b(react|next\\.?js|vue|svelte|nuxt|angular|remix)\\b",
+        "(?i)\\b(express|fastapi|django|flask|nestjs|laravel|rails)\\b"
+      ],
+      "weight": 1.5
+    },
+    "ml_stack": {
+      "patterns": [
+        "(?i)\\b(pytorch|tensorflow|jax|scikit-learn|huggingface|transformers|langchain|llama-?index)\\b"
+      ],
+      "weight": 1.5
+    },
+    "infra_devops": {
+      "patterns": [
+        "(?i)\\b(docker|kubernetes|terraform|ansible|aws|gcp|azure|vercel|cloudflare)\\b"
+      ],
+      "weight": 1.0
+    },
+    "languages": {
+      "patterns": [
+        "(?i)\\b(python|typescript|javascript|go|golang|rust|c\\+\\+|java|kotlin|swift|ruby|php)\\b"
+      ],
+      "weight": 0.5
+    },
+    "certifications": {
+      "patterns": [
+        "(?i)\\b(OSCP|OSCE|CEH|CISSP|Security\\+|CompTIA|GPEN|GWAPT|CRTO|AWS\\s+Certified)\\b"
+      ],
+      "weight": 3.0
+    }
+  }
+}
