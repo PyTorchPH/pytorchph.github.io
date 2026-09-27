@@ -5,7 +5,7 @@ for (var i = 0; i < links.length; i++) {
     continue;
   }
 
-  if (!links[i].hostname.includes("pytorch.kr")) {
+  if (links[i].hostname !== window.location.hostname) {
     links[i].target = '_blank';
   }
 }

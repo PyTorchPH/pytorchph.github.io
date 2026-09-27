@@ -4,7 +4,7 @@ title: PyTorch for Edge
 permalink: /get-started/executorch/
 background-class: get-started-background
 body-class: get-started
-order: 6
+order: 5
 published: true
 ---
 

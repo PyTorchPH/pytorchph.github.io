@@ -2,21 +2,21 @@
   <div class="container">
     <div class="row">
       <div class="col-md-4 text-center">
-        <h2>PyTorchKorea @ GitHub</h2>
-        <p>파이토치 한국 사용자 모임을 GitHub에서 만나보세요.</p>
-        <a class="with-right-arrow" href="{{ site.external_urls.repo_org }}">GitHub로 이동</a>
+        <h2>PyTorch Docs</h2>
+        <p>Comprehensive developer documentation for PyTorch.</p>
+        <a class="with-right-arrow" href="{{ site.external_urls.org_docs }}">View Docs</a>
       </div>
 
       <div class="col-md-4 text-center">
-        <h2>한국어 튜토리얼</h2>
-        <p>한국어로 번역 중인 파이토치 튜토리얼을 만나보세요.</p>
-        <a class="with-right-arrow" href="{{ site.external_urls.site_tutorials }}">튜토리얼로 이동</a>
+        <h2>Tutorials</h2>
+        <p>Get in-depth tutorials for beginners and advanced developers.</p>
+        <a class="with-right-arrow" href="{{ site.external_urls.org_tutorials }}">View Tutorials</a>
       </div>
 
       <div class="col-md-4 text-center">
-        <h2>한국어 커뮤니티</h2>
-        <p>다른 사용자들과 의견을 나누고, 도와주세요!</p>
-        <a class="with-right-arrow" href="{{ site.external_urls.site_community }}">커뮤니티로 이동</a>
+        <h2>PyTorchPH @ GitHub</h2>
+        <p>Find community projects, learning materials, and event resources.</p>
+        <a class="with-right-arrow" href="{{ site.external_urls.repo_org }}">Go to GitHub</a>
       </div>
     </div>
   </div>
@@ -25,29 +25,48 @@
 <footer class="site-footer">
   <div class="container footer-container">
     <div class="footer-logo-wrapper">
-      <a href="{{ site.url }}{{ site.baseurl }}" class="footer-logo"></a>
+      <a href="{{ site.url }}{{ site.baseurl }}" class="footer-logo" aria-label="PyTorch Philippines"></a>
     </div>
 
     <div class="footer-links-wrapper">
       <div class="footer-links-col">
         <ul>
-          <li class="list-title"><a href="{{ site.baseurl }}">파이토치 한국 사용자 모임</a></li>
-          <li><a href="{{ site.baseurl }}/about">사용자 모임 소개</a></li>
-          <li><a href="{{ site.baseurl }}/contributors">기여해주신 분들</a></li>
-          <li><a href="{{ site.baseurl }}/resources">리소스</a></li>
-          <li><a href="{{ site.baseurl }}/coc">행동 강령</a></li>
+          <li class="list-title"><a href="{{ site.baseurl }}/">PyTorch Philippines</a></li>
+          <li><a href="{{ site.baseurl }}/about/">About</a></li>
+          <li><a href="{{ site.baseurl }}/events/">Events</a></li>
+          <li><a href="{{ site.baseurl }}/blog/">Blog</a></li>
+          <li><a href="{{ site.baseurl }}/code-of-conduct/">Code of Conduct</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links-col">
+        <ul>
+          <li class="list-title"><a href="{{ site.baseurl }}/portal/login/">Member Portal</a></li>
+          <li><a href="{{ site.baseurl }}/portal/register/">Join the community</a></li>
+          <li><a href="{{ site.baseurl }}/portal/community-preview/">Community preview</a></li>
+          <li><a href="{{ site.baseurl }}/get-started/locally/">Get started with PyTorch</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links-col">
+        <ul>
+          <li class="list-title"><a href="{{ site.external_urls.org_www }}" target="_blank">PyTorch</a></li>
+          <li><a href="{{ site.external_urls.org_docs }}" target="_blank">Docs</a></li>
+          <li><a href="{{ site.external_urls.org_tutorials }}" target="_blank">Tutorials</a></li>
+          <li><a href="{{ site.external_urls.org_forums }}" target="_blank">Forums</a></li>
+          <li><a href="{{ site.external_urls.repo_org }}" target="_blank">GitHub</a></li>
         </ul>
       </div>
     </div>
 
     <div class="trademark-disclaimer">
       <ul>
-        <li>이 사이트는 독립적인 파이토치 사용자 커뮤니티로, 최신 버전이 아니거나 잘못된 내용이 포함되어 있을 수 있습니다. This site is an independent user community and may be out of date or contain incorrect information.</li>
-        <li><a href="https://pytorch.kr/coc">행동 강령</a>을 읽고 지켜주세요. PyTorch 공식 로고 사용 규정은 <a href="https://www.linuxfoundation.org/policies/">Linux Foundation의 정책</a>을 따릅니다. Please read and follow <a href="https://pytorch.kr/coc">our code of conduct</a>. All PyTorch trademark policy applicable to <a href="https://www.linuxfoundation.org/policies/">Linux Foundation's policies</a>.</li>
+        <li>PyTorch Philippines is an independent, community-led user group and is not operated by the PyTorch Foundation. Content may not reflect the latest PyTorch release; see <a href="{{ site.external_urls.org_www }}">pytorch.org</a> for official information.</li>
+        <li>PyTorch, the PyTorch logo, and related marks are trademarks of The Linux Foundation. For trademark and logo usage, see the <a href="https://www.linuxfoundation.org/legal/trademark-usage">Linux Foundation trademark usage policy</a>.</li>
+        <li>This site is based on the open-source <a href="https://github.com/PyTorchKR/pytorch.kr">PyTorch Korea</a> and <a href="https://github.com/pytorch/pytorch.github.io">PyTorch</a> websites (BSD 3-Clause).</li>
       </ul>
     </div>
   </div>
-  {% include analytics.html %}
 </footer>
 
 {% include mobile_menu.html %}

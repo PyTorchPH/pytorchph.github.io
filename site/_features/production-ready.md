@@ -24,7 +24,7 @@ snippet: >
       my_script_module.save("my_script_module.pt")
   ```
 
-summary-home: TorchScript로 eager 모드와 graph 모드를 손쉽게 전환하고, TorchServe로 생산성을 높혀보세요.
+summary-home: Transition seamlessly between eager and graph modes with TorchScript, and accelerate the path to production with TorchServe.
 featured-home: true
 
 ---

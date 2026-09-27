@@ -121,4 +121,3 @@ For the majority of PyTorch users, installing from a pre-built binary via a pack
 3. Follow the steps described here: [https://github.com/pytorch/pytorch#from-source](https://github.com/pytorch/pytorch#from-source)
 
 You can verify the installation as described [above](#linux-verification).
-원본 텍스트로 전환하려면 클릭하세요.페이지 번역하려면 클릭하세요.설정PDF 번역

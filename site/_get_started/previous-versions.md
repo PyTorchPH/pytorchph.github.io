@@ -1,6 +1,6 @@
 ---
 layout: get_started
-title: 이전 버전의 PyTorch
+title: Previous PyTorch Versions
 permalink: /get-started/previous-versions/
 background-class: get-started-background
 body-class: get-started
@@ -9,263 +9,13 @@ published: true
 redirect_from: /previous-versions.html
 ---
 
-## 이전 버전의 PyTorch 설치하기
+## Installing previous versions of PyTorch
 
-[최신 버전](/get-started/locally)을 설치하시기를 권해드리지만,
-편의를 위해 아래와 같이 이전 버전의 설치 파일과 방법을 제공하고 있습니다. \
-이전 버전의 PyTorch와 호환되는 Domain API의 버전 정보는 [PyTorch 버전 호환성](/get-started/compatibility/)을 참고해주세요.
+We'd prefer you install the [latest version](https://pytorch.org/get-started/locally),
+but old binaries and installation instructions are provided below for
+your convenience.
 
-## 1.0.0 이상 버전 설치하기
-
-### v2.13.0
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.13.0 torchvision==0.28.0
-```
-
-##### Linux and Windows
-
-```
-# ROCM 7.2 (Linux only)
-pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/rocm7.2
-# CUDA 12.6
-pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 13.0
-pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cu130
-# CUDA 13.2
-pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cu132
-# CPU only
-pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cpu
-```
-
-### v2.12.1
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.12.1 torchvision==0.27.1
-```
-
-##### Linux and Windows
-
-```
-# ROCM 7.2 (Linux only)
-pip install torch==2.12.1 torchvision==0.27.1 --index-url https://download.pytorch.org/whl/rocm7.2
-# CUDA 12.6
-pip install torch==2.12.1 torchvision==0.27.1 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 13.0
-pip install torch==2.12.1 torchvision==0.27.1 --index-url https://download.pytorch.org/whl/cu130
-# CUDA 13.2
-pip install torch==2.12.1 torchvision==0.27.1 --index-url https://download.pytorch.org/whl/cu132
-# CPU only
-pip install torch==2.12.1 torchvision==0.27.1 --index-url https://download.pytorch.org/whl/cpu
-```
-
-### v2.12.0
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.12.0 torchvision==0.27.0
-```
-
-##### Linux and Windows
-
-```
-# ROCM 7.2 (Linux only)
-pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/rocm7.2
-# CUDA 12.6
-pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 13.0
-pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/cu130
-# CUDA 13.2
-pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/cu132
-# CPU only
-pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/cpu
-```
-
-### v2.11.0
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0
-```
-
-##### Linux and Windows
-
-```
-# ROCM 7.2 (Linux only)
-pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/rocm7.2
-# CUDA 12.6
-pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 12.8
-pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu128
-# CUDA 13.0
-pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu130
-# CPU only
-pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cpu
-```
-
-### v2.10.0
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0
-```
-
-##### Linux and Windows
-
-```
-# ROCM 7.1 (Linux only)
-pip install torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --index-url https://download.pytorch.org/whl/rocm7.1
-# CUDA 12.6
-pip install torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 12.8
-pip install torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --index-url https://download.pytorch.org/whl/cu128
-# CUDA 13.0
-pip install torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --index-url https://download.pytorch.org/whl/cu130
-# CPU only
-pip install torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --index-url https://download.pytorch.org/whl/cpu
-```
-
-### v2.9.1
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1
-```
-
-##### Linux and Windows
-
-```
-# ROCM 6.4 (Linux only)
-pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/rocm6.4
-# CUDA 12.6
-pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 12.8
-pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu128
-# CUDA 13.0
-pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu130
-# CPU only
-pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cpu
-```
-
-### v2.9.0
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0
-```
-
-##### Linux and Windows
-
-```
-# ROCM 6.4 (Linux only)
-pip install torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0 --index-url https://download.pytorch.org/whl/rocm6.4
-# CUDA 12.6
-pip install torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 12.8
-pip install torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0 --index-url https://download.pytorch.org/whl/cu128
-# CUDA 13.0
-pip install torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0 --index-url https://download.pytorch.org/whl/cu130
-# CPU only
-pip install torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0 --index-url https://download.pytorch.org/whl/cpu
-```
-
-### v2.8.0
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0
-```
-
-##### Linux and Windows
-
-```
-# ROCM 6.4 (Linux only)
-pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/rocm6.4
-# CUDA 12.6
-pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 12.8
-pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128
-# CUDA 12.9
-pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu129
-# CPU only
-pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
-```
-
-### v2.7.1
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1
-```
-
-##### Linux and Windows
-
-```
-# ROCM 6.3 (Linux only)
-pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/rocm6.3
-# CUDA 11.8
-pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu118
-# CUDA 12.6
-pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 12.8
-pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
-# CPU only
-pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cpu
-```
-
-### v2.7.0
-
-#### Wheel
-
-##### OSX
-
-```
-pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0
-```
-
-##### Linux and Windows
-
-```
-# ROCM 6.3 (Linux only)
-pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/rocm6.3
-# CUDA 11.8
-pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/cu118
-# CUDA 12.6
-pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/cu126
-# CUDA 12.8
-pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/cu128
-# CPU only
-pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/cpu
-```
+## Commands for Versions >= 1.0.0
 
 ### v2.6.0
 
@@ -940,7 +690,6 @@ pip install torch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1
 
 ```
 # ROCM 5.2 (Linux only)
-pip3 install torch torchvision torchaudio --extra-index-url
 pip install torch==1.13.1+rocm5.2 torchvision==0.14.1+rocm5.2 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/rocm5.2
 # CUDA 11.6
 pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116
@@ -984,7 +733,6 @@ pip install torch==1.13.0 torchvision==0.14.0 torchaudio==0.13.0
 
 ```
 # ROCM 5.2 (Linux only)
-pip3 install torch torchvision torchaudio --extra-index-url
 pip install torch==1.13.0+rocm5.2 torchvision==0.14.0+rocm5.2 torchaudio==0.13.0 --extra-index-url https://download.pytorch.org/whl/rocm5.2
 # CUDA 11.6
 pip install torch==1.13.0+cu116 torchvision==0.14.0+cu116 torchaudio==0.13.0 --extra-index-url https://download.pytorch.org/whl/cu116
@@ -1172,7 +920,7 @@ pip install torch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1
 
 ```
 # ROCM 4.2 (Linux only)
-pip install torch==1.10.1+rocm4.2 torchvision==0.11.2+rocm4.2 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.10.1+rocm4.2 torchvision==0.11.2+rocm4.2 torchaudio==0.10.1 -f https://download.pytorch.org/whl/rocm4.2/torch_stable.html
 
 # ROCM 4.1 (Linux only)
 pip install torch==1.10.1+rocm4.1 torchvision==0.11.2+rocm4.1 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
@@ -1181,13 +929,13 @@ pip install torch==1.10.1+rocm4.1 torchvision==0.11.2+rocm4.1 torchaudio==0.10.1
 pip install torch==1.10.1+rocm4.0.1 torchvision==0.10.2+rocm4.0.1 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
 
 # CUDA 11.1
-pip install torch==1.10.1+cu111 torchvision==0.11.2+cu111 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.10.1+cu111 torchvision==0.11.2+cu111 torchaudio==0.10.1 -f https://download.pytorch.org/whl/cu111/torch_stable.html
 
 # CUDA 10.2
-pip install torch==1.10.1+cu102 torchvision==0.11.2+cu102 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.10.1+cu102 torchvision==0.11.2+cu102 torchaudio==0.10.1 -f https://download.pytorch.org/whl/cu102/torch_stable.html
 
 # CPU only
-pip install torch==1.10.1+cpu torchvision==0.11.2+cpu torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.10.1+cpu torchvision==0.11.2+cpu torchaudio==0.10.1 -f https://download.pytorch.org/whl/cpu/torch_stable.html
 ```
 
 
@@ -1267,7 +1015,7 @@ conda install pytorch==1.9.1 torchvision==0.10.1 torchaudio==0.9.1 cudatoolkit=1
 conda install pytorch==1.9.1 torchvision==0.10.1 torchaudio==0.9.1 cudatoolkit=11.3 -c pytorch -c conda-forge
 
 # CPU Only
-conda install pytorch==1.9.0 torchvision==0.10.1 torchaudio==0.9.1 cpuonly -c pytorch
+conda install pytorch==1.9.1 torchvision==0.10.1 torchaudio==0.9.1 cpuonly -c pytorch
 ```
 
 #### Wheel
@@ -1282,10 +1030,10 @@ pip install torch==1.9.1 torchvision==0.10.1 torchaudio==0.9.1
 
 ```
 # ROCM 4.2 (Linux only)
-pip install torch==1.9.0+rocm4.2 torchvision==0.10.1+rocm4.2 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.9.1+rocm4.2 torchvision==0.10.1+rocm4.2 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
 
 # ROCM 4.1 (Linux only)
-pip install torch==1.9.0+rocm4.1 torchvision==0.10.1+rocm4.1 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.9.1+rocm4.1 torchvision==0.10.1+rocm4.1 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
 
 # ROCM 4.0.1 (Linux only)
 pip install torch==1.9.1+rocm4.0.1 torchvision==0.10.1+rocm4.0.1 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
@@ -1294,7 +1042,7 @@ pip install torch==1.9.1+rocm4.0.1 torchvision==0.10.1+rocm4.0.1 torchaudio==0.9
 pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
 
 # CUDA 10.2
-pip install torch==1.9.1+cu102 torchvision==0.10.1+cu102 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.9.1+cu102 torchvision==0.10.1+cu102 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
 
 # CPU only
 pip install torch==1.9.1+cpu torchvision==0.10.1+cpu torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
@@ -1475,7 +1223,7 @@ pip install torch==1.8.1+cpu torchvision==0.9.1+cpu torchaudio==0.8.1 -f https:/
 conda install pytorch==1.8.0 torchvision==0.9.0 torchaudio==0.8.0 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 10.2
@@ -1525,7 +1273,7 @@ pip install torch==1.8.0+cpu torchvision==0.9.0+cpu torchaudio==0.8.0 -f https:/
 conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 9.2
@@ -1582,7 +1330,7 @@ pip install torch==1.7.1+cpu torchvision==0.8.2+cpu torchaudio==0.7.2 -f https:/
 conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 9.2
@@ -1639,7 +1387,7 @@ pip install torch==1.7.0+cpu torchvision==0.8.0+cpu torchaudio==0.7.0 -f https:/
 conda install pytorch==1.6.0 torchvision==0.7.0 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 9.2
@@ -1690,7 +1438,7 @@ pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.
 conda install pytorch==1.5.1 torchvision==0.6.1 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 9.2
@@ -1741,7 +1489,7 @@ pip install torch==1.5.1+cpu torchvision==0.6.1+cpu -f https://download.pytorch.
 conda install pytorch==1.5.0 torchvision==0.6.0 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 9.2
@@ -1792,7 +1540,7 @@ pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.
 conda install pytorch==1.4.0 torchvision==0.5.0 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 9.2
@@ -1837,7 +1585,7 @@ pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.
 conda install pytorch==1.2.0 torchvision==0.4.0 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 9.2
@@ -1882,7 +1630,7 @@ pip install torch==1.2.0+cpu torchvision==0.4.0+cpu -f https://download.pytorch.
 conda install pytorch==1.1.0 torchvision==0.3.0 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 9.0
@@ -1927,7 +1675,7 @@ Download and install wheel from https://download.pytorch.org/whl/cpu/torch_stabl
 conda install pytorch==1.0.1 torchvision==0.2.2 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 9.0
@@ -1972,7 +1720,7 @@ Download and install wheel from https://download.pytorch.org/whl/cpu/torch_stabl
 conda install pytorch==1.0.0 torchvision==0.2.1 -c pytorch
 ```
 
-##### Linux and Windows
+#####  Linux and Windows
 
 ```
 # CUDA 10.0
@@ -2012,7 +1760,7 @@ Download and install wheel from https://download.pytorch.org/whl/cu80/torch_stab
 Download and install wheel from https://download.pytorch.org/whl/cpu/torch_stable.html
 ```
 
-## 1.0.0 미만 버전 설치하기
+## Commands for Versions < 1.0.0
 
 ### Via conda
 

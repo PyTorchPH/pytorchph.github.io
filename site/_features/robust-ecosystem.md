@@ -12,7 +12,7 @@ snippet: >
     inception = models.inception_v3(pretrained=True)
   ```
 
-summary-home: 풍부한 툴과 라이브러리 생태계로 PyTorch를 확장하고 비전, NLP 등의 분야에서 개발합니다.
+summary-home: A rich ecosystem of tools and libraries extends PyTorch and supports development in computer vision, NLP and more.
 featured-home: true
 
 ---

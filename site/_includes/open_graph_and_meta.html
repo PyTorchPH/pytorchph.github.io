@@ -1,12 +1,12 @@
 {%- comment -%}
-  페이지별 Open Graph / Twitter Card 메타 태그를 생성합니다.
-  페이지 고유 값이 없으면 사이트 기본값으로 폴백합니다.
+  Builds per-page Open Graph / Twitter Card meta tags.
+  Falls back to site defaults when a page has no value of its own.
 {%- endcomment -%}
 
-{%- comment -%} 제목: page.title → site.title {%- endcomment -%}
+{%- comment -%} Title: page.title -> site.title {%- endcomment -%}
 {%- assign og_title = page.title | default: site.title -%}
 
-{%- comment -%} 설명: page.description → (블로그 글) 본문 발췌 → site.description {%- endcomment -%}
+{%- comment -%} Description: page.description -> (blog post) excerpt -> site.description {%- endcomment -%}
 {%- assign og_description = page.description -%}
 {%- if og_description == nil or og_description == '' -%}
   {%- if page.layout == 'blog_detail' -%}
@@ -18,7 +18,7 @@
 {%- endif -%}
 {%- assign og_description = og_description | strip_html | normalize_whitespace | strip | truncate: 200 -%}
 
-{%- comment -%} 유형: 블로그 글이면 article, 그 외에는 website {%- endcomment -%}
+{%- comment -%} Type: article for blog posts, website otherwise {%- endcomment -%}
 {%- if page.layout == 'blog_detail' -%}
   {%- assign og_type = 'article' -%}
 {%- else -%}
@@ -26,8 +26,8 @@
 {%- endif -%}
 
 {%- comment -%}
-  이미지: page.image → (블로그 글) 본문 첫 래스터 이미지 → 사이트 기본 이미지.
-  대부분의 소셜 스크래퍼는 og:image로 SVG/데이터 URI를 렌더링하지 못하므로 건너뜁니다.
+  Image: page.image -> (blog post) first raster image in the body -> site default image.
+  Most social scrapers cannot render SVG or data URIs as og:image, so those are skipped.
 {%- endcomment -%}
 {%- assign og_image = page.image -%}
 {%- if og_image == nil or og_image == '' -%}
@@ -47,9 +47,9 @@
   {%- endif -%}
 {%- endif -%}
 {%- if og_image == nil or og_image == '' -%}
-  {%- assign og_image = '/assets/images/pytorch-kr-logo.png' -%}
+  {%- assign og_image = '/assets/images/social-share-ph.png' -%}
 {%- endif -%}
-{%- comment -%} 상대경로 이미지는 절대 URL로 변환 {%- endcomment -%}
+{%- comment -%} Convert relative image paths to absolute URLs {%- endcomment -%}
 {%- unless og_image contains '://' -%}
   {%- assign og_image = og_image | absolute_url -%}
 {%- endunless -%}

@@ -5,12 +5,12 @@ snippet: >
   ```python
     import torch.distributed as dist
     from torch.nn.parallel import DistributedDataParallel
-
+    
     dist.init_process_group(backend='gloo')
     model = DistributedDataParallel(model)
   ```
 
-summary-home: torch.distributed 백엔드로 연구 및 상용에서 확장 가능한 분산 학습 및 성능 최적화할 수 있습니다.
+summary-home: Scalable distributed training and performance optimization in research and production is enabled by the torch.distributed backend.
 featured-home: true
 
 ---

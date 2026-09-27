@@ -1,69 +1,67 @@
 main_menu:
-  - title: "배우기"
+  - title: "Learn"
     key: "get-started"
     has_dropdown: true
     dropdown_items:
-      - title: "PyTorch 시작하기"
+      - title: "Get Started"
         url: "/get-started/locally/"
         url_type: "baseurl"
         external: false
-      - title: "기본 익히기"
-        url: "https://tutorials.pytorch.kr/beginner/basics/intro.html"
-        external: false
-        target: "_self"
-      - title: "한국어 튜토리얼"
-        url: "https://tutorials.pytorch.kr"
-        external: false
-        target: "_self"
-      - title: "한국어 모델 허브"
-        url: "/hub"
-        url_type: "baseurl"
-        external: false
-      - title: "Official Tutorials"
+      - title: "Learn the Basics"
+        url: "https://docs.pytorch.org/tutorials/beginner/basics/intro.html"
+        external: true
+        target: "_blank"
+      - title: "PyTorch Tutorials"
         url: "https://docs.pytorch.org/tutorials/"
         external: true
         target: "_blank"
-
-  - title: "블로그"
-    key: "blog"
-    url: "/blog"
-    url_type: "baseurl"
-    has_dropdown: false
-
-  - title: "문서"
-    key: "docs"
-    has_dropdown: true
-    dropdown_items:
-      - title: "PyTorch API"
+      - title: "PyTorch Docs"
         url: "https://docs.pytorch.org/docs/"
         external: true
         target: "_blank"
-      - title: "Domain API 소개"
-        url: "/domains"
-        url_type: "baseurl"
-        external: false
-      - title: "한국어 튜토리얼"
-        url: "https://tutorials.pytorch.kr"
-        external: false
-        target: "_self"
-      - title: "Official Tutorials"
-        url: "https://docs.pytorch.org/tutorials/"
-        external: true
-        target: "_blank"
 
-  - title: "커뮤니티"
+  - title: "Community"
     key: "community"
     has_dropdown: true
     dropdown_items:
-      - title: "한국어 커뮤니티"
-        url: "https://discuss.pytorch.kr/"
-        external: false
-        target: "_self"
-      - title: "개발자 정보"
-        url: "/resources/"
+      - title: "Events"
+        url: "/events/"
         url_type: "baseurl"
         external: false
-      - title: "Landscape"
-        url: "https://landscape.pytorch.org/"
+      - title: "Community Preview"
+        url: "/portal/community-preview/"
+        url_type: "baseurl"
+        external: false
+      - title: "GitHub"
+        url: "https://github.com/PyTorchPH"
         external: true
         target: "_blank"
+      - title: "PyTorch Forums"
+        url: "https://discuss.pytorch.org/"
+        external: true
+        target: "_blank"
+
+  - title: "Blog"
+    key: "blog"
+    url: "/blog/"
+    url_type: "baseurl"
+    has_dropdown: false
+
+  - title: "About"
+    key: "about"
+    has_dropdown: true
+    dropdown_items:
+      - title: "About PyTorch Philippines"
+        url: "/about/"
+        url_type: "baseurl"
+        external: false
+      - title: "Code of Conduct"
+        url: "/code-of-conduct/"
+        url_type: "baseurl"
+        external: false
+
+  - title: "Member Portal"
+    key: "portal"
+    url: "/portal/login/"
+    url_type: "baseurl"
+    has_dropdown: false

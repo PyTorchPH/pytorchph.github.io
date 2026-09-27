@@ -1,16 +1,16 @@
 ---
 layout: get_started
-title: 직접 설치하기
+title: Start Locally
 permalink: /get-started/locally/
 background-class: get-started-background
 body-class: get-started
-order: 1
+order: 0
 published: true
 get-started-locally: true
 redirect_from: "/get-started/"
 ---
 
-## 직접 설치하기
+## Start Locally
 
 <div class="container-fluid quick-start-module quick-starts">
   <div class="row">
@@ -19,6 +19,8 @@ redirect_from: "/get-started/"
     </div>
   </div>
 </div>
+
+<p><i>Could not find the right platform for your hardware?</i> See the <a href="{{ site.baseurl }}/get-started/additional-platforms/">PyTorch Additional Platforms</a> page.</p>
 
 ---
 
@@ -44,3 +46,4 @@ redirect_from: "/get-started/"
 <script page-id="get-started-locally" src="{{ site.baseurl }}/assets/menu-tab-selection.js"></script>
 <script src="{{ site.baseurl }}/assets/quick-start-module.js"></script>
 <script src="{{ site.baseurl }}/assets/show-screencast.js"></script>
+<script src="{{ site.baseurl }}/assets/get-started-sidebar.js"></script>
