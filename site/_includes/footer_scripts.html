@@ -1,0 +1,60 @@
+<script src="{{ site.baseurl }}/assets/mobile-menu.js"></script>
+<script src="{{ site.baseurl }}/assets/scroll-to-anchor.js"></script>
+<script src="{{ site.baseurl }}/assets/external-links-new-tab.js"></script>
+<!-- {% if page.layout != "deep_learning" %}
+  <script src="{{ site.baseurl }}/assets/search-bar.js"></script>
+{% endif %}
+<script src="{{ site.baseurl }}/assets/cookie-banner.js"></script> -->
+
+<script type="text/javascript">
+  mobileMenu.bind();
+  anchors.add('.pytorch-article h2, .pytorch-article h3, .pytorch-article h4, .pytorch-article h5');
+
+  // Add class to links that have code blocks, since we cannot create links in code blocks
+  $("a code.highlighter-rouge").each(function(e) {
+    $(this).closest("a").addClass("has-code");
+  });
+
+  scrollToAnchor.bind();
+
+  var hasStaticHeader = $(".blog-header, .blog-detail-header, .resources-header, .get-started-header, .features-header, .ecosystem-header, .hub-header, .mobile-header, .coc-header, .announcement-header").length > 0;
+
+  if (!hasStaticHeader) {
+    $(window).on("scroll", function() {
+      var top = $(this).scrollTop();
+      var fullPosition = $(".main-background").height() - $(".header-holder").height();
+
+      if (top <= 40) {
+        $(".header-holder").css({"backgroundColor": "rgba(0, 0, 0, 0.165)"});
+      } else if (top >= fullPosition) {
+        $(".header-holder").css({"backgroundColor": "#000000"});
+      } else {
+        var bgColor = "rgba(0, 0, 0, " + top / fullPosition + ")";
+        $(".header-holder").css({"backgroundColor": bgColor});
+      }
+    });
+  }
+</script>
+
+<style>
+  .language-mermaid { text-align: center; }
+  .language-mermaid svg { display: block; margin-left: auto; margin-right: auto; }
+</style>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true });
+
+  // Target Jekyll markdown standard code block output
+  document.addEventListener('DOMContentLoaded', function() {
+    mermaid.run({
+      querySelector: '.language-mermaid',
+    });
+  });
+</script>
+
+{% if page.body-class == "homepage" %}
+<script src="{{ site.baseurl }}/assets/community-widget.js"></script>
+{% endif %}
+<script src="{{ site.baseurl }}/assets/track-events.js"></script>
+<script>trackEvents.bind();</script>
