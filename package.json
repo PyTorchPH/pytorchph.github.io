@@ -14,7 +14,8 @@
     "design-system",
     "development/local-access",
     "development/local-workspace",
-    "development/prefect-dashboard"
+    "development/prefect-dashboard",
+    "apps/pages-demo"
   ],
   "scripts": {
     "setup": "npm ci --ignore-scripts --no-audit --no-fund",
@@ -32,6 +33,8 @@
     "grades:inject": "npm run inject --workspace @pytorch-ph/academic-records --",
     "test": "npm run test:boundaries && npm run test:portal-hosts --workspace @pytorch-ph/portal && npm run test:capabilities --workspace @pytorch-ph/portal && npm run test:product --workspace @pytorch-ph/portal && npm run test:nationwide",
     "dev:workspace": "node development/local-workspace/start.mjs",
-    "test:nationwide": "npm run test:nationwide --workspace @pytorch-ph/portal"
+    "test:nationwide": "npm run test:nationwide --workspace @pytorch-ph/portal",
+    "build:pages": "npm run build --workspace @pytorch-ph/pages-demo && node development/pages-demo/publish-export.mjs",
+    "test:pages": "node development/pages-demo/verify.mjs"
   }
 }
