@@ -262,7 +262,7 @@ test("all resume templates render and measure the same ATS-readable normalized s
   for (const template of resumeTemplates) {
     const html = resumeHtml(profile!, template.id);
     assert.match(html, /Professional summary/);
-    assert.match(html, /Campus Vision Demo/);
+    assert.match(html, /Community Vision Demo/);
     assert.match(html, /PyTorch/);
     assert.doesNotMatch(html, /grid-template-columns|<table|<img/);
     assert.ok(await resumePdfPageCount(profile!, template.id) >= 1);

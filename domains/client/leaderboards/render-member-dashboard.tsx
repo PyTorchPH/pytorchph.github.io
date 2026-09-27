@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { demoMemberData } from "../../../apps/pages-demo/app/demo-member-data";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, BriefcaseBusiness, CalendarCheck2, FileCheck2, Flame, Medal, ShieldCheck, Sparkles, Trophy } from "lucide-react";
-import { DemoShell as AppShell } from "../../../apps/pages-demo/app/demo-shell";
+import { AppShell } from "@pytorch-ph/domain-client/navigation";
 import { PersonalActivityChart, SkillPointsChart } from "@pytorch-ph/domain-client/organization";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Card } from "@pytorch-ph/design-system/card";
@@ -13,7 +12,7 @@ import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import { rankForPoints, type MemberOverview } from "@pytorch-ph/domain-protocol/leaderboards";
 
 export function MemberDashboard() {
-  const query = { data: demoMemberData, isError: false };
+  const query = useQuery({ queryKey: ["member-overview"], queryFn: () => fetchJson<MemberOverview>("/api/member/overview", { cache: "no-store" }) });
   const data = query.data;
   const tier = data ? rankForPoints(data.summary.points) : null;
   const progress = tier ? tier.ceiling ? ((data!.summary.points-tier.floor)/(tier.ceiling-tier.floor))*100 : 100 : 0;

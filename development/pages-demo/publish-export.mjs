@@ -13,7 +13,7 @@ const walk = directory => readdirSync(directory, { withFileTypes: true }).flatMa
   return entry.isDirectory() ? walk(path) : [path];
 });
 const allowed = name => /^(?:index\.html|index\.txt|404\.html|\.nojekyll|__next\.[\w.-]+\.txt)$/.test(name)
-  || /^(?:404|_not-found|login|register|dashboard|admin|events|leaderboards)\//.test(name)
+  || /^(?:404|_not-found|login|register|dashboard|admin|events|leaderboards|career|connections|jobs|membership|reports|settings|trust|demo-api|demo)\//.test(name)
   || name.startsWith("_next/static/");
 function destination(name) {
   const path = resolve(root, name);
@@ -23,7 +23,21 @@ function destination(name) {
 
 const files = new Map(walk(output).map(path => [relative(output, path).split(sep).join("/"), readFileSync(path)]));
 files.set(".nojekyll", Buffer.alloc(0));
-for (const required of ["index.html", "login/index.html", "register/index.html", "dashboard/index.html", "admin/dashboard/index.html", "events/index.html", "leaderboards/index.html"]) {
+// The portal UI references its synthetic evidence media from /demo/; publish it without copying source files.
+const portalDemoMedia = resolve(root, "apps/portal/public/demo");
+for (const path of walk(portalDemoMedia)) files.set(`demo/${relative(portalDemoMedia, path).split(sep).join("/")}`, readFileSync(path));
+// Next writes segment prefetch payloads as `__next.<segment>/<file>.txt`, but the client requests
+// the flat `__next.<segment>.<file>.txt`; static hosts have no rewrite, so publish both spellings.
+const flatPrefetchName = name => {
+  const parts = name.split("/");
+  const start = parts.findIndex((part, index) => part.startsWith("__next.") && index < parts.length - 1);
+  return start === -1 ? null : [...parts.slice(0, start), parts.slice(start).join(".")].join("/");
+};
+for (const [name, bytes] of [...files]) {
+  const flat = flatPrefetchName(name);
+  if (flat && !files.has(flat)) files.set(flat, bytes);
+}
+for (const required of ["index.html", "login/index.html", "register/index.html", "dashboard/index.html", "dashboard/profile/index.html", "admin/dashboard/index.html", "events/index.html", "leaderboards/index.html", "career/evidence/index.html", "career/resumes/index.html", "jobs/opportunities/index.html", "membership/index.html", "trust/index.html", "settings/index.html", "demo-api/fixtures.json"]) {
   if (!files.has(required)) throw new Error(`Missing static demo route: ${required}`);
 }
 // Verify the entire plan before changing any repository file.

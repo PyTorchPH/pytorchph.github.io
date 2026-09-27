@@ -52,7 +52,7 @@ function ProfileContent() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-[-0.02em]">User Profile & Personal Hub</h1>
-          <p className="mt-2 text-muted">Student growth profile with consent-based social connectors and skill telemetry.</p>
+          <p className="mt-2 text-muted">Member growth profile with consent-based social connectors and skill telemetry.</p>
         </div>
         {officerPortal ? <SegmentedTabs items={tierTabs} onChange={setTier} value={tier} /> : <Badge variant="orange">{userTiers[effectiveTier].label}</Badge>}
       </div>

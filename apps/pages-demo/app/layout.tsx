@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { AppProviders } from "../../portal/components/providers";
+import { FeedbackReporter } from "@pytorch-ph/domain-client/privacy-feedback";
+import { DemoBar } from "./demo-bar";
 import "../../portal/app/globals.css";
 
 export const metadata: Metadata = {
@@ -8,10 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" className="dark"><body>
-    {children}
-    <aside className="fixed bottom-0 inset-x-0 z-50 border-t border-orange-500/30 bg-[#17100b]/95 px-4 py-2 text-center text-xs text-orange-100 backdrop-blur" aria-label="Demo notice">
-      Demo only · Fictional accounts and sample data · No real signup, payments, or submissions
-    </aside>
+  return <html lang="en" className="dark" data-scroll-behavior="smooth"><body className="pb-12">
+    <AppProviders>{children}<FeedbackReporter /></AppProviders>
+    <DemoBar />
   </body></html>;
 }
