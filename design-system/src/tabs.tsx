@@ -1,9 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Tabs } from "radix-ui";
 import { cn } from "@pytorch-ph/design-system/merge-classes";
 
+// A segmented filter: toggle buttons, because there is no separate tab panel to control.
 export function SegmentedTabs<T extends string>({
   items,
   value,
@@ -14,22 +14,22 @@ export function SegmentedTabs<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <Tabs.Root onValueChange={(next) => onChange(next as T)} value={value}>
-      <Tabs.List className="inline-flex max-w-full gap-1 rounded-full border border-border bg-elevated p-1">
+    <div className="inline-flex max-w-full gap-1 rounded-full border border-border bg-elevated p-1" role="group">
       {items.map((item) => (
-        <Tabs.Trigger
+        <button
+          aria-pressed={value === item.value}
           key={item.value}
           className={cn(
             "focus-ring h-8 rounded-full px-3 text-sm font-semibold transition-all duration-300 ease-in-out",
             value === item.value ? "bg-accent text-white" : "text-muted hover:text-ink"
           )}
-          value={item.value}
+          onClick={() => onChange(item.value)}
+          type="button"
         >
           {item.label}
-        </Tabs.Trigger>
+        </button>
       ))}
-      </Tabs.List>
-    </Tabs.Root>
+    </div>
   );
 }
 

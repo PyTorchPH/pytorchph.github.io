@@ -30,14 +30,14 @@ export function CommunityDemoContent() {
   }
 
   return <div className="space-y-6 pb-10">
-      <section className="overflow-hidden rounded-3xl border border-accent/25 bg-[radial-gradient(circle_at_90%_10%,rgba(232,89,12,.27),transparent_38%),linear-gradient(130deg,#1c1818,#101013)] p-6 lg:p-9">
+      <section className="overflow-hidden rounded-3xl border border-accent/25 bg-[radial-gradient(circle_at_90%_10%,rgb(var(--accent-rgb)/.1),transparent_38%),linear-gradient(130deg,rgb(var(--surface-rgb)),rgb(var(--surface-rgb)))] p-6 lg:p-9">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-2xl">
             <Badge variant="orange"><Sparkles size={14} /> Website demo</Badge>
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight lg:text-4xl">Find your place in PyTorch PH</h1>
             <p className="mt-3 leading-7 text-muted">A calmer first look at the proposed community. Pick a sample profile and interests to preview the channels and events that fit.</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-muted"><Users className="mb-2 text-accent" size={22} />Community preview<br /><strong className="text-foreground">No Discord account needed</strong></div>
+          <div className="rounded-2xl border border-border bg-elevated px-4 py-3 text-sm text-muted"><Users className="mb-2 text-accent" size={22} />Community preview<br /><strong className="text-foreground">No Discord account needed</strong></div>
         </div>
         <p className="mt-6 rounded-xl border border-warning/25 bg-warning/10 px-4 py-3 text-sm text-warning">Sample data only. Choices on this page do not link accounts, award points, or assign Discord roles.</p>
       </section>
@@ -51,7 +51,7 @@ export function CommunityDemoContent() {
           <p className="mt-1 text-sm text-muted">Interests tailor suggestions; they never unlock gated spaces.</p>
           <div className="mt-3 flex flex-wrap gap-2">{communityInterestOptions.map((answer) => {
             const selected = interests.includes(answer.roleKey);
-            return <button aria-pressed={selected} className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors ${selected ? "border-accent bg-accentSoft text-[#ffae7f]" : "border-border bg-elevated text-muted hover:text-foreground"}`} key={answer.roleKey} onClick={() => toggleInterest(answer.roleKey)} type="button">{selected && <Check size={14} />}{answer.label}</button>;
+            return <button aria-pressed={selected} className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors ${selected ? "border-accent bg-accentSoft text-accent" : "border-border bg-elevated text-muted hover:text-foreground"}`} key={answer.roleKey} onClick={() => toggleInterest(answer.roleKey)} type="button">{selected && <Check size={14} />}{answer.label}</button>;
           })}</div>
         </Card>
 

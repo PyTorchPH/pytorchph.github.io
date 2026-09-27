@@ -35,7 +35,7 @@ const tooltipStyle = {
 
 function Watermark({ state }: { state?: AnalyticsState }) {
   if (state !== "unavailable") return null;
-  return <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"><span className="rounded-full border border-white/10 bg-[#0d0d0d]/85 px-5 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted shadow-xl">Data unavailable</span></div>;
+  return <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"><span className="rounded-full border border-border bg-canvas/85 px-5 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted shadow-xl">Data unavailable</span></div>;
 }
 
 const emptySkills = ["Computer Vision", "NLP", "Optimization", "MLOps", "Data Ethics", "Research"].map((skill) => ({ skill, score: 0 }));
@@ -49,7 +49,7 @@ export function SkillRadarChart({ data = skillRadar, state }: { data?: Array<{ s
       <Watermark state={state} />
       <ResponsiveContainer>
         <RadarChart accessibilityLayer data={chartData}>
-          <PolarGrid stroke="rgba(122,139,158,0.35)" />
+          <PolarGrid stroke="var(--border)" />
           <PolarAngleAxis dataKey="skill" tick={{ fill: "var(--muted)", fontSize: 12 }} />
           <Radar dataKey="score" fill="var(--accent)" fillOpacity={0.28} stroke="var(--accent)" strokeWidth={2} />
           <Tooltip contentStyle={tooltipStyle} />
@@ -75,11 +75,11 @@ export function SkillBarChart() {
 }
 
 export function PersonalActivityChart({ data }: { data: Array<{ week: string; points: number }> }) {
-  return <ChartContainer aria-label="Twelve-week verified point activity" className="h-64" config={chartConfig}><ResponsiveContainer><AreaChart accessibilityLayer data={data}><defs><linearGradient id="personal-activity" x1="0" x2="0" y1="0" y2="1"><stop offset="5%" stopColor="var(--accent)" stopOpacity={0.42} /><stop offset="95%" stopColor="var(--accent)" stopOpacity={0} /></linearGradient></defs><CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} /><XAxis dataKey="week" tick={{ fill: "var(--muted)", fontSize: 11 }} /><YAxis tick={{ fill: "var(--muted)", fontSize: 11 }} /><Tooltip contentStyle={tooltipStyle} /><Area dataKey="points" fill="url(#personal-activity)" stroke="var(--accent)" strokeWidth={2} type="monotone" /></AreaChart></ResponsiveContainer></ChartContainer>;
+  return <ChartContainer aria-label="Twelve-week verified point activity" className="h-64" config={chartConfig}><ResponsiveContainer><AreaChart accessibilityLayer data={data}><defs><linearGradient id="personal-activity" x1="0" x2="0" y1="0" y2="1"><stop offset="5%" stopColor="var(--accent)" stopOpacity={0.42} /><stop offset="95%" stopColor="var(--accent)" stopOpacity={0} /></linearGradient></defs><CartesianGrid stroke="var(--chart-grid)" vertical={false} /><XAxis dataKey="week" tick={{ fill: "var(--muted)", fontSize: 11 }} /><YAxis tick={{ fill: "var(--muted)", fontSize: 11 }} /><Tooltip contentStyle={tooltipStyle} /><Area dataKey="points" fill="url(#personal-activity)" stroke="var(--accent)" strokeWidth={2} type="monotone" /></AreaChart></ResponsiveContainer></ChartContainer>;
 }
 
 export function SkillPointsChart({ data }: { data: Array<{ skill: string; points: number }> }) {
-  return <ChartContainer aria-label="Verified skill points" className="h-64" config={chartConfig}><ResponsiveContainer><BarChart accessibilityLayer data={data} layout="vertical" margin={{ left: 12 }}><CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.06)" /><XAxis type="number" tick={{ fill: "var(--muted)", fontSize: 11 }} /><YAxis dataKey="skill" type="category" width={76} tick={{ fill: "var(--muted)", fontSize: 11 }} /><Tooltip contentStyle={tooltipStyle} /><Bar dataKey="points" fill="var(--accent)" radius={[0,6,6,0]} /></BarChart></ResponsiveContainer></ChartContainer>;
+  return <ChartContainer aria-label="Verified skill points" className="h-64" config={chartConfig}><ResponsiveContainer><BarChart accessibilityLayer data={data} layout="vertical" margin={{ left: 12 }}><CartesianGrid horizontal={false} stroke="var(--chart-grid)" /><XAxis type="number" tick={{ fill: "var(--muted)", fontSize: 11 }} /><YAxis dataKey="skill" type="category" width={76} tick={{ fill: "var(--muted)", fontSize: 11 }} /><Tooltip contentStyle={tooltipStyle} /><Bar dataKey="points" fill="var(--accent)" radius={[0,6,6,0]} /></BarChart></ResponsiveContainer></ChartContainer>;
 }
 
 export function ActivityTrendChart({ data = activityTrend, state }: { data?: Array<{ day: string; events: number | null; contributions: number | null }>; state?: AnalyticsState } = {}) {
@@ -95,7 +95,7 @@ export function ActivityTrendChart({ data = activityTrend, state }: { data?: Arr
               <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+          <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
           <XAxis dataKey="day" tick={{ fill: "var(--muted)", fontSize: 12 }} tickLine={false} />
           <YAxis tick={{ fill: "var(--muted)", fontSize: 12 }} tickLine={false} />
           <Tooltip contentStyle={tooltipStyle} />
@@ -114,25 +114,25 @@ export function DepartmentLoadChart({ data = departmentLoad, state }: { data?: A
       <Watermark state={state} />
       <ResponsiveContainer>
         <BarChart accessibilityLayer data={chartData} layout="vertical" margin={{ left: 16 }}>
-          <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.06)" />
+          <CartesianGrid horizontal={false} stroke="var(--chart-grid)" />
           <XAxis tick={{ fill: "var(--muted)", fontSize: 12 }} type="number" />
           <YAxis dataKey="department" tick={{ fill: "var(--muted)", fontSize: 12 }} tickLine={false} type="category" width={86} />
           <Tooltip contentStyle={tooltipStyle} />
           <Bar dataKey="open" fill="var(--accent)" radius={[0, 6, 6, 0]} />
-          <Bar dataKey="approved" fill="rgba(255,255,255,0.22)" radius={[0, 6, 6, 0]} />
+          <Bar dataKey="approved" fill="var(--border)" radius={[0, 6, 6, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </ChartContainer>
   );
 }
 
-const readinessColors = ["#e8590c", "#fb923c", "#60a5fa", "#4ade80"];
+const readinessColors = ["var(--accent)", "var(--warning)", "var(--info)", "var(--success)"];
 
 export function CareerReadinessDonut({ segments }: { segments: Array<{ label: string; ready: boolean }> }) {
   const ready = segments.filter((item) => item.ready).length;
   const data = segments.map((item) => ({ name: item.label, value: 1, ready: item.ready }));
   return <ChartContainer aria-label="Career readiness donut chart" className="h-64" config={chartConfig}>
-    <ResponsiveContainer><PieChart accessibilityLayer><Pie data={data} dataKey="value" innerRadius={68} outerRadius={92} paddingAngle={3} stroke="transparent">{data.map((item, index) => <Cell fill={item.ready ? readinessColors[index % readinessColors.length] : "rgba(255,255,255,0.08)"} key={item.name} />)}</Pie><Tooltip contentStyle={tooltipStyle} formatter={(_value, _name, entry) => [entry.payload.ready ? "Ready" : "Needs prerequisite", entry.payload.name]} /></PieChart></ResponsiveContainer>
+    <ResponsiveContainer><PieChart accessibilityLayer><Pie data={data} dataKey="value" innerRadius={68} outerRadius={92} paddingAngle={3} stroke="transparent">{data.map((item, index) => <Cell fill={item.ready ? readinessColors[index % readinessColors.length] : "var(--chart-grid)"} key={item.name} />)}</Pie><Tooltip contentStyle={tooltipStyle} formatter={(_value, _name, entry) => [entry.payload.ready ? "Ready" : "Needs prerequisite", entry.payload.name]} /></PieChart></ResponsiveContainer>
     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"><span className="data-label text-3xl font-bold">{ready}/{segments.length}</span><span className="mt-1 text-xs text-muted">ready</span></div>
   </ChartContainer>;
 }

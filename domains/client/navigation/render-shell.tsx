@@ -77,16 +77,16 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   const navItems = officerPortal ? officerNavItems : memberNavItems;
 
   const sidebar = (
-    <aside className="flex h-full w-72 flex-col border-r border-white/10 bg-[#0d0d0d] p-4 text-[#FFF7ED]">
+    <aside className="flex h-full w-72 flex-col border-r border-border bg-canvas p-4 text-ink">
       <div className="mb-6 flex items-center justify-between">
         <Link className="focus-ring rounded-lg" href="/">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-[#e8590c] to-[#ff8a3d] shadow-lg shadow-[#e8590c]/30">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent shadow-lg shadow-accent/30">
               <Flame size={20} />
             </div>
             <div>
               <p className="font-mono text-sm font-bold tracking-[-0.02em]">PYTORCH PH</p>
-              <p className="text-xs text-[#FFF7ED]/45">{officerPortal ? "Officer / Developer" : "Member Workspace"}</p>
+              <p className="text-xs text-muted">{officerPortal ? "Officer / Developer" : "Member Workspace"}</p>
             </div>
           </div>
         </Link>
@@ -104,7 +104,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
           if (isLocked) return (
             <span
               aria-disabled="true"
-              className="flex h-10 cursor-not-allowed items-center gap-3 rounded-lg px-3 text-sm font-semibold text-[#FFF7ED]/25"
+              className="flex h-10 cursor-not-allowed items-center gap-3 rounded-lg px-3 text-sm font-semibold text-muted"
               key={item.href}
               title={capability.reason}
             >
@@ -115,7 +115,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
             <Link
               className={cn(
                 "focus-ring flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-all duration-300 ease-in-out",
-                active ? "bg-[#e8590c] text-white" : "text-[#FFF7ED]/55 hover:bg-white/[0.06] hover:text-[#FFF7ED]"
+                active ? "bg-accent text-white" : "text-muted hover:bg-elevated hover:text-ink"
               )}
               href={item.href}
               key={item.href}
@@ -126,20 +126,20 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
           );
         })}
       </nav>
-      <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.035] p-3">
+      <div className="mt-6 rounded-lg border border-border bg-elevated p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-[#FFF7ED]/40">Current cycle</p>
-          <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted">Current cycle</p>
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
         </div>
-        <Progress className="h-1.5 bg-white/10" indicatorClassName="bg-[#e8590c]" value={68} />
-        <p className="mt-2 text-xs text-[#FFF7ED]/45">{officerPortal ? "Community operations and review readiness." : "Personal evidence and career readiness."}</p>
+        <Progress className="h-1.5 bg-elevated" indicatorClassName="bg-accent" value={68} />
+        <p className="mt-2 text-xs text-muted">{officerPortal ? "Community operations and review readiness." : "Personal evidence and career readiness."}</p>
       </div>
-      <div className="mt-auto rounded-lg border border-white/10 bg-white/[0.035] p-3">
+      <div className="mt-auto rounded-lg border border-border bg-elevated p-3">
         <div className="mb-2 flex items-center gap-2">
-          <Shield className="text-[#e8590c]" size={16} />
+          <Shield className="text-accent" size={16} />
           <p className="text-sm font-semibold">{officerPortal ? "Officer data gateway" : "Personal data gateway"}</p>
         </div>
-        <p className="text-xs leading-5 text-[#FFF7ED]/45">{officerPortal ? "Role checks run before officer data or diagnostics are returned." : "Officer diagnostics and operational payloads are excluded from this portal."}</p>
+        <p className="text-xs leading-5 text-muted">{officerPortal ? "Role checks run before officer data or diagnostics are returned." : "Officer diagnostics and operational payloads are excluded from this portal."}</p>
       </div>
       <Button
         className="mt-3 w-full justify-start gap-3"
@@ -155,9 +155,9 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-[#0b0b0c] text-[#FFF7ED]">
-      {manifest.localDemo && <div className="fixed inset-x-0 top-0 z-50 flex h-8 items-center justify-center border-b border-[#ff8a3d]/30 bg-[#e8590c] px-3 text-center font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-white sm:text-xs">Local {officerPortal ? "officer" : "member"} demo · Synthetic data · External actions disabled</div>}
-      <header className={cn("sticky z-30 flex h-16 items-center justify-between border-b border-white/10 bg-[#0b0b0c]/90 px-4 backdrop-blur lg:hidden", manifest.localDemo ? "top-8" : "top-0")}>
+    <div className="min-h-screen bg-canvas text-ink">
+      {manifest.localDemo && <div className="fixed inset-x-0 top-0 z-50 flex h-8 items-center justify-center border-b border-accent/30 bg-accent px-3 text-center font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-white sm:text-xs">Local {officerPortal ? "officer" : "member"} demo · Synthetic data · External actions disabled</div>}
+      <header className={cn("sticky z-30 flex h-16 items-center justify-between border-b border-border bg-canvas/90 px-4 backdrop-blur lg:hidden", manifest.localDemo ? "top-8" : "top-0")}>
         <Button aria-label="Open menu" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary">
           <Menu size={18} />
         </Button>

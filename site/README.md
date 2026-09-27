@@ -41,5 +41,5 @@ refresh them from upstream when PyTorch releases a new version.
 ## Accessibility
 
 Pages are checked with axe-core against WCAG 2.1 A/AA. Keep text contrast at 4.5:1 or higher (use
-`$orange` for orange text, not the brand `#ee4c2c`), keep one `h1` per page with headings in order, and
+`$orange` for orange text, not the brand `#ee4c2c`; the portal uses the same value as `--accent-rgb`), keep one `h1` per page with headings in order, and
 give every image and icon link a text alternative.

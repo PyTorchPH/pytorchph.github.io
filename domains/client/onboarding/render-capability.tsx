@@ -10,7 +10,7 @@ export function CapabilityGate({ capabilityKey, children }: { capabilityKey: Cap
   const capability = useCapability(capabilityKey);
   if (capability.state !== "locked") return <>{children}</>;
   return (
-    <Card aria-live="polite" className="border-border bg-surface opacity-75" data-capability={capabilityKey}>
+    <Card aria-live="polite" className="border-dashed border-border bg-surface" data-capability={capabilityKey}>
       <div className="flex items-start gap-3">
         <LockKeyhole className="mt-0.5 flex-none text-muted" size={20} />
         <div>

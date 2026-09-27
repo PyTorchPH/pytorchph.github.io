@@ -786,6 +786,7 @@ export function CareerEvidenceView({
                 const file = event.target.files?.[0];
                 if (file) void upload(file);
               }}
+              aria-label="Upload an evidence image"
               ref={uploadRef}
               type="file"
             />
@@ -889,7 +890,7 @@ function ResumePreview({ templateId }: { templateId: ResumeTemplateId }) {
   return (
     <iframe
       allow="fullscreen"
-      className="h-[72dvh] min-h-[520px] w-full rounded-xl border border-border bg-[#202124]"
+      className="h-[72dvh] min-h-[520px] w-full rounded-xl border border-border bg-elevated"
       data-testid="resume-pdf-frame"
       sandbox="allow-downloads allow-popups allow-same-origin allow-scripts"
       src={`/career/resume-viewer?template=${templateId}`}
@@ -1073,7 +1074,7 @@ export function ResumeStudioView({ data }: { data: ProductViewData }) {
                 </div>
               </div>
               <Link
-              className="focus-ring flex items-center justify-between rounded-xl border border-accent/30 bg-accentSoft p-4 text-sm font-semibold text-[#fb923c]"
+              className="focus-ring flex items-center justify-between rounded-xl border border-accent/30 bg-accentSoft p-4 text-sm font-semibold text-accent"
                 href="/career/evidence"
               >
                 Edit source evidence <ExternalLink size={15} />
