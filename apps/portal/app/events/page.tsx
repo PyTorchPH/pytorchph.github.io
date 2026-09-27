@@ -23,11 +23,11 @@ const roleTabs = [
 ] satisfies Array<{ value: UserTier; label: string }>;
 
 const statusLabel: Record<ExternalEvent["status"], string> = {
-  not_sado_approved: "Not SADO approved",
+  not_sado_approved: "Not yet approved",
   department_review: "Department review",
   email_review: "Final email review",
-  submitted_to_sado: "Submitted to SADO",
-  sado_approved: "SADO approved",
+  submitted_to_sado: "Submitted for approval",
+  sado_approved: "Approved",
   rejected: "Rejected",
 };
 
@@ -126,8 +126,8 @@ function EventsContent() {
 
   return <div className="space-y-8">
     <section className="rounded-2xl border border-accent/30 bg-[radial-gradient(circle_at_top_right,rgba(232,89,12,.27),transparent_35%),#141416] p-6 lg:p-8">
-      <Badge variant="orange">External event intelligence</Badge><h1 className="mt-4 text-3xl font-extrabold">Events intake & SADO pipeline</h1>
-      <p className="mt-3 max-w-3xl leading-7 text-muted">Your local companion extracts a public link into reviewable JSON. AI proposes fields; departments and SADO remain the approval authorities.</p>
+      <Badge variant="orange">External event intelligence</Badge><h1 className="mt-4 text-3xl font-extrabold">Events intake & approval pipeline</h1>
+      <p className="mt-3 max-w-3xl leading-7 text-muted">Your local companion extracts a public link into reviewable JSON. AI proposes fields; departments and partner organizers remain the approval authorities.</p>
     </section>
 
     <Card className="bg-surface">
@@ -150,7 +150,7 @@ function EventsContent() {
             {event.emailDraft?.deliveryStatus !== "exported" && <div className="grid grid-cols-2 gap-2"><Button onClick={() => navigator.clipboard.writeText(`${event.emailDraft?.subject || ""}\n\n${event.emailDraft?.body || ""}`)} size="sm" variant="secondary">Copy draft</Button><Button disabled={action.isPending} onClick={() => approveDelivery(event)} size="sm"><MailCheck size={14}/>{event.emailDraft?.deliveryMode === "gmail" ? "Approve & send" : "Approve exact export"}</Button></div>}
             {event.emailDraft?.deliveryStatus === "exported" && <div className="space-y-2 rounded-lg border border-warning/30 bg-warning/10 p-3"><p className="text-xs text-muted">The exact draft was exported. Record the real sent-message or thread reference only after manual delivery.</p><input className="h-10 w-full rounded-lg border border-border bg-elevated px-3 text-sm" onChange={(change) => setManualDeliveryReferences((current) => ({ ...current, [event.id]: change.target.value }))} placeholder="Sent email/thread reference" value={manualDeliveryReferences[event.id] || ""}/><Button className="w-full" disabled={(manualDeliveryReferences[event.id] || "").trim().length < 4} onClick={() => action.mutate({ id: event.id, action: { action: "confirm_manual_delivery", detail: manualDeliveryReferences[event.id] } })} size="sm">Confirm manual delivery</Button></div>}
           </>}
-          {officer && event.status === "submitted_to_sado" && <div className="space-y-2"><label className="block text-xs font-semibold">SADO response reference<input className="mt-1 h-10 w-full rounded-lg border border-border bg-elevated px-3 text-sm" onChange={(change) => setSadoReferences((current) => ({ ...current, [event.id]: change.target.value }))} placeholder="Email/thread/reference ID" value={sadoReferences[event.id] || ""}/></label><Button className="w-full" disabled={(sadoReferences[event.id] || "").trim().length < 4} onClick={() => action.mutate({ id: event.id, action: { action: "record_sado_approval", detail: sadoReferences[event.id] } })} size="sm"><CheckCircle2 size={14}/>Record SADO proof</Button></div>}
+          {officer && event.status === "submitted_to_sado" && <div className="space-y-2"><label className="block text-xs font-semibold">Approval reference<input className="mt-1 h-10 w-full rounded-lg border border-border bg-elevated px-3 text-sm" onChange={(change) => setSadoReferences((current) => ({ ...current, [event.id]: change.target.value }))} placeholder="Email/thread/reference ID" value={sadoReferences[event.id] || ""}/></label><Button className="w-full" disabled={(sadoReferences[event.id] || "").trim().length < 4} onClick={() => action.mutate({ id: event.id, action: { action: "record_sado_approval", detail: sadoReferences[event.id] } })} size="sm"><CheckCircle2 size={14}/>Record approval proof</Button></div>}
         </div>
       </Card>)}
     </section>

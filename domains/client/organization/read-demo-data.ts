@@ -54,7 +54,7 @@ export const activityTrend = [
 ];
 
 export const departmentLoad = [
-  { department: "Academics", open: 18, approved: 11 },
+  { department: "Learning Programs", open: 18, approved: 11 },
   { department: "Engineering", open: 24, approved: 15 },
   { department: "External", open: 13, approved: 9 },
   { department: "Research", open: 17, approved: 12 },

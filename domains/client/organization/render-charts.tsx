@@ -40,7 +40,7 @@ function Watermark({ state }: { state?: AnalyticsState }) {
 
 const emptySkills = ["Computer Vision", "NLP", "Optimization", "MLOps", "Data Ethics", "Research"].map((skill) => ({ skill, score: 0 }));
 const emptyActivity = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => ({ day, events: null, contributions: null }));
-const emptyDepartments = ["Academics", "Engineering", "External", "Research", "Creatives"].map((department) => ({ department, open: null, approved: null }));
+const emptyDepartments = ["Learning Programs", "Engineering", "External", "Research", "Creatives"].map((department) => ({ department, open: null, approved: null }));
 
 export function SkillRadarChart({ data = skillRadar, state }: { data?: Array<{ skill: string; score: number | null }>; state?: AnalyticsState } = {}) {
   const chartData = data.length ? data : emptySkills;
