@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { communityDemoView } from "../app/dashboard/community/demo-model";
+import { communityDemoView, communityPeerTutorials, tutorialFitsBand } from "../app/dashboard/community/demo-model";
 
 test("community preview starts with seven public channels and no staff channels", () => {
   const newcomer = communityDemoView("newcomer", ["interest-mentor"]);
@@ -22,4 +22,16 @@ test("verified credentials unlock the mentor path even with few points", () => {
   assert.equal(mentor.profile.accessBand, "mentor");
   assert.ok(mentor.availableChannels.some((channel) => channel.key === "mentor-circle"));
   assert.ok(mentor.eventBands.every((event) => event.unlocked));
+});
+
+test("peer tutorials cover every level and fit the profile band", () => {
+  const levels = new Set(communityPeerTutorials.map((tutorial) => tutorial.level));
+  assert.deepEqual([...levels].sort(), ["advanced", "beginner", "builder"]);
+  assert.ok(communityPeerTutorials.every((tutorial) => tutorial.tutor.startsWith("Sample ")));
+  const beginner = communityPeerTutorials.find((tutorial) => tutorial.level === "beginner");
+  const advanced = communityPeerTutorials.find((tutorial) => tutorial.level === "advanced");
+  assert.ok(beginner && advanced);
+  assert.equal(tutorialFitsBand(beginner, "none"), true);
+  assert.equal(tutorialFitsBand(advanced, "mentor"), true);
+  assert.equal(tutorialFitsBand(advanced, "beginner"), false);
 });

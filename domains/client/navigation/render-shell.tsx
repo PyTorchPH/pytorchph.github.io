@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   Bot,
   BriefcaseBusiness,
   CalendarDays,
@@ -35,42 +34,39 @@ import { Badge } from "@pytorch-ph/design-system/badge";
 import { Sheet } from "@pytorch-ph/design-system/sheet";
 import { Progress } from "@pytorch-ph/design-system/progress";
 
-type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; capability?: CapabilityKey };
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; capability?: CapabilityKey; alsoActiveOn?: string[] };
 
 const memberNavItems: NavItem[] = [
-  { href: "/dashboard", label: "Personal Dashboard", icon: Home },
-  { href: "/career/evidence", label: "Career Evidence", icon: UserRound, capability: "evidence_read" },
-  { href: "/career/resumes", label: "Resume Studio", icon: BarChart3, capability: "resume_read" },
-  { href: "/jobs/opportunities", label: "Opportunities", icon: BriefcaseBusiness, capability: "opportunities_read" },
-  { href: "/events", label: "Community Events", icon: CalendarDays },
+  { href: "/dashboard", label: "My Performance", icon: Home },
   { href: "/leaderboards", label: "Leaderboards", icon: Trophy },
+  { href: "/career/evidence", label: "Career Evidence", icon: UserRound, capability: "evidence_read" },
+  { href: "/career/resumes", label: "Resumes & Opportunities", icon: BriefcaseBusiness, capability: "resume_read", alsoActiveOn: ["/jobs/opportunities"] },
+  { href: "/events", label: "Community Events", icon: CalendarDays },
   { href: "/dashboard/community", label: "Community Preview", icon: MessageCircle },
-  { href: "/trust", label: "Privacy & Trust", icon: Shield },
-  { href: "/membership", label: "Membership", icon: UserCheck },
-  { href: "/dashboard/profile", label: "My Profile", icon: UserRound },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/profile", label: "My Profile", icon: UserCheck },
+  { href: "/settings", label: "Settings & Privacy", icon: Settings, alsoActiveOn: ["/trust"] },
 ];
 
 const officerNavItems: NavItem[] = [
   { href: "/dashboard", label: "Command Center", icon: LayoutDashboard },
+  { href: "/leaderboards", label: "Leaderboards", icon: Trophy },
   { href: "/career/evidence", label: "Career Evidence", icon: UserRound, capability: "evidence_read" },
-  { href: "/career/resumes", label: "Resume Studio", icon: BarChart3, capability: "resume_read" },
+  { href: "/career/resumes", label: "Resumes & Opportunities", icon: BriefcaseBusiness, capability: "resume_read", alsoActiveOn: ["/jobs/opportunities"] },
   { href: "/jobs/analytics", label: "Job Analytics", icon: Search, capability: "analytics_read" },
   { href: "/jobs/automation", label: "Job Automation", icon: Bot, capability: "application_draft" },
-  { href: "/jobs/opportunities", label: "Opportunities", icon: BriefcaseBusiness, capability: "opportunities_read" },
   { href: "/connections", label: "Connections", icon: Unplug, capability: "connections" },
   { href: "/events", label: "Community Events", icon: CalendarDays },
-  { href: "/leaderboards", label: "Leaderboards", icon: Trophy },
   { href: "/dashboard/community", label: "Community Preview", icon: MessageCircle },
   { href: "/trust", label: "Integrity Console", icon: Shield },
   { href: "/reports", label: "Reports & Feedback", icon: ClipboardList },
-  { href: "/membership", label: "Member Reviews", icon: UserCheck },
   { href: "/admin/dashboard", label: "Officer Admin", icon: Shield },
+  { href: "/dashboard/profile", label: "My Profile", icon: UserCheck },
   { href: "/settings", label: "Settings", icon: Settings }
 ];
 
 function AppShellContent({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  // Static hosting serves routes with a trailing slash; navigation links are written without one.
+  const pathname = usePathname().replace(/\/+$/, "") || "/";
   const [open, setOpen] = useState(false);
   const manifest = useCapabilities();
   const officerPortal = manifest.portal.audience === "officer";
@@ -96,7 +92,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
       </div>
       <nav className="space-y-1">
         {navItems.map((item) => {
-          const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
+          const active = [item.href, ...(item.alsoActiveOn ?? [])].some((href) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`)));
           const Icon = item.icon;
           const capability = item.capability ? manifest.capabilities[item.capability] : undefined;
           const isLocked = capability?.state === "locked";

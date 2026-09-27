@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { AppShell } from "@pytorch-ph/domain-client/navigation";
 import { useCapabilities } from "@pytorch-ph/domain-client/onboarding";
 import { SkillBarChart, SkillRadarChart } from "@pytorch-ph/domain-client/organization";
-import { GatePanel } from "@pytorch-ph/domain-client/identity";
+import { GatePanel, IdentityCodes } from "@pytorch-ph/domain-client/identity";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import { Button } from "@pytorch-ph/design-system/button";
@@ -14,7 +14,7 @@ import { SegmentedTabs } from "@pytorch-ph/design-system/tabs";
 import { userTiers, type UserTier } from "@pytorch-ph/domain-protocol/identity";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import type { LeaderboardIdentitySettings } from "@pytorch-ph/domain-protocol/leaderboards";
-import type { MemberPrivacySettings } from "@pytorch-ph/domain-protocol/privacy-feedback";
+import type { MemberPrivacySettings, MembershipStatus } from "@pytorch-ph/domain-protocol/privacy-feedback";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { toast } from "sonner";
 
@@ -34,6 +34,7 @@ function ProfileContent() {
   const privacy = useQuery({ queryKey: ["member-privacy"], queryFn: () => fetchJson<MemberPrivacySettings>("/api/member/privacy", { cache: "no-store" }) });
   const identity = useQuery({ queryKey: ["leaderboard-identity"], queryFn: () => fetchJson<LeaderboardIdentitySettings>("/api/member/leaderboard-identity", { cache: "no-store" }) });
   const evidence = useQuery({ queryKey: ["product", "career-evidence"], queryFn: () => fetchJson<ProductViewData>("/api/product/career-evidence", { cache: "no-store" }) });
+  const membership = useQuery({ queryKey: ["membership-status", false], queryFn: () => fetchJson<MembershipStatus>("/api/membership/status", { cache: "no-store" }) });
   const aiStatus = useQuery({ queryKey: ["local-ai-status"], queryFn: () => fetchJson<{ configured: boolean }>("/api/backend/local-ai/status", { cache: "no-store" }) });
   const [upskillPlan, setUpskillPlan] = useState<UpskillPlan | null>(null);
   const upskill = useMutation({
@@ -45,14 +46,15 @@ function ProfileContent() {
     onSuccess: setUpskillPlan,
     onError: (error) => toast.error(error instanceof Error ? error.message : "UpSkill planning failed."),
   });
+  const identityLinks = (evidence.data?.evidence?.sources || []).flatMap((source) => source.connectionStatus === "connected" && source.configuredUrl?.startsWith("https://") ? [{ id: source.id, label: source.label, url: source.configuredUrl }] : []);
   const memberLabel = privacy.data?.hideRealName !== false ? identity.data?.preview || "Member #7A82F" : "Mika Santos";
 
   return (
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-[-0.02em]">User Profile & Personal Hub</h1>
-          <p className="mt-2 text-muted">Member growth profile with consent-based social connectors and skill telemetry.</p>
+          <h1 className="text-3xl font-bold tracking-[-0.02em]">My profile</h1>
+          <p className="mt-2 text-muted">Your identity, QR codes, connected accounts, and skills.</p>
         </div>
         {officerPortal ? <SegmentedTabs items={tierTabs} onChange={setTier} value={tier} /> : <Badge variant="orange">{userTiers[effectiveTier].label}</Badge>}
       </div>
@@ -66,7 +68,7 @@ function ProfileContent() {
               </div>
               <div>
                 <h2 className="text-xl font-bold tracking-[-0.02em]">{officerPortal ? "Mika Santos · Alex_Rivera" : memberLabel}</h2>
-                <p className="text-sm text-muted">BS Computer Science, Philippine Community Innovation cohort</p>
+                <p className="text-sm text-muted">PyTorch Philippines member · {membership.data?.state === "active" ? "Membership active (free)" : "Membership under review"}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Badge variant="orange">Computer Vision</Badge>
                   <Badge variant="success">AI Study Circles</Badge>
@@ -101,6 +103,10 @@ function ProfileContent() {
             </button>
           </div>
         </Card>
+      </div>
+
+      <div className="mt-4">
+        <IdentityCodes links={identityLinks} username={identity.data?.username || ""} />
       </div>
 
       <div className="mt-4">

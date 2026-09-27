@@ -7,6 +7,7 @@ import { Badge } from "@pytorch-ph/design-system/badge";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Card } from "@pytorch-ph/design-system/card";
 import { communityDemoProfiles, communityDemoView, communityInterestOptions } from "./demo-model";
+import { PeerTutorials } from "./peer-tutorials";
 
 const channelIcon = { text: Hash, forum: MessageCircle, voice: Volume2, stage: Volume2 };
 const bandDescription: Record<string, string> = {
@@ -37,7 +38,7 @@ export function CommunityDemoContent() {
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight lg:text-4xl">Find your place in PyTorch PH</h1>
             <p className="mt-3 leading-7 text-muted">A calmer first look at the proposed community. Pick a sample profile and interests to preview the channels and events that fit.</p>
           </div>
-          <div className="rounded-2xl border border-border bg-elevated px-4 py-3 text-sm text-muted"><Users className="mb-2 text-accent" size={22} />Community preview<br /><strong className="text-foreground">No Discord account needed</strong></div>
+          <div className="rounded-2xl border border-border bg-elevated px-4 py-3 text-sm text-muted"><Users className="mb-2 text-accent" size={22} />Community preview<br /><strong className="text-ink">No Discord account needed</strong></div>
         </div>
         <p className="mt-6 rounded-xl border border-warning/25 bg-warning/10 px-4 py-3 text-sm text-warning">Sample data only. Choices on this page do not link accounts, award points, or assign Discord roles.</p>
       </section>
@@ -46,12 +47,12 @@ export function CommunityDemoContent() {
         <Card className="bg-surface">
           <div className="flex items-center gap-3"><div className="rounded-xl bg-accentSoft p-2 text-accent"><Users size={20}/></div><div><h2 className="text-lg font-bold">Preview as a member</h2><p className="text-sm text-muted">Switch profiles to see how verified progress changes access.</p></div></div>
           <label className="mt-5 block text-sm font-semibold" htmlFor="community-profile">Sample profile</label>
-          <div className="relative mt-2"><select className="h-12 w-full appearance-none rounded-xl border border-border bg-elevated px-4 pr-10 text-foreground" id="community-profile" onChange={(event) => setProfileId(event.target.value)} value={profileId}>{communityDemoProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label} — {profile.note}</option>)}</select><ChevronDown aria-hidden className="pointer-events-none absolute right-4 top-4 text-muted" size={17}/></div>
+          <div className="relative mt-2"><select className="h-12 w-full appearance-none rounded-xl border border-border bg-elevated px-4 pr-10 text-ink" id="community-profile" onChange={(event) => setProfileId(event.target.value)} value={profileId}>{communityDemoProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label} — {profile.note}</option>)}</select><ChevronDown aria-hidden className="pointer-events-none absolute right-4 top-4 text-muted" size={17}/></div>
           <p className="mt-6 text-sm font-semibold">What are you here for?</p>
           <p className="mt-1 text-sm text-muted">Interests tailor suggestions; they never unlock gated spaces.</p>
           <div className="mt-3 flex flex-wrap gap-2">{communityInterestOptions.map((answer) => {
             const selected = interests.includes(answer.roleKey);
-            return <button aria-pressed={selected} className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors ${selected ? "border-accent bg-accentSoft text-accent" : "border-border bg-elevated text-muted hover:text-foreground"}`} key={answer.roleKey} onClick={() => toggleInterest(answer.roleKey)} type="button">{selected && <Check size={14} />}{answer.label}</button>;
+            return <button aria-pressed={selected} className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors ${selected ? "border-accent bg-accentSoft text-accent" : "border-border bg-elevated text-muted hover:text-ink"}`} key={answer.roleKey} onClick={() => toggleInterest(answer.roleKey)} type="button">{selected && <Check size={14} />}{answer.label}</button>;
           })}</div>
         </Card>
 
@@ -78,6 +79,8 @@ export function CommunityDemoContent() {
           <Card className="bg-surface"><div className="flex items-center gap-2"><Bell className="text-accent" size={18}/><h2 className="font-bold">Launch approach</h2></div><p className="mt-2 text-sm leading-6 text-muted">Discord's own Onboarding, Server Guide, forums, and AutoMod keep the setup familiar. The custom PyTorch PH app would handle website-linked roles in a later phase.</p><Badge className="mt-4" variant="warning">Preview only</Badge></Card>
         </div>
       </section>
+
+      <PeerTutorials accessBand={view.profile.accessBand} />
   </div>;
 }
 
