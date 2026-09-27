@@ -33,6 +33,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design
 import { AppDialog } from "@pytorch-ph/design-system/dialog";
 import { Input, Label } from "@pytorch-ph/design-system/input";
 import { Progress } from "@pytorch-ph/design-system/progress";
+import { SegmentedTabs } from "@pytorch-ph/design-system/tabs";
 import type { CapabilityKey } from "@pytorch-ph/domain-protocol/identity";
 import type { Opportunity, ProductView, ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { fetchJson, queryKeys } from "@pytorch-ph/domain-client/transport";
@@ -48,10 +49,6 @@ function Header({ data, capabilityKey }: { data: ProductViewData; capabilityKey:
     <div><p className="data-label mb-2 text-xs uppercase tracking-widest text-accent">{data.heading.eyebrow}</p><h1 className="text-3xl font-bold tracking-[-0.02em]">{data.heading.title}</h1><p className="mt-2 max-w-3xl leading-7 text-muted">{data.heading.description}</p></div>
     <div className="flex flex-wrap gap-2" data-tour="service-status"><CapabilityStatus capabilityKey={capabilityKey} /><SourceBadge data={data} /></div>
   </header>;
-}
-
-function Stats({ data }: { data: ProductViewData }) {
-  return <section className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{data.stats.map((item) => <Card className="bg-surface" key={item.label}><p className="text-sm text-muted">{item.label}</p><p className="data-label mt-3 text-3xl font-bold">{item.value}</p><p className="mt-2 text-xs text-muted">{item.detail}</p></Card>)}</section>;
 }
 
 function EvidenceView({ data }: { data: ProductViewData }) {
@@ -155,8 +152,25 @@ function ProductContent({ view, capabilityKey, safety }: Props) {
     {data ? <Header capabilityKey={capabilityKey} data={data} /> : <header className="mb-6 flex items-start justify-between gap-4" data-tour="page-heading"><div><p className="data-label mb-2 text-xs uppercase tracking-widest text-accent">Product workspace</p><h1 className="text-3xl font-bold">Loading visual workspace…</h1></div><Badge data-tour="service-status">Checking access</Badge></header>}
     <Card className="mb-4 border-accent/25 bg-accentSoft" data-tour="permission-boundary"><div className="flex gap-3"><ShieldCheck className="mt-0.5 flex-none text-accent" size={20} /><div><strong>Permission boundary</strong><p className="mt-1 text-sm text-muted">{safety}</p></div></div></Card>
     {automation && <Card className="mb-4 bg-surface" data-automation-state={automation.state}><div className="flex items-start gap-3">{automation.state === "available" ? <Sparkles className="mt-0.5 flex-none text-success" size={19}/> : <LockKeyhole className="mt-0.5 flex-none text-warning" size={19}/>}<div><strong>{automation.state === "available" ? "Automation available" : "Manual mode"}</strong><p className="mt-1 text-sm text-muted">{automation.reason}</p>{automation.state === "locked" && automation.missing.length > 0 && <p className="mt-2 text-xs text-muted">Automated tools require: {automation.missing.join(", ")}. Manual workspace actions remain available.</p>}</div></div></Card>}
-    <div data-tour="service-data"><CapabilityGate capabilityKey={capabilityKey}><div data-tour="page-content">{error ? <Card className="bg-surface"><div className="flex gap-3"><AlertTriangle className="flex-none text-accent" /><div><CardTitle>Product data unavailable</CardTitle><p className="mt-2 text-sm text-muted">{error}</p></div></div></Card> : data ? <><Stats data={data} /><ViewBody canScrapeEvidence={evidenceScrape.state === "available"} canWriteEvidence={evidenceWrite.state === "available"} data={data} view={view} /><div className="mt-4"><DeveloperDiagnostics data={data.diagnostics} /></div></> : <Card className="bg-surface"><div className="flex items-center gap-3 text-muted"><Server className="animate-pulse" size={20} />Connecting to the active data provider…</div></Card>}</div></CapabilityGate></div>
+    <div data-tour="service-data"><CapabilityGate capabilityKey={capabilityKey}><div data-tour="page-content">{error ? <Card className="bg-surface"><div className="flex gap-3"><AlertTriangle className="flex-none text-accent" /><div><CardTitle>Product data unavailable</CardTitle><p className="mt-2 text-sm text-muted">{error}</p></div></div></Card> : data ? <><ViewBody canScrapeEvidence={evidenceScrape.state === "available"} canWriteEvidence={evidenceWrite.state === "available"} data={data} view={view} /><div className="mt-4"><DeveloperDiagnostics data={data.diagnostics} /></div></> : <Card className="bg-surface"><div className="flex items-center gap-3 text-muted"><Server className="animate-pulse" size={20} />Connecting to the active data provider…</div></Card>}</div></CapabilityGate></div>
   </>;
 }
 
 export function ProductWorkspace(props: Props) { return <AppShell><ProductContent {...props} /></AppShell>; }
+
+type CareerView = "resumes" | "opportunities";
+
+const careerViews: Array<{ value: CareerView; label: string; capabilityKey: CapabilityKey; safety: string }> = [
+  { value: "resumes", label: "Resumes", capabilityKey: "resume_read", safety: "Resume selection and upload are separate actions; no artifact advances without explicit approval." },
+  { value: "opportunities", label: "Opportunities", capabilityKey: "opportunities_read", safety: "Manual opportunity review stays available. Automated discovery remains separately locked until its prerequisites are verified." },
+];
+
+// Resumes and the opportunities they are written for live on one page.
+export function CareerWorkspace({ initialView = "resumes" }: { initialView?: CareerView }) {
+  const [view, setView] = useState<CareerView>(initialView);
+  const active = careerViews.find((item) => item.value === view) ?? careerViews[0];
+  return <AppShell>
+    <div aria-label="Career workspace section" className="mb-5" role="group"><SegmentedTabs items={careerViews.map(({ value, label }) => ({ value, label }))} onChange={setView} value={view} /></div>
+    <ProductContent capabilityKey={active.capabilityKey} key={view} safety={active.safety} view={view} />
+  </AppShell>;
+}

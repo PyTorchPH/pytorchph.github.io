@@ -57,6 +57,29 @@ Original steps:
 2. Define light pytorch.org token values; keep charts and status colors legible.
 3. Screenshot review of member dashboard, officer command center, and workspaces; fix contrast.
 
+### Phase 3: portal information architecture (done 2026-09-28)
+Member navigation: My Performance, Leaderboards, Career Evidence, Resumes & Opportunities, Community
+Events, Community Preview, My Profile, Settings & Privacy.
+- **My Performance** replaces the personal dashboard: no counter tiles; a season rank card and a stat
+  line that compares the member with the peer median and the leader (`summarizePeers`), then grouped
+  personal-development visuals. "How ranking works" stays hidden in a popover until opened and uses the
+  officer review rubric (participation x1, contributor x2, finalist or lead x3, winner x4).
+- **Career Evidence**: one "Add evidence" card with Manual and Automatic (AI) modes; Automatic lists the
+  sources AI can read. Counter tiles were removed from all product workspaces.
+- **Community Events**: community events first; "Add an external event" sits at the bottom with
+  "Fill in the details" or "Use AI". AI retrieval accepts Luma and Meetup links only
+  (`automaticEventSource`); an info popover explains this.
+- **Resumes & Opportunities** share one page (`CareerWorkspace`).
+- **My Profile** holds identity QR codes: one for the PyTorch PH profile (the member's place on the
+  leaderboard) and one per connected account that has a profile link. A single code cannot work inside
+  LinkedIn or Facebook, because each platform only accepts its own codes.
+- **Membership is free.** The page only reports account status and is no longer in the navigation.
+  The backend still uses the `paid` and `payment_pending` fields and `paymentReference`; renaming them
+  needs a database migration and is not part of this change.
+- **Privacy controls** moved under Settings; `/trust` remains for details and for officers.
+- **Community Preview** adds sample peer-to-peer tutorials.
+- The product tour (React Joyride) now runs on static hosting, where routes end with a slash.
+
 ### Future: free API pages (like pytorch.kr "Domain API" and "Developer resources")
 PyTorch Korea lists libraries on `/domains` (cards with description and link) and developer
 information on `/resources`. PyTorch PH wants similar pages where people can discover and use the

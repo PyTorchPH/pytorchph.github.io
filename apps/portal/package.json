@@ -30,14 +30,14 @@
     "demo:reset": "tsx scripts/demo-data.ts reset --confirm",
     "test:tours:e2e": "node tests/product-tour.e2e.mjs",
     "test:nationwide": "tsx --test tests/nationwide-membership.test.ts",
-    "test:community": "tsx --test tests/community-demo.test.ts"
+    "test:community": "tsx --test tests/community-demo.test.ts tests/peer-summary.test.ts tests/event-sources.test.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "@pytorch-ph/design-system": "0.1.0",
     "@pytorch-ph/domain-client": "0.1.0",
     "@pytorch-ph/domain-protocol": "0.1.0",
     "@pytorch-ph/domain-server": "0.1.0",
-    "@hookform/resolvers": "^5.9.1",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.3",
     "@tanstack/react-query": "^5.101.4",
@@ -55,6 +55,7 @@
     "pdfjs-dist": "^6.2.108",
     "playwright": "^1.45.0",
     "postcss": "^8.5.26",
+    "qrcode.react": "^4.2.0",
     "radix-ui": "^1.6.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

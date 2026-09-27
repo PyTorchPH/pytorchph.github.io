@@ -3,3 +3,4 @@ export * from "./session/collect-credentials";
 export * from "./session/create-browser-client";
 export * from "./session/end-session";
 export * from "./session/render-shell";
+export * from "./render-identity-codes";

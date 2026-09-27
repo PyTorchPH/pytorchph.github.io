@@ -13,7 +13,8 @@ export function requestProductTour() {
 }
 
 export function ProductTourController() {
-  const pathname = usePathname();
+  // Static hosting serves routes with a trailing slash; tours are keyed without one.
+  const pathname = usePathname().replace(/\/+$/, "") || "/";
   const manifest = useCapabilities();
   const tours = manifest.portal.audience === "member" ? memberProductTours : productTours;
   const tour = tours[pathname];
@@ -101,20 +102,20 @@ export function ProductTourController() {
       }}
       onEvent={handleEvent}
       options={{
-        backgroundColor: "#141416",
+        backgroundColor: "#ffffff",
         blockTargetInteraction: true,
         buttons: ["back", "skip", "close", "primary"],
         closeButtonAction: "skip",
         dismissKeyAction: "close",
         overlayClickAction: false,
-        overlayColor: "rgba(0, 0, 0, 0.72)",
-        primaryColor: "#e8590c",
+        overlayColor: "rgba(0, 0, 0, 0.55)",
+        primaryColor: "#be2c10",
         showProgress: true,
         skipBeacon: true,
         spotlightPadding: 8,
-        spotlightRadius: 10,
+        spotlightRadius: 0,
         targetWaitTimeout: 6000,
-        textColor: "#FFF7ED",
+        textColor: "#262626",
         width: 360,
         zIndex: 1000
       }}
@@ -122,13 +123,13 @@ export function ProductTourController() {
       scrollToFirstStep
       steps={tour.steps}
       styles={{
-        buttonBack: { color: "#FFF7ED", opacity: 0.72 },
-        buttonClose: { color: "#FFF7ED" },
-        buttonPrimary: { borderRadius: 8, fontWeight: 700, padding: "9px 14px" },
-        buttonSkip: { color: "#FFF7ED", opacity: 0.62 },
-        tooltip: { border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12 },
+        buttonBack: { color: "#5f5f60" },
+        buttonClose: { color: "#262626" },
+        buttonPrimary: { borderRadius: 0, fontWeight: 700, padding: "9px 14px" },
+        buttonSkip: { color: "#5f5f60" },
+        tooltip: { border: "1px solid rgba(0,0,0,0.14)", borderRadius: 0 },
         tooltipContent: { lineHeight: 1.6, textAlign: "left" },
-        tooltipTitle: { color: "#FFF7ED", fontWeight: 700, textAlign: "left" }
+        tooltipTitle: { color: "#262626", fontWeight: 700, textAlign: "left" }
       }}
     />
   );

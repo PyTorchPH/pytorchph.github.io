@@ -62,7 +62,7 @@ export const productTours: Record<string, ProductTour> = {
   "/leaderboards": {
     version: 1,
     steps: [
-      { target: '[data-tour="leaderboards-heading"]', title: "Public-safe rankings", content: "Leaderboards use reviewed signals and public-safe handles instead of exposing private student information.", placement: "bottom-start" },
+      { target: '[data-tour="leaderboards-heading"]', title: "Public-safe rankings", content: "Leaderboards use reviewed signals and public-safe handles instead of exposing private member information.", placement: "bottom-start" },
       { target: '[data-tour="leaderboards-tabs"]', title: "Change the ranking view", content: "Switch between the global board and verified-skill ladders without leaving the page." },
       { target: '[data-tour="leaderboards-table"]', title: "Understand each rank", content: "Compare season rating, tier, active-week streak, and verified skill labels." }
     ]
@@ -81,19 +81,19 @@ export const productTours: Record<string, ProductTour> = {
   },
   "/membership": {
     version: 1,
-    steps: [{ target: "main", title: "Membership review", content: "Paid membership remains human-approved. Authentication alone never grants an unpaid applicant member access.", placement: "center" }],
+    steps: [{ target: "main", title: "Membership", content: "Membership in PyTorch Philippines is free. This page shows the status of member accounts.", placement: "center" }],
   },
 };
 
 export const memberProductTours: Record<string, ProductTour> = {
   ...productTours,
   "/dashboard": {
-    version: 1,
+    version: 2,
     steps: [
-      { target: '[data-tour="member-overview"]', title: "Your personal workspace", content: "Start here for your evidence, resume readiness, chapter participation, and opportunity shortlist.", placement: "bottom-start" },
-      { target: '[data-tour="member-metrics"]', title: "Private readiness stats", content: "These owner-only totals describe your evidence, resumes, events, and opportunities." },
-      { target: '[data-tour="member-standing"]', title: "Competitive progression", content: "Your season tier and activity chart use verified point events; your own ladder row is strongly highlighted." },
-      { target: '[data-tour="member-community"]', title: "Safe community pulse", content: "Members can see useful chapter totals without names, emails, private profiles, or small-group breakdowns." },
+      { target: '[data-tour="member-overview"]', title: "Your performance dashboard", content: "Start here for your season standing, how you compare with your peers, and what to work on next.", placement: "bottom-start" },
+      { target: '[data-tour="member-ranking-guide"]', title: "How ranking works", content: "Open this at any time to see how points are earned and how to raise your rank. Winning a competition raises it the most." },
+      { target: '[data-tour="member-standing"]', title: "Standing against peers", content: "Your rank, tier, and streak sit beside a stat line that compares you with the peer median and the current leader." },
+      { target: '[data-tour="member-development"]', title: "Personal development", content: "Your activity, skill points, readiness checklist, and recommended next moves are grouped in one place." },
     ],
   },
   "/trust": {
@@ -102,7 +102,7 @@ export const memberProductTours: Record<string, ProductTour> = {
   },
   "/membership": {
     version: 1,
-    steps: [{ target: "main", title: "Membership verification", content: "Authentication and paid chapter membership are separate. Officers approve payment evidence before access becomes active.", placement: "center" }],
+    steps: [{ target: "main", title: "Membership", content: "Membership in PyTorch Philippines is free. This page shows the status of your account.", placement: "center" }],
   },
   "/events": {
     version: 2,

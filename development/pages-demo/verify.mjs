@@ -31,12 +31,25 @@ const origin = `http://127.0.0.1:${server.address().port}`;
 const url = `${origin}${PORTAL_BASE_PATH}`;
 const chrome = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const schoolText = /\b(?:FEU|Far Eastern|Tamaraw|SADO|campus|students?|university|faculty|college)\b|fit\.edu/i;
-const memberHeading = "Your evidence, momentum, and next move.";
+const memberHeading = "My performance";
 const officerHeading = "Community intelligence dashboard for chapter operations.";
 let browser;
 try {
   browser = await chromium.launch({ headless: true, executablePath: process.env.PH_DEMO_BROWSER || (existsSync(chrome) ? chrome : undefined) });
+  // The product tour starts on a first visit and covers the page; first check it, then run the rest with tours seen.
+  const firstVisit = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const tourPage = await firstVisit.newPage();
+  await tourPage.goto(`${url}/dashboard/`, { waitUntil: "networkidle" });
+  await tourPage.getByText("Your performance dashboard", { exact: true }).waitFor();
+  await tourPage.keyboard.press("Escape");
+  await tourPage.getByText("Your performance dashboard", { exact: true }).waitFor({ state: "detached" });
+  await firstVisit.close();
+
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  await context.addInitScript(() => {
+    const read = Storage.prototype.getItem;
+    Storage.prototype.getItem = function getItem(key) { return String(key).startsWith("pytorch-ph:tour:") ? "seen" : read.call(this, key); };
+  });
   const page = await context.newPage();
   const errors = [], externalRequests = [], missingAssets = [];
   page.on("pageerror", error => errors.push(error.message));
@@ -56,6 +69,10 @@ try {
   await page.getByRole("button", { name: "Use example member", exact: true }).click();
   await heading(memberHeading);
   await page.getByRole("link", { name: "Career Evidence" }).first().waitFor();
+  await page.getByRole("columnheader", { name: "Peer median" }).waitFor();
+  await page.getByRole("button", { name: "How ranking works" }).click();
+  await page.getByText("How to raise your rank", { exact: true }).waitFor();
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Use example officer", exact: true }).click();
   await heading(officerHeading);
   await page.reload({ waitUntil: "networkidle" });
@@ -90,7 +107,7 @@ try {
   assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request)), []);
   assert.deepEqual(missingAssets, []);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["portal-entry-redirect", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
+  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
 } finally {
   await browser?.close();
   await new Promise(resolveClosed => server.close(resolveClosed));

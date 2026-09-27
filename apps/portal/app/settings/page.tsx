@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { PrivacyControls } from "@pytorch-ph/domain-client/privacy-feedback";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cpu, Eye, FlaskConical, LockKeyhole, UserCog } from "lucide-react";
@@ -60,7 +62,7 @@ export default function SettingsPage() {
 
   return <AppShell>
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3" data-tour="settings-heading">
-      <div><h1 className="text-3xl font-bold tracking-[-0.02em]">Settings</h1><p className="mt-2 text-muted">Configure private local AI access and member-facing identity controls.</p></div>
+      <div><h1 className="text-3xl font-bold tracking-[-0.02em]">Settings</h1><p className="mt-2 text-muted">Your leaderboard identity, privacy controls, and AI connection.</p></div>
       <Badge variant="orange">Private by default</Badge>
     </div>
     <Card className="mb-4 bg-surface">
@@ -89,5 +91,9 @@ export default function SettingsPage() {
       </Card>
       <div className="space-y-4"><Card className="bg-surface"><CardHeader><div><CardTitle>Member preview</CardTitle><CardDescription>Exactly how your label is intended to appear.</CardDescription></div><Eye className="text-accent" /></CardHeader><div className="rounded-xl border border-accent/30 bg-accentSoft p-5 text-center text-xl font-bold">{preview}</div></Card><Card className="bg-surface"><CardHeader><div><CardTitle>Never included</CardTitle><CardDescription>Leaderboard payloads exclude private career and account data.</CardDescription></div><LockKeyhole className="text-success" /></CardHeader><p className="text-sm leading-6 text-muted">No UUID, email, avatar, bio, department, job history, projects, resumes, evidence text or IDs, source URLs, activity timestamps, or diagnostics.</p></Card></div>
     </section>
+    <Card className="mt-4 bg-surface" id="privacy">
+      <CardHeader><div><CardTitle>Privacy &amp; trust</CardTitle><CardDescription>Choose what leaves your device and what other members see. <Link className="text-accent underline underline-offset-2" href="/trust">How your data is protected</Link></CardDescription></div><LockKeyhole aria-hidden="true" className="text-accent" /></CardHeader>
+      <PrivacyControls />
+    </Card>
   </AppShell>;
 }

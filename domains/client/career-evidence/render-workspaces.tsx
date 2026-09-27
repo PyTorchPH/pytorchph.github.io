@@ -37,6 +37,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { Badge } from "@pytorch-ph/design-system/badge";
+import { SegmentedTabs } from "@pytorch-ph/design-system/tabs";
 import { Button } from "@pytorch-ph/design-system/button";
 import {
   Card,
@@ -576,6 +577,17 @@ function MemberIntegrityNotice() {
   return <Card className="border-warning/30 bg-warning/10"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 text-warning"/><div className="flex-1"><h2 className="font-bold">Leaderboard eligibility review</h2><p className="mt-2 text-sm leading-6 text-muted">{active.reason}</p><p className="mt-1 text-xs text-muted">Decision {new Date(active.imposedAt).toLocaleString()} · claim {active.claimId}</p>{appealOpen ? <p className="mt-4 rounded-lg border border-border bg-surface p-3 text-sm">Your appeal is open. An officer must review it before eligibility can change.</p> : <div className="mt-4"><Label htmlFor="integrity-appeal">Appeal note</Label><Textarea id="integrity-appeal" maxLength={1200} onChange={(event) => setNote(event.target.value)} placeholder="Explain which submitted source supports a review." value={note}/><Button className="mt-3" disabled={busy || note.trim().length < 10} onClick={async () => { setBusy(true); setNotice(""); try { const response = await fetch("/api/evidence/integrity", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sanctionId: active.sanctionId, note }) }); const body = await response.json(); if (!response.ok) throw new Error(body.error || "Appeal could not be opened."); setNote(""); setNotice("Appeal opened for officer review."); await load(); } catch (error) { setNotice(error instanceof Error ? error.message : "Appeal could not be opened."); } finally { setBusy(false); } }}>Open one appeal</Button></div>}{notice && <p aria-live="polite" className="mt-3 text-sm">{notice}</p>}</div></div></Card>;
 }
 
+type AddMode = "manual" | "automatic";
+
+const addModes: Array<{ value: AddMode; label: string }> = [
+  { value: "manual", label: "Manual" },
+  { value: "automatic", label: "Automatic (AI)" },
+];
+
+// Sources AI can read: a signed-in website session or a public URL. Uploads and manual entry are manual.
+const isAutomaticSource = (source: EvidenceSource) =>
+  source.connectionMethod === "website_session" || source.connectionMethod === "url";
+
 export function CareerEvidenceView({
   data,
   canWrite,
@@ -593,13 +605,8 @@ export function CareerEvidenceView({
   const [actionError, setActionError] = useState("");
   const [uploading, setUploading] = useState(false);
   const uploadRef = useRef<HTMLInputElement>(null);
+  const [addMode, setAddMode] = useState<AddMode>("manual");
   if (!evidence) return <Card>No evidence view is available.</Card>;
-  const steps = [
-    { label: "Approved sources", icon: FileText },
-    { label: "Retrieval middleman", icon: GitBranch },
-    { label: "Normalize + verify", icon: Network },
-    { label: "Career database", icon: Database },
-  ];
   const persist = async (item: EvidenceItem) => {
     const creating = item.id.startsWith("new-");
     const response = await fetch(
@@ -665,85 +672,80 @@ export function CareerEvidenceView({
   return (
     <div className="space-y-4">
       <MemberIntegrityNotice />
-      <Card className="overflow-hidden border-accent/25 bg-accentSoft">
+      <Card className="bg-surface" data-tour="evidence-add">
         <CardHeader>
           <div>
-            <CardTitle>One controlled evidence pipeline</CardTitle>
+            <CardTitle>Add evidence</CardTitle>
             <CardDescription>
-              Metadata-aware inventory becomes reusable rules; generated resumes
-              never become source evidence.
+              Enter it yourself, or let AI collect it from a source you
+              connect.
             </CardDescription>
           </div>
-          <ShieldCheck className="text-accent" size={20} />
+          <div aria-label="How to add evidence" role="group">
+            <SegmentedTabs items={addModes} onChange={setAddMode} value={addMode} />
+          </div>
         </CardHeader>
-        <div className="grid gap-2 md:grid-cols-4">
-          {steps.map(({ label, icon: Icon }, index) => (
-            <div
-              className="rounded-lg border border-border bg-surface p-4"
-              key={label}
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accentSoft text-accent">
-                  <Icon size={18} />
-                </span>
-                {index < 3 && (
-                  <ArrowRight
-                    className="hidden text-muted md:block"
-                    size={16}
-                  />
-                )}
-              </div>
-              <p className="text-sm font-semibold">{label}</p>
+        {addMode === "manual" ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button disabled={!canWrite} onClick={startManual} size="sm" variant="secondary">
+              <Plus size={14} />
+              Manual entry
+            </Button>
+            <Button disabled={!canWrite || uploading} onClick={() => uploadRef.current?.click()} size="sm">
+              <Upload size={14} />
+              {uploading ? "Preparing…" : "Upload photo"}
+            </Button>
+            <input
+              accept="image/jpeg,image/png,image/webp"
+              aria-label="Upload an evidence image"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void upload(file);
+              }}
+              ref={uploadRef}
+              type="file"
+            />
+            <p className="w-full text-sm text-muted">
+              You write the details. Nothing is collected for you.
+            </p>
+          </div>
+        ) : (
+          <>
+            <p className="mb-4 text-sm text-muted">
+              Choose a source. AI reads only what you allow and proposes
+              evidence; each proposal waits for your review before it counts.
+              {!canAutomate && " Automatic collection is locked until an AI endpoint is configured in Settings."}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {sources.filter(isAutomaticSource).map((item) => (
+                <button
+                  className="focus-ring group border border-border bg-elevated p-4 text-left transition hover:border-accent/40"
+                  key={item.id}
+                  onClick={() => setSource(item)}
+                  type="button"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="flex h-9 w-9 items-center justify-center bg-surface text-accent">
+                      {item.connectionMethod === "website_session" ? <Globe2 size={18} /> : <Link2 size={18} />}
+                    </span>
+                    <Badge variant={sourceTone(item)}>
+                      {item.maturity === "available"
+                        ? item.connectionStatus?.replaceAll("_", " ")
+                        : item.maturity}
+                    </Badge>
+                  </div>
+                  <p className="mt-4 font-semibold">{item.label}</p>
+                  <p className="mt-1 text-xs leading-5 text-muted">{item.kind}</p>
+                  <div className="mt-4 flex items-center justify-between text-xs text-muted">
+                    <span>{item.evidenceCount || 0} items</span>
+                    <ChevronRight className="transition group-hover:translate-x-1" size={15} />
+                  </div>
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-      </Card>
-      <Card className="bg-surface">
-        <CardHeader>
-          <div>
-            <CardTitle>Supported sources & connections</CardTitle>
-            <CardDescription>
-              Click a source to inspect permissions, connect it, or sync
-              selected evidence.
-            </CardDescription>
-          </div>
-          <Badge variant="orange">Rules are reusable</Badge>
-        </CardHeader>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {sources.map((item) => (
-            <button
-              className="focus-ring group rounded-xl border border-border bg-elevated p-4 text-left transition hover:-translate-y-0.5 hover:border-accent/40"
-              key={item.id}
-              onClick={() => setSource(item)}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface text-accent">
-                  {item.connectionMethod === "website_session" ? (
-                    <Globe2 size={18} />
-                  ) : item.connectionMethod === "upload" ? (
-                    <ImageIcon size={18} />
-                  ) : (
-                    <Link2 size={18} />
-                  )}
-                </span>
-                <Badge variant={sourceTone(item)}>
-                  {item.maturity === "available"
-                    ? item.connectionStatus?.replaceAll("_", " ")
-                    : item.maturity}
-                </Badge>
-              </div>
-              <p className="mt-4 font-semibold">{item.label}</p>
-              <p className="mt-1 text-xs leading-5 text-muted">{item.kind}</p>
-              <div className="mt-4 flex items-center justify-between text-xs text-muted">
-                <span>{item.evidenceCount || 0} items</span>
-                <ChevronRight
-                  className="transition group-hover:translate-x-1"
-                  size={15}
-                />
-              </div>
-            </button>
-          ))}
-        </div>
+          </>
+        )}
       </Card>
       <Card className="bg-surface">
         <CardHeader>
@@ -762,34 +764,6 @@ export function CareerEvidenceView({
               }{" "}
               verified
             </Badge>
-            <Button
-              disabled={!canWrite}
-              onClick={startManual}
-              size="sm"
-              variant="secondary"
-            >
-              <Plus size={14} />
-              Manual entry
-            </Button>
-            <Button
-              disabled={!canWrite || uploading}
-              onClick={() => uploadRef.current?.click()}
-              size="sm"
-            >
-              <Upload size={14} />
-              {uploading ? "Preparing…" : "Upload photo"}
-            </Button>
-            <input
-              accept="image/jpeg,image/png,image/webp"
-              className="sr-only"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void upload(file);
-              }}
-              aria-label="Upload an evidence image"
-              ref={uploadRef}
-              type="file"
-            />
           </div>
         </CardHeader>
         {actionError && (

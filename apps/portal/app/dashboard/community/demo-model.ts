@@ -75,3 +75,21 @@ export function communityDemoView(profileId: string, selectedInterests: readonly
     eventBands: eventBands.map((event) => ({ ...event, unlocked: (profile.unlockedEventKeys as readonly string[]).includes(event.key) })),
   };
 }
+
+export type PeerTutorial = { id: string; topic: string; summary: string; level: "beginner" | "builder" | "advanced"; format: string; tutor: string };
+
+// Sample tutorials that members could offer one another. Tutor names are fictional sample handles.
+export const communityPeerTutorials: PeerTutorial[] = [
+  { id: "tensors-autograd", topic: "Tensors and autograd from scratch", summary: "Build intuition for tensors, gradients, and a first training loop.", level: "beginner", format: "1-on-1 · 45 minutes", tutor: "Sample Mentor A" },
+  { id: "first-image-classifier", topic: "Your first image classifier", summary: "Train and evaluate a small vision model on a public dataset.", level: "beginner", format: "Small group · 60 minutes", tutor: "Sample Builder B" },
+  { id: "debugging-training", topic: "Debugging a training run", summary: "Read loss curves, find data leaks, and fix exploding gradients.", level: "builder", format: "1-on-1 · 45 minutes", tutor: "Sample Mentor C" },
+  { id: "serving-fastapi", topic: "Serving a model with FastAPI", summary: "Wrap a trained model in an API and test it end to end.", level: "builder", format: "Pair session · 60 minutes", tutor: "Sample Builder D" },
+  { id: "paper-reading", topic: "Reading a research paper together", summary: "Walk through one paper and reproduce its key result.", level: "advanced", format: "Small group · 90 minutes", tutor: "Sample Mentor E" },
+  { id: "distributed-training", topic: "Distributed training basics", summary: "Scale a training job across GPUs and measure the speed-up.", level: "advanced", format: "1-on-1 · 60 minutes", tutor: "Sample Mentor A" },
+];
+
+// New and unlinked members start with beginner tutorials; mentors are a good fit to take advanced ones.
+export function tutorialFitsBand(tutorial: PeerTutorial, accessBand: string) {
+  const level = accessBand === "mentor" ? "advanced" : accessBand === "none" ? "beginner" : accessBand;
+  return tutorial.level === level;
+}
