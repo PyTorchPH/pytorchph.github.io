@@ -47,13 +47,14 @@ export default function LeaderboardsPage() {
   const [page, setPage] = useState(1);
   const [view, setView] = useState<LeaderboardView>("both");
   const params = useMemo(() => new URLSearchParams({ page: String(page), pageSize: "25", view, ...(skill ? { skill } : {}), ...(season ? { season } : {}) }), [page, season, skill, view]);
-  const query = useQuery({ queryKey: ["member-leaderboard", season, skill, view, page], queryFn: () => fetchJson<LeaderboardPayload>(`/api/member/leaderboard?${params}`, { cache: "no-store" }) });
+  const query = useQuery({ queryKey: ["member-leaderboard", season, skill, view, page], enabled: !officialApiOrigin, queryFn: () => fetchJson<LeaderboardPayload>(`/api/member/leaderboard?${params}`, { cache: "no-store" }) });
   const data = query.data;
   const highlighted = useSyncExternalStore(subscribeToLocation, readHighlightedMember, () => null);
   const highlightedEntry = highlighted ? data?.entries.find((entry) => entry.displayLabel === highlighted) : undefined;
   const current = data?.entries.find((entry) => entry.isCurrentUser);
   const range = current ? rankForPoints(current.points) : null;
   const progress = range ? range.ceiling ? ((current!.points - range.floor) / (range.ceiling - range.floor)) * 100 : 100 : 0;
+  if (officialApiOrigin) return <AppShell><div className="space-y-5"><section className="page-hero" data-tour="leaderboards-heading"><Badge variant="success">Official verified points</Badge><h1 className="mt-4 text-3xl font-extrabold">Organization leaderboard</h1><p className="mt-2 text-muted">Ranks come from officer-published results, verified attendance, and approved evidence.</p></section><OfficialLeaderboard /></div></AppShell>;
   return <AppShell>
     <div className="space-y-5">
       <section className="page-hero" data-tour="leaderboards-heading">
@@ -63,7 +64,6 @@ export default function LeaderboardsPage() {
         <div aria-label="Featured ladder tabs" className="mt-4 flex flex-wrap gap-2" data-tour="leaderboards-tabs" role="group">{[{ slug:"",label:"Global" },...(data?.skills.slice(0,4) || [])].map((item) => <button aria-pressed={skill===item.slug} className={`border px-4 py-2 text-sm font-semibold ${skill===item.slug ? "border-accent bg-accentSoft text-accent" : "border-border text-muted"}`} key={item.slug || "global"} onClick={() => { setSkill(item.slug); setPage(1); }} type="button">{item.label}</button>)}</div>
       </section>
 
-      <OfficialLeaderboard />
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="bg-surface"><div className="flex items-center gap-2 text-muted"><Trophy size={18} /> Your standing</div><p className="mt-4 text-3xl font-bold">{current ? `${current.points.toLocaleString()} points` : "Not listed"}</p><p className="mt-1 text-sm text-muted">{current ? `${current.verifiedPoints.toLocaleString()} verified · ${current.pendingPoints.toLocaleString()} pending` : "No points in this verification view."}</p></Card>
         <Card className="bg-surface"><div className="flex items-center gap-2 text-muted"><Medal size={18} /> Tier progress</div><div className="mt-4 flex items-center justify-between"><strong>{current ? `${current.tier} ${current.division}` : "Unranked"}</strong><span className="text-xs text-muted">{range?.ceiling ? `${range.ceiling - current!.points} to next` : current ? "Top tier" : "—"}</span></div><Progress className="mt-3" value={progress} /></Card>

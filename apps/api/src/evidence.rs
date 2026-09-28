@@ -6,6 +6,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
 };
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use sqlx::Row;
 use std::sync::Arc;
 use url::Url;
@@ -18,6 +19,123 @@ pub struct NewClaim {
     title: String,
     source_url: String,
     content_hash: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtensionEnvelope {
+    schema_version: i64,
+    source: String,
+    origin: String,
+    page_url: String,
+    content_hash: String,
+    items: Vec<ExtensionItem>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ExtensionItem {
+    title: String,
+    text: String,
+    source_url: String,
+    evidence_kind: String,
+}
+
+fn source_host_matches(source: &str, host: &str) -> bool {
+    match source {
+        "github" => host == "github.com",
+        "facebook" => host == "facebook.com" || host.ends_with(".facebook.com"),
+        "linkedin" => host == "linkedin.com" || host.ends_with(".linkedin.com"),
+        _ => false,
+    }
+}
+
+fn extension_kind(kind: &str, source: &str) -> &'static str {
+    match (kind, source) {
+        ("project", "github") => "personal_project",
+        ("competition", _) => "external_competition",
+        ("activity" | "achievement", _) => "external_participation",
+        _ => "external_participation",
+    }
+}
+
+pub async fn submit_extension(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Json(input): Json<ExtensionEnvelope>,
+) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
+    check_origin(&state, &headers)?;
+    let actor = auth::viewer(&state, &headers).await?;
+    if actor.role == "pending" {
+        return Err(ApiError(StatusCode::FORBIDDEN, "Member approval required"));
+    }
+    let page = Url::parse(&input.page_url).map_err(|_| bad("Invalid extension page"))?;
+    if input.schema_version != 1
+        || input.origin != "extension_scrape"
+        || input.items.is_empty()
+        || input.items.len() > 50
+        || input.content_hash.len() != 71
+        || !input.content_hash.starts_with("sha256:")
+        || !input.content_hash[7..]
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit())
+        || page.scheme() != "https"
+        || !page
+            .host_str()
+            .is_some_and(|host| source_host_matches(&input.source, host))
+    {
+        return Err(bad("Invalid extension envelope"));
+    }
+    let mut tx = state.db.begin().await.map_err(internal)?;
+    let mut submitted = 0;
+    let mut duplicates = 0;
+    for item in input.items {
+        let source_url = Url::parse(&item.source_url).map_err(|_| bad("Invalid evidence URL"))?;
+        if item.title.trim().len() < 3
+            || item.title.len() > 200
+            || item.source_url.len() > 2048
+            || item.text.trim().is_empty()
+            || item.text.len() > 5000
+            || source_url.scheme() != "https"
+            || !source_url
+                .host_str()
+                .is_some_and(|host| source_host_matches(&input.source, host))
+            || !matches!(
+                item.evidence_kind.as_str(),
+                "project" | "achievement" | "competition" | "activity"
+            )
+        {
+            return Err(bad("Invalid extension evidence item"));
+        }
+        let kind = extension_kind(&item.evidence_kind, &input.source);
+        let canonical = serde_json::to_vec(&(
+            &input.source,
+            kind,
+            source_url.as_str(),
+            &item.title,
+            &item.text,
+        ))
+        .map_err(internal)?;
+        let hash = hex::encode(Sha256::digest(canonical));
+        let changed = sqlx::query("INSERT INTO evidence_claims(id,member_id,kind,title,source_url,source,origin,submitted_text,content_hash,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,'pending',?) ON CONFLICT(member_id,content_hash) DO NOTHING")
+            .bind(Uuid::new_v4().to_string()).bind(&actor.id).bind(kind).bind(item.title.trim())
+            .bind(source_url.as_str()).bind(&input.source).bind("extension_scrape").bind(&item.text)
+            .bind(hash).bind(chrono::Utc::now().to_rfc3339())
+            .execute(&mut *tx).await.map_err(internal)?.rows_affected();
+        if changed == 1 {
+            submitted += 1;
+        } else {
+            duplicates += 1;
+        }
+    }
+    tx.commit().await.map_err(internal)?;
+    tracing::info!(member_id = %actor.id, submitted, duplicates, "evidence.extension_submitted");
+    Ok((
+        StatusCode::CREATED,
+        Json(
+            serde_json::json!({"submitted": submitted, "duplicates": duplicates, "status": "pending"}),
+        ),
+    ))
 }
 
 #[derive(Serialize)]
@@ -83,16 +201,19 @@ pub struct ClaimView {
     kind: String,
     title: String,
     source_url: String,
+    source: String,
+    origin: String,
+    submitted_text: Option<String>,
     status: String,
     points: Option<i64>,
 }
 
 async fn claims(state: &AppState, owner: Option<&str>) -> ApiResult<Vec<ClaimView>> {
     let rows = if let Some(owner) = owner {
-        sqlx::query("SELECT id,member_id,kind,title,source_url,status,points FROM evidence_claims WHERE member_id=? ORDER BY created_at DESC LIMIT 100")
+        sqlx::query("SELECT id,member_id,kind,title,source_url,source,origin,submitted_text,status,points FROM evidence_claims WHERE member_id=? ORDER BY created_at DESC LIMIT 100")
             .bind(owner).fetch_all(&state.db).await.map_err(internal)?
     } else {
-        sqlx::query("SELECT id,member_id,kind,title,source_url,status,points FROM evidence_claims WHERE status='pending' ORDER BY created_at LIMIT 100")
+        sqlx::query("SELECT id,member_id,kind,title,source_url,source,origin,submitted_text,status,points FROM evidence_claims WHERE status='pending' ORDER BY created_at LIMIT 100")
             .fetch_all(&state.db).await.map_err(internal)?
     };
     Ok(rows
@@ -103,8 +224,11 @@ async fn claims(state: &AppState, owner: Option<&str>) -> ApiResult<Vec<ClaimVie
             kind: row.get(2),
             title: row.get(3),
             source_url: row.get(4),
-            status: row.get(5),
-            points: row.get(6),
+            source: row.get(5),
+            origin: row.get(6),
+            submitted_text: row.get(7),
+            status: row.get(8),
+            points: row.get(9),
         })
         .collect())
 }
@@ -144,7 +268,10 @@ pub async fn review_claim(
     if !matches!(input.decision.as_str(), "approve" | "reject")
         || input.reason.trim().len() < 4
         || input.reason.len() > 500
-        || (input.decision == "approve" && !input.points.is_some_and(|points| points > 0))
+        || (input.decision == "approve"
+            && !input
+                .points
+                .is_some_and(|points| (1..=1000).contains(&points)))
         || (input.decision == "reject" && input.points.is_some())
     {
         return Err(bad("Invalid evidence review"));
