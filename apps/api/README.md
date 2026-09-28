@@ -18,6 +18,7 @@ Rust/Axum service for server-authoritative member access, internal competitive-e
 
 | Endpoint | Role | Result |
 |---|---|---|
+| `GET /demo/fixtures` | Public | Fictional member and officer view responses stored in SQLite; never real member records |
 | `POST /auth/google`, `GET /auth/me` | Google user | Establish/read session |
 | `GET /members`, `POST /members/{id}/approve` | Officer/admin | Eligible members and onboarding |
 | `POST /events`, `GET /events` | Officer | Create/list internal events |
