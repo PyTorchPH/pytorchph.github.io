@@ -135,6 +135,31 @@ CREATE TABLE leaderboard_cache (
   refreshed_at TEXT NOT NULL
 );
 
+CREATE TABLE attendance_sources (
+  event_id TEXT PRIMARY KEY REFERENCES events(id),
+  form_id TEXT NOT NULL UNIQUE,
+  points INTEGER NOT NULL CHECK (points > 0 AND points <= 1000),
+  configured_by TEXT NOT NULL REFERENCES members(id),
+  created_at TEXT NOT NULL,
+  last_imported_at TEXT
+);
+
+CREATE TABLE attendance_responses (
+  form_id TEXT NOT NULL,
+  response_id TEXT NOT NULL,
+  event_id TEXT NOT NULL REFERENCES events(id),
+  submitted_at TEXT NOT NULL,
+  normalized_email TEXT,
+  member_id TEXT REFERENCES members(id),
+  status TEXT NOT NULL CHECK (status IN ('awarded','unmatched','duplicate_member')),
+  imported_by TEXT NOT NULL REFERENCES members(id),
+  imported_at TEXT NOT NULL,
+  PRIMARY KEY(form_id, response_id)
+);
+CREATE INDEX attendance_event_idx ON attendance_responses(event_id, submitted_at);
+CREATE UNIQUE INDEX attendance_one_award_per_member ON attendance_responses(event_id, member_id)
+  WHERE status = 'awarded';
+
 CREATE TABLE officer_roles (
   member_id TEXT NOT NULL REFERENCES members(id),
   role TEXT NOT NULL CHECK (role IN ('ambassador','secretariat','treasurer','external_relations','academics','executive','campus_lead')),

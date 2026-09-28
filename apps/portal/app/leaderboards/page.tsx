@@ -16,6 +16,24 @@ import { rankForPoints, type LeaderboardPayload, type LeaderboardView } from "@p
 const subscribeToLocation = () => () => undefined;
 // A profile QR code opens this page with ?member=<leaderboard name>.
 const readHighlightedMember = () => new URLSearchParams(window.location.search).get("member");
+const officialApiOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || "";
+type OfficialRank = { rank: number; memberId: string; displayName: string; points: number };
+
+function OfficialLeaderboard() {
+  const query = useQuery({
+    queryKey: ["official-leaderboard", officialApiOrigin],
+    enabled: Boolean(officialApiOrigin),
+    queryFn: async () => {
+      const response = await fetch(`${officialApiOrigin}/leaderboard`, { cache: "no-store" });
+      if (!response.ok) throw new Error("Official leaderboard is unavailable.");
+      return response.json() as Promise<OfficialRank[]>;
+    },
+  });
+  if (!officialApiOrigin) return null;
+  return <Card className="overflow-hidden bg-surface p-0"><div className="border-b border-border p-4"><h2 className="font-bold">Official organization points</h2><p className="text-xs text-muted">Server verified events, attendance, and evidence. Updated after the backend refresh job.</p></div>
+    {query.isError ? <p className="p-4 text-sm" role="alert">Official points are temporarily unavailable.</p> : <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Rank</TableHead><TableHead>Member</TableHead><TableHead>Verified points</TableHead></TableRow></TableHeader><TableBody>{query.data?.map((entry) => <TableRow key={entry.memberId}><TableCell>#{entry.rank}</TableCell><TableCell>{entry.displayName}</TableCell><TableCell>{entry.points.toLocaleString()}</TableCell></TableRow>)}{query.data?.length === 0 && <TableRow><TableCell colSpan={3}>No official points yet.</TableCell></TableRow>}</TableBody></Table></div>}
+  </Card>;
+}
 
 function countdown(endsAt?: string) {
   if (!endsAt) return "—";
@@ -45,6 +63,7 @@ export default function LeaderboardsPage() {
         <div aria-label="Featured ladder tabs" className="mt-4 flex flex-wrap gap-2" data-tour="leaderboards-tabs" role="group">{[{ slug:"",label:"Global" },...(data?.skills.slice(0,4) || [])].map((item) => <button aria-pressed={skill===item.slug} className={`border px-4 py-2 text-sm font-semibold ${skill===item.slug ? "border-accent bg-accentSoft text-accent" : "border-border text-muted"}`} key={item.slug || "global"} onClick={() => { setSkill(item.slug); setPage(1); }} type="button">{item.label}</button>)}</div>
       </section>
 
+      <OfficialLeaderboard />
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="bg-surface"><div className="flex items-center gap-2 text-muted"><Trophy size={18} /> Your standing</div><p className="mt-4 text-3xl font-bold">{current ? `${current.points.toLocaleString()} points` : "Not listed"}</p><p className="mt-1 text-sm text-muted">{current ? `${current.verifiedPoints.toLocaleString()} verified · ${current.pendingPoints.toLocaleString()} pending` : "No points in this verification view."}</p></Card>
         <Card className="bg-surface"><div className="flex items-center gap-2 text-muted"><Medal size={18} /> Tier progress</div><div className="mt-4 flex items-center justify-between"><strong>{current ? `${current.tier} ${current.division}` : "Unranked"}</strong><span className="text-xs text-muted">{range?.ceiling ? `${range.ceiling - current!.points} to next` : current ? "Top tier" : "—"}</span></div><Progress className="mt-3" value={progress} /></Card>

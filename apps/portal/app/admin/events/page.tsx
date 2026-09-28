@@ -16,6 +16,7 @@ import type { EventAction, ExternalEvent } from "@pytorch-ph/domain-protocol/org
 import { AddExternalEvent } from "../../events/add-external-event";
 import { departmentLabel, statusLabel } from "../../events/event-labels";
 import { CompetitiveEventForm } from "./competitive-event";
+import { MailWorkflow } from "./mail-workflow";
 
 const MIN_REFERENCE_LENGTH = 4;
 
@@ -78,6 +79,7 @@ function EventWorkflowContent() {
       <h2 className="font-heading text-xl font-semibold" id="stage-create">1. Create an event</h2>
       <AddExternalEvent description="Type the details, or let AI read a Luma or Meetup page. The event then moves to department approval." headingLevel={3} title="Event details" />
       <CompetitiveEventForm />
+      <MailWorkflow />
     </section>
 
     {events.isError && <Card className="bg-surface"><p className="text-sm text-muted">Events are unavailable right now.</p></Card>}

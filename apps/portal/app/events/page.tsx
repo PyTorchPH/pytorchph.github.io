@@ -16,6 +16,26 @@ import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidenc
 import { AddExternalEvent } from "./add-external-event";
 import { departmentLabel, statusLabel } from "./event-labels";
 
+const officialApiOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || "";
+type OfficialEvent = { id: string; title: string; category: string; startsAt: string; parentId: string | null; publishedAt: string | null };
+
+function OfficialEvents() {
+  const query = useQuery({
+    queryKey: ["official-events", officialApiOrigin],
+    enabled: Boolean(officialApiOrigin),
+    queryFn: async () => {
+      const response = await fetch(`${officialApiOrigin}/public/events`, { cache: "no-store" });
+      if (!response.ok) throw new Error("Official events are unavailable.");
+      return response.json() as Promise<OfficialEvent[]>;
+    },
+  });
+  if (!officialApiOrigin) return null;
+  return <section className="space-y-4"><div><h2 className="text-2xl font-bold">Official PyTorch PH events</h2><p className="text-sm text-muted">Events and published competition results come from the organization backend.</p></div>
+    {query.isError && <p role="alert" className="text-sm text-muted">Official events are temporarily unavailable.</p>}
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{query.data?.map((event) => <Card className="bg-surface" key={event.id}><Badge>{event.category.replaceAll("_", " ")}</Badge><h3 className="mt-3 font-semibold">{event.title}</h3><p className="mt-2 text-sm text-muted">{new Date(event.startsAt).toLocaleString()}</p>{event.publishedAt && <p className="mt-2 text-xs text-success">Official results published</p>}</Card>)}</div>
+  </section>;
+}
+
 // The same page for members and officers. Officers run approvals in Event Workflow.
 function EventsContent() {
   const manifest = useCapabilities();
@@ -44,6 +64,7 @@ function EventsContent() {
       <p className="mt-3 max-w-3xl leading-7 text-muted">Workshops, hackathons, study groups, and meetups. You can also share an event hosted by another organizer at the bottom of this page.</p>
     </section>
 
+    <OfficialEvents />
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-2xl font-bold tracking-[-0.02em]">Upcoming events</h2><p className="mt-2 text-muted">Register for workshops, clinics, hackathons, and other community activities.</p></div><div data-tour="events-role"><Badge variant="orange">{effectiveTier === "general" ? "Member access" : "Priority member"}</Badge></div></div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" data-tour="events-grid">
