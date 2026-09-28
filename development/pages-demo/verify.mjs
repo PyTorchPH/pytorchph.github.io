@@ -38,6 +38,8 @@ try {
   browser = await chromium.launch({ headless: true, executablePath: process.env.PH_DEMO_BROWSER || (existsSync(chrome) ? chrome : undefined) });
   // The product tour starts on a first visit and covers the page; first check it, then run the rest with tours seen.
   const firstVisit = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const demoSeed = readFileSync(resolve(root, "apps/api/seeds/demo-fixtures.json"));
+  await firstVisit.route("https://api.pytorch.ph/demo/fixtures", route => route.fulfill({ status: 200, contentType: "application/json", body: demoSeed }));
   const tourPage = await firstVisit.newPage();
   await tourPage.goto(`${url}/dashboard/`, { waitUntil: "networkidle" });
   await tourPage.getByText("Your performance dashboard", { exact: true }).waitFor();
@@ -46,6 +48,11 @@ try {
   await firstVisit.close();
 
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  let demoApiRequests = 0;
+  await context.route("https://api.pytorch.ph/demo/fixtures", route => {
+    demoApiRequests += 1;
+    return route.fulfill({ status: 200, contentType: "application/json", body: demoSeed });
+  });
   await context.addInitScript(() => {
     const read = Storage.prototype.getItem;
     Storage.prototype.getItem = function getItem(key) { return String(key).startsWith("pytorch-ph:tour:") ? "seen" : read.call(this, key); };
@@ -132,10 +139,11 @@ try {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `Mobile overflow: ${path}`);
   }
   assert.deepEqual(await context.cookies(), []);
-  assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request)), []);
+  assert.ok(demoApiRequests > 0, "Demo views must request the backend snapshot");
+  assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request) && request !== "https://api.pytorch.ph/demo/fixtures"), []);
   assert.deepEqual(missingAssets, []);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "account-binding", "logo-landing", "installable-app", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
+  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "account-binding", "logo-landing", "installable-app", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "backend-demo-snapshot", "no-unapproved-external-requests", "no-missing-assets", "no-page-errors"] }));
 } finally {
   await browser?.close();
   await new Promise(resolveClosed => server.close(resolveClosed));

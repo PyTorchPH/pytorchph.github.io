@@ -1,6 +1,7 @@
 mod attendance;
 mod auth;
 mod auth_email;
+mod demo;
 mod events;
 mod evidence;
 mod mail;
@@ -194,6 +195,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .connect_with(options)
         .await?;
     sqlx::migrate!().run(&db).await?;
+    demo::seed(&db).await?;
     if env::var("SEED_TEMP_TEST_ACCOUNTS").ok().as_deref() == Some("true") {
         let password = env::var("TEMP_TEST_PASSWORD")?;
         auth_email::seed_test_accounts(&db, &password).await?;
@@ -232,6 +234,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::PATCH]);
     let app = Router::new()
         .route("/health", get(health))
+        .route("/demo/fixtures", get(demo::fixtures))
         .route("/auth/google", post(auth::google_login))
         .route("/auth/email/start", post(auth_email::start_signup))
         .route("/auth/email/verify", post(auth_email::verify_signup))
@@ -299,6 +302,30 @@ mod tests {
     use axum::extract::Path;
     use sha2::{Digest, Sha256};
     use uuid::Uuid;
+
+    #[tokio::test]
+    async fn demo_snapshot_is_seeded_once_and_served_from_sqlite() {
+        let (state, _, _, _) = fixture().await;
+        demo::seed(&state.db).await.unwrap();
+        let Json(snapshot) = demo::fixtures(State(state.clone())).await.unwrap();
+        assert_eq!(
+            snapshot["member"]["/api/capabilities"]["body"]["portal"]["audience"],
+            "member"
+        );
+        assert_eq!(
+            snapshot["officer"]["/api/capabilities"]["body"]["portal"]["audience"],
+            "officer"
+        );
+
+        sqlx::query("UPDATE demo_fixtures SET payload_json = ? WHERE id = 1")
+            .bind(r#"{"member":{"/api/demo":{"status":200,"body":{"source":"database"}}},"officer":{}}"#)
+            .execute(&state.db)
+            .await
+            .unwrap();
+        demo::seed(&state.db).await.unwrap();
+        let Json(updated) = demo::fixtures(State(state)).await.unwrap();
+        assert_eq!(updated["member"]["/api/demo"]["body"]["source"], "database");
+    }
 
     async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
         let db = SqlitePoolOptions::new()

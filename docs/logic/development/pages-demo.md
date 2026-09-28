@@ -6,7 +6,7 @@ code_paths:
   - apps/pages-demo/app/demo-bar.tsx
   - apps/pages-demo/app/layout.tsx
   - apps/pages-demo/next.config.mjs
-  - apps/pages-demo/public/demo-api/fixtures.json
+  - apps/api/seeds/demo-fixtures.json
   - development/pages-demo/build-portal-demo.mjs
   - development/pages-demo/portal-base-path.mjs
   - development/pages-demo/finalize-out.mjs
@@ -26,8 +26,9 @@ app shell, member dashboard, officer command center, and workspaces—without sc
 
 - Next.js static export builds a separate application whose routes re-export the portal pages.
   `/dashboard` picks the member or officer view from the chosen example account, like the portal.
-- GitHub Pages cannot run API routes, so `demo-api.ts` answers same-origin `/api/*` reads from
-  `fixtures.json`, captured from the local synthetic portal for the member and officer accounts.
+- GitHub Pages cannot run API routes, so `demo-api.ts` maps same-origin `/api/*` reads to the
+  Rust API's `/demo/fixtures` snapshot. SQLite stores the captured fictional member and officer
+  responses; the seed file initializes it only when no snapshot exists.
   Locked capabilities and offline services keep their captured 403/503 states.
 - Writes never leave the browser: non-GET API calls return a read-only notice (403). The portal
   login form accepts the example accounts locally; registration and Google sign-in use a Supabase
@@ -38,8 +39,9 @@ app shell, member dashboard, officer command center, and workspaces—without sc
 - The build finishes `apps/pages-demo/out` with the portal's public files (synthetic media, setup
   illustrations, the web manifest, and app icons), flat aliases
   for segment-prefetch payloads, and `.nojekyll`, so any static host can serve it unchanged.
-- The demo is built with `PAGES_BASE_PATH=/portal` (`npm run build:pages`) and prefixes its fixtures,
-  navigation, and media with that base path; `/portal/` itself forwards to the portal login.
+- The demo is built with `PAGES_BASE_PATH=/portal` (`npm run build:pages`) and prefixes its
+  navigation and media with that base path. Set `NEXT_PUBLIC_AUTH_API_ORIGIN` to the Rust API origin
+  at build time; `/portal/` itself forwards to the portal login.
 - `.github/workflows/deploy-pages.yml` builds the public Jekyll site (`site/`) at `/`, copies the demo
   to `/portal/`, and deploys one Pages artifact. No generated files are committed to the repository.
 - Refresh fixtures after portal data changes by capturing `/api/*` from `npm run dev` while signed in

@@ -2,8 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-// The static export forwards /api/* to the official service when configured.
-// Offline previews retain synthetic, read-only fixtures.
+// The static export reads fictional demo responses from the official API.
 export type DemoAudience = "member" | "officer";
 type Fixture = { status: number; body: unknown };
 type Fixtures = Record<DemoAudience, Record<string, Fixture>>;
@@ -11,8 +10,9 @@ type Fixtures = Record<DemoAudience, Record<string, Fixture>>;
 const AUDIENCE_KEY = "pytorch-ph-demo-audience";
 // Empty on the root PH site; set for project sites served under a path.
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const FIXTURES_URL = `${BASE_PATH}/demo-api/fixtures.json`;
-const READ_ONLY_MESSAGE = "This is a static demo, so nothing was saved. Explore freely—no data leaves your browser.";
+const API_ORIGIN = (process.env.NEXT_PUBLIC_AUTH_API_ORIGIN ?? "").replace(/\/$/, "");
+const FIXTURES_URL = `${API_ORIGIN}/demo/fixtures`;
+const READ_ONLY_MESSAGE = "This is a read-only demo, so your changes were not saved.";
 const listeners = new Set<() => void>();
 
 export function readAudience(): DemoAudience {
@@ -81,21 +81,30 @@ function installDemoApi() {
   const originalFetch = window.fetch.bind(window);
   let fixtures: Promise<Fixtures> | undefined;
   // Captured data links synthetic media as "/demo/..."; project sites serve it under the base path.
-  const loadFixtures = () => (fixtures ??= originalFetch(FIXTURES_URL)
-    .then(response => response.text())
-    .then(text => JSON.parse(BASE_PATH ? text.replaceAll("\"/demo/", `"${BASE_PATH}/demo/`) : text) as Fixtures));
+  const loadFixtures = () => (fixtures ??= originalFetch(FIXTURES_URL, { cache: "no-store" })
+    .then(response => {
+      if (!response.ok) throw new Error(`Demo API returned ${response.status}`);
+      return response.text();
+    })
+    .then(text => JSON.parse(BASE_PATH ? text.replaceAll("\"/demo/", `"${BASE_PATH}/demo/`) : text) as Fixtures)
+    .catch(error => { fixtures = undefined; throw error; }));
 
   window.fetch = async (input, init) => {
     const url = requestUrl(input);
     if (url.origin !== window.location.origin || !url.pathname.startsWith("/api/")) return originalFetch(input, init);
-    // Official auth calls use AUTH_API_ORIGIN directly. Other demo views keep their
-    // fixture contracts until the corresponding Rust endpoints are migrated.
+    // Official auth calls use AUTH_API_ORIGIN directly. Demo views retain their
+    // existing response contracts, now supplied by the Rust service.
     const method = requestMethod(input, init);
     if (method === "POST" && url.pathname === "/api/auth/login") return login(init);
     if (method === "POST" && url.pathname === "/api/auth/signout") return json({ ok: true });
     if (method !== "GET" && method !== "HEAD") return json({ error: READ_ONLY_MESSAGE }, 403);
-    const fixture = lookup(await loadFixtures(), url);
-    return fixture ? json(fixture.body, fixture.status) : json({ error: "This view is not available in the static demo." }, 404);
+    try {
+      const fixture = lookup(await loadFixtures(), url);
+      return fixture ? json(fixture.body, fixture.status) : json({ error: "This view is not available in the demo." }, 404);
+    } catch (error) {
+      console.error("Demo API unavailable", error);
+      return json({ error: "Demo data is temporarily unavailable." }, 503);
+    }
   };
 }
 
