@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 const countries = ["Philippines", "Australia", "Canada", "Singapore", "United Kingdom", "United States"];
 
-export function JobMarketDashboard() {
+export function JobMarketContent() {
   const { register, watch } = useForm<JobMarketFilters>({ resolver: zodResolver(jobMarketFilterSchema), defaultValues: { country: "Philippines", compareCountry: "", role: "software", mode: "any" } });
   const [country, compareCountry, role, mode] = watch(["country", "compareCountry", "role", "mode"]);
   const selectedCountries = useMemo(() => [country, compareCountry].filter(Boolean), [country, compareCountry]);
@@ -28,7 +28,7 @@ export function JobMarketDashboard() {
   const loading = market.isFetching;
 
   return (
-    <AppShell>
+    <>
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4" data-tour="analytics-heading">
         <div>
           <div className="data-label mb-2 text-xs uppercase tracking-widest text-accent">Evidence-backed market view</div>
@@ -89,9 +89,11 @@ export function JobMarketDashboard() {
 
         <Card className="mt-4 bg-surface" data-tour="analytics-sources"><CardHeader><div><CardTitle>Sources and limitations</CardTitle><CardDescription>Provenance is part of every interpretation.</CardDescription></div></CardHeader><div className="grid gap-3 lg:grid-cols-2">{data.sources.map((source) => { const content = <><div className="flex items-center justify-between gap-3"><strong>{source.label}</strong><Badge variant={source.configured ? "success" : undefined}>{source.configured ? "Available" : "Not configured"}</Badge></div><p className="mt-2 text-sm text-muted">{source.geography} · {source.freshness}</p></>; return source.attribution_url ? <a className="focus-ring rounded-lg border border-border bg-elevated p-4 hover:border-accent" href={source.attribution_url} key={source.id} rel="noreferrer" target="_blank">{content}</a> : <div className="rounded-lg border border-border bg-elevated p-4" key={source.id}>{content}</div>; })}</div><div className="mt-4 space-y-2 border-t border-border pt-4">{data.warnings.map((warning) => <p className="flex gap-2 text-sm text-muted" key={warning}><AlertTriangle className="mt-0.5 flex-none text-accent" size={15} />{warning}</p>)}</div></Card>
       </>}
-    </AppShell>
+    </>
   );
 }
+
+export function JobMarketDashboard() { return <AppShell><JobMarketContent /></AppShell>; }
 
 function Metric({ label, value, detail }: { label: string; value: number; detail: string }) {
   return <Card className="bg-surface"><p className="text-sm text-muted">{label}</p><p className="mt-3 text-3xl font-bold">{value}</p><p className="mt-2 text-xs text-muted">{detail}</p></Card>;

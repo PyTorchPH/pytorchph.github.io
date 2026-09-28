@@ -26,14 +26,23 @@ const serviceSteps = (purpose: string): Step[] => [
 
 export const productTours: Record<string, ProductTour> = {
   "/dashboard": {
-    version: 3,
+    version: 2,
+    steps: [
+      { target: '[data-tour="member-overview"]', title: "Your performance dashboard", content: "Start here for your season standing, how you compare with your peers, and what to work on next.", placement: "bottom-start" },
+      { target: '[data-tour="member-ranking-guide"]', title: "How ranking works", content: "Open this at any time to see how points are earned and how to raise your rank. Winning a competition raises it the most." },
+      { target: '[data-tour="member-standing"]', title: "Standing against peers", content: "Your rank, tier, and streak sit beside a stat line that compares you with the peer median and the current leader." },
+      { target: '[data-tour="member-development"]', title: "Personal development", content: "Your activity, skill points, readiness checklist, and recommended next moves are grouped in one place." },
+      { target: '[data-tour="officer-desk"]', title: "Officer desk", content: "Officers see the same performance page as members, plus the work that is waiting for them and links to the officer tools." },
+    ],
+  },
+  "/admin/dashboard": {
+    version: 4,
     steps: [
       { target: '[data-tour="dashboard-overview"]', title: "Your command center", content: "Start here for chapter operations, analytics availability, pipeline health, and current risks.", placement: "bottom-start" },
       { target: '[data-tour="dashboard-metrics"]', title: "Cycle metrics", content: "Live data is shown when available. Missing data keeps the same visual footprint with a clear watermark." },
       { target: '[data-tour="dashboard-activity"]', title: "Activity pulse", content: "The line and area chart preserves its axes and dimensions even when its source is unavailable." },
       { target: '[data-tour="dashboard-trust"]', title: "Trust boundary", content: "Safety indicators keep privacy and human review visible before work is dispatched." },
-      { target: '[data-tour="dashboard-approvals"]', title: "Approval middleman", content: "AI-assisted outputs remain human-gated; unavailable data never becomes a fabricated queue." },
-      { target: '[data-tour="dashboard-career"]', title: "Career workspace", content: "Career readiness and destination cards are appended after the original operations dashboard." }
+      { target: '[data-tour="dashboard-approvals"]', title: "Approval middleman", content: "AI-assisted outputs remain human-gated; unavailable data never becomes a fabricated queue." }
     ]
   },
   "/career/evidence": { version: 1, steps: serviceSteps("Review the verified profile, source artifacts, and any evidence blockers before generating career outputs.") },
@@ -55,7 +64,7 @@ export const productTours: Record<string, ProductTour> = {
     version: 1,
     steps: [
       { target: '[data-tour="events-heading"]', title: "Chapter events", content: "Browse workshops, clinics, hackathons, and other chapter activities from one view.", placement: "bottom-start" },
-      { target: '[data-tour="events-role"]', title: "Preview access tiers", content: "This prototype selector demonstrates how event access labels change by member tier." },
+      { target: '[data-tour="events-role"]', title: "Your access level", content: "This label comes from your account. Officers run approvals in Event Workflow." },
       { target: '[data-tour="events-grid"]', title: "Read event availability", content: "Each card shows the department, date, activity type, seats, and the applicable access label." }
     ]
   },

@@ -35,18 +35,20 @@ try {
   assert.equal("analytics" in memberPayload.body, false);
   assert.equal("operations" in memberPayload.body, false);
   assert.deepEqual(forbiddenKeys(memberPayload.body), []);
-  const blockedProduct = await memberPage.evaluate(async () => (await fetch("/api/product/job-operations")).status);
+  const ownOperations = await memberPage.evaluate(async () => (await fetch("/api/product/job-operations")).status);
+  assert.equal(ownOperations, 200);
+  const blockedProduct = await memberPage.evaluate(async () => (await fetch("/api/product/connections")).status);
   assert.equal(blockedProduct, 403);
-  await memberPage.goto(`${memberBase}/jobs/automation`);
+  await memberPage.goto(`${memberBase}/admin/dashboard`);
   assert.equal(new URL(memberPage.url()).pathname, "/dashboard");
   await memberPage.goto(`${memberBase}/events`);
   assert.equal(await memberPage.getByRole("button", { name: "Officer", exact: true }).count(), 0);
   await member.close();
 
   const officer = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  await officer.addInitScript(() => localStorage.setItem("pytorch-ph:tour:/dashboard:v3", "seen"));
+  await officer.addInitScript(() => { localStorage.setItem("pytorch-ph:tour:/dashboard:v2", "seen"); localStorage.setItem("pytorch-ph:tour:/admin/dashboard:v4", "seen"); });
   const officerPage = await officer.newPage();
-  await officerPage.goto(`${officerBase}/dashboard`);
+  await officerPage.goto(`${officerBase}/admin/dashboard`);
   await officerPage.getByText("Officer command", { exact: true }).waitFor();
   await officerPage.getByTestId("developer-diagnostics").waitFor();
   await officerPage.getByRole("link", { name: "Job Automation", exact: true }).waitFor();

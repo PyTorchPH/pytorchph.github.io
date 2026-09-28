@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { officerApiError } from "@pytorch-ph/domain-server/identity";
+import { memberApiError } from "@pytorch-ph/domain-server/identity";
 import { fallbackMarketSummary } from "@pytorch-ph/domain-server/job-discovery";
 import { configuredProductProvider } from "@pytorch-ph/domain-server/career-evidence";
 
 export async function GET(request: NextRequest) {
-  const denied = await officerApiError();
+  const denied = await memberApiError();
   if (denied) return denied;
   const backend = process.env.PYTORCH_PH_API_URL || "http://127.0.0.1:8000";
   const allowed = new URLSearchParams();

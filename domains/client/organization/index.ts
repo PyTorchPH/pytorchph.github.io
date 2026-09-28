@@ -3,3 +3,4 @@ export * from "./render-charts";
 export * from "./render-command-center";
 export * from "./render-diagnostics";
 export * from "./render-kanban";
+export * from "./render-officer-desk";

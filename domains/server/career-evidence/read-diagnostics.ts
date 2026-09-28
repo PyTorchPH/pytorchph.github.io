@@ -1,7 +1,8 @@
 import type { ViewerContext } from "@pytorch-ph/domain-server/identity";
 import type { DeveloperDiagnostics, ProductView, ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 
-const officerOnlyViews = new Set<ProductView>(["advisor", "connections", "job-operations"]);
+// Job operations belong to the signed-in member, so members may read their own.
+const officerOnlyViews = new Set<ProductView>(["advisor", "connections"]);
 
 export function isOfficerOnlyProductView(view: ProductView) {
   return officerOnlyViews.has(view);

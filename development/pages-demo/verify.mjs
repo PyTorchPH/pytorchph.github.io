@@ -73,11 +73,19 @@ try {
   await page.getByRole("button", { name: "How ranking works" }).click();
   await page.getByText("How to raise your rank", { exact: true }).waitFor();
   await page.keyboard.press("Escape");
+  // Officers share My Performance and see the officer desk and the officer tools in addition.
   await page.getByRole("button", { name: "Use example officer", exact: true }).click();
-  await heading(officerHeading);
+  await heading(memberHeading);
+  await heading("Officer desk");
   await page.reload({ waitUntil: "networkidle" });
+  await heading("Officer desk");
+  await page.getByRole("link", { name: "Command Center" }).first().click();
   await heading(officerHeading);
-  await page.getByRole("link", { name: "Command Center" }).first().waitFor();
+  assert.equal(await page.getByText("Elite node rank", { exact: true }).count(), 0, "The command center must not repeat the leaderboard");
+  await page.getByRole("link", { name: "Event Workflow" }).first().click();
+  await heading("Event workflow");
+  for (const stage of ["1. Create an event", "2. Department approval", "3. Auto emailer", "4. Final approval"]) await heading(stage);
+  await page.getByRole("button", { name: "Approve this exact text" }).waitFor();
 
   // The portal login form works with an example account and never contacts a backend.
   await page.goto(`${url}/login/`, { waitUntil: "networkidle" });
@@ -87,12 +95,20 @@ try {
   await page.getByRole("button", { name: /^Sign in/ }).click();
   await heading(memberHeading);
   assert.ok(new URL(page.url()).pathname.startsWith(PORTAL_BASE_PATH), "Navigation must stay under the portal base path");
+  assert.equal(await page.getByRole("heading", { name: "Officer desk", exact: true }).count(), 0, "Members must not see the officer desk");
+  assert.equal(await page.getByRole("link", { name: "Command Center" }).count(), 0, "Members must not see officer tools");
+
+  // Job analytics and job automation sit under Resumes & Opportunities for members too.
+  await page.goto(`${url}/career/resumes/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Job analytics", exact: true }).click();
+  await heading("Job Market Analytics");
+  await page.getByRole("button", { name: "Job automation", exact: true }).waitFor();
 
   // Writes are answered locally with a read-only notice.
   const write = await page.evaluate(() => fetch("/api/feedback", { method: "POST", body: "{}" }).then(response => response.status));
   assert.equal(write, 403);
 
-  const routes = ["/login/", "/register/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/events/", "/leaderboards/", "/membership/", "/trust/", "/settings/"];
+  const routes = ["/login/", "/register/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/jobs/analytics/", "/jobs/automation/", "/events/", "/leaderboards/", "/membership/", "/trust/", "/settings/"];
   for (const path of routes) {
     await page.goto(`${url}${path}`, { waitUntil: "networkidle" });
     await page.getByRole("complementary", { name: "Demo notice" }).waitFor();
@@ -107,7 +123,7 @@ try {
   assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request)), []);
   assert.deepEqual(missingAssets, []);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
+  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
 } finally {
   await browser?.close();
   await new Promise(resolveClosed => server.close(resolveClosed));

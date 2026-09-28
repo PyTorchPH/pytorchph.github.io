@@ -80,6 +80,39 @@ Events, Community Preview, My Profile, Settings & Privacy.
 - **Community Preview** adds sample peer-to-peer tutorials.
 - The product tour (React Joyride) now runs on static hosting, where routes end with a slash.
 
+### Phase 4: one structure for members and officers (done 2026-09-28)
+Officers have everything members have, plus officer tools. Nothing is shown twice.
+- **Shared pages:** My Performance, Leaderboards, Career Evidence, Resumes & Opportunities (with Job
+  analytics and Job automation as sections), Community Events, Community Preview, My Profile,
+  Settings & Privacy.
+- **Officer tools** (a separate menu group): Command Center (`/admin/dashboard`), Event Workflow
+  (`/admin/events`), Evidence Review (`/admin/evidence`), Reports & Feedback, Connections, Integrity
+  Console.
+- **My Performance** is the dashboard for both; officers also see an officer desk with the work that
+  is waiting for them.
+- **Command Center** exists once and no longer repeats the leaderboard or the career pages.
+- **Event Workflow:** 1. create an event, 2. department approval, 3. auto emailer (review the exact
+  email before it is sent or exported), 4. final approval. It reuses the existing event actions.
+- **Access rules changed:** members may read their own job operations and the job-market summary
+  (`officerOnlyViews`, `officerOnlyPrefixes`, `memberApiError`). Connections, the career advisor,
+  reports, and everything under `/admin` stay officer-only.
+- Demo data for these pages is produced without a running portal by
+  `npx tsx development/pages-demo/patch-fixtures.ts` (typed sample events, member-safe copies).
+
+### Future: mobile app
+The portal is already responsive, and members and officers share one structure, so the same screens
+can move to a phone. Options, from least to most work:
+1. **Installable web app (PWA):** add a web manifest, icons, and offline caching to the portal. One
+   codebase; installs from the browser on Android and iOS; no app store listing.
+2. **Store app that wraps the portal (Capacitor):** the same web code inside a native shell, published
+   to Google Play and the App Store, with access to native features such as push notifications and a
+   QR scanner.
+3. **Native app (Kotlin Multiplatform or React Native):** separate screens that call the portal API.
+   Most work; best native feel. Shared logic in `domains/protocol` (ranking, peer summary, event
+   sources) can be reused from TypeScript only with React Native.
+Decide first whether store presence and a camera QR scanner are required; that choice separates option
+1 from options 2 and 3. Any option needs the portal API hosted (GitHub Pages serves only the demo).
+
 ### Future: free API pages (like pytorch.kr "Domain API" and "Developer resources")
 PyTorch Korea lists libraries on `/domains` (cards with description and link) and developer
 information on `/resources`. PyTorch PH wants similar pages where people can discover and use the
