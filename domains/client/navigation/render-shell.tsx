@@ -26,6 +26,7 @@ import {
 import { useState } from "react";
 import type { CapabilityKey } from "@pytorch-ph/domain-protocol/identity";
 import { cn } from "@pytorch-ph/design-system/merge-classes";
+import { PUBLIC_SITE_URL } from "@pytorch-ph/domain-protocol/organization";
 import { CapabilityProvider, useCapabilities } from "@pytorch-ph/domain-client/onboarding";
 import { ProductTourController, requestProductTour } from "@pytorch-ph/domain-client/onboarding";
 import { SignOutButton } from "@pytorch-ph/domain-client/identity";
@@ -98,7 +99,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   const sidebar = (
     <aside className="flex h-full w-72 flex-col overflow-y-auto border-r border-border bg-canvas p-4 text-ink">
       <div className="mb-6 flex items-center justify-between">
-        <Link aria-label="PyTorch PH: go to My Performance" className="focus-ring rounded-lg" href="/dashboard" onClick={() => setOpen(false)}>
+        <a aria-label="PyTorch PH: go to the pytorch.ph home page" className="focus-ring rounded-lg" href={PUBLIC_SITE_URL}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent shadow-lg shadow-accent/30">
               <Flame size={20} />
@@ -108,7 +109,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
               <p className="text-xs text-muted">{officerPortal ? "Officer / Developer" : "Member Workspace"}</p>
             </div>
           </div>
-        </Link>
+        </a>
         <Button aria-label="Close menu" className="lg:hidden" onClick={() => setOpen(false)} size="icon" type="button" variant="ghost">
           <X size={18} />
         </Button>
@@ -155,7 +156,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
         <Button aria-label="Open menu" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary">
           <Menu size={18} />
         </Button>
-        <Link aria-label="PyTorch PH: go to My Performance" className="focus-ring rounded-full" href="/dashboard"><Badge variant="orange"><Flame aria-hidden="true" size={14} />{officerPortal ? "Officer Portal" : "Member Portal"}</Badge></Link>
+        <Link aria-label={`${officerPortal ? "Officer Portal" : "Member Portal"}: go to My Performance`} className="focus-ring rounded-full" href="/dashboard"><Badge variant="orange"><Flame aria-hidden="true" size={14} />{officerPortal ? "Officer Portal" : "Member Portal"}</Badge></Link>
         <Button aria-label="Replay page tour" data-tour="tour-help" onClick={requestProductTour} size="icon" type="button" variant="secondary">
           <CircleHelp size={18} />
         </Button>

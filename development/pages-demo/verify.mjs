@@ -110,9 +110,8 @@ try {
   await page.getByText("Not installed", { exact: true }).waitFor();
   await page.getByRole("link", { name: "How to install" }).click();
   await heading("Install the Evidence Collector");
-  // The logo returns to the dashboard from any page.
-  await page.getByRole("link", { name: "PyTorch PH: go to My Performance" }).first().click();
-  await heading(memberHeading);
+  // Every logo opens the pytorch.ph landing page.
+  assert.equal(await page.getByRole("link", { name: "PyTorch PH: go to the pytorch.ph home page" }).first().getAttribute("href"), "https://pytorch.ph/");
   await page.goto(`${url}/settings/`, { waitUntil: "networkidle" });
   const manifest = await page.evaluate(async () => (await fetch(document.querySelector('link[rel="manifest"]').href)).json());
   assert.equal(manifest.display, "standalone");
@@ -136,7 +135,7 @@ try {
   assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request)), []);
   assert.deepEqual(missingAssets, []);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "account-binding", "logo-home", "installable-app", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
+  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "account-binding", "logo-landing", "installable-app", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
 } finally {
   await browser?.close();
   await new Promise(resolveClosed => server.close(resolveClosed));
