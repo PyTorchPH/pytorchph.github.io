@@ -3,7 +3,7 @@ logic_id: development.pages-demo
 code_paths:
   - apps/pages-demo/app/demo-api.ts
   - apps/pages-demo/app/demo-identity.ts
-  - apps/pages-demo/app/demo-bar.tsx
+  - apps/pages-demo/app/demo-accounts.tsx
   - apps/pages-demo/app/layout.tsx
   - apps/pages-demo/next.config.mjs
   - apps/api/seeds/demo-fixtures.json
@@ -34,8 +34,8 @@ app shell, member dashboard, officer command center, and workspaces—without sc
   login form accepts the example accounts locally; registration and Google sign-in use a Supabase
   stub (`demo-identity.ts`, aliased only in this app) that explains the demo.
 - The example account lives in `sessionStorage`; no cookies or authenticated sessions are created.
-- All numbers, names, events, and roles are fictional. A persistent demo bar discloses demo status
-  and switches between the example member and officer.
+- All numbers, names, events, and roles are fictional. The login page labels the example accounts
+  and offers member and officer view controls without fixed banners.
 - The build finishes `apps/pages-demo/out` with the portal's public files (synthetic media, setup
   illustrations, the web manifest, and app icons), flat aliases
   for segment-prefetch payloads, and `.nojekyll`, so any static host can serve it unchanged.

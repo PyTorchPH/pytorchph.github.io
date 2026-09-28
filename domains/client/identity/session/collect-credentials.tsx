@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentType, InputHTMLAttributes } from "react";
+import type { ComponentType, InputHTMLAttributes, ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowRight, AtSign, CheckCircle2, Lock, Mail, User as UserIcon } from "lucide-react";
@@ -63,7 +63,7 @@ function Field({ icon: Icon, className: _className, ...props }: FieldProps) {
   );
 }
 
-export function LoginForm() {
+export function LoginForm({ demoControls }: { demoControls?: ReactNode } = {}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const form = useForm<LoginValues>({ defaultValues: { email: "", password: "", remember: false }, mode: "onChange", resolver: zodResolver(loginSchema) });
@@ -145,6 +145,7 @@ export function LoginForm() {
       <div className="mt-8 text-center text-sm text-muted">
         New to the community? <Link className="text-accent underline underline-offset-2" href="/register">Register</Link>
       </div>
+      {demoControls}
     </AuthShell>
   );
 }
