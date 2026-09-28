@@ -54,7 +54,8 @@ async function manualPackage(form: typeof emptyForm): Promise<EventPackage> {
 }
 
 // Add an event hosted somewhere else: type the details, or let AI read a Luma or Meetup page.
-export function AddExternalEvent() {
+export function AddExternalEvent({ title = "Add an external event", description = "Share a PyTorch or machine learning event hosted by another organizer.", headingLevel = 2 }: { title?: string; description?: string; headingLevel?: 2 | 3 }) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   const client = useQueryClient();
   const [mode, setMode] = useState<Mode>("manual");
   const [form, setForm] = useState(emptyForm);
@@ -98,14 +99,14 @@ export function AddExternalEvent() {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold tracking-[-0.02em]">Add an external event</h2>
+          <Heading className="text-xl font-bold tracking-[-0.02em]">{title}</Heading>
           <InfoPopover label="About adding external events" title="Which links can AI read?">
             <p>AI can retrieve details automatically from <strong>{names}</strong> event pages, because both publish their event details in a consistent format.</p>
             <p className="mt-2">Other websites are not supported yet. For those, choose <strong>Fill in the details</strong> and type them yourself.</p>
             <p className="mt-2 text-muted">Either way, the event is published as unapproved until it is reviewed.</p>
           </InfoPopover>
         </div>
-        <p className="mt-1 text-sm text-muted">Share a PyTorch or machine learning event hosted by another organizer.</p>
+        <p className="mt-1 text-sm text-muted">{description}</p>
       </div>
       <div aria-label="How to add the event" role="group"><SegmentedTabs items={modes} onChange={setMode} value={mode} /></div>
     </div>

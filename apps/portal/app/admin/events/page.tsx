@@ -75,7 +75,7 @@ function EventWorkflowContent() {
 
     <section aria-labelledby="stage-create" className="space-y-3">
       <h2 className="font-heading text-xl font-semibold" id="stage-create">1. Create an event</h2>
-      <AddExternalEvent />
+      <AddExternalEvent description="Type the details, or let AI read a Luma or Meetup page. The event then moves to department approval." headingLevel={3} title="Event details" />
     </section>
 
     {events.isError && <Card className="bg-surface"><p className="text-sm text-muted">Events are unavailable right now.</p></Card>}
