@@ -282,10 +282,17 @@ pub async fn publish_results(
         return Err(bad("Too many placements for eligible entrants"));
     }
     let mut seen_entrants = HashSet::new();
-    for (index, placement) in input.placements.iter().enumerate() {
-        if placement.place != (index + 1) as i64 || !seen_entrants.insert(&placement.entrant_id) {
-            return Err(bad("Placements must be ordered, unique, and gap-free"));
+    let mut previous_place = 0;
+    for placement in &input.placements {
+        if placement.place <= previous_place
+            || placement.place > last_place
+            || !seen_entrants.insert(&placement.entrant_id)
+        {
+            return Err(bad(
+                "Placements must be ordered, unique, and within the configured range",
+            ));
         }
+        previous_place = placement.place;
         let belongs: Option<(String,)> =
             sqlx::query_as("SELECT id FROM entrants WHERE id = ? AND event_id = ?")
                 .bind(&placement.entrant_id)
