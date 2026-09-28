@@ -108,7 +108,13 @@ test("member responses remove officer analytics and all diagnostics", () => {
 
 test("officer routes, views, and diagnostics are explicit allowlists", () => {
   assert.equal(isOfficerOnlyPath("/admin"), true);
-  assert.equal(isOfficerOnlyPath("/jobs/automation/run"), true);
+  assert.equal(isOfficerOnlyPath("/admin/events"), true);
+  assert.equal(isOfficerOnlyPath("/connections"), true);
+  // Members use job analytics and job automation for their own applications.
+  assert.equal(isOfficerOnlyPath("/jobs/automation/run"), false);
+  assert.equal(isOfficerOnlyPath("/jobs/analytics"), false);
+  assert.equal(isOfficerOnlyProductView("job-operations"), false);
+  assert.equal(isOfficerOnlyProductView("connections"), true);
   assert.equal(isOfficerOnlyPath("/jobs/opportunities"), false);
   assert.equal(memberDestination("/career/advisor"), "/dashboard");
   assert.equal(memberDestination("/career/evidence"), "/career/evidence");

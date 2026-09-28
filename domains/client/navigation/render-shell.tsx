@@ -36,32 +36,26 @@ import { Progress } from "@pytorch-ph/design-system/progress";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; capability?: CapabilityKey; alsoActiveOn?: string[] };
 
-const memberNavItems: NavItem[] = [
+// Members and officers share these pages.
+const sharedNavItems: NavItem[] = [
   { href: "/dashboard", label: "My Performance", icon: Home },
   { href: "/leaderboards", label: "Leaderboards", icon: Trophy },
   { href: "/career/evidence", label: "Career Evidence", icon: UserRound, capability: "evidence_read" },
-  { href: "/career/resumes", label: "Resumes & Opportunities", icon: BriefcaseBusiness, capability: "resume_read", alsoActiveOn: ["/jobs/opportunities"] },
+  { href: "/career/resumes", label: "Resumes & Opportunities", icon: BriefcaseBusiness, capability: "resume_read", alsoActiveOn: ["/jobs/opportunities", "/jobs/analytics", "/jobs/automation"] },
   { href: "/events", label: "Community Events", icon: CalendarDays },
   { href: "/dashboard/community", label: "Community Preview", icon: MessageCircle },
   { href: "/dashboard/profile", label: "My Profile", icon: UserCheck },
-  { href: "/settings", label: "Settings & Privacy", icon: Settings, alsoActiveOn: ["/trust"] },
+  { href: "/settings", label: "Settings & Privacy", icon: Settings },
 ];
 
+// Officers get these in addition: configuration and the workflows they run.
 const officerNavItems: NavItem[] = [
-  { href: "/dashboard", label: "Command Center", icon: LayoutDashboard },
-  { href: "/leaderboards", label: "Leaderboards", icon: Trophy },
-  { href: "/career/evidence", label: "Career Evidence", icon: UserRound, capability: "evidence_read" },
-  { href: "/career/resumes", label: "Resumes & Opportunities", icon: BriefcaseBusiness, capability: "resume_read", alsoActiveOn: ["/jobs/opportunities"] },
-  { href: "/jobs/analytics", label: "Job Analytics", icon: Search, capability: "analytics_read" },
-  { href: "/jobs/automation", label: "Job Automation", icon: Bot, capability: "application_draft" },
+  { href: "/admin/dashboard", label: "Command Center", icon: LayoutDashboard },
+  { href: "/admin/events", label: "Event Workflow", icon: ClipboardList },
+  { href: "/admin/evidence", label: "Evidence Review", icon: Search },
+  { href: "/reports", label: "Reports & Feedback", icon: Bot },
   { href: "/connections", label: "Connections", icon: Unplug, capability: "connections" },
-  { href: "/events", label: "Community Events", icon: CalendarDays },
-  { href: "/dashboard/community", label: "Community Preview", icon: MessageCircle },
   { href: "/trust", label: "Integrity Console", icon: Shield },
-  { href: "/reports", label: "Reports & Feedback", icon: ClipboardList },
-  { href: "/admin/dashboard", label: "Officer Admin", icon: Shield },
-  { href: "/dashboard/profile", label: "My Profile", icon: UserCheck },
-  { href: "/settings", label: "Settings", icon: Settings }
 ];
 
 function AppShellContent({ children }: { children: React.ReactNode }) {
@@ -70,10 +64,40 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const manifest = useCapabilities();
   const officerPortal = manifest.portal.audience === "officer";
-  const navItems = officerPortal ? officerNavItems : memberNavItems;
+
+  const renderItem = (item: NavItem) => {
+    const active = [item.href, ...(item.alsoActiveOn ?? []), ...(item.href === "/settings" && !officerPortal ? ["/trust"] : [])].some((href) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`)));
+    const Icon = item.icon;
+    const capability = item.capability ? manifest.capabilities[item.capability] : undefined;
+    const isLocked = capability?.state === "locked";
+    const content = <><Icon size={18} />{item.label}{isLocked && <LockKeyhole className="ml-auto" size={14} />}</>;
+    if (isLocked) return (
+      <span
+        aria-disabled="true"
+        className="flex h-10 cursor-not-allowed items-center gap-3 rounded-lg px-3 text-sm font-semibold text-muted"
+        key={item.href}
+        title={capability.reason}
+      >
+        {content}
+      </span>
+    );
+    return (
+      <Link
+        className={cn(
+          "focus-ring flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-all duration-300 ease-in-out",
+          active ? "bg-accent text-white" : "text-muted hover:bg-elevated hover:text-ink"
+        )}
+        href={item.href}
+        key={item.href}
+        onClick={() => setOpen(false)}
+      >
+        {content}
+      </Link>
+    );
+  };
 
   const sidebar = (
-    <aside className="flex h-full w-72 flex-col border-r border-border bg-canvas p-4 text-ink">
+    <aside className="flex h-full w-72 flex-col overflow-y-auto border-r border-border bg-canvas p-4 text-ink">
       <div className="mb-6 flex items-center justify-between">
         <Link className="focus-ring rounded-lg" href="/">
           <div className="flex items-center gap-3">
@@ -90,37 +114,12 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
           <X size={18} />
         </Button>
       </div>
-      <nav className="space-y-1">
-        {navItems.map((item) => {
-          const active = [item.href, ...(item.alsoActiveOn ?? [])].some((href) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`)));
-          const Icon = item.icon;
-          const capability = item.capability ? manifest.capabilities[item.capability] : undefined;
-          const isLocked = capability?.state === "locked";
-          const content = <><Icon size={18} />{item.label}{isLocked && <LockKeyhole className="ml-auto" size={14} />}</>;
-          if (isLocked) return (
-            <span
-              aria-disabled="true"
-              className="flex h-10 cursor-not-allowed items-center gap-3 rounded-lg px-3 text-sm font-semibold text-muted"
-              key={item.href}
-              title={capability.reason}
-            >
-              {content}
-            </span>
-          );
-          return (
-            <Link
-              className={cn(
-                "focus-ring flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-all duration-300 ease-in-out",
-                active ? "bg-accent text-white" : "text-muted hover:bg-elevated hover:text-ink"
-              )}
-              href={item.href}
-              key={item.href}
-              onClick={() => setOpen(false)}
-            >
-              {content}
-            </Link>
-          );
-        })}
+      <nav aria-label="Portal" className="space-y-1">
+        {sharedNavItems.map(renderItem)}
+        {officerPortal && <>
+          <p className="px-3 pb-1 pt-5 font-mono text-[10px] uppercase tracking-widest text-muted" id="officer-tools-heading">Officer tools</p>
+          <div aria-labelledby="officer-tools-heading" className="space-y-1" role="group">{officerNavItems.map(renderItem)}</div>
+        </>}
       </nav>
       <div className="mt-6 rounded-lg border border-border bg-elevated p-3">
         <div className="mb-2 flex items-center justify-between gap-2">

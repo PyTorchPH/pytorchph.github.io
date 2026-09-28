@@ -23,6 +23,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { AppShell } from "@pytorch-ph/domain-client/navigation";
+import { JobMarketContent } from "@pytorch-ph/domain-client/job-discovery";
 import { DeveloperDiagnostics } from "@pytorch-ph/domain-client/organization";
 import { CareerEvidenceView, ConnectionsWorkspaceView, ResumeStudioView } from "@pytorch-ph/domain-client/career-evidence";
 import { CapabilityGate, CapabilityStatus } from "@pytorch-ph/domain-client/onboarding";
@@ -158,19 +159,22 @@ function ProductContent({ view, capabilityKey, safety }: Props) {
 
 export function ProductWorkspace(props: Props) { return <AppShell><ProductContent {...props} /></AppShell>; }
 
-type CareerView = "resumes" | "opportunities";
+type CareerView = "resumes" | "opportunities" | "analytics" | "automation";
+type CareerProductView = { value: CareerView; label: string; view: ProductView; capabilityKey: CapabilityKey; safety: string };
 
-const careerViews: Array<{ value: CareerView; label: string; capabilityKey: CapabilityKey; safety: string }> = [
-  { value: "resumes", label: "Resumes", capabilityKey: "resume_read", safety: "Resume selection and upload are separate actions; no artifact advances without explicit approval." },
-  { value: "opportunities", label: "Opportunities", capabilityKey: "opportunities_read", safety: "Manual opportunity review stays available. Automated discovery remains separately locked until its prerequisites are verified." },
+const careerViews: Array<{ value: CareerView; label: string } & Partial<CareerProductView>> = [
+  { value: "resumes", label: "Resumes", view: "resumes", capabilityKey: "resume_read", safety: "Resume selection and upload are separate actions; no artifact advances without explicit approval." },
+  { value: "opportunities", label: "Opportunities", view: "opportunities", capabilityKey: "opportunities_read", safety: "Manual opportunity review stays available. Automated discovery remains separately locked until its prerequisites are verified." },
+  { value: "analytics", label: "Job analytics" },
+  { value: "automation", label: "Job automation", view: "job-operations", capabilityKey: "application_draft", safety: "Automation never bypasses a CAPTCHA, answers a questionnaire, uploads a file, or submits an application without your approval." },
 ];
 
-// Resumes and the opportunities they are written for live on one page.
+// Resumes, the opportunities they are written for, and the job tools around them live on one page.
 export function CareerWorkspace({ initialView = "resumes" }: { initialView?: CareerView }) {
   const [view, setView] = useState<CareerView>(initialView);
   const active = careerViews.find((item) => item.value === view) ?? careerViews[0];
   return <AppShell>
     <div aria-label="Career workspace section" className="mb-5" role="group"><SegmentedTabs items={careerViews.map(({ value, label }) => ({ value, label }))} onChange={setView} value={view} /></div>
-    <ProductContent capabilityKey={active.capabilityKey} key={view} safety={active.safety} view={view} />
+    {active.view && active.capabilityKey && active.safety ? <ProductContent capabilityKey={active.capabilityKey} key={view} safety={active.safety} view={active.view} /> : <JobMarketContent />}
   </AppShell>;
 }

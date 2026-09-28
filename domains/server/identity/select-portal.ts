@@ -5,8 +5,6 @@ const officerOnlyPrefixes = [
   "/admin",
   "/career/advisor",
   "/connections",
-  "/jobs/analytics",
-  "/jobs/automation",
   "/reports",
 ];
 
