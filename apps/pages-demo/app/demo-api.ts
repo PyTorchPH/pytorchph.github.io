@@ -11,7 +11,6 @@ type Fixtures = Record<DemoAudience, Record<string, Fixture>>;
 const AUDIENCE_KEY = "pytorch-ph-demo-audience";
 // Empty on the root PH site; set for project sites served under a path.
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const API_ORIGIN = (process.env.NEXT_PUBLIC_API_ORIGIN ?? "").replace(/\/$/, "");
 const FIXTURES_URL = `${BASE_PATH}/demo-api/fixtures.json`;
 const READ_ONLY_MESSAGE = "This is a static demo, so nothing was saved. Explore freely—no data leaves your browser.";
 const listeners = new Set<() => void>();
@@ -89,10 +88,8 @@ function installDemoApi() {
   window.fetch = async (input, init) => {
     const url = requestUrl(input);
     if (url.origin !== window.location.origin || !url.pathname.startsWith("/api/")) return originalFetch(input, init);
-    if (API_ORIGIN) {
-      const target = `${API_ORIGIN}${url.pathname}${url.search}`;
-      return originalFetch(input instanceof Request ? new Request(target, input) : target, init);
-    }
+    // Official auth calls use AUTH_API_ORIGIN directly. Other demo views keep their
+    // fixture contracts until the corresponding Rust endpoints are migrated.
     const method = requestMethod(input, init);
     if (method === "POST" && url.pathname === "/api/auth/login") return login(init);
     if (method === "POST" && url.pathname === "/api/auth/signout") return json({ ok: true });

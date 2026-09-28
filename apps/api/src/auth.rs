@@ -108,13 +108,51 @@ pub async fn google_login(
     };
     let id = Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
-    sqlx::query("INSERT INTO members(id, google_sub, email, display_name, public_handle, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(google_sub) DO UPDATE SET email = excluded.email, display_name = excluded.display_name")
-        .bind(&id).bind(&claims.sub).bind(&email)
-        .bind(claims.name.unwrap_or_else(|| email.clone()).chars().take(100).collect::<String>())
-        .bind(format!("Member-{}", &id[..8]))
-        .bind(role).bind(&now).execute(&state.db).await.map_err(internal)?;
-    let row = sqlx::query("SELECT id, display_name, role FROM members WHERE google_sub = ?")
-        .bind(&claims.sub)
+    let display_name = claims
+        .name
+        .unwrap_or_else(|| email.clone())
+        .chars()
+        .take(100)
+        .collect::<String>();
+    let existing: Option<String> =
+        sqlx::query_scalar("SELECT google_sub FROM members WHERE email = ?")
+            .bind(&email)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(internal)?;
+    match existing {
+        Some(sub) if sub.starts_with("email:") => {
+            sqlx::query("UPDATE members SET google_sub = ?, display_name = ? WHERE email = ?")
+                .bind(&claims.sub)
+                .bind(&display_name)
+                .bind(&email)
+                .execute(&state.db)
+                .await
+                .map_err(internal)?;
+        }
+        Some(sub) if sub == claims.sub => {
+            sqlx::query("UPDATE members SET display_name = ? WHERE email = ?")
+                .bind(&display_name)
+                .bind(&email)
+                .execute(&state.db)
+                .await
+                .map_err(internal)?;
+        }
+        Some(_) => {
+            return Err(ApiError(
+                StatusCode::CONFLICT,
+                "Email belongs to another identity",
+            ));
+        }
+        None => {
+            sqlx::query("INSERT INTO members(id, google_sub, email, display_name, public_handle, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(google_sub) DO UPDATE SET email = excluded.email, display_name = excluded.display_name")
+                .bind(&id).bind(&claims.sub).bind(&email).bind(&display_name)
+                .bind(format!("Member-{}", &id[..8])).bind(role).bind(&now)
+                .execute(&state.db).await.map_err(internal)?;
+        }
+    }
+    let row = sqlx::query("SELECT id, display_name, role FROM members WHERE email = ?")
+        .bind(&email)
         .fetch_one(&state.db)
         .await
         .map_err(internal)?;
@@ -123,6 +161,10 @@ pub async fn google_login(
         display_name: row.get(1),
         role: row.get(2),
     };
+    issue_session(&state, viewer).await
+}
+
+pub(crate) async fn issue_session(state: &AppState, viewer: Viewer) -> ApiResult<Response> {
     let token = format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple());
     let hash = hex::encode(Sha256::digest(token.as_bytes()));
     let expires = (chrono::Utc::now() + chrono::Duration::days(7)).to_rfc3339();

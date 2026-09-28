@@ -9,7 +9,7 @@ export default {
   trailingSlash: true,
   images: { unoptimized: true },
   agentRules: false,
-  env: { NEXT_PUBLIC_BASE_PATH: basePath },
+  env: { NEXT_PUBLIC_BASE_PATH: basePath, NEXT_PUBLIC_STATIC_DEMO: "1" },
   transpilePackages: ["@pytorch-ph/design-system", "@pytorch-ph/domain-client", "@pytorch-ph/domain-protocol"],
   // Static export uses a browser identity stub for offline previews.
   turbopack: { resolveAlias: { "@pytorch-ph/domain-client/identity": "./app/demo-identity.ts" } },

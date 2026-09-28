@@ -1,5 +1,6 @@
 mod attendance;
 mod auth;
+mod auth_email;
 mod events;
 mod evidence;
 mod mail;
@@ -33,6 +34,9 @@ struct AppState {
     google_forms_client_id: Option<String>,
     google_forms_client_secret: Option<String>,
     google_forms_refresh_token: Option<String>,
+    email_code_secret: String,
+    mail_relay: Option<auth_email::RelayConfig>,
+    password_slots: tokio::sync::Semaphore,
 }
 
 #[derive(Debug)]
@@ -190,6 +194,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .connect_with(options)
         .await?;
     sqlx::migrate!().run(&db).await?;
+    if env::var("SEED_TEMP_TEST_ACCOUNTS").ok().as_deref() == Some("true") {
+        let password = env::var("TEMP_TEST_PASSWORD")?;
+        auth_email::seed_test_accounts(&db, &password).await?;
+    }
     sqlx::query(
         "UPDATE jobs SET status='pending' WHERE status='running' AND kind='leaderboard_refresh'",
     )
@@ -209,6 +217,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         google_forms_client_id: env::var("GOOGLE_FORMS_CLIENT_ID").ok(),
         google_forms_client_secret: env::var("GOOGLE_FORMS_CLIENT_SECRET").ok(),
         google_forms_refresh_token: env::var("GOOGLE_FORMS_REFRESH_TOKEN").ok(),
+        email_code_secret: env::var("EMAIL_CODE_SECRET")?,
+        mail_relay: auth_email::RelayConfig::from_env()?,
+        password_slots: tokio::sync::Semaphore::new(2),
     });
     tokio::spawn(worker(db));
     let cors = CorsLayer::new()
@@ -222,6 +233,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/health", get(health))
         .route("/auth/google", post(auth::google_login))
+        .route("/auth/email/start", post(auth_email::start_signup))
+        .route("/auth/email/verify", post(auth_email::verify_signup))
+        .route("/auth/password", post(auth_email::password_login))
         .route("/auth/me", get(auth::me))
         .route("/members", get(auth::list_members))
         .route("/members/{id}/approve", post(auth::approve_member))
@@ -321,11 +335,106 @@ mod tests {
             google_forms_client_id: None,
             google_forms_client_secret: None,
             google_forms_refresh_token: None,
+            email_code_secret: "test-secret-only".into(),
+            mail_relay: None,
+            password_slots: tokio::sync::Semaphore::new(2),
         });
         let mut headers = HeaderMap::new();
         headers.insert("origin", "https://pytorch.ph".parse().unwrap());
         headers.insert("cookie", format!("ph_session={token}").parse().unwrap());
         (state, headers, officer, member)
+    }
+
+    #[tokio::test]
+    async fn email_signup_requires_the_current_code_and_creates_one_member() {
+        let (state, headers, _, _) = fixture().await;
+        let email = "new@example.test";
+        let code = "12345678";
+        sqlx::query("INSERT INTO pending_email_signups(email,display_name,public_handle,password_hash,code_hash,expires_at,sent_at) VALUES (?,?,?,?,?,?,?)")
+            .bind(email).bind("New Member").bind("new_member")
+            .bind(auth_email::password_hash("strong-password").unwrap())
+            .bind(auth_email::code_hash(&state.email_code_secret, email, code))
+            .bind((chrono::Utc::now() + chrono::Duration::minutes(10)).to_rfc3339())
+            .bind(chrono::Utc::now().to_rfc3339()).execute(&state.db).await.unwrap();
+        let wrong = auth_email::verify_signup(
+            State(state.clone()),
+            headers.clone(),
+            Json(auth_email::SignupVerify {
+                email: email.into(),
+                code: "00000000".into(),
+            }),
+        )
+        .await;
+        assert!(matches!(wrong, Err(ApiError(StatusCode::BAD_REQUEST, _))));
+        let count: i64 = sqlx::query_scalar("SELECT count(*) FROM members WHERE email=?")
+            .bind(email)
+            .fetch_one(&state.db)
+            .await
+            .unwrap();
+        assert_eq!(count, 0);
+        let response = auth_email::verify_signup(
+            State(state.clone()),
+            headers.clone(),
+            Json(auth_email::SignupVerify {
+                email: email.into(),
+                code: code.into(),
+            }),
+        )
+        .await
+        .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert!(response.headers().get("set-cookie").is_some());
+        let replay = auth_email::verify_signup(
+            State(state.clone()),
+            headers.clone(),
+            Json(auth_email::SignupVerify {
+                email: email.into(),
+                code: code.into(),
+            }),
+        )
+        .await;
+        assert!(matches!(replay, Err(ApiError(StatusCode::BAD_REQUEST, _))));
+        let logged_in = auth_email::password_login(
+            State(state),
+            headers,
+            Json(auth_email::PasswordLogin {
+                email: email.into(),
+                password: "strong-password".into(),
+            }),
+        )
+        .await
+        .unwrap();
+        assert_eq!(logged_in.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn temporary_test_accounts_keep_member_and_officer_roles() {
+        let (state, headers, _, _) = fixture().await;
+        auth_email::seed_test_accounts(&state.db, "test-password")
+            .await
+            .unwrap();
+        for (email, role) in [
+            ("member@admin.ph", "member"),
+            ("officer@admin.ph", "officer"),
+        ] {
+            let response = auth_email::password_login(
+                State(state.clone()),
+                headers.clone(),
+                Json(auth_email::PasswordLogin {
+                    email: email.into(),
+                    password: "test-password".into(),
+                }),
+            )
+            .await
+            .unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+            let actual: String = sqlx::query_scalar("SELECT role FROM members WHERE email=?")
+                .bind(email)
+                .fetch_one(&state.db)
+                .await
+                .unwrap();
+            assert_eq!(actual, role);
+        }
     }
 
     #[tokio::test]
