@@ -99,7 +99,24 @@ Officers have everything members have, plus officer tools. Nothing is shown twic
 - Demo data for these pages is produced without a running portal by
   `npx tsx development/pages-demo/patch-fixtures.ts` (typed sample events, member-safe copies).
 
-### Future: mobile app
+### Phase 5: account binding in Settings and an installable app (done 2026-09-28)
+- **Settings & Privacy** is the same for members and officers and holds: Connected accounts, leaderboard
+  identity, Privacy & integrity (the integrity page is linked from here and left the officer menu), and
+  the AI connection.
+- **Connected accounts** binds accounts for evidence collection. It reuses the existing client-side
+  design (`docs/CLIENT-SCRAPING.md`): collection runs in the member's own browser through the evidence
+  extension (`apps/evidence-extension`), with a preview, the member's review, and officer verification.
+  It works on the **website in a desktop browser only**; phones and the installed app cannot run a
+  browser extension, and the section says so.
+- The extension's portal bridge now also matches `https://pytorch.ph/*`; before, it matched localhost only.
+- **Still needed to ship binding to members:** a packaged extension (Chrome Web Store listing or a signed
+  download). The setup page still describes the developer install (build and load unpacked). The legacy
+  Python headless scraper (`legacy/python/resume_builder/sources/social/`) remains the blueprint for
+  vendor logic; it is not run by the website.
+- **Installable app (PWA), step 1:** web manifest and icons, so the portal installs from the browser on
+  Android, iOS, and desktop. No offline cache or push notifications yet.
+
+### Future: mobile app (after the installable app)
 The portal is already responsive, and members and officers share one structure, so the same screens
 can move to a phone. Options, from least to most work:
 1. **Installable web app (PWA):** add a web manifest, icons, and offline caching to the portal. One

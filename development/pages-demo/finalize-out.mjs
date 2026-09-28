@@ -4,7 +4,7 @@ import { dirname, relative, resolve, sep } from "node:path";
 // Completes apps/pages-demo/out so any static host (root site or a path-based project site) can serve it as-is.
 const root = resolve(import.meta.dirname, "../..");
 const output = resolve(root, "apps/pages-demo/out");
-const portalDemoMedia = resolve(root, "apps/portal/public/demo");
+const portalPublic = resolve(root, "apps/portal/public");
 const walk = directory => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
   const path = resolve(directory, entry.name);
   if (entry.isSymbolicLink()) throw new Error("Symlinks are not allowed in the Pages artifact.");
@@ -17,9 +17,10 @@ const copy = (from, name) => {
 };
 if (!existsSync(output)) throw new Error("Build apps/pages-demo before finalizing the export.");
 
-// The portal UI references its synthetic evidence media from /demo/.
+// The portal UI references its own public files: synthetic evidence media, setup illustrations,
+// the web manifest, and app icons.
 let media = 0;
-for (const path of walk(portalDemoMedia)) { copy(path, `demo/${relative(portalDemoMedia, path).split(sep).join("/")}`); media += 1; }
+for (const path of walk(portalPublic)) { copy(path, relative(portalPublic, path).split(sep).join("/")); media += 1; }
 
 // Next writes segment prefetch payloads as `__next.<segment>/<file>.txt`, but the client requests
 // the flat `__next.<segment>.<file>.txt`; static hosts have no rewrite, so publish both spellings.

@@ -104,11 +104,20 @@ try {
   await heading("Job Market Analytics");
   await page.getByRole("button", { name: "Job automation", exact: true }).waitFor();
 
+  // Settings holds account binding and privacy for everyone; binding needs the browser extension.
+  await page.goto(`${url}/settings/`, { waitUntil: "networkidle" });
+  await page.getByText("Connected accounts", { exact: true }).waitFor();
+  await page.getByText("Not installed", { exact: true }).waitFor();
+  await page.getByRole("link", { name: "How to install" }).click();
+  await heading("Install the Evidence Collector");
+  const manifest = await page.evaluate(async () => (await fetch(document.querySelector('link[rel="manifest"]').href)).json());
+  assert.equal(manifest.display, "standalone");
+
   // Writes are answered locally with a read-only notice.
   const write = await page.evaluate(() => fetch("/api/feedback", { method: "POST", body: "{}" }).then(response => response.status));
   assert.equal(write, 403);
 
-  const routes = ["/login/", "/register/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/jobs/analytics/", "/jobs/automation/", "/events/", "/leaderboards/", "/membership/", "/trust/", "/settings/"];
+  const routes = ["/login/", "/register/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/jobs/analytics/", "/jobs/automation/", "/events/", "/leaderboards/", "/membership/", "/trust/", "/settings/", "/setup/evidence-extension/"];
   for (const path of routes) {
     await page.goto(`${url}${path}`, { waitUntil: "networkidle" });
     await page.getByRole("complementary", { name: "Demo notice" }).waitFor();
@@ -123,7 +132,7 @@ try {
   assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request)), []);
   assert.deepEqual(missingAssets, []);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
+  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "account-binding", "installable-app", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "no-external-requests", "no-missing-assets", "no-page-errors"] }));
 } finally {
   await browser?.close();
   await new Promise(resolveClosed => server.close(resolveClosed));

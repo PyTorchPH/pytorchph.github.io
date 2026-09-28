@@ -4,23 +4,50 @@
   "description": "Collect reviewable career evidence from a normal user-approved browser session.",
   "version": "0.1.0",
   "minimum_chrome_version": "120",
-  "permissions": ["activeTab", "storage", "tabs"],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
   "host_permissions": [
     "https://*.facebook.com/*",
     "https://*.linkedin.com/*",
     "https://github.com/*"
   ],
-  "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_popup": "popup.html", "default_title": "PyTorch PH Evidence Collector" },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PyTorch PH Evidence Collector"
+  },
   "content_scripts": [
     {
-      "matches": ["http://localhost:3100/*", "http://localhost:3001/*", "http://*.localhost:3100/*", "http://*.localhost:3001/*", "http://127.0.0.1:3100/*", "http://127.0.0.1:3001/*"],
-      "js": ["portal-bridge.js"],
+      "matches": [
+        "http://localhost:3100/*",
+        "http://localhost:3001/*",
+        "http://*.localhost:3100/*",
+        "http://*.localhost:3001/*",
+        "http://127.0.0.1:3100/*",
+        "http://127.0.0.1:3001/*",
+        "https://pytorch.ph/*",
+        "https://*.pytorch.ph/*"
+      ],
+      "js": [
+        "portal-bridge.js"
+      ],
       "run_at": "document_start"
     },
     {
-      "matches": ["https://*.facebook.com/*", "https://*.linkedin.com/*", "https://github.com/*"],
-      "js": ["source-collector.js"],
+      "matches": [
+        "https://*.facebook.com/*",
+        "https://*.linkedin.com/*",
+        "https://github.com/*"
+      ],
+      "js": [
+        "source-collector.js"
+      ],
       "run_at": "document_idle"
     }
   ]

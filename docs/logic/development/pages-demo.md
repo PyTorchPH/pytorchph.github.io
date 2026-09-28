@@ -35,7 +35,8 @@ app shell, member dashboard, officer command center, and workspaces—without sc
 - The example account lives in `sessionStorage`; no cookies or authenticated sessions are created.
 - All numbers, names, events, and roles are fictional. A persistent demo bar discloses demo status
   and switches between the example member and officer.
-- The build finishes `apps/pages-demo/out` with the portal's synthetic `/demo/` media, flat aliases
+- The build finishes `apps/pages-demo/out` with the portal's public files (synthetic media, setup
+  illustrations, the web manifest, and app icons), flat aliases
   for segment-prefetch payloads, and `.nojekyll`, so any static host can serve it unchanged.
 - The demo is built with `PAGES_BASE_PATH=/portal` (`npm run build:pages`) and prefixes its fixtures,
   navigation, and media with that base path; `/portal/` itself forwards to the portal login.
