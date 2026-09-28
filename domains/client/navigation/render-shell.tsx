@@ -98,7 +98,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   const sidebar = (
     <aside className="flex h-full w-72 flex-col overflow-y-auto border-r border-border bg-canvas p-4 text-ink">
       <div className="mb-6 flex items-center justify-between">
-        <Link className="focus-ring rounded-lg" href="/">
+        <Link aria-label="PyTorch PH: go to My Performance" className="focus-ring rounded-lg" href="/dashboard" onClick={() => setOpen(false)}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent shadow-lg shadow-accent/30">
               <Flame size={20} />
@@ -155,7 +155,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
         <Button aria-label="Open menu" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary">
           <Menu size={18} />
         </Button>
-        <Badge variant="orange">{officerPortal ? "Officer Portal" : "Member Portal"}</Badge>
+        <Link aria-label="PyTorch PH: go to My Performance" className="focus-ring rounded-full" href="/dashboard"><Badge variant="orange"><Flame aria-hidden="true" size={14} />{officerPortal ? "Officer Portal" : "Member Portal"}</Badge></Link>
         <Button aria-label="Replay page tour" data-tour="tour-help" onClick={requestProductTour} size="icon" type="button" variant="secondary">
           <CircleHelp size={18} />
         </Button>
