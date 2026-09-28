@@ -1,0 +1,246 @@
+use crate::{ApiError, ApiResult, AppState, check_origin, internal};
+use axum::{
+    Json,
+    extract::{Path, State},
+    http::{HeaderMap, HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
+};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header, jwk::JwkSet};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use sqlx::Row;
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+use uuid::Uuid;
+
+#[derive(Clone, Serialize)]
+pub struct Viewer {
+    pub id: String,
+    pub display_name: String,
+    pub role: String,
+}
+
+#[derive(Deserialize)]
+pub struct Login {
+    id_token: String,
+}
+
+#[derive(Deserialize)]
+struct GoogleClaims {
+    sub: String,
+    email: String,
+    email_verified: bool,
+    name: Option<String>,
+}
+
+async fn google_keys(state: &AppState) -> ApiResult<JwkSet> {
+    let mut guard = state.google_keys.lock().await;
+    if let Some((fetched, keys)) = &*guard {
+        if fetched.elapsed() < Duration::from_secs(3600) {
+            return Ok(keys.clone());
+        }
+    }
+    let keys: JwkSet = state
+        .http
+        .get("https://www.googleapis.com/oauth2/v3/certs")
+        .send()
+        .await
+        .map_err(internal)?
+        .error_for_status()
+        .map_err(internal)?
+        .json()
+        .await
+        .map_err(internal)?;
+    *guard = Some((Instant::now(), keys.clone()));
+    Ok(keys)
+}
+
+async fn verify_google(state: &AppState, token: &str) -> ApiResult<GoogleClaims> {
+    if token.len() > 8192 {
+        return Err(ApiError(StatusCode::UNAUTHORIZED, "Invalid Google token"));
+    }
+    let header = decode_header(token)
+        .map_err(|_| ApiError(StatusCode::UNAUTHORIZED, "Invalid Google token"))?;
+    if header.alg != Algorithm::RS256 {
+        return Err(ApiError(
+            StatusCode::UNAUTHORIZED,
+            "Invalid Google algorithm",
+        ));
+    }
+    let kid = header
+        .kid
+        .as_deref()
+        .ok_or(ApiError(StatusCode::UNAUTHORIZED, "Missing key id"))?;
+    let keys = google_keys(state).await?;
+    let key = keys
+        .find(kid)
+        .ok_or(ApiError(StatusCode::UNAUTHORIZED, "Unknown Google key"))?;
+    let key = DecodingKey::from_jwk(key).map_err(internal)?;
+    let mut validation = Validation::new(Algorithm::RS256);
+    validation.set_audience(&[state.google_client_id.as_str()]);
+    validation.set_issuer(&["https://accounts.google.com", "accounts.google.com"]);
+    let claims = decode::<GoogleClaims>(token, &key, &validation)
+        .map_err(|_| ApiError(StatusCode::UNAUTHORIZED, "Invalid Google token"))?
+        .claims;
+    if !claims.email_verified || claims.sub.is_empty() || claims.email.len() > 320 {
+        return Err(ApiError(
+            StatusCode::UNAUTHORIZED,
+            "Unverified Google identity",
+        ));
+    }
+    Ok(claims)
+}
+
+pub async fn google_login(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Json(payload): Json<Login>,
+) -> ApiResult<Response> {
+    check_origin(&state, &headers)?;
+    let claims = verify_google(&state, &payload.id_token).await?;
+    let email = claims.email.to_ascii_lowercase();
+    let role = if email == state.bootstrap_admin_email.to_ascii_lowercase() {
+        "admin"
+    } else {
+        "pending"
+    };
+    let id = Uuid::new_v4().to_string();
+    let now = chrono::Utc::now().to_rfc3339();
+    sqlx::query("INSERT INTO members(id, google_sub, email, display_name, public_handle, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(google_sub) DO UPDATE SET email = excluded.email, display_name = excluded.display_name")
+        .bind(&id).bind(&claims.sub).bind(&email)
+        .bind(claims.name.unwrap_or_else(|| email.clone()).chars().take(100).collect::<String>())
+        .bind(format!("Member-{}", &id[..8]))
+        .bind(role).bind(&now).execute(&state.db).await.map_err(internal)?;
+    let row = sqlx::query("SELECT id, display_name, role FROM members WHERE google_sub = ?")
+        .bind(&claims.sub)
+        .fetch_one(&state.db)
+        .await
+        .map_err(internal)?;
+    let viewer = Viewer {
+        id: row.get(0),
+        display_name: row.get(1),
+        role: row.get(2),
+    };
+    let token = format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple());
+    let hash = hex::encode(Sha256::digest(token.as_bytes()));
+    let expires = (chrono::Utc::now() + chrono::Duration::days(7)).to_rfc3339();
+    sqlx::query("INSERT INTO sessions(token_hash, member_id, expires_at) VALUES (?, ?, ?)")
+        .bind(hash)
+        .bind(&viewer.id)
+        .bind(expires)
+        .execute(&state.db)
+        .await
+        .map_err(internal)?;
+    let mut response = Json(viewer).into_response();
+    let cookie =
+        format!("ph_session={token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800");
+    response.headers_mut().insert(
+        "set-cookie",
+        HeaderValue::from_str(&cookie).map_err(internal)?,
+    );
+    Ok(response)
+}
+
+pub async fn viewer(state: &AppState, headers: &HeaderMap) -> ApiResult<Viewer> {
+    let raw = headers
+        .get("cookie")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("");
+    let token = raw
+        .split(';')
+        .map(str::trim)
+        .find_map(|part| part.strip_prefix("ph_session="))
+        .ok_or(ApiError(
+            StatusCode::UNAUTHORIZED,
+            "Authentication required",
+        ))?;
+    if token.len() != 64 || !token.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return Err(ApiError(StatusCode::UNAUTHORIZED, "Invalid session"));
+    }
+    let hash = hex::encode(Sha256::digest(token.as_bytes()));
+    let row = sqlx::query("SELECT m.id, m.display_name, m.role FROM sessions s JOIN members m ON m.id = s.member_id WHERE s.token_hash = ? AND s.expires_at > ?")
+        .bind(hash).bind(chrono::Utc::now().to_rfc3339()).fetch_optional(&state.db).await.map_err(internal)?
+        .ok_or(ApiError(StatusCode::UNAUTHORIZED, "Session expired"))?;
+    Ok(Viewer {
+        id: row.get(0),
+        display_name: row.get(1),
+        role: row.get(2),
+    })
+}
+
+pub async fn require_officer(state: &AppState, headers: &HeaderMap) -> ApiResult<Viewer> {
+    let viewer = viewer(state, headers).await?;
+    if viewer.role != "officer" && viewer.role != "admin" {
+        return Err(ApiError(StatusCode::FORBIDDEN, "Officer access required"));
+    }
+    Ok(viewer)
+}
+
+pub async fn me(State(state): State<Arc<AppState>>, headers: HeaderMap) -> ApiResult<Json<Viewer>> {
+    Ok(Json(viewer(&state, &headers).await?))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MemberListItem {
+    id: String,
+    display_name: String,
+    role: String,
+}
+
+pub async fn list_members(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+) -> ApiResult<Json<Vec<MemberListItem>>> {
+    let actor = require_officer(&state, &headers).await?;
+    let rows: Vec<(String, String, String)> = sqlx::query_as(
+        "SELECT id,display_name,role FROM members WHERE role != 'pending' OR ? = 'admin' ORDER BY display_name LIMIT 500"
+    ).bind(&actor.role).fetch_all(&state.db).await.map_err(internal)?;
+    Ok(Json(
+        rows.into_iter()
+            .map(|(id, display_name, role)| MemberListItem {
+                id,
+                display_name,
+                role,
+            })
+            .collect(),
+    ))
+}
+
+#[derive(Deserialize)]
+pub struct Approval {
+    role: String,
+}
+
+pub async fn approve_member(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+    Json(payload): Json<Approval>,
+) -> ApiResult<StatusCode> {
+    check_origin(&state, &headers)?;
+    let actor = viewer(&state, &headers).await?;
+    if actor.role != "admin" {
+        return Err(ApiError(StatusCode::FORBIDDEN, "Admin access required"));
+    }
+    if payload.role != "member" && payload.role != "officer" {
+        return Err(ApiError(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "Invalid approval role",
+        ));
+    }
+    let changed = sqlx::query("UPDATE members SET role = ? WHERE id = ? AND role = 'pending'")
+        .bind(&payload.role)
+        .bind(&id)
+        .execute(&state.db)
+        .await
+        .map_err(internal)?
+        .rows_affected();
+    if changed == 0 {
+        return Err(ApiError(StatusCode::NOT_FOUND, "Pending member not found"));
+    }
+    tracing::info!(actor_id = %actor.id, member_id = %id, role = %payload.role, "member.approved");
+    Ok(StatusCode::NO_CONTENT)
+}
