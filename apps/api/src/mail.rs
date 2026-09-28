@@ -1,9 +1,11 @@
 use crate::auth;
+use crate::pdf;
 use crate::{ApiError, ApiResult, AppState, bad, check_origin, internal};
 use axum::{
     Json,
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
+    response::{IntoResponse, Response},
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -246,9 +248,13 @@ async fn insert_revision(
     hash: &str,
     actor_id: &str,
 ) -> ApiResult<()> {
-    sqlx::query("INSERT INTO mail_revisions(draft_id,revision,recipients_json,subject,body,pdf_text,content_hash,required_roles_json,sender_role,edited_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+    let pdf_bytes = content.pdf_text.as_deref().map(pdf::render).transpose()?;
+    let pdf_hash = pdf_bytes
+        .as_ref()
+        .map(|bytes| hex::encode(Sha256::digest(bytes)));
+    sqlx::query("INSERT INTO mail_revisions(draft_id,revision,recipients_json,subject,body,pdf_text,pdf_bytes,pdf_sha256,content_hash,required_roles_json,sender_role,edited_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
         .bind(id).bind(revision).bind(serde_json::to_string(&content.recipients).map_err(internal)?)
-        .bind(&content.subject).bind(&content.body).bind(&content.pdf_text).bind(hash)
+        .bind(&content.subject).bind(&content.body).bind(&content.pdf_text).bind(pdf_bytes).bind(pdf_hash).bind(hash)
         .bind(serde_json::to_string(&content.required_roles).map_err(internal)?)
         .bind(&content.sender_role).bind(actor_id).bind(chrono::Utc::now().to_rfc3339())
         .execute(&mut **tx).await.map_err(internal)?;
@@ -315,9 +321,159 @@ pub async fn read_draft(
             .fetch_all(&state.db)
             .await
             .map_err(internal)?;
+    let delivery: Option<(String, Option<String>, Option<String>)> = sqlx::query_as(
+        "SELECT status,claimed_at,external_message_id FROM mail_dispatch WHERE draft_id=?",
+    )
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(internal)?;
+    let pdf_hash: Option<(Option<String>,)> =
+        sqlx::query_as("SELECT pdf_sha256 FROM mail_revisions WHERE draft_id=? AND revision=?")
+            .bind(&id)
+            .bind(revision)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(internal)?;
     Ok(Json(
-        serde_json::json!({"id": id, "revision": revision, "status": status, "contentHash": content_hash(&content)?, "content": content, "approvedRoles": approvals.into_iter().map(|row| row.0).collect::<Vec<_>>() }),
+        serde_json::json!({"id": id, "revision": revision, "status": status, "contentHash": content_hash(&content)?, "pdfSha256": pdf_hash.and_then(|row| row.0), "content": content, "approvedRoles": approvals.into_iter().map(|row| row.0).collect::<Vec<_>>(), "delivery": delivery.map(|(status,claimed_at,external_message_id)| serde_json::json!({"status": status, "claimedAt": claimed_at, "externalMessageId": external_message_id})) }),
     ))
+}
+
+fn pdf_response(bytes: Vec<u8>) -> Response {
+    (
+        [
+            ("content-type", "application/pdf"),
+            (
+                "content-disposition",
+                "inline; filename=approved-attachment.pdf",
+            ),
+            ("cache-control", "no-store"),
+            ("x-content-type-options", "nosniff"),
+        ],
+        bytes,
+    )
+        .into_response()
+}
+
+pub async fn preview_pdf(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+) -> ApiResult<Response> {
+    let actor = auth::require_officer(&state, &headers).await?;
+    let (revision, _, content) = current(&state, &id).await?;
+    require_draft_access(&state, &actor, &id, &content).await?;
+    let row: Option<(Option<Vec<u8>>, Option<String>)> = sqlx::query_as(
+        "SELECT pdf_bytes,pdf_sha256 FROM mail_revisions WHERE draft_id=? AND revision=?",
+    )
+    .bind(&id)
+    .bind(revision)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(internal)?;
+    let Some((Some(bytes), Some(hash))) = row else {
+        return Err(ApiError(StatusCode::NOT_FOUND, "PDF not available"));
+    };
+    if hex::encode(Sha256::digest(&bytes)) != hash {
+        return Err(ApiError(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "PDF integrity check failed",
+        ));
+    }
+    Ok(pdf_response(bytes))
+}
+
+pub async fn dispatch_pdf(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+) -> ApiResult<Response> {
+    check_workflow_key(&state, &headers)?;
+    let row: Option<(Option<Vec<u8>>, Option<String>)> = sqlx::query_as("SELECT r.pdf_bytes,r.pdf_sha256 FROM mail_dispatch d JOIN mail_revisions r ON r.draft_id=d.draft_id AND r.revision=d.revision AND r.content_hash=d.content_hash WHERE d.draft_id=? AND d.status='claimed'")
+        .bind(&id).fetch_optional(&state.db).await.map_err(internal)?;
+    let Some((Some(bytes), Some(hash))) = row else {
+        return Err(ApiError(StatusCode::NOT_FOUND, "Claimed PDF not found"));
+    };
+    if hex::encode(Sha256::digest(&bytes)) != hash {
+        return Err(ApiError(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "PDF integrity check failed",
+        ));
+    }
+    Ok(pdf_response(bytes))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReconcileInput {
+    status: String,
+    reason: String,
+    external_message_id: Option<String>,
+}
+
+pub async fn reconcile_dispatch(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+    Json(input): Json<ReconcileInput>,
+) -> ApiResult<StatusCode> {
+    check_origin(&state, &headers)?;
+    let actor = auth::viewer(&state, &headers).await?;
+    if actor.role != "admin" {
+        return Err(ApiError(StatusCode::FORBIDDEN, "Admin access required"));
+    }
+    if !matches!(input.status.as_str(), "sent" | "uncertain" | "failed")
+        || input.reason.trim().len() < 10
+        || input.reason.len() > 500
+        || input
+            .external_message_id
+            .as_ref()
+            .is_some_and(|id| id.len() > 255)
+        || (input.status == "sent"
+            && input
+                .external_message_id
+                .as_deref()
+                .unwrap_or("")
+                .is_empty())
+    {
+        return Err(bad("Invalid reconciliation record"));
+    }
+    let mut tx = state.db.begin().await.map_err(internal)?;
+    let changed = sqlx::query("UPDATE mail_dispatch SET status=?,external_message_id=?,updated_at=? WHERE draft_id=? AND status IN ('claimed','uncertain','failed')")
+        .bind(&input.status).bind(&input.external_message_id).bind(chrono::Utc::now().to_rfc3339()).bind(&id)
+        .execute(&mut *tx).await.map_err(internal)?.rows_affected();
+    if changed != 1 {
+        return Err(ApiError(
+            StatusCode::PRECONDITION_FAILED,
+            "Dispatch is not reconcilable",
+        ));
+    }
+    sqlx::query("UPDATE mail_drafts SET status=?,updated_at=? WHERE id=?")
+        .bind(&input.status)
+        .bind(chrono::Utc::now().to_rfc3339())
+        .bind(&id)
+        .execute(&mut *tx)
+        .await
+        .map_err(internal)?;
+    sqlx::query("INSERT INTO mail_reconciliations(id,draft_id,status,reason,external_message_id,actor_id,created_at) VALUES (?,?,?,?,?,?,?)")
+        .bind(Uuid::new_v4().to_string()).bind(&id).bind(&input.status).bind(input.reason.trim())
+        .bind(&input.external_message_id).bind(&actor.id).bind(chrono::Utc::now().to_rfc3339())
+        .execute(&mut *tx).await.map_err(internal)?;
+    sqlx::query(
+        "INSERT INTO audit_events(id,actor_id,operation,entity_id,created_at) VALUES (?,?,?,?,?)",
+    )
+    .bind(Uuid::new_v4().to_string())
+    .bind(&actor.id)
+    .bind(format!("mail.reconciled.{}", input.status))
+    .bind(&id)
+    .bind(chrono::Utc::now().to_rfc3339())
+    .execute(&mut *tx)
+    .await
+    .map_err(internal)?;
+    tx.commit().await.map_err(internal)?;
+    tracing::info!(draft_id = %id, actor_id = %actor.id, status = %input.status, "mail.reconciled");
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Deserialize)]
@@ -484,10 +640,23 @@ pub async fn release_draft(
         return Err(bad("Draft is not releasable"));
     }
     if content.pdf_text.is_some() {
-        return Err(ApiError(
-            StatusCode::SERVICE_UNAVAILABLE,
-            "PDF rendering is not configured",
-        ));
+        let pdf: Option<(Option<Vec<u8>>, Option<String>)> = sqlx::query_as(
+            "SELECT pdf_bytes,pdf_sha256 FROM mail_revisions WHERE draft_id=? AND revision=?",
+        )
+        .bind(&id)
+        .bind(revision)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(internal)?;
+        let Some((Some(bytes), Some(hash))) = pdf else {
+            return Err(ApiError(StatusCode::PRECONDITION_FAILED, "PDF is missing"));
+        };
+        if hex::encode(Sha256::digest(&bytes)) != hash {
+            return Err(ApiError(
+                StatusCode::PRECONDITION_FAILED,
+                "PDF integrity check failed",
+            ));
+        }
     }
     if !has_role(&state, &actor.id, &content.sender_role).await? {
         return Err(ApiError(StatusCode::FORBIDDEN, "Sender role required"));
@@ -554,15 +723,16 @@ pub async fn claim_dispatch(
     sqlx::query("UPDATE mail_dispatch SET status='claimed',claimed_at=?,updated_at=? WHERE draft_id=? AND status='pending'")
         .bind(chrono::Utc::now().to_rfc3339()).bind(chrono::Utc::now().to_rfc3339()).bind(&id)
         .execute(&mut *tx).await.map_err(internal)?;
-    let row = sqlx::query("SELECT recipients_json,subject,body,pdf_text FROM mail_revisions WHERE draft_id=? AND revision=? AND content_hash=?")
+    let row = sqlx::query("SELECT recipients_json,subject,body,pdf_sha256 FROM mail_revisions WHERE draft_id=? AND revision=? AND content_hash=?")
         .bind(&id).bind(revision).bind(&hash).fetch_one(&mut *tx).await.map_err(internal)?;
     let recipients: Vec<String> = serde_json::from_str(row.get::<&str, _>(0)).map_err(internal)?;
     let subject: String = row.get(1);
     let body: String = row.get(2);
-    let pdf_text: Option<String> = row.get(3);
+    let pdf_sha256: Option<String> = row.get(3);
+    let has_pdf = pdf_sha256.is_some();
     tx.commit().await.map_err(internal)?;
     Ok(Json(
-        serde_json::json!({"job": {"id": id, "revision": revision, "recipients": recipients, "subject": subject, "body": body, "pdfText": pdf_text}}),
+        serde_json::json!({"job": {"id": id, "revision": revision, "recipients": recipients, "subject": subject, "body": body, "pdfSha256": pdf_sha256, "hasPdf": has_pdf}}),
     ))
 }
 

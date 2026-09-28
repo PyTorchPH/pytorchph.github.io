@@ -1,21 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Script from "next/script";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Card } from "@pytorch-ph/design-system/card";
 import { Input, Label } from "@pytorch-ph/design-system/input";
+import { OfficialGoogleConnect, type OfficialViewer } from "../../../components/official-google-connect";
 
 const apiOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || "";
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
-type Viewer = { id: string; display_name: string; role: string };
+type Viewer = OfficialViewer;
 type Member = { id: string; displayName: string; role: string };
 type EventItem = { id: string; title: string; category: string; startsAt: string; revision: number; publishedAt: string | null };
 type Entrant = { id: string; name: string; kind: string; memberIds: string[] };
 type EventDetail = { id: string; title: string; category: string; startsAt: string; competitive: boolean; entrantKind: "team" | "individual" | null; lastPlace: number | null; revision: number; placePoints: [number, number][]; results: [number, string][] };
 type AttendanceSummary = { source: null | { formId: string; points: number; lastImportedAt: string | null }; awarded: number; unmatched: number };
-type GoogleApi = { accounts: { id: { initialize: (config: { client_id: string; callback: (value: { credential: string }) => void }) => void; renderButton: (element: HTMLElement, options: { theme: string; size: string }) => void } } };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiOrigin}${path}`, { credentials: "include", cache: "no-store", ...init });
@@ -28,8 +27,6 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export function CompetitiveEventForm() {
-  const [ready, setReady] = useState(false);
-  const googleButton = useRef<HTMLDivElement>(null);
   const [viewer, setViewer] = useState<Viewer | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -65,17 +62,6 @@ export function CompetitiveEventForm() {
     if (!apiOrigin) return;
     void refresh().catch(() => setViewer(null));
   }, [refresh]);
-
-  useEffect(() => {
-    if (!ready || !googleClientId || !googleButton.current || viewer) return;
-    const google = (window as unknown as { google?: GoogleApi }).google;
-    if (!google) return;
-    google.accounts.id.initialize({ client_id: googleClientId, callback: ({ credential }) => {
-      void api<Viewer>("/auth/google", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id_token: credential }) })
-        .then(() => refresh()).catch((error: Error) => setMessage(error.message));
-    } });
-    google.accounts.id.renderButton(googleButton.current, { theme: "outline", size: "large" });
-  }, [ready, refresh, viewer]);
 
   async function selectEvent(id: string) {
     const [detail, registrations, attendanceSummary] = await Promise.all([api<EventDetail>(`/events/${id}/results`), api<Entrant[]>(`/events/${id}/entrants`), api<AttendanceSummary>(`/events/${id}/attendance`)]);
@@ -148,9 +134,8 @@ export function CompetitiveEventForm() {
   if (!apiOrigin || !googleClientId) return <Card className="bg-surface"><p className="text-sm text-muted">Competitive-event backend is not configured for this build.</p></Card>;
 
   return <Card className="space-y-5 bg-surface">
-    <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={() => setReady(true)} />
     <div><h3 className="font-heading text-lg font-semibold">Internal events and competitions</h3><p className="text-sm text-muted">Set placements when creating a competition; select official winners after it starts.</p></div>
-    {!viewer ? <div><p className="mb-2 text-sm">Connect your officer Google account to the official backend.</p><div ref={googleButton} /></div> : viewer.role !== "officer" && viewer.role !== "admin" ? <p className="text-sm text-muted">Officer approval is required.</p> : <>
+    {!viewer ? <div><p className="mb-2 text-sm">Connect your officer Google account to the official backend.</p><OfficialGoogleConnect onConnected={() => void refresh().catch((error: Error) => setMessage(error.message))} onError={setMessage} /></div> : viewer.role !== "officer" && viewer.role !== "admin" ? <p className="text-sm text-muted">Officer approval is required.</p> : <>
       <div className="grid gap-3 sm:grid-cols-2">
         <div><Label htmlFor="competition-title">Event title</Label><Input id="competition-title" value={title} onChange={(event) => setTitle(event.target.value)} /></div>
         <div><Label htmlFor="competition-category">Category</Label><select className="w-full border border-border bg-canvas p-2" id="competition-category" value={category} onChange={(event) => setCategory(event.target.value)}><option value="talk">Talk</option><option value="workshop">Workshop</option><option value="hackathon">Hackathon</option><option value="competitive">Other competition</option><option value="mini_contest">Talk/workshop mini contest</option></select></div>

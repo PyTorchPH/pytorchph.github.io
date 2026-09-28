@@ -3,6 +3,7 @@ mod auth;
 mod events;
 mod evidence;
 mod mail;
+mod pdf;
 
 use axum::{
     Json, Router,
@@ -143,8 +144,12 @@ async fn leaderboard(State(state): State<Arc<AppState>>) -> ApiResult<impl IntoR
     let rows: Vec<(String, String, i64)> = sqlx::query_as(
         "SELECT m.id, m.public_handle, c.points FROM leaderboard_cache c JOIN members m ON m.id = c.member_id WHERE m.role != 'pending' ORDER BY c.points DESC, m.id ASC LIMIT 100"
     ).fetch_all(&state.db).await.map_err(internal)?;
+    let mut prior_points = None;
+    let mut peer_rank = 0;
     let body: Vec<_> = rows.into_iter().enumerate().map(|(i, (member_id, display_name, points))| {
-        serde_json::json!({"rank": i + 1, "memberId": member_id, "displayName": display_name, "points": points})
+        if prior_points != Some(points) { peer_rank = i + 1; }
+        prior_points = Some(points);
+        serde_json::json!({"rank": peer_rank, "memberId": member_id, "displayName": display_name, "points": points})
     }).collect();
     let mut response = Json(body).into_response();
     response.headers_mut().insert(
@@ -241,6 +246,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             post(attendance::import_google_form),
         )
         .route("/evidence", post(evidence::submit_claim))
+        .route("/evidence/extension", post(evidence::submit_extension))
         .route("/evidence/me", get(evidence::my_claims))
         .route("/evidence/pending", get(evidence::pending_claims))
         .route("/evidence/{id}/review", post(evidence::review_claim))
@@ -253,7 +259,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/mail/drafts/{id}/approve", post(mail::approve_draft))
         .route("/mail/drafts/{id}/release", post(mail::release_draft))
+        .route(
+            "/mail/drafts/{id}/reconcile",
+            post(mail::reconcile_dispatch),
+        )
+        .route("/mail/drafts/{id}/pdf", get(mail::preview_pdf))
         .route("/internal/mail/claim", post(mail::claim_dispatch))
+        .route("/internal/mail/{id}/pdf", get(mail::dispatch_pdf))
         .route("/internal/mail/{id}/receipt", post(mail::record_receipt))
         .layer(RequestBodyLimitLayer::new(64 * 1024))
         .layer(cors)

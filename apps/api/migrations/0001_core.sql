@@ -94,6 +94,9 @@ CREATE TABLE evidence_claims (
   kind TEXT NOT NULL CHECK (kind IN ('personal_project','external_talk','external_competition','external_participation')),
   title TEXT NOT NULL,
   source_url TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual','github','facebook','linkedin')),
+  origin TEXT NOT NULL DEFAULT 'manual' CHECK (origin IN ('manual','extension_scrape')),
+  submitted_text TEXT,
   content_hash TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('pending','approved','rejected')),
   points INTEGER,
@@ -191,6 +194,8 @@ CREATE TABLE mail_revisions (
   subject TEXT NOT NULL,
   body TEXT NOT NULL,
   pdf_text TEXT,
+  pdf_bytes BLOB,
+  pdf_sha256 TEXT,
   content_hash TEXT NOT NULL,
   required_roles_json TEXT NOT NULL,
   sender_role TEXT NOT NULL,
@@ -219,3 +224,14 @@ CREATE TABLE mail_dispatch (
   updated_at TEXT NOT NULL,
   FOREIGN KEY(draft_id, revision) REFERENCES mail_revisions(draft_id, revision)
 );
+
+CREATE TABLE mail_reconciliations (
+  id TEXT PRIMARY KEY,
+  draft_id TEXT NOT NULL REFERENCES mail_drafts(id),
+  status TEXT NOT NULL CHECK (status IN ('sent','uncertain','failed')),
+  reason TEXT NOT NULL,
+  external_message_id TEXT,
+  actor_id TEXT NOT NULL REFERENCES members(id),
+  created_at TEXT NOT NULL
+);
+CREATE INDEX mail_reconciliations_draft_idx ON mail_reconciliations(draft_id, created_at);

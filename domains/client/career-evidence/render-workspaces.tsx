@@ -70,6 +70,8 @@ import {
 import { collectEvidenceFromExtension, ExtensionCapabilityOverlay } from "@pytorch-ph/domain-client/client-automation";
 import type { EvidenceIntegrityCase } from "@pytorch-ph/domain-protocol/organization";
 
+const officialApiOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || "";
+
 export const sourceTone = (source: EvidenceSource) =>
   source.connectionStatus === "connected"
     ? "success"
@@ -162,12 +164,19 @@ export function SourceDialog({
     setBusy(true);
     setNotice("");
     try {
-      const response = await fetch("/api/evidence/submissions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(preview) });
+      const response = await fetch(officialApiOrigin ? `${officialApiOrigin}/evidence/extension` : "/api/evidence/submissions", {
+        method: "POST", credentials: "include", cache: "no-store", headers: { "Content-Type": "application/json" }, body: JSON.stringify(preview),
+      });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Evidence submission failed.");
       setPreview(null);
-      onChanged({ ...source, status: "verified", connectionStatus: "connected", evidenceCount: (source.evidenceCount || 0) + (payload.duplicate ? 0 : payload.claimIds.length), lastSyncedAt: new Date().toISOString() });
-      setNotice(payload.duplicate ? "This exact evidence revision was already submitted." : `${payload.claimIds.length} claim${payload.claimIds.length === 1 ? "" : "s"} sent for officer review.`);
+      if (officialApiOrigin) {
+        onChanged({ ...source, evidenceCount: (source.evidenceCount || 0) + payload.submitted, lastSyncedAt: new Date().toISOString() });
+        setNotice(`${payload.submitted} official claim${payload.submitted === 1 ? "" : "s"} submitted for officer review; ${payload.duplicates} already submitted.`);
+      } else {
+        onChanged({ ...source, status: "verified", connectionStatus: "connected", evidenceCount: (source.evidenceCount || 0) + (payload.duplicate ? 0 : payload.claimIds.length), lastSyncedAt: new Date().toISOString() });
+        setNotice(payload.duplicate ? "This exact evidence revision was already submitted." : `${payload.claimIds.length} claim${payload.claimIds.length === 1 ? "" : "s"} sent for officer review.`);
+      }
     } catch (error) { setNotice(error instanceof Error ? error.message : "Evidence submission failed."); }
     finally { setBusy(false); }
   };
