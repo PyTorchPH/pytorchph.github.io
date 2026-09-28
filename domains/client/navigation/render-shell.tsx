@@ -26,7 +26,7 @@ import { useState } from "react";
 import type { CapabilityKey } from "@pytorch-ph/domain-protocol/identity";
 import { cn } from "@pytorch-ph/design-system/merge-classes";
 import { CapabilityProvider, useCapabilities } from "@pytorch-ph/domain-client/onboarding";
-import { ProductTourController, requestProductTour } from "@pytorch-ph/domain-client/onboarding";
+import { ProductTourController, requestProductTour, useHasProductTour } from "@pytorch-ph/domain-client/onboarding";
 import { SignOutButton } from "@pytorch-ph/domain-client/identity";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Sheet } from "@pytorch-ph/design-system/sheet";
@@ -62,6 +62,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const manifest = useCapabilities();
   const officerPortal = manifest.portal.audience === "officer";
+  const hasTour = useHasProductTour();
 
   const renderItem = (item: NavItem) => {
     const active = [item.href, ...(item.alsoActiveOn ?? [])].some((href) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`)));
@@ -148,7 +149,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
       {manifest.localDemo && <div className="on-dark fixed inset-x-0 top-0 z-50 flex h-8 items-center justify-center border-b border-accent bg-chrome px-3 text-center font-heading text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">Local {officerPortal ? "officer" : "member"} demo · Synthetic data · External actions disabled</div>}
       <SiteHeader
         className={cn("sticky", manifest.localDemo ? "top-8" : "top-0")}
-        end={<Button aria-label="Replay page tour" className="lg:hidden" data-tour="tour-help" onClick={requestProductTour} size="icon" type="button" variant="secondary"><CircleHelp size={18} /></Button>}
+        end={hasTour && <Button aria-label="Replay page tour" data-tour="tour-help" onClick={requestProductTour} size="sm" title="Show the tour of this page again" type="button" variant="outline"><CircleHelp aria-hidden="true" size={16} /><span className="hidden sm:inline">Page tour</span></Button>}
         start={<Button aria-label="Open menu" className="lg:hidden" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary"><Menu size={18} /></Button>}
       />
       <div className={cn("hidden lg:fixed lg:bottom-0 lg:left-0 lg:block", manifest.localDemo ? "lg:top-28" : "lg:top-20")}>{sidebar}</div>
