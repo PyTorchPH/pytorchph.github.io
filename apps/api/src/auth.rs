@@ -167,40 +167,92 @@ pub async fn google_login(
 pub(crate) async fn issue_session(state: &AppState, viewer: Viewer) -> ApiResult<Response> {
     let token = format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple());
     let hash = hex::encode(Sha256::digest(token.as_bytes()));
-    let expires = (chrono::Utc::now() + chrono::Duration::days(7)).to_rfc3339();
+    let expires = session_expiry(chrono::Utc::now());
     sqlx::query("INSERT INTO sessions(token_hash, member_id, expires_at) VALUES (?, ?, ?)")
         .bind(hash)
         .bind(&viewer.id)
-        .bind(expires)
+        .bind(expires.to_rfc3339())
         .execute(&state.db)
         .await
         .map_err(internal)?;
     let mut response = Json(viewer).into_response();
-    let cookie =
-        format!("ph_session={token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800");
-    response.headers_mut().insert(
-        "set-cookie",
-        HeaderValue::from_str(&cookie).map_err(internal)?,
-    );
+    response
+        .headers_mut()
+        .insert("set-cookie", session_cookie(&token, expires)?);
     Ok(response)
 }
 
-pub async fn viewer(state: &AppState, headers: &HeaderMap) -> ApiResult<Viewer> {
-    let raw = headers
-        .get("cookie")
-        .and_then(|value| value.to_str().ok())
-        .unwrap_or("");
+fn session_expiry(now: chrono::DateTime<chrono::Utc>) -> chrono::DateTime<chrono::Utc> {
+    now.date_naive()
+        .checked_add_days(chrono::Days::new(7))
+        .expect("session expiry date is in range")
+        .and_hms_opt(23, 59, 59)
+        .expect("end of day is valid")
+        .and_utc()
+}
+
+fn session_cookie(token: &str, expires: chrono::DateTime<chrono::Utc>) -> ApiResult<HeaderValue> {
+    let max_age = (expires - chrono::Utc::now()).num_seconds().max(0);
+    let expires_http = expires.format("%a, %d %b %Y %H:%M:%S GMT");
+    HeaderValue::from_str(&format!(
+        "ph_session={token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age={max_age}; Expires={expires_http}"
+    ))
+    .map_err(internal)
+}
+
+fn session_token(headers: &HeaderMap) -> Option<&str> {
+    let raw = headers.get("cookie")?.to_str().ok()?;
     let token = raw
         .split(';')
         .map(str::trim)
-        .find_map(|part| part.strip_prefix("ph_session="))
-        .ok_or(ApiError(
-            StatusCode::UNAUTHORIZED,
-            "Authentication required",
-        ))?;
-    if token.len() != 64 || !token.bytes().all(|b| b.is_ascii_hexdigit()) {
-        return Err(ApiError(StatusCode::UNAUTHORIZED, "Invalid session"));
+        .find_map(|part| part.strip_prefix("ph_session="))?;
+    (token.len() == 64 && token.bytes().all(|byte| byte.is_ascii_hexdigit())).then_some(token)
+}
+
+pub async fn refresh_session(
+    State(state): State<Arc<AppState>>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    let token = session_token(request.headers()).map(str::to_owned);
+    let mut renewed = None;
+    if let Some(token) = token {
+        let now = chrono::Utc::now();
+        let expires = session_expiry(now);
+        let hash = hex::encode(Sha256::digest(token.as_bytes()));
+        match sqlx::query(
+            "UPDATE sessions SET expires_at = ? WHERE token_hash = ? AND expires_at > ?",
+        )
+        .bind(expires.to_rfc3339())
+        .bind(hash)
+        .bind(now.to_rfc3339())
+        .execute(&state.db)
+        .await
+        {
+            Ok(result) if result.rows_affected() == 1 => renewed = Some((token, expires)),
+            Ok(_) => {}
+            Err(error) => return internal(error).into_response(),
+        }
     }
+    let mut response = next.run(request).await;
+    if let Some((token, expires)) = renewed {
+        if !response.headers().contains_key("set-cookie") {
+            match session_cookie(&token, expires) {
+                Ok(cookie) => {
+                    response.headers_mut().insert("set-cookie", cookie);
+                }
+                Err(error) => return error.into_response(),
+            }
+        }
+    }
+    response
+}
+
+pub async fn viewer(state: &AppState, headers: &HeaderMap) -> ApiResult<Viewer> {
+    let token = session_token(headers).ok_or(ApiError(
+        StatusCode::UNAUTHORIZED,
+        "Authentication required",
+    ))?;
     let hash = hex::encode(Sha256::digest(token.as_bytes()));
     let row = sqlx::query("SELECT m.id, m.display_name, m.role FROM sessions s JOIN members m ON m.id = s.member_id WHERE s.token_hash = ? AND s.expires_at > ?")
         .bind(hash).bind(chrono::Utc::now().to_rfc3339()).fetch_optional(&state.db).await.map_err(internal)?

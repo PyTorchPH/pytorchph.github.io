@@ -284,6 +284,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/internal/mail/claim", post(mail::claim_dispatch))
         .route("/internal/mail/{id}/pdf", get(mail::dispatch_pdf))
         .route("/internal/mail/{id}/receipt", post(mail::record_receipt))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            auth::refresh_session,
+        ))
         .layer(RequestBodyLimitLayer::new(64 * 1024))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
@@ -302,6 +306,64 @@ mod tests {
     use axum::extract::Path;
     use sha2::{Digest, Sha256};
     use uuid::Uuid;
+
+    #[tokio::test]
+    async fn authenticated_requests_extend_session_to_seventh_calendar_day() {
+        let (state, headers, _, _) = fixture().await;
+        let token = "a".repeat(64);
+        let hash = hex::encode(Sha256::digest(token.as_bytes()));
+        let app = Router::new()
+            .route("/auth/me", get(auth::me))
+            .layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                auth::refresh_session,
+            ))
+            .with_state(state.clone());
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let client = reqwest::Client::new();
+        let response = client
+            .get(format!("http://{address}/auth/me"))
+            .header("cookie", headers.get("cookie").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let cookie = response
+            .headers()
+            .get("set-cookie")
+            .unwrap()
+            .to_str()
+            .unwrap();
+        assert!(cookie.contains("HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age="));
+        assert!(cookie.contains("Expires="));
+        let expiry: String =
+            sqlx::query_scalar("SELECT expires_at FROM sessions WHERE token_hash = ?")
+                .bind(&hash)
+                .fetch_one(&state.db)
+                .await
+                .unwrap();
+        let expected_date = (chrono::Utc::now().date_naive() + chrono::Days::new(7)).to_string();
+        assert!(expiry.starts_with(&expected_date));
+        assert!(expiry.contains("T23:59:59"));
+
+        sqlx::query("UPDATE sessions SET expires_at = ? WHERE token_hash = ?")
+            .bind((chrono::Utc::now() - chrono::Duration::days(1)).to_rfc3339())
+            .bind(&hash)
+            .execute(&state.db)
+            .await
+            .unwrap();
+        let expired = client
+            .get(format!("http://{address}/auth/me"))
+            .header("cookie", headers.get("cookie").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(expired.status(), StatusCode::UNAUTHORIZED);
+        assert!(expired.headers().get("set-cookie").is_none());
+        server.abort();
+    }
 
     #[tokio::test]
     async fn demo_snapshot_is_seeded_once_and_served_from_sqlite() {

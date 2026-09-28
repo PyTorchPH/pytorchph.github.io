@@ -81,7 +81,7 @@ function installDemoApi() {
   const originalFetch = window.fetch.bind(window);
   let fixtures: Promise<Fixtures> | undefined;
   // Captured data links synthetic media as "/demo/..."; project sites serve it under the base path.
-  const loadFixtures = () => (fixtures ??= originalFetch(FIXTURES_URL, { cache: "no-store" })
+  const loadFixtures = () => (fixtures ??= originalFetch(FIXTURES_URL, { cache: "no-store", credentials: "include" })
     .then(response => {
       if (!response.ok) throw new Error(`Demo API returned ${response.status}`);
       return response.text();
