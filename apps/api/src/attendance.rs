@@ -98,13 +98,15 @@ async fn access_token(state: &AppState) -> ApiResult<String> {
         StatusCode::SERVICE_UNAVAILABLE,
         "Google Forms OAuth is not configured",
     ))?;
-    let mut serializer = url::form_urlencoded::Serializer::new(String::new());
-    serializer
-        .append_pair("client_id", client_id)
-        .append_pair("client_secret", client_secret)
-        .append_pair("refresh_token", refresh_token)
-        .append_pair("grant_type", "refresh_token");
-    let body = serializer.finish();
+    let body = {
+        let mut serializer = url::form_urlencoded::Serializer::new(String::new());
+        serializer
+            .append_pair("client_id", client_id)
+            .append_pair("client_secret", client_secret)
+            .append_pair("refresh_token", refresh_token)
+            .append_pair("grant_type", "refresh_token");
+        serializer.finish()
+    };
     let response = state
         .http
         .post("https://oauth2.googleapis.com/token")
