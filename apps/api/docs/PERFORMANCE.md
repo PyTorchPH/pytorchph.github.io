@@ -31,13 +31,20 @@ The current Rust binary (`cargo build --locked`) ran in Docker with a 2-CPU, 512
 
 There were no HTTP error responses. The deadline aborts occurred as the 10-second generator window ended; they are still listed rather than hidden. Both data endpoints returned empty JSON arrays (2 bytes), so this is an empty-database baseline. The 20-QPS p99 outliers and lower apparent CPU efficiency show that ten-second, shared-host samples are noisy. Repeat longer on a dedicated client with populated data before selecting a service limit or budget.
 
-### Public HTTPS benchmark
+### Production public HTTPS, 2026-09-29
 
-Pending. A new bounded benchmark could not run on 2026-09-29: `ssh` to `47.129.167.4:22` and `curl --connect-timeout 5 https://api.pytorch.ph/health` both timed out from the test client; an external web check also could not reach the URL. DNS still resolved to `47.129.167.4`, and the instance owner reported that it was running at that IP. No production throughput or cost-efficiency result is inferred from the loopback or local-container tests. Repeat the procedure below once reachability is restored.
+After the tested binary was deployed (SHA-256 `96a768cf5bb7f9b0bb5beba1dd110c8debeabc6438a6e72d04217d9e41cc4f14`), `oha` 1.15.0 ran from the separate Windows Docker client against `https://api.pytorch.ph` with valid TLS, HTTP keepalive, 16 connections, 50 offered QPS, and a 10-second window per read-only endpoint. The API process on the VPS had 100 CPU ticks/second. CPU time is the process user + system tick delta across each window. Its peak `VmHWM` was 21,120 KiB (20.6 MiB); `VmRSS` after the two stages was 18.1 and 18.2 MiB. The API returned empty JSON arrays (2 bytes), so these are empty-data reads. Raw `oha` output is in `results/2026-09-29-public-events-50.json` and `results/2026-09-29-leaderboard-50.json`.
+
+| Path | HTTP 200 | Deadline aborts | `oha` req/s | p50 / p95 / p99 ms | API CPU ms / 1,000 HTTP 200 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `/public/events` | 495 | 7 | 50.19 | 103.251 / 181.351 / 430.576 | 1,131 |
+| `/leaderboard` | 495 | 7 | 50.19 | 102.686 / 177.045 / 426.815 | 1,111 |
+
+There were no HTTP error responses. `oha`'s request rate includes attempts; the seven aborted requests per endpoint reached the ten-second deadline, so completed-success throughput was about 49.5/s. The quickest responses were about 100 ms, showing that public network/TLS time dominates the earlier loopback latency. The p99 values include client/network variability. Ten seconds at 50 QPS is a bounded smoke load, not a sustainable-capacity claim. Earlier on the same date, public SSH and HTTPS both timed out temporarily while the instance remained running; access recovered before this test. That reachability incident remains a reliability finding separate from request latency.
 
 ## Repeatable HTTP benchmark
 
-Use the upstream `oha` 1.15.0 OCI image (`ghcr.io/hatoo/oha:1.15`) on a separate client. It reports success rate, throughput, and latency percentiles in JSON. Run only public, read-only endpoints. Keep each stage at 10 seconds and concurrency at four to limit load on the small production VPS. Pin the image digest for a formal comparison.
+Use the upstream `oha` 1.15.0 OCI image (`ghcr.io/hatoo/oha:1.15`, tested digest `sha256:57c2247792c1466c88ecc83ddb9253aa0b58dcb852b1d7f2026a0acf7744c965`) on a separate client. It reports success rate, request rate, and latency percentiles in JSON. Run only public, read-only endpoints. Keep each stage at 10 seconds and concurrency at no more than 16 for the current VPS. Pin the image digest for a formal comparison.
 
 ```powershell
 $image = 'ghcr.io/hatoo/oha:1.15'
@@ -45,7 +52,7 @@ $base = 'https://api.pytorch.ph'
 foreach ($path in @('/health', '/public/events', '/leaderboard')) {
   foreach ($rate in @(5, 20, 50)) {
     $name = ($path.TrimStart('/') -replace '/', '-') + "-$rate"
-    docker run --rm $image --no-tui -z 10s -c 4 -q $rate --latency-correction --output-format json "$base$path" > "${name}.json"
+    docker run --rm $image --no-tui -z 10s -c 16 -q $rate --latency-correction --output-format json "$base$path" > "${name}.json"
   }
 }
 ```
@@ -56,6 +63,6 @@ Report each endpoint and rate with attempted/successful requests, HTTP status di
 
 ## Cost model
 
-AWS lists the Lightsail Linux 0.5 GB bundle with public IPv4 at **US$5/month**, 2 vCPUs, 20 GB storage, and 1 TB transfer. The VPS looks consistent with this size, but its actual billed bundle and extras have not been verified. Use actual billing for a real cost ratio. At a *sustained, measured* successful rate `R`, an illustrative 30-day instance-only cost per million successful requests is `monthly USD × 1,000,000 / (R × 2,592,000)`. For example, **if** this $5 bundle sustained 20 successful requests/s for the entire month, the instance component would be about **$0.096 per million**. This is a formula example, not a measured capacity or bill; storage extras, data transfer overages, domains, relay costs, backups, downtime, and workload changes are excluded.
+AWS lists the Lightsail Linux 0.5 GB bundle with public IPv4 at **US$5/month**, 2 vCPUs, 20 GB storage, and 1 TB transfer. The VPS looks consistent with this size, but its actual billed bundle and extras have not been verified. Use actual billing for a real cost ratio. At a *sustained, measured* successful rate `R`, an illustrative 30-day instance-only cost per million successful requests is `monthly USD × 1,000,000 / (R × 2,592,000)`. For example, **if** this $5 bundle sustained 50 successful requests/s for the entire month, the instance component would be about **$0.039 per million**. The observed ten-second run does not establish that sustained rate. Storage extras, data transfer overages, domains, relay costs, backups, downtime, and workload changes are excluded.
 
 Sources: [oha CLI and JSON output](https://github.com/hatoo/oha/blob/master/README.md), [oha JSON schema](https://github.com/hatoo/oha/blob/master/schema.json), [Lightsail bundle specifications](https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-bundles.html).
