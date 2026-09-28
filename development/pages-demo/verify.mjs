@@ -70,17 +70,21 @@ try {
   // The portal root forwards to the login screen.
   await page.goto(`${url}/`, { waitUntil: "networkidle" });
   await page.waitForURL(`**${PORTAL_BASE_PATH}/login/`);
+  await page.waitForLoadState("networkidle");
   assert.match(await page.title(), /PyTorch Philippines.*Demo/);
 
-  // Demo bar enters the real portal views as the example member, then the example officer.
+  // Example controls on the login page enter both portal views without fixed banners.
+  await page.getByRole("region", { name: "Example accounts" }).waitFor();
   await page.getByRole("button", { name: "Use example member", exact: true }).click();
   await heading(memberHeading);
+  await page.waitForLoadState("networkidle");
   await page.getByRole("link", { name: "Career Evidence" }).first().waitFor();
   await page.getByRole("columnheader", { name: "Peer median" }).waitFor();
   await page.getByRole("button", { name: "How ranking works" }).click();
   await page.getByText("How to raise your rank", { exact: true }).waitFor();
   await page.keyboard.press("Escape");
   // Officers share My Performance and see the officer desk and the officer tools in addition.
+  await page.goto(`${url}/login/`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Use example officer", exact: true }).click();
   await heading(memberHeading);
   await heading("Officer desk");
@@ -130,7 +134,7 @@ try {
   const routes = ["/login/", "/register/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/jobs/analytics/", "/jobs/automation/", "/events/", "/leaderboards/", "/membership/", "/trust/", "/settings/", "/setup/evidence-extension/"];
   for (const path of routes) {
     await page.goto(`${url}${path}`, { waitUntil: "networkidle" });
-    await page.getByRole("complementary", { name: "Demo notice" }).waitFor();
+    assert.equal(await page.locator('aside[aria-label="Demo notice"], .on-dark.fixed.inset-x-0.top-0').count(), 0, `Fixed demo banner on ${path}`);
     assert.doesNotMatch(await page.locator("body").innerText(), schoolText, `School-specific text on ${path}`);
   }
   await page.setViewportSize({ width: 390, height: 844 });
@@ -143,7 +147,7 @@ try {
   assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request) && request !== "https://api.pytorch.ph/demo/fixtures"), []);
   assert.deepEqual(missingAssets, []);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "account-binding", "logo-landing", "installable-app", "demo-bar-member", "demo-bar-officer", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "backend-demo-snapshot", "no-unapproved-external-requests", "no-missing-assets", "no-page-errors"] }));
+  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "account-binding", "logo-landing", "installable-app", "login-example-member", "login-example-officer", "no-fixed-demo-banners", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "backend-demo-snapshot", "no-unapproved-external-requests", "no-missing-assets", "no-page-errors"] }));
 } finally {
   await browser?.close();
   await new Promise(resolveClosed => server.close(resolveClosed));

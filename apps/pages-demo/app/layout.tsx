@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { AppProviders } from "../../portal/components/providers";
 import { FeedbackReporter } from "@pytorch-ph/domain-client/privacy-feedback";
-import { DemoBar } from "./demo-bar";
+import { DemoApiProvider } from "./demo-api";
 import { fontVariables } from "../../portal/app/fonts";
 import "../../portal/app/globals.css";
 
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#262626" };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <html className={fontVariables} data-scroll-behavior="smooth" lang="en" style={{ "--hero-art": `url(${BASE_PATH}/brand/ph-network.svg)` } as React.CSSProperties}><body className="pb-24 sm:pb-14">
+  return <html className={fontVariables} data-scroll-behavior="smooth" lang="en" style={{ "--hero-art": `url(${BASE_PATH}/brand/ph-network.svg)` } as React.CSSProperties}><body>
+    <DemoApiProvider />
     <AppProviders>{children}<FeedbackReporter /></AppProviders>
-    <DemoBar />
   </body></html>;
 }

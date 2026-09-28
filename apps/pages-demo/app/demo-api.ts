@@ -109,3 +109,6 @@ function installDemoApi() {
 }
 
 installDemoApi();
+
+// Keep the demo API active on every exported route without rendering a banner.
+export function DemoApiProvider() { return null; }
