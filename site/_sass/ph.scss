@@ -75,9 +75,11 @@
     background-color: $white;
   }
 
+  h3,
   h4 {
     color: $slate;
     font-size: rem(20px);
+    line-height: 1.3;
     margin-bottom: rem(12px);
   }
 
@@ -146,6 +148,84 @@
   font-style: italic;
 }
 
+// Links to each part of the Community page, shown right under the hero.
+.ph-jump {
+  padding: rem(32px) 0 0;
+
+  h2.ph-subheading {
+    font-size: rem(20px);
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: $orange;
+    margin: 0 0 rem(16px);
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem(8px);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li a {
+    display: inline-block;
+    padding: rem(8px) rem(16px);
+    border: 1px solid $slate;
+    color: $slate;
+    font-size: rem(15px);
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      border-color: $orange;
+      color: $orange;
+    }
+  }
+}
+
+// Small label on a card or in a note: the event format, or "Sample" for placeholder content.
+.ph-tag {
+  display: inline-block;
+  padding: rem(2px) rem(8px);
+  border: 1px solid $slate;
+  color: $slate;
+  font-size: rem(12px);
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  line-height: rem(18px);
+  text-transform: uppercase;
+
+  &.ph-tag-sample {
+    border-style: dashed;
+  }
+}
+
+.ph-sample-note {
+  margin: rem(20px) 0 0;
+  color: $dark_grey;
+  font-size: rem(15px);
+
+  .ph-tag {
+    margin-right: rem(6px);
+    border-style: dashed;
+  }
+}
+
+.ph-card .ph-event-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: rem(6px);
+  margin-top: rem(16px);
+}
+
+// Sections are reached from the links above; leave room for the fixed header.
+.ph-section[id],
+.ph-jump[id] {
+  scroll-margin-top: rem(90px);
+}
+
 // Sample code blocks reuse the site code styling with readable wrapping on small screens.
 .ph-code {
   background-color: $white;
@@ -209,7 +289,7 @@ button:focus-visible,
 
 // Links inside running text are underlined so they do not rely on color alone (WCAG 1.4.1).
 main p a:not(.btn):not(.ph-card-link),
-main li a:not(.btn):not(.ph-card-link):not(.nav-link):not(.page-link),
+main li a:not(.btn):not(.ph-card-link):not(.ph-jump-link):not(.nav-link):not(.page-link),
 .ph-empty a {
   text-decoration: underline;
   text-underline-offset: 2px;

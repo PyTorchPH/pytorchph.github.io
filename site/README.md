@@ -20,14 +20,15 @@ Open http://localhost:4000. `/portal/` links resolve only in the deployed site o
 
 ## Content
 
-The navigation follows one order: Community, News & Blog, Learn, About. The home page is the community
-landing page (events, then Learn and About summaries); news and blog posts live on `/news/`.
+The navigation follows one order: Community, News & Blog, Learn, About. The home page is the Community
+page: one page read from top to bottom, with a section per event type (`/community/` redirects to
+it). News and blog posts live on `/news/`.
 
 | To change | Edit |
 |---|---|
 | Navigation | `_data/navigation.yml` |
 | Event types (workshops, hackathons, ...) | `_data/event_groups.yml` |
-| An event | add `_events/<name>.md` with `title`, `type` (an event type key), `date`, and optional `location`, `link` |
+| An event | add `_events/<date>-<name>.md` (fields in `_events/README.md`); delete the `sample: true` placeholder events once real ones exist |
 | Blog post | add `_posts/YYYY-MM-DD-title.md`; use category `community` or `research` to also list it under News |
 | Learning materials and open-source projects | `_data/learn.yml` |
 | Sample code | `_includes/sample_code/*.py` |

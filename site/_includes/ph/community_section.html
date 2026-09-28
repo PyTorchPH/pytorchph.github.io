@@ -1,51 +1,97 @@
 {%- comment -%}
-  Community: events grouped by type (_data/event_groups.yml + _events/).
-  include.full = true renders the full Community page; otherwise a home-page summary.
+  Community, on one page read from top to bottom: a section per event type
+  (_data/event_groups.yml + _events/), then links to the rest of the site.
+  Events marked `sample: true` are placeholders and are labelled as samples.
 {%- endcomment -%}
 {%- assign now = site.time | date: '%s' | plus: 0 -%}
-<section class="ph-section" aria-labelledby="community-heading">
+{%- assign sample_events = site.events | where: "sample", true -%}
+<section class="ph-jump" id="events" aria-labelledby="events-heading">
   <div class="container">
-    <div class="ph-section-header{% if include.full %} ph-visually-hidden{% endif %}">
-      <div>
-        <h2 id="community-heading">Community</h2>
-        <p>Workshops, hackathons, study groups, and meetups organized by and for the PyTorch community across the Philippines.</p>
-      </div>
-      {%- unless include.full %}
-      <a href="{{ site.baseurl }}/community/" class="btn btn-lg with-right-arrow module-button">See all events</a>
-      {%- endunless %}
-    </div>
+    <h2 class="ph-subheading" id="events-heading">Events</h2>
+    <nav aria-label="On this page">
+      <ul>
+        {%- for group in site.data.event_groups %}
+        <li><a class="ph-jump-link" href="#{{ group.key }}">{{ group.title }}</a></li>
+        {%- endfor %}
+        <li><a class="ph-jump-link" href="#explore">Keep exploring</a></li>
+      </ul>
+    </nav>
+    {%- if sample_events.size > 0 %}
+    <p class="ph-sample-note"><span class="ph-tag">Sample</span> These are sample events that show how this page will look. Real events will replace them.</p>
+    {%- endif %}
+  </div>
+</section>
 
-    <h3 class="ph-subheading" id="events">Events</h3>
+{%- for group in site.data.event_groups %}
+{%- assign group_events = site.events | where: "type", group.key | sort: "date" %}
+<section class="ph-section{% cycle '', ' ph-section-grey' %}" id="{{ group.key }}" aria-labelledby="{{ group.key }}-title">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="{{ group.key }}-title">{{ group.title }}</h2>
+        <p>{{ group.summary }}</p>
+      </div>
+    </div>
+    {%- assign shown = 0 %}
     <div class="row ph-card-grid">
-      {%- for group in site.data.event_groups %}
-      {%- assign group_events = site.events | where: "type", group.key | sort: "date" %}
-      <div class="col-md-6 col-lg-3">
-        <article class="ph-card" id="{{ group.key }}" aria-labelledby="{{ group.key }}-title">
-          <h4 id="{{ group.key }}-title">{{ group.title }}</h4>
-          <p>{{ group.summary }}</p>
-          {%- assign shown = 0 %}
-          <ul class="ph-event-list">
-            {%- for event in group_events %}
-            {%- assign starts = event.date | date: '%s' | plus: 0 %}
-            {%- if starts >= now and shown < 3 %}
-            <li>
-              <time datetime="{{ event.date | date_to_xmlschema }}">{{ event.date | date: "%B %-d, %Y" }}{% if event.location %} · {{ event.location }}{% endif %}</time>
-              {% if event.link %}<a href="{{ event.link }}">{{ event.title }}</a>{% else %}{{ event.title }}{% endif %}
-            </li>
-            {%- assign shown = shown | plus: 1 %}
-            {%- endif %}
-            {%- endfor %}
-          </ul>
-          {%- if shown == 0 %}
-          <p class="ph-empty">No upcoming {{ group.title | downcase }} yet. <a href="{{ site.baseurl }}/portal/register/">Join</a> to hear first.</p>
+      {%- for event in group_events %}
+      {%- assign starts = event.date | date: '%s' | plus: 0 %}
+      {%- if starts >= now and shown < 6 %}
+      <div class="col-md-6 col-lg-4">
+        <article class="ph-card ph-event">
+          <span class="ph-card-meta"><time datetime="{{ event.date | date_to_xmlschema }}">{{ event.date | date: "%B %-d, %Y" }}</time>{% if event.location %} · {{ event.location }}{% endif %}</span>
+          <h3>{% if event.link %}<a class="ph-card-link" href="{{ event.link }}">{{ event.title }}</a>{% else %}{{ event.title }}{% endif %}</h3>
+          {%- if event.summary %}
+          <p>{{ event.summary }}</p>
           {%- endif %}
+          <p class="ph-event-tags">{% if event.format %}<span class="ph-tag">{{ event.format }}</span>{% endif %}{% if event.sample %}<span class="ph-tag ph-tag-sample">Sample</span>{% endif %}</p>
         </article>
       </div>
+      {%- assign shown = shown | plus: 1 %}
+      {%- endif %}
       {%- endfor %}
     </div>
-
-    {%- if include.full %}
-    <p><a href="{{ site.baseurl }}/portal/community-preview/" class="with-right-arrow">Preview the community space</a></p>
+    {%- if shown == 0 %}
+    <p class="ph-empty">No upcoming {{ group.title | downcase }} yet. <a href="{{ site.baseurl }}/portal/register/">Join</a> to hear first.</p>
     {%- endif %}
+  </div>
+</section>
+{%- endfor %}
+
+<section class="ph-section" id="explore" aria-labelledby="explore-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="explore-heading">Keep exploring</h2>
+        <p>See the member space, read the latest news, start learning, or meet the team.</p>
+      </div>
+      <a href="{{ site.baseurl }}/portal/register/" class="btn btn-lg with-right-arrow module-button">Join the community</a>
+    </div>
+    <div class="row ph-card-grid">
+      <div class="col-md-6 col-lg-3">
+        <article class="ph-card">
+          <h3><a class="ph-card-link" href="{{ site.baseurl }}/portal/community-preview/">Community space</a></h3>
+          <p>Preview the member space: peer tutorials, discussions, and projects.</p>
+        </article>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <article class="ph-card">
+          <h3><a class="ph-card-link" href="{{ site.baseurl }}/news/">News &amp; Blog</a></h3>
+          <p>Community updates, new research, and the latest from the PyTorch project.</p>
+        </article>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <article class="ph-card">
+          <h3><a class="ph-card-link" href="{{ site.baseurl }}/learn/">Learn</a></h3>
+          <p>Materials, sample code, and open-source projects to start with PyTorch.</p>
+        </article>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <article class="ph-card">
+          <h3><a class="ph-card-link" href="{{ site.baseurl }}/about/">About</a></h3>
+          <p>Who we are, what we do, and the people behind PyTorch Philippines.</p>
+        </article>
+      </div>
+    </div>
   </div>
 </section>
