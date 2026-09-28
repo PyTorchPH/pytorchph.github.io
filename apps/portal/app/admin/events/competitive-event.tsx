@@ -14,6 +14,7 @@ type Member = { id: string; displayName: string; role: string };
 type EventItem = { id: string; title: string; category: string; startsAt: string; revision: number; publishedAt: string | null };
 type Entrant = { id: string; name: string; kind: string; memberIds: string[] };
 type EventDetail = { id: string; title: string; category: string; startsAt: string; competitive: boolean; entrantKind: "team" | "individual" | null; lastPlace: number | null; revision: number; placePoints: [number, number][]; results: [number, string][] };
+type AttendanceSummary = { source: null | { formId: string; points: number; lastImportedAt: string | null }; awarded: number; unmatched: number };
 type GoogleApi = { accounts: { id: { initialize: (config: { client_id: string; callback: (value: { credential: string }) => void }) => void; renderButton: (element: HTMLElement, options: { theme: string; size: string }) => void } } };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -45,6 +46,9 @@ export function CompetitiveEventForm() {
   const [entrantMembers, setEntrantMembers] = useState<string[]>([]);
   const [placements, setPlacements] = useState<string[]>([]);
   const [reason, setReason] = useState("Official judges result");
+  const [formId, setFormId] = useState("");
+  const [attendancePoints, setAttendancePoints] = useState(10);
+  const [attendance, setAttendance] = useState<AttendanceSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -74,10 +78,13 @@ export function CompetitiveEventForm() {
   }, [ready, refresh, viewer]);
 
   async function selectEvent(id: string) {
-    const [detail, registrations] = await Promise.all([api<EventDetail>(`/events/${id}/results`), api<Entrant[]>(`/events/${id}/entrants`)]);
+    const [detail, registrations, attendanceSummary] = await Promise.all([api<EventDetail>(`/events/${id}/results`), api<Entrant[]>(`/events/${id}/entrants`), api<AttendanceSummary>(`/events/${id}/attendance`)]);
     setSelected(detail);
     setEntrants(registrations);
     setPlacements(detail.results.map((result) => result[1]));
+    setAttendance(attendanceSummary);
+    setFormId(attendanceSummary.source?.formId || "");
+    setAttendancePoints(attendanceSummary.source?.points || 10);
   }
 
   async function run(action: () => Promise<void>) {
@@ -126,6 +133,18 @@ export function CompetitiveEventForm() {
     });
   }
 
+  function importAttendance() {
+    if (!selected) return;
+    return run(async () => {
+      const result = await api<{ fetched: number; awarded: number; unmatched: number; duplicates: number; duplicateMembers: number }>(`/events/${selected.id}/attendance/import`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ formId: formId.trim(), points: attendancePoints }),
+      });
+      const summary = await api<AttendanceSummary>(`/events/${selected.id}/attendance`);
+      setAttendance(summary);
+      setMessage(`Attendance imported: ${result.awarded} awarded, ${result.unmatched} unmatched, ${result.duplicateMembers} duplicate members, ${result.duplicates} already imported (${result.fetched} fetched).`);
+    });
+  }
+
   if (!apiOrigin || !googleClientId) return <Card className="bg-surface"><p className="text-sm text-muted">Competitive-event backend is not configured for this build.</p></Card>;
 
   return <Card className="space-y-5 bg-surface">
@@ -151,6 +170,15 @@ export function CompetitiveEventForm() {
         <div className="flex gap-2"><Button disabled={placements.length >= Math.min(selected.lastPlace || 0, entrants.length)} onClick={() => setPlacements((current) => [...current, ""])} type="button" variant="secondary">Add next place</Button><Button disabled={!placements.length} onClick={() => setPlacements((current) => current.slice(0, -1))} type="button" variant="secondary">Remove last place</Button></div>
         <div><Label htmlFor="result-reason">Judges result/correction reason</Label><Input id="result-reason" value={reason} onChange={(event) => setReason(event.target.value)} /></div>
         <Button disabled={busy || !placements.length} onClick={publish} type="button">{selected.revision ? "Publish corrected results" : "Publish official results"}</Button>
+      </div>}
+      {selected && <div className="space-y-3 border-t border-border pt-4">
+        <div><h4 className="font-semibold">Google Forms attendance</h4><p className="text-sm text-muted">Only Forms collecting verified signed-in email can award points. Each approved member earns once per event. The form and point value become immutable after the first import.</p></div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div><Label htmlFor="attendance-form-id">Form ID</Label><Input disabled={Boolean(attendance?.source)} id="attendance-form-id" value={formId} onChange={(event) => setFormId(event.target.value)} /></div>
+          <div><Label htmlFor="attendance-points">Points per matched response</Label><Input disabled={Boolean(attendance?.source)} id="attendance-points" min={1} max={1000} type="number" value={attendancePoints} onChange={(event) => setAttendancePoints(Number(event.target.value))} /></div>
+        </div>
+        {attendance?.source && <p className="text-sm text-muted">Awarded: {attendance.awarded} · unmatched: {attendance.unmatched} · last import: {attendance.source.lastImportedAt ? new Date(attendance.source.lastImportedAt).toLocaleString() : "never"}</p>}
+        <Button disabled={busy || !formId.trim() || !Number.isSafeInteger(attendancePoints) || attendancePoints < 1 || attendancePoints > 1000} onClick={importAttendance} type="button" variant="secondary">Import attendance</Button>
       </div>}
     </>}
     {message && <p aria-live="polite" className="text-sm text-muted">{message}</p>}

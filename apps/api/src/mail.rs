@@ -366,7 +366,7 @@ pub async fn edit_draft(
         content.body = value;
     }
     if let Some(value) = patch.pdf_text {
-        content.pdf_text = Some(value);
+        content.pdf_text = if value.is_empty() { None } else { Some(value) };
     }
     if !valid_content(
         &content.recipients,

@@ -1,3 +1,4 @@
+mod attendance;
 mod auth;
 mod events;
 mod evidence;
@@ -28,6 +29,9 @@ struct AppState {
     google_keys: tokio::sync::Mutex<Option<(std::time::Instant, jsonwebtoken::jwk::JwkSet)>>,
     workflow_key: Option<String>,
     live_email_enabled: bool,
+    google_forms_client_id: Option<String>,
+    google_forms_client_secret: Option<String>,
+    google_forms_refresh_token: Option<String>,
 }
 
 #[derive(Debug)]
@@ -150,6 +154,16 @@ async fn leaderboard(State(state): State<Arc<AppState>>) -> ApiResult<impl IntoR
     Ok(response)
 }
 
+async fn public_events(State(state): State<Arc<AppState>>) -> ApiResult<impl IntoResponse> {
+    let rows: Vec<(String, String, String, String, Option<String>, Option<String>)> = sqlx::query_as(
+        "SELECT id,title,category,starts_at,parent_id,published_at FROM events ORDER BY starts_at DESC LIMIT 100"
+    ).fetch_all(&state.db).await.map_err(internal)?;
+    let body: Vec<_> = rows.into_iter().map(|(id,title,category,starts_at,parent_id,published_at)| {
+        serde_json::json!({"id": id, "title": title, "category": category, "startsAt": starts_at, "parentId": parent_id, "publishedAt": published_at})
+    }).collect();
+    Ok(Json(body))
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
@@ -187,6 +201,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         google_keys: tokio::sync::Mutex::new(None),
         workflow_key: env::var("N8N_SHARED_KEY").ok(),
         live_email_enabled: env::var("ENABLE_LIVE_EMAIL").ok().as_deref() == Some("true"),
+        google_forms_client_id: env::var("GOOGLE_FORMS_CLIENT_ID").ok(),
+        google_forms_client_secret: env::var("GOOGLE_FORMS_CLIENT_SECRET").ok(),
+        google_forms_refresh_token: env::var("GOOGLE_FORMS_REFRESH_TOKEN").ok(),
     });
     tokio::spawn(worker(db));
     let cors = CorsLayer::new()
@@ -217,6 +234,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/jobs/{id}", get(read_job))
         .route("/leaderboard", get(leaderboard))
+        .route("/public/events", get(public_events))
+        .route("/events/{id}/attendance", get(attendance::read_attendance))
+        .route(
+            "/events/{id}/attendance/import",
+            post(attendance::import_google_form),
+        )
         .route("/evidence", post(evidence::submit_claim))
         .route("/evidence/me", get(evidence::my_claims))
         .route("/evidence/pending", get(evidence::pending_claims))
@@ -283,6 +306,9 @@ mod tests {
             google_keys: tokio::sync::Mutex::new(None),
             workflow_key: None,
             live_email_enabled: false,
+            google_forms_client_id: None,
+            google_forms_client_secret: None,
+            google_forms_refresh_token: None,
         });
         let mut headers = HeaderMap::new();
         headers.insert("origin", "https://pytorch.ph".parse().unwrap());
