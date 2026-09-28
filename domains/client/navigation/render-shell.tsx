@@ -45,7 +45,7 @@ const sharedNavItems: NavItem[] = [
   { href: "/events", label: "Community Events", icon: CalendarDays },
   { href: "/dashboard/community", label: "Community Preview", icon: MessageCircle },
   { href: "/dashboard/profile", label: "My Profile", icon: UserCheck },
-  { href: "/settings", label: "Settings & Privacy", icon: Settings },
+  { href: "/settings", label: "Settings & Privacy", icon: Settings, alsoActiveOn: ["/trust", "/setup"] },
 ];
 
 // Officers get these in addition: configuration and the workflows they run.
@@ -55,7 +55,6 @@ const officerNavItems: NavItem[] = [
   { href: "/admin/evidence", label: "Evidence Review", icon: Search },
   { href: "/reports", label: "Reports & Feedback", icon: Bot },
   { href: "/connections", label: "Connections", icon: Unplug, capability: "connections" },
-  { href: "/trust", label: "Integrity Console", icon: Shield },
 ];
 
 function AppShellContent({ children }: { children: React.ReactNode }) {
@@ -66,7 +65,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   const officerPortal = manifest.portal.audience === "officer";
 
   const renderItem = (item: NavItem) => {
-    const active = [item.href, ...(item.alsoActiveOn ?? []), ...(item.href === "/settings" && !officerPortal ? ["/trust"] : [])].some((href) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`)));
+    const active = [item.href, ...(item.alsoActiveOn ?? [])].some((href) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`)));
     const Icon = item.icon;
     const capability = item.capability ? manifest.capabilities[item.capability] : undefined;
     const isLocked = capability?.state === "locked";

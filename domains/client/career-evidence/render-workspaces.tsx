@@ -70,7 +70,7 @@ import {
 import { collectEvidenceFromExtension, ExtensionCapabilityOverlay } from "@pytorch-ph/domain-client/client-automation";
 import type { EvidenceIntegrityCase } from "@pytorch-ph/domain-protocol/organization";
 
-const sourceTone = (source: EvidenceSource) =>
+export const sourceTone = (source: EvidenceSource) =>
   source.connectionStatus === "connected"
     ? "success"
     : source.connectionStatus === "verification_required"
@@ -83,7 +83,7 @@ const verificationTone = (state: EvidenceItem["verificationState"]) =>
       ? "orange"
       : "default";
 
-function SourceDialog({
+export function SourceDialog({
   source,
   canWrite,
   canAutomate,
@@ -585,7 +585,7 @@ const addModes: Array<{ value: AddMode; label: string }> = [
 ];
 
 // Sources AI can read: a signed-in website session or a public URL. Uploads and manual entry are manual.
-const isAutomaticSource = (source: EvidenceSource) =>
+export const isAutomaticSource = (source: EvidenceSource) =>
   source.connectionMethod === "website_session" || source.connectionMethod === "url";
 
 export function CareerEvidenceView({

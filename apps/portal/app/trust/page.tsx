@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Database, HardDrive, LockKeyhole, Network, Radio, ShieldCheck, TriangleAlert } from "lucide-react";
+import Link from "next/link";
 import { AppShell } from "@pytorch-ph/domain-client/navigation";
 import { useCapabilities } from "@pytorch-ph/domain-client/onboarding";
 import { Badge } from "@pytorch-ph/design-system/badge";
@@ -23,7 +24,7 @@ function TrustContent() {
   const reports = useQuery({ queryKey: ["feedback-reports"], queryFn: () => fetchJson<FeedbackReport[]>("/api/feedback", { cache: "no-store" }) });
   return <div className="space-y-5">
     <section className="overflow-hidden rounded-2xl border border-accent/30 bg-[radial-gradient(circle_at_top_right,rgb(var(--accent-rgb)/.1),transparent_35%),rgb(var(--surface-rgb))] p-6 lg:p-8" data-testid="trust-center">
-      <div className="flex flex-wrap items-start justify-between gap-4"><div><Badge variant="orange">Trust, privacy & resilience</Badge><h1 className="mt-4 text-3xl font-extrabold">{officer ? "Officer integrity console" : "Your privacy command center"}</h1><p className="mt-3 max-w-3xl leading-7 text-muted">{officer ? "Observe authoritative storage, proposed replica witnesses, feedback health, and explicit integrity boundaries." : "Choose what leaves your device, what other members see, and how your own ranking stays recognizable only to you."}</p></div><ShieldCheck className="text-accent" size={38} /></div>
+      <div className="flex flex-wrap items-start justify-between gap-4"><div><Link className="text-sm font-semibold text-accent underline underline-offset-2" href="/settings#privacy">Back to Settings</Link><div className="mt-3"><Badge variant="orange">Trust, privacy & resilience</Badge></div><h1 className="mt-4 text-3xl font-extrabold">{officer ? "Officer integrity console" : "Your privacy command center"}</h1><p className="mt-3 max-w-3xl leading-7 text-muted">{officer ? "Observe authoritative storage, proposed replica witnesses, feedback health, and explicit integrity boundaries." : "Choose what leaves your device, what other members see, and how your own ranking stays recognizable only to you."}</p></div><ShieldCheck className="text-accent" size={38} /></div>
     </section>
 
     <section className="grid gap-4 lg:grid-cols-3">
