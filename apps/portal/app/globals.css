@@ -184,8 +184,14 @@ textarea {
   padding: 2rem 1rem 4rem;
 }
 
-.page-hero:first-child {
+.page-hero:first-child,
+[data-page-tour] + .page-hero {
   margin-top: -1.5rem;
+}
+
+/* Room for the page tour button in the hero's top-right corner. */
+main:has([data-page-tour]) .page-hero {
+  padding-top: 3.5rem;
 }
 
 .page-hero::after {
@@ -221,6 +227,10 @@ textarea {
     padding: 2.75rem 2rem 5rem;
   }
 
+  main:has([data-page-tour]) .page-hero {
+    padding-top: 4rem;
+  }
+
   .page-hero::after {
     height: 3.5rem;
   }
@@ -251,6 +261,14 @@ textarea {
   .page-hero h1 {
     font-size: 2.75rem;
   }
+}
+
+/*
+  Product tour: its overlay and spotlight sit below the sticky site header (see run-tour.tsx), and
+  the tooltip above it, so a tall section that pushes the tooltip to the top keeps it readable.
+*/
+.react-joyride__floater {
+  z-index: 60 !important;
 }
 
 /* Cards: an orange line grows along the bottom edge on hover, as on the public site. */

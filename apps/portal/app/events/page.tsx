@@ -39,12 +39,12 @@ function EventsContent() {
   const chapterEvents = dashboard?.events || [];
 
   return <div className="space-y-8">
-    <section className="page-hero">
+    <section className="page-hero" data-tour="events-heading">
       <FilipinoPhrase meaning="Come, join us!" phrase="Tara, sali na!" /><h1 className="mt-1 text-3xl font-extrabold">Community events</h1>
       <p className="mt-3 max-w-3xl leading-7 text-muted">Workshops, hackathons, study groups, and meetups. You can also share an event hosted by another organizer at the bottom of this page.</p>
     </section>
 
-    <section className="space-y-4" data-tour="events-heading">
+    <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-2xl font-bold tracking-[-0.02em]">Upcoming events</h2><p className="mt-2 text-muted">Register for workshops, clinics, hackathons, and other community activities.</p></div><div data-tour="events-role"><Badge variant="orange">{effectiveTier === "general" ? "Member access" : "Priority member"}</Badge></div></div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" data-tour="events-grid">
         {chapterEvents.map((event) => <Card className="flex flex-col bg-surface" key={event.id}>

@@ -15,6 +15,8 @@ export function requestProductTour() {
 // Space kept above a highlighted element, so it never sits under the sticky header.
 const SCROLL_GAP = 16;
 const DEFAULT_SCROLL_OFFSET = 96;
+// Space kept below the tooltip, clear of the demo notice bar at the bottom of the screen.
+const BOTTOM_GAP = 72;
 
 function readScrollOffset() {
   const header = document.querySelector("[data-site-header]");
@@ -112,6 +114,9 @@ export function ProductTourController() {
     <Joyride
       key={`${pathname}-${instance}`}
       continuous
+      // A section taller than the screen leaves no room above or below it; the tooltip then moves
+      // up or down to stay on screen, between the header and the bottom of the window.
+      floatingOptions={{ shiftOptions: { crossAxis: true, padding: { top: scrollOffset, bottom: BOTTOM_GAP, left: 12, right: 12 } } }}
       locale={{
         back: "Back",
         close: "Close tour",
@@ -139,7 +144,8 @@ export function ProductTourController() {
         targetWaitTimeout: 6000,
         textColor: "#262626",
         width: 360,
-        zIndex: 1000
+        // Below the sticky site header (z-40): the header covers any part of the spotlight under it.
+        zIndex: 35
       }}
       run={run}
       scrollToFirstStep
