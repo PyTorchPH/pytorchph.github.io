@@ -75,3 +75,16 @@ pub fn render(text: &str) -> ApiResult<Vec<u8>> {
     }
     Ok(bytes)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::render;
+
+    #[test]
+    fn renders_bounded_attachment_and_rejects_unsupported_text() {
+        let pdf = render("PyTorch PH\nApproved evidence: niñez").unwrap();
+        assert!(pdf.starts_with(b"%PDF-"));
+        assert!(pdf.len() < 1_000_000);
+        assert!(render("Unsupported: 🚀").is_err());
+    }
+}
