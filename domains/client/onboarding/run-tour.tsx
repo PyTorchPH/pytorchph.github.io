@@ -12,13 +12,32 @@ export function requestProductTour() {
   window.dispatchEvent(new CustomEvent(START_PRODUCT_TOUR_EVENT));
 }
 
-export function ProductTourController() {
+// Space kept above a highlighted element, so it never sits under the sticky header.
+const SCROLL_GAP = 16;
+const DEFAULT_SCROLL_OFFSET = 96;
+
+function readScrollOffset() {
+  const header = document.querySelector("[data-site-header]");
+  return header ? Math.ceil(header.getBoundingClientRect().bottom) + SCROLL_GAP : DEFAULT_SCROLL_OFFSET;
+}
+
+function usePageTour() {
   // Static hosting serves routes with a trailing slash; tours are keyed without one.
   const pathname = usePathname().replace(/\/+$/, "") || "/";
   const manifest = useCapabilities();
   const tours = manifest.portal.audience === "member" ? memberProductTours : productTours;
-  const tour = tours[pathname];
+  return { pathname, tour: tours[pathname] };
+}
+
+// Pages with a tour show a button to replay it.
+export function useHasProductTour() {
+  return Boolean(usePageTour().tour);
+}
+
+export function ProductTourController() {
+  const { pathname, tour } = usePageTour();
   const [run, setRun] = useState(false);
+  const [scrollOffset, setScrollOffset] = useState(DEFAULT_SCROLL_OFFSET);
   const [instance, setInstance] = useState(0);
   const startToken = useRef(0);
   const storageKey = useMemo(
@@ -29,6 +48,7 @@ export function ProductTourController() {
   const start = useCallback(() => {
     if (!tour) return;
     const token = ++startToken.current;
+    setScrollOffset(readScrollOffset());
     setRun(false);
     setInstance((value) => value + 1);
     window.requestAnimationFrame(() => {
@@ -110,9 +130,11 @@ export function ProductTourController() {
         overlayClickAction: false,
         overlayColor: "rgba(0, 0, 0, 0.55)",
         primaryColor: "#be2c10",
+        scrollOffset,
         showProgress: true,
         skipBeacon: true,
-        spotlightPadding: 8,
+        // No padding: a wider cutout showed the page background around full-width sections.
+        spotlightPadding: 0,
         spotlightRadius: 0,
         targetWaitTimeout: 6000,
         textColor: "#262626",
