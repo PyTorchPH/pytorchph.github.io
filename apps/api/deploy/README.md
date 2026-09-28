@@ -23,6 +23,6 @@ The two temporary test accounts are seeded only when `SEED_TEMP_TEST_ACCOUNTS=tr
 
 Before deploying a new binary or migration, back up the SQLite database using its online backup API or `sqlite3 .backup` and preserve the prior binary. Check `GET /health`, role-specific `/auth/me`, and the Postman smoke folder. Roll back by stopping the service, restoring the prior binary and compatible database backup, and restarting. Never roll back a migrated database with an older binary without the matching backup.
 
-The public Pages build sets `NEXT_PUBLIC_AUTH_API_ORIGIN=https://api.pytorch.ph`. Its login and signup forms use the Rust API. Other Pages demo views still use synthetic read-only fixtures until their API contracts have been migrated; they must not be represented as persisted production data. `NEXT_PUBLIC_API_ORIGIN` remains reserved for the separately integrated official event/leaderboard views.
+The public Pages build sets `NEXT_PUBLIC_AUTH_API_ORIGIN=https://api.pytorch.ph`. Its login and signup forms use the Rust API. Other Pages demo views fetch the fictional read-only `/demo/fixtures` snapshot from SQLite; they must not be represented as real member records. `NEXT_PUBLIC_API_ORIGIN` remains reserved for the separately integrated official event/leaderboard views.
 
 Measured latency and the bounded public benchmark procedure are in `../docs/PERFORMANCE.md`.
