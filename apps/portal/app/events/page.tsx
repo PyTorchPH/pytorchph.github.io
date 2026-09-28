@@ -39,7 +39,7 @@ function EventsContent() {
   const chapterEvents = dashboard?.events || [];
 
   return <div className="space-y-8">
-    <section className="border border-border bg-surface p-6 lg:p-8">
+    <section className="page-hero">
       <FilipinoPhrase meaning="Come, join us!" phrase="Tara, sali na!" /><h1 className="mt-1 text-3xl font-extrabold">Community events</h1>
       <p className="mt-3 max-w-3xl leading-7 text-muted">Workshops, hackathons, study groups, and meetups. You can also share an event hosted by another organizer at the bottom of this page.</p>
     </section>

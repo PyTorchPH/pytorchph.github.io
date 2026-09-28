@@ -16,6 +16,8 @@ const config: Config = {
         canvas: "rgb(var(--canvas-rgb) / <alpha-value>)",
         surface: "rgb(var(--surface-rgb) / <alpha-value>)",
         elevated: "rgb(var(--elevated-rgb) / <alpha-value>)",
+        chrome: "rgb(var(--chrome-rgb) / <alpha-value>)",
+        onAccent: "rgb(var(--on-accent-rgb) / <alpha-value>)",
         border: "var(--border)",
         ink: "rgb(var(--ink-rgb) / <alpha-value>)",
         muted: "rgb(var(--muted-rgb) / <alpha-value>)",

@@ -51,7 +51,7 @@ function ProfileContent() {
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="page-hero flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-[-0.02em]">My profile</h1>
           <p className="mt-2 text-muted">Your identity, QR codes, connected accounts, and skills.</p>

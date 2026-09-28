@@ -31,7 +31,7 @@ export function CommunityDemoContent() {
   }
 
   return <div className="space-y-6 pb-10">
-      <section className="overflow-hidden rounded-3xl border border-accent/25 bg-[radial-gradient(circle_at_90%_10%,rgb(var(--accent-rgb)/.1),transparent_38%),linear-gradient(130deg,rgb(var(--surface-rgb)),rgb(var(--surface-rgb)))] p-6 lg:p-9">
+      <section className="page-hero">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-2xl">
             <Badge variant="orange"><Sparkles size={14} /> Website demo</Badge>
@@ -52,7 +52,7 @@ export function CommunityDemoContent() {
           <p className="mt-1 text-sm text-muted">Interests tailor suggestions; they never unlock gated spaces.</p>
           <div className="mt-3 flex flex-wrap gap-2">{communityInterestOptions.map((answer) => {
             const selected = interests.includes(answer.roleKey);
-            return <button aria-pressed={selected} className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors ${selected ? "border-accent bg-accentSoft text-accent" : "border-border bg-elevated text-muted hover:text-ink"}`} key={answer.roleKey} onClick={() => toggleInterest(answer.roleKey)} type="button">{selected && <Check size={14} />}{answer.label}</button>;
+            return <button aria-pressed={selected} className={`inline-flex items-center gap-2 border px-3 py-2 text-sm transition-colors ${selected ? "border-accent bg-accentSoft text-accent" : "border-border bg-elevated text-muted hover:text-ink"}`} key={answer.roleKey} onClick={() => toggleInterest(answer.roleKey)} type="button">{selected && <Check size={14} />}{answer.label}</button>;
           })}</div>
         </Card>
 
@@ -71,7 +71,7 @@ export function CommunityDemoContent() {
             const Icon = channelIcon[channel.kind];
             return <div className="flex items-center gap-3 rounded-xl border border-border bg-elevated px-3 py-3" key={channel.key}><Icon className="shrink-0 text-accent" size={18}/><div className="min-w-0"><p className="truncate text-sm font-semibold">{channel.name}</p><p className="text-xs text-muted">{channel.defaultChannel ? "Available to everyone" : "Unlocked for this profile"}</p></div>{!channel.defaultChannel && view.recommendedKeys.has(channel.key) && <Sparkles aria-label="Suggested for your interests" className="ml-auto shrink-0 text-warning" size={15}/>}</div>;
           })}</div></div>)}</div>
-          {view.lockedChannels.length > 0 && <div className="mt-6 border-t border-border pt-5"><h3 className="flex items-center gap-2 text-sm font-bold"><LockKeyhole size={16}/> More to unlock</h3><p className="mt-1 text-xs text-muted">Verified points or credentials can unlock learning spaces. Interest choices alone cannot.</p><div className="mt-3 flex flex-wrap gap-2">{view.lockedChannels.filter((channel) => channel.category === "LEARNING PATHS").map((channel) => <span className="rounded-full border border-border px-3 py-1.5 text-xs text-muted" key={channel.key}># {channel.name}</span>)}</div></div>}
+          {view.lockedChannels.length > 0 && <div className="mt-6 border-t border-border pt-5"><h3 className="flex items-center gap-2 text-sm font-bold"><LockKeyhole size={16}/> More to unlock</h3><p className="mt-1 text-xs text-muted">Verified points or credentials can unlock learning spaces. Interest choices alone cannot.</p><div className="mt-3 flex flex-wrap gap-2">{view.lockedChannels.filter((channel) => channel.category === "LEARNING PATHS").map((channel) => <span className="border border-border px-3 py-1.5 text-xs text-muted" key={channel.key}># {channel.name}</span>)}</div></div>}
         </Card>
 
         <div className="space-y-4">

@@ -1,21 +1,20 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /*
-  Light theme follows the pytorch.org palette used by the public site (site/_sass/_variables.scss).
+  Light theme follows the pytorch.org palette used by the public site (site/_sass/_variables.scss):
+  a white page, light grey cards, a dark header and hero, and orange accents.
   Colors are RGB channels so Tailwind opacity modifiers such as bg-warning/10 work.
-  Text colors keep WCAG AA contrast (4.5:1) on both --surface and --canvas.
+  Text colors keep WCAG AA contrast (4.5:1) on --canvas, --surface, and --elevated.
 */
 :root {
-  --font-sans: "Open Sans";
-  --font-heading: "Montserrat";
-  --font-mono: "IBM Plex Mono";
-  --canvas-rgb: 243 244 247;
-  --surface-rgb: 255 255 255;
-  --elevated-rgb: 243 244 247;
+  /* --font-sans, --font-heading, and --font-mono come from app/fonts.ts (next/font). */
+  --canvas-rgb: 255 255 255;
+  --surface-rgb: 243 244 247;
+  --elevated-rgb: 255 255 255;
+  --chrome-rgb: 38 38 38;
+  --on-accent-rgb: 255 255 255;
   --ink-rgb: 38 38 38;
   --muted-rgb: 95 95 96;
   --accent-rgb: 190 44 16;
@@ -32,6 +31,8 @@
   --canvas-rgb: 11 11 12;
   --surface-rgb: 20 20 22;
   --elevated-rgb: 28 28 32;
+  --chrome-rgb: 20 20 22;
+  --on-accent-rgb: 11 11 12;
   --ink-rgb: 255 255 255;
   --muted-rgb: 148 163 184;
   --accent-rgb: 255 122 61;
@@ -100,9 +101,11 @@ textarea {
   color: white;
 }
 
+/* Eyebrow labels read like the public site's orange section labels ("EVENTS"). */
 .data-label {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  letter-spacing: 0.03em;
+  font-family: var(--font-heading), var(--font-sans), sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.12em;
 }
 
 .focus-ring {
@@ -127,6 +130,150 @@ textarea {
   position: absolute;
   right: 12%;
   z-index: -1;
+}
+
+/*
+  Dark areas shared with the public site: the header, and the hero at the top of each page.
+  Tokens are redefined inside them, so the badges, buttons, and text in a hero stay readable.
+*/
+.on-dark,
+.page-hero,
+.hero-panel {
+  --canvas-rgb: 38 38 38;
+  --surface-rgb: 52 52 54;
+  --elevated-rgb: 62 62 64;
+  --ink-rgb: 255 255 255;
+  --muted-rgb: 214 214 214;
+  --accent-rgb: 255 138 102;
+  --accent-soft-rgb: 74 40 32;
+  --on-accent-rgb: 38 38 38;
+  --success-rgb: 134 239 172;
+  --warning-rgb: 252 211 77;
+  --danger-rgb: 252 165 165;
+  --info-rgb: 147 197 253;
+  --border: rgb(255 255 255 / 0.24);
+  color: rgb(var(--ink-rgb));
+}
+
+/* The public site's hero: charcoal, the archipelago network art, and a wave at the bottom. */
+.page-hero,
+.hero-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 85% 15%, rgb(255 255 255 / 0.07), transparent 45%),
+    linear-gradient(160deg, #303030, #262626 60%);
+}
+
+.page-hero::before,
+.hero-panel::before {
+  content: "";
+  position: absolute;
+  inset: -20% 2% -20% auto;
+  z-index: -1;
+  width: 55%;
+  background: var(--hero-art) no-repeat right center / contain;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+/* The hero reaches the edges of the content area, like the full-width hero on the public site. */
+.page-hero {
+  margin: 0 -1rem 1.5rem;
+  padding: 2rem 1rem 4rem;
+}
+
+.page-hero:first-child {
+  margin-top: -1.5rem;
+}
+
+.page-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  z-index: -1;
+  height: 2.5rem;
+  background: rgb(255 255 255);
+  -webkit-mask: var(--hero-wave) no-repeat center bottom / 100% 100%;
+  mask: var(--hero-wave) no-repeat center bottom / 100% 100%;
+}
+
+/* The wave is drawn in the page color; the hero's own tokens are dark, so it is set here. */
+.dark .page-hero::after {
+  background: rgb(11 11 12);
+}
+
+:root {
+  --hero-wave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,50L60,45C120,40 240,30 360,35C480,40 600,60 720,70C840,80 960,80 1080,75C1140,72.5 1170,67.5 1185,65L1200,62.5L1200,200L0,200Z' fill-opacity='0.3'/%3E%3Cpath d='M0,20L80,25C160,30 320,40 480,50C640,60 800,70 960,65C1040,62.5 1120,52.5 1160,47.5L1200,42.5L1200,200L0,200Z' fill-opacity='0.5'/%3E%3Cpath d='M0,90L50,88C100,86 200,82 300,85C400,88 500,95 600,92C700,89 800,77 900,82C1000,87 1100,93 1150,96L1200,100L1200,200L0,200Z'/%3E%3C/svg%3E");
+}
+
+@media (min-width: 640px) {
+  .page-hero {
+    margin-inline: -1.5rem;
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-hero {
+    margin-inline: -2rem;
+    padding: 2.75rem 2rem 5rem;
+  }
+
+  .page-hero::after {
+    height: 3.5rem;
+  }
+
+  .page-hero::before,
+  .hero-panel::before {
+    width: 38%;
+    opacity: 0.4;
+  }
+}
+
+/* Page titles follow the public site's hero: Montserrat, light, uppercase. */
+.page-hero h1,
+.hero-title {
+  font-family: var(--font-heading), var(--font-sans), sans-serif;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.page-hero h1 {
+  font-size: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .page-hero h1 {
+    font-size: 2.75rem;
+  }
+}
+
+/* Cards: an orange line grows along the bottom edge on hover, as on the public site. */
+.card-hover {
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .card-hover::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: rgb(var(--accent-rgb));
+    transition: width 250ms ease-in-out;
+    pointer-events: none;
+  }
+
+  .card-hover:hover::after {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

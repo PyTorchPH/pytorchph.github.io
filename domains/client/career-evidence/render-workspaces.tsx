@@ -928,7 +928,7 @@ export function ResumeStudioView({ data }: { data: ProductViewData }) {
             </div>
           </div>
           <Link
-            className="focus-ring inline-flex items-center gap-2 rounded-full border border-accent/30 px-4 py-2 text-sm font-semibold text-accent"
+            className="focus-ring inline-flex items-center gap-2 border border-accent/30 px-4 py-2 text-sm font-semibold text-accent"
             href="/career/evidence"
           >
             Edit in Career Evidence <ArrowRight size={15} />

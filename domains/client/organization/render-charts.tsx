@@ -35,7 +35,7 @@ const tooltipStyle = {
 
 function Watermark({ state }: { state?: AnalyticsState }) {
   if (state !== "unavailable") return null;
-  return <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"><span className="rounded-full border border-border bg-canvas/85 px-5 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted shadow-xl">Data unavailable</span></div>;
+  return <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"><span className="border border-border bg-canvas/85 px-5 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted shadow-xl">Data unavailable</span></div>;
 }
 
 const emptySkills = ["Computer Vision", "NLP", "Optimization", "MLOps", "Data Ethics", "Research"].map((skill) => ({ skill, score: 0 }));

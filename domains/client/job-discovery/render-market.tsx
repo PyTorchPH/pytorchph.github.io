@@ -29,7 +29,7 @@ export function JobMarketContent() {
 
   return (
     <>
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4" data-tour="analytics-heading">
+      <header className="page-hero flex flex-wrap items-start justify-between gap-4" data-tour="analytics-heading">
         <div>
           <div className="data-label mb-2 text-xs uppercase tracking-widest text-accent">Evidence-backed market view</div>
           <h1 className="text-3xl font-bold tracking-[-0.02em]">Job Market Analytics</h1>
@@ -73,7 +73,7 @@ export function JobMarketContent() {
           </Card>
           <Card className="bg-surface">
             <CardHeader><div><CardTitle>Degree and experience barriers</CardTitle><CardDescription>Percent of the selected posting sample.</CardDescription></div><AlertTriangle className="text-accent" size={20} /></CardHeader>
-            <div className="space-y-4">{data.qualification_barriers.map((item) => <div key={item.label}><div className="mb-2 flex justify-between text-sm"><span>{item.label}</span><span className="data-label text-muted">{item.count} · {item.percent}%</span></div><div className="h-2 overflow-hidden rounded-full bg-elevated"><div className="h-full rounded-full bg-accent" style={{ width: `${item.percent}%` }} /></div></div>)}</div>
+            <div className="space-y-4">{data.qualification_barriers.map((item) => <div key={item.label}><div className="mb-2 flex justify-between text-sm"><span>{item.label}</span><span className="data-label text-muted">{item.count} · {item.percent}%</span></div><div className="h-2 overflow-hidden bg-elevated"><div className="h-full bg-accent" style={{ width: `${item.percent}%` }} /></div></div>)}</div>
           </Card>
         </section>
 

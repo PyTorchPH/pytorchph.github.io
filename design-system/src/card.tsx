@@ -5,7 +5,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <section
       className={cn(
-        "rounded-lg border border-border bg-surface p-5 transition-all duration-300 ease-in-out hover:-translate-y-0.5",
+        "card-hover border border-transparent bg-surface p-5",
         className
       )}
       {...props}
@@ -18,7 +18,7 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
 }
 
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={cn("text-base font-bold tracking-[-0.02em]", className)} {...props} />;
+  return <h2 className={cn("font-heading text-lg font-semibold text-ink", className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {

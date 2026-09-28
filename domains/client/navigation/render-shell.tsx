@@ -8,7 +8,6 @@ import {
   CalendarDays,
   CircleHelp,
   ClipboardList,
-  Flame,
   Home,
   LayoutDashboard,
   LockKeyhole,
@@ -26,14 +25,13 @@ import {
 import { useState } from "react";
 import type { CapabilityKey } from "@pytorch-ph/domain-protocol/identity";
 import { cn } from "@pytorch-ph/design-system/merge-classes";
-import { PUBLIC_SITE_URL } from "@pytorch-ph/domain-protocol/organization";
 import { CapabilityProvider, useCapabilities } from "@pytorch-ph/domain-client/onboarding";
 import { ProductTourController, requestProductTour } from "@pytorch-ph/domain-client/onboarding";
 import { SignOutButton } from "@pytorch-ph/domain-client/identity";
 import { Button } from "@pytorch-ph/design-system/button";
-import { Badge } from "@pytorch-ph/design-system/badge";
 import { Sheet } from "@pytorch-ph/design-system/sheet";
 import { Progress } from "@pytorch-ph/design-system/progress";
+import { SiteHeader } from "@pytorch-ph/domain-client/public-site";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; capability?: CapabilityKey; alsoActiveOn?: string[] };
 
@@ -70,11 +68,12 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
     const Icon = item.icon;
     const capability = item.capability ? manifest.capabilities[item.capability] : undefined;
     const isLocked = capability?.state === "locked";
-    const content = <><Icon size={18} />{item.label}{isLocked && <LockKeyhole className="ml-auto" size={14} />}</>;
+    const content = <><Icon aria-hidden="true" size={17} />{item.label}{isLocked && <LockKeyhole aria-hidden="true" className="ml-auto" size={14} />}</>;
+    const row = "flex min-h-10 items-center gap-3 border-l-[3px] py-2 pl-3 pr-2 text-[15px]";
     if (isLocked) return (
       <span
         aria-disabled="true"
-        className="flex h-10 cursor-not-allowed items-center gap-3 rounded-lg px-3 text-sm font-semibold text-muted"
+        className={cn(row, "cursor-not-allowed border-transparent text-muted")}
         key={item.href}
         title={capability.reason}
       >
@@ -83,9 +82,11 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
     );
     return (
       <Link
+        aria-current={active ? "page" : undefined}
         className={cn(
-          "focus-ring flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-all duration-300 ease-in-out",
-          active ? "bg-accent text-white" : "text-muted hover:bg-elevated hover:text-ink"
+          "focus-ring transition-colors duration-200",
+          row,
+          active ? "border-accent bg-surface font-semibold text-accent" : "border-transparent text-ink hover:text-accent"
         )}
         href={item.href}
         key={item.href}
@@ -97,41 +98,34 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   };
 
   const sidebar = (
-    <aside className="flex h-full w-72 flex-col overflow-y-auto border-r border-border bg-canvas p-4 text-ink">
-      <div className="mb-6 flex items-center justify-between">
-        <a aria-label="PyTorch PH: go to the pytorch.ph home page" className="focus-ring rounded-lg" href={PUBLIC_SITE_URL}>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent shadow-lg shadow-accent/30">
-              <Flame size={20} />
-            </div>
-            <div>
-              <p className="font-mono text-sm font-bold tracking-[-0.02em]">PYTORCH PH</p>
-              <p className="text-xs text-muted">{officerPortal ? "Officer / Developer" : "Member Workspace"}</p>
-            </div>
-          </div>
-        </a>
+    <aside className="flex h-full w-72 flex-col overflow-y-auto border-r border-border bg-canvas px-4 py-6 text-ink">
+      <div className="mb-5 flex items-start justify-between gap-2 px-1">
+        <div>
+          <p className="data-label text-sm uppercase text-accent">{officerPortal ? "Officer portal" : "Member portal"}</p>
+          <p className="mt-1 text-sm text-muted">{officerPortal ? "Community operations and your own progress" : "Your progress in the community"}</p>
+        </div>
         <Button aria-label="Close menu" className="lg:hidden" onClick={() => setOpen(false)} size="icon" type="button" variant="ghost">
           <X size={18} />
         </Button>
       </div>
-      <nav aria-label="Portal" className="space-y-1">
+      <nav aria-label="Portal" className="space-y-0.5">
         {sharedNavItems.map(renderItem)}
         {officerPortal && <>
-          <p className="px-3 pb-1 pt-5 font-mono text-[10px] uppercase tracking-widest text-muted" id="officer-tools-heading">Officer tools</p>
-          <div aria-labelledby="officer-tools-heading" className="space-y-1" role="group">{officerNavItems.map(renderItem)}</div>
+          <p className="data-label px-4 pb-2 pt-6 text-xs uppercase text-accent" id="officer-tools-heading">Officer tools</p>
+          <div aria-labelledby="officer-tools-heading" className="space-y-0.5" role="group">{officerNavItems.map(renderItem)}</div>
         </>}
       </nav>
-      <div className="mt-6 rounded-lg border border-border bg-elevated p-3">
+      <div className="mt-6 bg-surface p-4">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted">Current cycle</p>
+          <p className="data-label text-[11px] uppercase text-muted">Current cycle</p>
           <span className="h-1.5 w-1.5 rounded-full bg-success" />
         </div>
-        <Progress className="h-1.5 bg-elevated" indicatorClassName="bg-accent" value={68} />
+        <Progress className="h-1 bg-elevated" indicatorClassName="bg-accent" value={68} />
         <p className="mt-2 text-xs text-muted">{officerPortal ? "Community operations and review readiness." : "Personal evidence and career readiness."}</p>
       </div>
-      <div className="mt-auto rounded-lg border border-border bg-elevated p-3">
+      <div className="mt-auto bg-surface p-4">
         <div className="mb-2 flex items-center gap-2">
-          <Shield className="text-accent" size={16} />
+          <Shield aria-hidden="true" className="text-accent" size={16} />
           <p className="text-sm font-semibold">{officerPortal ? "Officer data gateway" : "Personal data gateway"}</p>
         </div>
         <p className="text-xs leading-5 text-muted">{officerPortal ? "Role checks run before officer data or diagnostics are returned." : "Officer diagnostics and operational payloads are excluded from this portal."}</p>
@@ -151,17 +145,13 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      {manifest.localDemo && <div className="fixed inset-x-0 top-0 z-50 flex h-8 items-center justify-center border-b border-accent/30 bg-accent px-3 text-center font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-white sm:text-xs">Local {officerPortal ? "officer" : "member"} demo · Synthetic data · External actions disabled</div>}
-      <header className={cn("sticky z-30 flex h-16 items-center justify-between border-b border-border bg-canvas/90 px-4 backdrop-blur lg:hidden", manifest.localDemo ? "top-8" : "top-0")}>
-        <Button aria-label="Open menu" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary">
-          <Menu size={18} />
-        </Button>
-        <Link aria-label={`${officerPortal ? "Officer Portal" : "Member Portal"}: go to My Performance`} className="focus-ring rounded-full" href="/dashboard"><Badge variant="orange"><Flame aria-hidden="true" size={14} />{officerPortal ? "Officer Portal" : "Member Portal"}</Badge></Link>
-        <Button aria-label="Replay page tour" data-tour="tour-help" onClick={requestProductTour} size="icon" type="button" variant="secondary">
-          <CircleHelp size={18} />
-        </Button>
-      </header>
-      <div className={cn("hidden lg:fixed lg:inset-x-auto lg:bottom-0 lg:left-0 lg:block", manifest.localDemo ? "lg:top-8" : "lg:top-0")}>{sidebar}</div>
+      {manifest.localDemo && <div className="on-dark fixed inset-x-0 top-0 z-50 flex h-8 items-center justify-center border-b border-accent bg-chrome px-3 text-center font-heading text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">Local {officerPortal ? "officer" : "member"} demo · Synthetic data · External actions disabled</div>}
+      <SiteHeader
+        className={cn("sticky", manifest.localDemo ? "top-8" : "top-0")}
+        end={<Button aria-label="Replay page tour" className="lg:hidden" data-tour="tour-help" onClick={requestProductTour} size="icon" type="button" variant="secondary"><CircleHelp size={18} /></Button>}
+        start={<Button aria-label="Open menu" className="lg:hidden" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary"><Menu size={18} /></Button>}
+      />
+      <div className={cn("hidden lg:fixed lg:bottom-0 lg:left-0 lg:block", manifest.localDemo ? "lg:top-28" : "lg:top-20")}>{sidebar}</div>
       <Sheet onOpenChange={setOpen} open={open}>{sidebar}</Sheet>
       <main className={cn("lg:pl-72", manifest.localDemo && "pt-8")}>
         <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">{children}</div>

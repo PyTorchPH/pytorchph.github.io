@@ -21,7 +21,7 @@ function MembershipContent() {
   const status = query.data;
   const active = status?.state === "active";
   return <div className="space-y-5">
-    <section className="border border-border bg-surface p-6 lg:p-8">
+    <section className="page-hero">
       <h1 className="text-3xl font-extrabold">Membership</h1>
       <p className="mt-3 max-w-2xl leading-7 text-muted">Membership in PyTorch Philippines is free. There is nothing to pay and no payment code to scan.</p>
     </section>
