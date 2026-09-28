@@ -39,7 +39,7 @@ function EvidenceReviewContent() {
   const activeClaimIsExtension = activeClaim?.origin === "extension_scrape" || (!activeClaim?.origin && activeClaim?.source !== "manual");
 
   return <div className="space-y-5">
-    <section className="border border-border bg-surface p-6 lg:p-8">
+    <section className="page-hero">
       <Badge variant="orange">Officers only</Badge>
       <h1 className="mt-3 text-3xl font-extrabold">Evidence review</h1>
       <p className="mt-3 max-w-3xl leading-7 text-muted">Verify the evidence that earns points. Only verified evidence counts toward a member's tier on the leaderboards.</p>

@@ -67,7 +67,7 @@ function EventWorkflowContent() {
   ];
 
   return <div className="space-y-6">
-    <section className="border border-border bg-surface p-6 lg:p-8" data-tour="workflow-heading">
+    <section className="page-hero" data-tour="workflow-heading">
       <Badge variant="orange">Officers only</Badge>
       <h1 className="mt-3 text-3xl font-extrabold">Event workflow</h1>
       <p className="mt-3 max-w-3xl leading-7 text-muted">Create an event, approve it by department, review the email before it goes out, and record the final approval. Members see an event as approved only at the end.</p>

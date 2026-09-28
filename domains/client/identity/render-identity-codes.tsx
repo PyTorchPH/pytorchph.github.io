@@ -52,7 +52,7 @@ export function IdentityCodes({ username, links }: { username: string; links: Id
       <QrCode aria-hidden="true" className="text-accent" size={20} />
     </CardHeader>
     <div className="flex flex-wrap gap-2" role="group" aria-label="Choose a QR code">
-      {codes.map((code) => <button aria-pressed={code.id === selected.id} className={`focus-ring rounded-full border px-3 py-1.5 text-sm font-semibold ${code.id === selected.id ? "border-accent bg-accentSoft text-accent" : "border-border text-muted hover:text-ink"}`} key={code.id} onClick={() => setSelectedId(code.id)} type="button">{code.label}</button>)}
+      {codes.map((code) => <button aria-pressed={code.id === selected.id} className={`focus-ring border px-3 py-1.5 text-sm font-semibold ${code.id === selected.id ? "border-accent bg-accentSoft text-accent" : "border-border text-muted hover:text-ink"}`} key={code.id} onClick={() => setSelectedId(code.id)} type="button">{code.label}</button>)}
     </div>
     <div className="mt-5 flex flex-wrap items-center gap-5">
       <div className="border border-border bg-white p-3">

@@ -62,7 +62,7 @@ export default function SettingsPage() {
   const selectedProvider = providerQuery.data?.providers.find((provider) => provider.id === aiProvider);
 
   return <AppShell>
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3" data-tour="settings-heading">
+    <div className="page-hero flex flex-wrap items-center justify-between gap-3" data-tour="settings-heading">
       <div><h1 className="text-3xl font-bold tracking-[-0.02em]">Settings</h1><p className="mt-2 text-muted">Your connected accounts, leaderboard identity, privacy and integrity, and AI connection.</p></div>
       <Badge variant="orange">Private by default</Badge>
     </div>

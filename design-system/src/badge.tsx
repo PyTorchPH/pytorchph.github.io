@@ -2,7 +2,7 @@ import type { HTMLAttributes } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@pytorch-ph/design-system/merge-classes";
 
-export const badgeVariants = cva("inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs font-semibold", {
+export const badgeVariants = cva("inline-flex min-h-7 items-center gap-1 border px-2 py-0.5 text-xs font-semibold", {
   variants: { variant: {
     default: "border-border bg-elevated text-muted",
     secondary: "border-border bg-surface text-ink",

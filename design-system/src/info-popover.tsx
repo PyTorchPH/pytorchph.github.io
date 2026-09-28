@@ -23,7 +23,7 @@ export function InfoPopover({ label, title, children, showLabel = false, classNa
       <Popover.Trigger asChild>
         <button
           aria-label={showLabel ? undefined : label}
-          className={cn("focus-ring inline-flex items-center gap-1.5 rounded-full border border-border bg-surface text-sm font-semibold text-ink hover:border-accent hover:text-accent", showLabel ? "h-9 px-3" : "h-7 w-7 justify-center", className)}
+          className={cn("focus-ring inline-flex items-center gap-1.5 border border-border bg-surface text-sm font-semibold text-ink hover:border-accent hover:text-accent", showLabel ? "h-9 px-3" : "h-7 w-7 justify-center", className)}
           onPointerEnter={hover(true)}
           onPointerLeave={hover(false)}
           type="button"

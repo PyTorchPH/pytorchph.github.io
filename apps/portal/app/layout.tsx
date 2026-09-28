@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { AppProviders } from "@/components/providers";
 import { FeedbackReporter } from "@pytorch-ph/domain-client/privacy-feedback";
+import { fontVariables } from "./fonts";
 import "./globals.css";
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
   title: "PyTorch Philippines",
@@ -16,7 +19,7 @@ export const viewport: Viewport = { themeColor: "#262626" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html className={fontVariables} data-scroll-behavior="smooth" lang="en" style={{ "--hero-art": `url(${BASE_PATH}/brand/ph-network.svg)` } as React.CSSProperties}>
       <body><AppProviders>{children}<FeedbackReporter /></AppProviders></body>
     </html>
   );

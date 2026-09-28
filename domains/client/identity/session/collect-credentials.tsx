@@ -42,7 +42,7 @@ export function LoginForm() {
   }
 
   return (
-    <AuthShell sub="// sign in" title="Welcome back, builder.">
+    <AuthShell sub="Sign in" title="Welcome back, builder.">
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async ({ email: submittedEmail, password }) => {
@@ -110,7 +110,7 @@ export function RegisterForm() {
   const emailValid = emailSchema.safeParse(email).success;
 
   return (
-    <AuthShell sub="// create account" title="Join PyTorch PH.">
+    <AuthShell sub="Create account" title="Join PyTorch PH.">
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async ({ email: submittedEmail, name, username, password }) => {

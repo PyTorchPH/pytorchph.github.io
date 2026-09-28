@@ -26,7 +26,7 @@ export function MemberDashboard() {
   const rank = peers?.rank ?? data?.summary.rank ?? null;
 
   return <AppShell><div className="space-y-6">
-    <section className="border border-border bg-surface p-5 lg:p-7" data-testid="member-dashboard" data-tour="member-overview">
+    <section className="page-hero" data-testid="member-dashboard" data-tour="member-overview">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <FilipinoPhrase meaning="Welcome back, builder." phrase="Mabuhay!" />
