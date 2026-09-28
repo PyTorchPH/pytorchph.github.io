@@ -1,11 +1,12 @@
-# PyTorch PH API (code-first draft)
+# PyTorch PH API
 
-Rust/Axum service for server-authoritative member access, internal competitive-event results, points ledger, leaderboard cache, durable jobs, and revision-bound mail approvals. The existing external-event pipeline remains separate. No VPS deployment or live mail is authorized by this code.
+Rust/Axum service for server-authoritative member access, internal competitive-event results, points ledger, leaderboard cache, durable jobs, and revision-bound mail approvals. The existing external-event pipeline remains separate. Deployment setup is in `deploy/`; verification mail requires a configured HTTPS relay.
 
 ## Boundaries
 
 - Browser/extension may collect evidence and prepare drafts; it cannot write points, results, roles, approvals, or sent status directly.
 - Google ID tokens are verified against Google's JWK set, issuer, audience, expiry, and `email_verified`. Session is an opaque HttpOnly/Secure cookie. Mutation requests require the configured portal `Origin`.
+- Email signup stores a pending code and password hash, then creates a member and session only after a matching one-time code. Codes expire after 10 minutes and have five attempts. Passwords use Argon2id; delivery uses a private HTTPS relay on port 443. Login and signup have SQLite-backed rate limits. The two temporary production test accounts are seeded only through private deployment settings.
 - Bootstrap admin is the configured, Google-verified email; everyone else begins `pending`. Admin approves members/officers. Admin manages officer roles and per-category mail routes.
 - Officer creates an event with optional placement points. For a competitive event, registered approved members form individual/team entrants. An authorized officer publishes ascending, unique placements within the configured range after the event starts; unawarded places may be skipped. Corrections append reversal and replacement ledger entries.
 - Personal-project and external-activity claims remain `pending` until an officer other than the claimant verifies them. Client-provided content hashes are deduplication hints, not proof. Grade and referral point sources are intentionally inactive.
@@ -41,4 +42,4 @@ Attendance import requires `GOOGLE_FORMS_CLIENT_ID`, `GOOGLE_FORMS_CLIENT_SECRET
 
 ## Verification status
 
-The API compiles on the test VPS with `cargo build --locked`; `cargo test --locked` passes all three tests, including placement correction and PDF rendering/unsupported-text checks. A loopback-only smoke run using a disposable SQLite database returned `/health` OK, public events/leaderboard 200, unauthenticated evidence 401, and disabled mail claim 503. No production database, public listener, Google Forms OAuth, officer session, n8n import, live email, or PDF visual/attachment delivery was tested. GitHub Pages currently publishes the separate static `apps/pages-demo` at `/portal/`, not this API-connected `apps/portal` build.
+Current deployment checks and reproducible performance results are recorded in `docs/PERFORMANCE.md`. Live email verification remains unavailable until the private `MAIL_RELAY_URL` and `MAIL_RELAY_TOKEN` are configured and the relay contract is tested.
