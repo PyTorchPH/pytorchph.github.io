@@ -17,7 +17,8 @@ built by reusing open-source PyTorch community websites instead of designing fro
   bar. Orange text and fills use `#be2c10` (the brand `#ee4c2c` fails WCAG AA for text); logos keep the brand color.
 - **Information order** (site navigation): Community (events grouped by type), News & Blog (community,
   research, blog, PyTorch news on their own page), Learn (materials, sample code, open-source projects),
-  About (team, with a profile page per member). The home page is the community landing page.
+  About (team, with a profile page per member). The home page is the Community page, all on one
+  page read from top to bottom; sample events fill it until real events are listed.
 - **Filipino identity, kept subtle:** one short Filipino phrase per page with its meaning (for example
   "Mabuhay!", "Bayanihan", "Tuloy po kayo"), and hero artwork of the Philippine archipelago drawn as a
   connected network in PyTorch orange.

@@ -1,9 +1,9 @@
 <nav class="main-menu" aria-label="Main">
   <ul>
     {% for item in site.data.navigation.main_menu %}
-      <li class="main-menu-item {% if item.key and (current[1] == item.key or (item.key == 'news' and page.url contains '/blog')) %}active{% endif %}{% if item.has_dropdown %} {{ item.key }}-dropdown ph-dropdown{% endif %}">
+      <li class="main-menu-item {% if item.key and (current[1] == item.key or (item.key == 'news' and page.url contains '/blog') or (item.key == 'community' and page.url == '/')) %}active{% endif %}{% if item.has_dropdown %} {{ item.key }}-dropdown ph-dropdown{% endif %}">
         {% if item.has_dropdown %}
-          <a href="{% if item.url %}{{ site.baseurl }}{{ item.url }}{% else %}#{% endif %}" aria-haspopup="true" class="{% if item.key and current[1] == item.key %}with-down-orange-arrow{% else %}with-down-arrow{% endif %}">{{ item.title }}</a>
+          <a href="{% if item.url %}{{ site.baseurl }}{{ item.url }}{% else %}#{% endif %}" aria-haspopup="true" class="{% if item.key and current[1] == item.key or item.key == 'community' and page.url == '/' %}with-down-orange-arrow{% else %}with-down-arrow{% endif %}">{{ item.title }}</a>
           <div class="{{ item.key }}-dropdown-menu dropdown-menu ph-dropdown-menu">
             {% for dropdown_item in item.dropdown_items %}
               {% if dropdown_item.url_type == "baseurl" %}
