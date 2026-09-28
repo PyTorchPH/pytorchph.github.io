@@ -139,6 +139,16 @@ function ViewBody({ view, data, canWriteEvidence, canScrapeEvidence }: { view: P
   return <AdvisorView data={data} />;
 }
 
+const workspaceTitles: Record<ProductView, string> = {
+  dashboard: "Dashboard",
+  "career-evidence": "Career Evidence",
+  resumes: "Resume Studio",
+  "job-operations": "Job automation",
+  opportunities: "Opportunities",
+  connections: "Connections",
+  advisor: "Career Advisor",
+};
+
 function ProductContent({ view, capabilityKey, safety }: Props) {
   const capability = useCapability(capabilityKey);
   const evidenceWrite = useCapability("evidence_write");
@@ -150,7 +160,7 @@ function ProductContent({ view, capabilityKey, safety }: Props) {
   const data = query.data || null;
   const error = query.error instanceof Error ? query.error.message : "";
   return <>
-    {data ? <Header capabilityKey={capabilityKey} data={data} /> : <header className="mb-6 flex items-start justify-between gap-4" data-tour="page-heading"><div><p className="data-label mb-2 text-xs uppercase tracking-widest text-accent">Product workspace</p><h1 className="text-3xl font-bold">Loading visual workspace…</h1></div><Badge data-tour="service-status">Checking access</Badge></header>}
+    {data ? <Header capabilityKey={capabilityKey} data={data} /> : <header className="mb-6 flex items-start justify-between gap-4" data-tour="page-heading"><div><p className="data-label mb-2 text-xs uppercase tracking-widest text-accent">Product workspace</p><h1 className="text-3xl font-bold">{capability.state === "locked" ? workspaceTitles[view] : "Loading workspace…"}</h1>{capability.state === "locked" && <p className="mt-2 max-w-3xl leading-7 text-muted">{capability.reason}</p>}</div><Badge data-tour="service-status">{capability.state === "locked" ? "Locked" : "Checking access"}</Badge></header>}
     <Card className="mb-4 border-accent/25 bg-accentSoft" data-tour="permission-boundary"><div className="flex gap-3"><ShieldCheck className="mt-0.5 flex-none text-accent" size={20} /><div><strong>Permission boundary</strong><p className="mt-1 text-sm text-muted">{safety}</p></div></div></Card>
     {automation && <Card className="mb-4 bg-surface" data-automation-state={automation.state}><div className="flex items-start gap-3">{automation.state === "available" ? <Sparkles className="mt-0.5 flex-none text-success" size={19}/> : <LockKeyhole className="mt-0.5 flex-none text-warning" size={19}/>}<div><strong>{automation.state === "available" ? "Automation available" : "Manual mode"}</strong><p className="mt-1 text-sm text-muted">{automation.reason}</p>{automation.state === "locked" && automation.missing.length > 0 && <p className="mt-2 text-xs text-muted">Automated tools require: {automation.missing.join(", ")}. Manual workspace actions remain available.</p>}</div></div></Card>}
     <div data-tour="service-data"><CapabilityGate capabilityKey={capabilityKey}><div data-tour="page-content">{error ? <Card className="bg-surface"><div className="flex gap-3"><AlertTriangle className="flex-none text-accent" /><div><CardTitle>Product data unavailable</CardTitle><p className="mt-2 text-sm text-muted">{error}</p></div></div></Card> : data ? <><ViewBody canScrapeEvidence={evidenceScrape.state === "available"} canWriteEvidence={evidenceWrite.state === "available"} data={data} view={view} /><div className="mt-4"><DeveloperDiagnostics data={data.diagnostics} /></div></> : <Card className="bg-surface"><div className="flex items-center gap-3 text-muted"><Server className="animate-pulse" size={20} />Connecting to the active data provider…</div></Card>}</div></CapabilityGate></div>
