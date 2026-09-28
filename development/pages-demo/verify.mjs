@@ -33,13 +33,14 @@ const chrome = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const schoolText = /\b(?:FEU|Far Eastern|Tamaraw|SADO|campus|students?|university|faculty|college)\b|fit\.edu/i;
 const memberHeading = "My performance";
 const officerHeading = "Community intelligence dashboard for chapter operations.";
+const demoResponse = { status: 200, contentType: "application/json", headers: { "access-control-allow-origin": origin, "access-control-allow-credentials": "true" } };
 let browser;
 try {
   browser = await chromium.launch({ headless: true, executablePath: process.env.PH_DEMO_BROWSER || (existsSync(chrome) ? chrome : undefined) });
   // The product tour starts on a first visit and covers the page; first check it, then run the rest with tours seen.
   const firstVisit = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const demoSeed = readFileSync(resolve(root, "apps/api/seeds/demo-fixtures.json"));
-  await firstVisit.route("https://api.pytorch.ph/demo/fixtures", route => route.fulfill({ status: 200, contentType: "application/json", body: demoSeed }));
+  await firstVisit.route("https://api.pytorch.ph/demo/fixtures", route => route.fulfill({ ...demoResponse, body: demoSeed }));
   const tourPage = await firstVisit.newPage();
   await tourPage.goto(`${url}/dashboard/`, { waitUntil: "networkidle" });
   await tourPage.getByText("Your performance dashboard", { exact: true }).waitFor();
@@ -51,7 +52,7 @@ try {
   let demoApiRequests = 0;
   await context.route("https://api.pytorch.ph/demo/fixtures", route => {
     demoApiRequests += 1;
-    return route.fulfill({ status: 200, contentType: "application/json", body: demoSeed });
+    return route.fulfill({ ...demoResponse, body: demoSeed });
   });
   await context.addInitScript(() => {
     const read = Storage.prototype.getItem;

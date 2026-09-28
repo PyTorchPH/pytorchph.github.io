@@ -25,4 +25,6 @@ Before deploying a new binary or migration, back up the SQLite database using it
 
 The public Pages build sets `NEXT_PUBLIC_AUTH_API_ORIGIN=https://api.pytorch.ph`. Its login and signup forms use the Rust API. Other Pages demo views fetch the fictional read-only `/demo/fixtures` snapshot from SQLite; they must not be represented as real member records. `NEXT_PUBLIC_API_ORIGIN` remains reserved for the separately integrated official event/leaderboard views.
 
+An authenticated request, including the demo fixture fetch, renews a valid session through the end of the seventh UTC calendar day after the request. The API updates SQLite and returns a matching `Secure; HttpOnly; SameSite=Lax` cookie with `Expires` and `Max-Age`; an expired session is never renewed. Browser requests must use `credentials: "include"`. Existing unexpired sessions renew on their next request without a database migration.
+
 Measured latency and the bounded public benchmark procedure are in `../docs/PERFORMANCE.md`.
