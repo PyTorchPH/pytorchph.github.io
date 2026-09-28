@@ -149,13 +149,18 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
       {manifest.localDemo && <div className="on-dark fixed inset-x-0 top-0 z-50 flex h-8 items-center justify-center border-b border-accent bg-chrome px-3 text-center font-heading text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">Local {officerPortal ? "officer" : "member"} demo · Synthetic data · External actions disabled</div>}
       <SiteHeader
         className={cn("sticky", manifest.localDemo ? "top-8" : "top-0")}
-        end={hasTour && <Button aria-label="Replay page tour" data-tour="tour-help" onClick={requestProductTour} size="sm" title="Show the tour of this page again" type="button" variant="outline"><CircleHelp aria-hidden="true" size={16} /><span className="hidden sm:inline">Page tour</span></Button>}
         start={<Button aria-label="Open menu" className="lg:hidden" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary"><Menu size={18} /></Button>}
       />
       <div className={cn("hidden lg:fixed lg:bottom-0 lg:left-0 lg:block", manifest.localDemo ? "lg:top-28" : "lg:top-20")}>{sidebar}</div>
       <Sheet onOpenChange={setOpen} open={open}>{sidebar}</Sheet>
       <main className={cn("lg:pl-72", manifest.localDemo && "pt-8")}>
-        <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+        <div className="relative mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
+          {/* Sits in the top-right corner of the page hero that follows it. */}
+          {hasTour && <div className="on-dark absolute right-4 top-3 z-10 sm:right-6 lg:right-8 lg:top-4" data-page-tour>
+            <Button aria-label="Replay page tour" data-tour="tour-help" onClick={requestProductTour} size="sm" title="Show the tour of this page again" type="button" variant="outline"><CircleHelp aria-hidden="true" size={16} />Page tour</Button>
+          </div>}
+          {children}
+        </div>
       </main>
       <ProductTourController />
     </div>
