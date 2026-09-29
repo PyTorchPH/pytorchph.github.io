@@ -32,18 +32,41 @@ fn reply(status: StatusCode, body: Value) -> Response {
     response
 }
 
-fn fixture(role: &str, key: &str) -> Option<(StatusCode, Value)> {
-    let audience = if role == "admin" || role == "officer" {
+fn is_officer(role: &str) -> bool {
+    role == "admin" || role == "officer"
+}
+
+fn fixture_item(audience: &str, key: &str) -> Option<&'static Value> {
+    let set = fixtures().get(audience)?;
+    set.get(key).or_else(|| set.get(key.split('?').next()?))
+}
+
+// An officer is an elevated member: their own views use the member fixtures, and only
+// organization-wide officer data and the officer portal manifest use the officer set.
+fn fixture_audience(role: &str, key: &str) -> &'static str {
+    let officer_data = key == "/api/capabilities"
+        || key.starts_with("/api/officer/")
+        || key.starts_with("/api/feedback");
+    if is_officer(role) && officer_data {
         "officer"
     } else {
         "member"
-    };
-    let item = fixtures()
-        .get(audience)?
-        .get(key)
-        .or_else(|| fixtures().get(audience)?.get(key.split('?').next()?))?;
+    }
+}
+
+fn fixture(role: &str, key: &str) -> Option<(StatusCode, Value)> {
+    let item = fixture_item(fixture_audience(role, key), key)?;
     let status = StatusCode::from_u16(item.get("status")?.as_u64()? as u16).ok()?;
-    Some((status, item.get("body")?.clone()))
+    let mut body = item.get("body")?.clone();
+    if key == "/api/capabilities" && !is_officer(role) {
+        // Career tools follow the same rules for every signed-in member; only the
+        // portal block (officer tools, diagnostics) differs by role.
+        let shared = fixture_item("officer", key)?
+            .get("body")?
+            .get("capabilities")?;
+        body["capabilities"] = shared.clone();
+    }
+    Some((status, body))
 }
 
 fn scope<'a>(member_id: &'a str, key: &str) -> &'a str {

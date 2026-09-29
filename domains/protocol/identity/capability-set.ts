@@ -60,7 +60,6 @@ const available = (reason: string): Capability => ({ state: "available", reason,
 const readOnly = (reason: string): Capability => ({ state: "read_only", reason, missing: [] });
 
 export function buildCapabilityManifest(input: CapabilityInputs): CapabilityManifest {
-  const privilegedOperator = input.developmentOwner || input.isOfficer === true;
   const canOwnCareerData = input.developmentOwner || input.authenticatedUser === true;
   const ownerRequired = locked("Available only in the authorized local development session.", ["development owner session"]);
   const connections = canOwnCareerData
@@ -71,7 +70,8 @@ export function buildCapabilityManifest(input: CapabilityInputs): CapabilityMani
       ? "Career Evidence is open for manual review and editing."
       : "Career Evidence is open for manual entry; automated collection is gated separately.")
     : ownerRequired;
-  const evidenceScrape = !input.developmentOwner
+  // Career tools are open to every signed-in member; only AI and source setup can lock them.
+  const evidenceScrape = !canOwnCareerData
     ? ownerRequired
     : !input.aiConfigured
       ? locked("Configure a local or remote AI endpoint in Settings before collecting scraper evidence.", ["AI endpoint and model"])
@@ -86,18 +86,18 @@ export function buildCapabilityManifest(input: CapabilityInputs): CapabilityMani
       ? "Resume Studio is open for manual template review and export."
       : "Resume Studio is open; add or edit Career Evidence to build its manual snapshot.")
     : ownerRequired;
-  const resumeGenerate = !input.developmentOwner
+  const resumeGenerate = !canOwnCareerData
     ? ownerRequired
     : !input.aiConfigured
       ? locked("Configure the AI endpoint in Settings before generating a resume.", ["AI endpoint and model"])
     : input.normalizedProfileReady
       ? available("Resume generation may consume the normalized middleman profile.")
       : locked("Run the evidence middleman before generating a resume.", ["middleman-produced user_profile.json"]);
-  const jobDiscovery = privilegedOperator && input.aiConfigured && input.jobSiteConnected
+  const jobDiscovery = canOwnCareerData && input.aiConfigured && input.jobSiteConnected
     ? available("The verified local job-site browser session is connected.")
     : input.visualDemo
       ? readOnly("Prototype opportunities are viewable; live discovery remains locked until a job-site session is verified.")
-      : !privilegedOperator
+      : !canOwnCareerData
         ? ownerRequired
         : !input.aiConfigured
           ? locked("Configure the AI endpoint before starting a scraper-connected job pipeline.", ["AI endpoint and model"])
@@ -105,7 +105,7 @@ export function buildCapabilityManifest(input: CapabilityInputs): CapabilityMani
   const opportunitiesRead = canOwnCareerData
     ? available("Opportunities is open for manual review; automated discovery is gated separately.")
     : ownerRequired;
-  const applicationDraft = !privilegedOperator
+  const applicationDraft = !canOwnCareerData
     ? ownerRequired
     : !input.aiConfigured
       ? locked("Configure the AI endpoint before application planning.", ["AI endpoint and model"])

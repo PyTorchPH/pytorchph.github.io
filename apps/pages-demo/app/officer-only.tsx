@@ -20,8 +20,8 @@ export function OfficerOnly({ path, children }: { path: string; children: ReactN
         if (!response.ok) { window.location.assign(`${basePath}/login/`); return; }
         const viewer = await response.json() as { role: string };
         if (viewer.role !== "officer" && viewer.role !== "admin") { window.location.assign(`${basePath}/dashboard/`); return; }
-        if (audience !== "officer") enterAs("officer", path);
-        else setVerified(true);
+        // The server session decides the role, so a new tab needs no client-side audience switch.
+        setVerified(true);
       })
       .catch(() => { if (!controller.signal.aborted) window.location.assign(`${basePath}/login/`); });
     return () => controller.abort();
