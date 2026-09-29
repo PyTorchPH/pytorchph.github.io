@@ -8,7 +8,7 @@ import { Badge } from "@pytorch-ph/design-system/badge";
 import { Card } from "@pytorch-ph/design-system/card";
 import { fetchJson, queryKeys } from "@pytorch-ph/domain-client/transport";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
-import type { EvidenceClaim, ExternalEvent } from "@pytorch-ph/domain-protocol/organization";
+import type { EvidenceClaim } from "@pytorch-ph/domain-protocol/organization";
 
 const PENDING_CLAIMS = ["manual_pending", "scraped_pending", "disputed"];
 const CLOSED_EVENTS = ["sado_approved", "rejected"];
@@ -17,12 +17,10 @@ const CLOSED_EVENTS = ["sado_approved", "rejected"];
 export function OfficerDesk() {
   const officer = useCapabilities().portal.audience === "officer";
   const claims = useQuery({ enabled: officer, queryKey: ["evidence-review"], queryFn: () => fetchJson<EvidenceClaim[]>("/api/officer/evidence", { cache: "no-store" }) });
-  const events = useQuery({ enabled: officer, queryKey: ["external-events"], queryFn: () => fetchJson<ExternalEvent[]>("/api/events", { cache: "no-store" }) });
   const dashboard = useQuery({ enabled: officer, queryKey: queryKeys.product("dashboard"), queryFn: () => fetchJson<ProductViewData>("/api/product/dashboard", { cache: "no-store" }) });
   if (!officer) return null;
 
   const queues = [
-    { label: "Events moving through approval", href: "/admin/events", waiting: events.data?.filter((event) => !CLOSED_EVENTS.includes(event.status)).length },
     { label: "Evidence claims to review", href: "/admin/evidence", waiting: claims.data?.filter((claim) => PENDING_CLAIMS.includes(claim.provenance)).length },
     { label: "Approvals waiting for a person", href: "/admin/dashboard", waiting: dashboard.data?.analytics?.approvals.data.filter((item) => item.status === "waiting").length },
   ];

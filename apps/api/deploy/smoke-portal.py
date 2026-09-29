@@ -104,18 +104,8 @@ def main():
         check("officer", "PATCH", prefix + "/feedback/" + report_id,
               {"status": "triaged", "severity": "low", "assignedTo": None, "resolution": None})
 
-        event = {"title": f"Synthetic event {marker}", "organizer": "PyTorch PH",
-                 "summary": "Synthetic external event for Rust portal write verification.", "category": "workshops",
-                 "scope": "external", "startAt": "2026-10-01T09:00:00+08:00", "endAt": None,
-                 "timezone": "Asia/Manila", "venue": "Online", "registrationUrl": None,
-                 "registrationDeadline": None, "fee": "Free", "eligibility": [], "requirements": [],
-                 "sourceUrl": "https://example.com/smoke-" + marker, "scrapedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
-                 "contentHash": "sha256:" + hashlib.sha256(marker.encode()).hexdigest(),
-                 "scraperVersion": "smoke", "confidence": 1, "warnings": []}
-        event_id = check("officer", "POST", prefix + "/events", event, 201)["id"]
-        assert any(item["id"] == event_id for item in check("member", "GET", prefix + "/events"))
-        check("member", "PATCH", prefix + "/events/" + event_id, {"action": "approve_department"}, 403)
-        assert check("member", "PATCH", prefix + "/events/" + event_id, {"action": "interest"})["interested"]
+        # External events were removed; POST /events must no longer exist.
+        check("officer", "POST", prefix + "/events", {}, 501)
 
         print(json.dumps({"status": "ok", "checks": len(durations), "marker": marker,
                           "maxMs": max(durations), "p50Ms": sorted(durations)[len(durations) // 2]}))
