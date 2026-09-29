@@ -105,6 +105,10 @@ function installDemoApi() {
     if (url.origin !== window.location.origin || !url.pathname.startsWith("/api/")) return originalFetch(input, init);
     const method = requestMethod(input, init);
     if (method === "POST" && url.pathname === "/api/auth/signout") {
+      if (API_ORIGIN) {
+        const response = await originalFetch(`${API_ORIGIN}/auth/signout`, { method: "POST", credentials: "include", cache: "no-store" });
+        if (!response.ok) return response;
+      }
       try { sessionStorage.removeItem(AUDIENCE_KEY); } catch { /* Storage may be unavailable. */ }
       session = undefined;
       listeners.forEach(listener => listener());
@@ -113,10 +117,13 @@ function installDemoApi() {
     if (API_ORIGIN) {
       try { await verifiedAudience(); }
       catch { return json({ error: "Sign in to access the member portal." }, 401); }
+      if (method === "POST" && url.pathname === "/api/auth/login") return json({ error: "Use official sign in." }, 400);
+      const target = `${API_ORIGIN}/portal${url.pathname}${url.search}`;
+      return originalFetch(target, { ...(input instanceof Request ? { method: input.method, headers: input.headers, body: input.body } : {}), ...init, credentials: "include", cache: "no-store" });
     }
     // Official auth calls use AUTH_API_ORIGIN directly. Demo views retain their
     // existing response contracts, now supplied by the Rust service.
-    if (method === "POST" && url.pathname === "/api/auth/login") return API_ORIGIN ? json({ error: "Use official sign in." }, 400) : login(init);
+    if (method === "POST" && url.pathname === "/api/auth/login") return login(init);
     if (method !== "GET" && method !== "HEAD") return json({ error: READ_ONLY_MESSAGE }, 403);
     try {
       const fixture = lookup(await loadFixtures(), url);

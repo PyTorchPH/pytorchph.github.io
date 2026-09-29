@@ -6,13 +6,14 @@ mod events;
 mod evidence;
 mod mail;
 mod pdf;
+mod portal;
 
 use axum::{
     Json, Router,
     extract::{Path, State},
     http::{HeaderMap, HeaderValue, Method, StatusCode},
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::{any, get, post},
 };
 use serde::Serialize;
 use sqlx::{
@@ -28,6 +29,7 @@ struct AppState {
     google_client_id: String,
     bootstrap_admin_email: String,
     allowed_origin: String,
+    public_api_origin: String,
     http: reqwest::Client,
     google_keys: tokio::sync::Mutex<Option<(std::time::Instant, jsonwebtoken::jwk::JwkSet)>>,
     workflow_key: Option<String>,
@@ -210,6 +212,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         google_client_id: env::var("GOOGLE_CLIENT_ID")?,
         bootstrap_admin_email: env::var("BOOTSTRAP_ADMIN_EMAIL")?,
         allowed_origin: allowed_origin.clone(),
+        public_api_origin: env::var("APP_PUBLIC_ORIGIN")
+            .unwrap_or_else(|_| "https://api.pytorch.ph".to_owned()),
         http: reqwest::Client::builder()
             .timeout(Duration::from_secs(8))
             .build()?,
@@ -235,6 +239,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/health", get(health))
         .route("/demo/fixtures", get(demo::fixtures))
+        .route("/portal/api/{*path}", any(portal::gateway))
+        .route("/portal/media/{id}", get(portal::media))
         .route("/auth/google", post(auth::google_login))
         .route("/auth/email/start", post(auth_email::start_signup))
         .route("/auth/email/verify", post(auth_email::verify_signup))
@@ -289,7 +295,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             state.clone(),
             auth::refresh_session,
         ))
-        .layer(RequestBodyLimitLayer::new(64 * 1024))
+        .layer(RequestBodyLimitLayer::new(384 * 1024))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(state);
@@ -304,9 +310,205 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::extract::Path;
+    use axum::{
+        body::Bytes,
+        extract::{OriginalUri, Path},
+    };
     use sha2::{Digest, Sha256};
     use uuid::Uuid;
+
+    #[tokio::test]
+    async fn portal_gateway_persists_private_settings_and_rejects_cross_role_access() {
+        let (state, officer_headers, _, member_id) = fixture().await;
+        let settings = serde_json::json!({"hideGoogleIdentity":true,"hideRealName":false,"deviceCacheEnabled":true,"anonymousRanking":false,"automaticErrorReports":true});
+        let put = portal::gateway(
+            State(state.clone()),
+            Path("member/privacy".to_owned()),
+            OriginalUri("/portal/api/member/privacy".parse().unwrap()),
+            Method::PUT,
+            officer_headers.clone(),
+            Bytes::from(settings.to_string()),
+        )
+        .await
+        .unwrap();
+        assert_eq!(put.status(), StatusCode::OK);
+        let get = portal::gateway(
+            State(state.clone()),
+            Path("member/privacy".to_owned()),
+            OriginalUri("/portal/api/member/privacy".parse().unwrap()),
+            Method::GET,
+            officer_headers.clone(),
+            Bytes::new(),
+        )
+        .await
+        .unwrap();
+        let body = axum::body::to_bytes(get.into_body(), 65536).await.unwrap();
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+            settings
+        );
+
+        let token = "b".repeat(64);
+        sqlx::query("INSERT INTO sessions(token_hash,member_id,expires_at) VALUES (?,?,?)")
+            .bind(hex::encode(Sha256::digest(token.as_bytes())))
+            .bind(&member_id)
+            .bind((chrono::Utc::now() + chrono::Duration::days(1)).to_rfc3339())
+            .execute(&state.db)
+            .await
+            .unwrap();
+        let mut member_headers = officer_headers.clone();
+        member_headers.insert("cookie", format!("ph_session={token}").parse().unwrap());
+        let member_get = portal::gateway(
+            State(state.clone()),
+            Path("member/privacy".to_owned()),
+            OriginalUri("/portal/api/member/privacy".parse().unwrap()),
+            Method::GET,
+            member_headers.clone(),
+            Bytes::new(),
+        )
+        .await
+        .unwrap();
+        let body = axum::body::to_bytes(member_get.into_body(), 65536)
+            .await
+            .unwrap();
+        assert_ne!(
+            serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+            settings
+        );
+        let officer_only = portal::gateway(
+            State(state),
+            Path("officer/evidence".to_owned()),
+            OriginalUri("/portal/api/officer/evidence".parse().unwrap()),
+            Method::GET,
+            member_headers,
+            Bytes::new(),
+        )
+        .await;
+        assert!(matches!(
+            officer_only,
+            Err(ApiError(StatusCode::FORBIDDEN, _))
+        ));
+    }
+
+    #[tokio::test]
+    async fn portal_external_event_is_shared_but_officer_approval_is_guarded() {
+        let (state, officer_headers, _, member_id) = fixture().await;
+        let event = serde_json::json!({
+            "title":"Sample Rust workshop", "organizer":"PyTorch PH", "summary":"A synthetic workshop used to verify portal writes.",
+            "category":"workshops", "scope":"external", "startAt":"2026-10-01T09:00:00+08:00", "endAt":null,
+            "timezone":"Asia/Manila", "venue":"Online", "registrationUrl":null, "registrationDeadline":null,
+            "fee":"Free", "eligibility":[], "requirements":[], "sourceUrl":"https://example.test/event",
+            "scrapedAt":"2026-09-29T00:00:00Z", "contentHash":format!("sha256:{}", "a".repeat(64)),
+            "scraperVersion":"test", "confidence":1.0, "warnings":[]
+        });
+        let created = portal::gateway(
+            State(state.clone()),
+            Path("events".to_owned()),
+            OriginalUri("/portal/api/events".parse().unwrap()),
+            Method::POST,
+            officer_headers.clone(),
+            Bytes::from(event.to_string()),
+        )
+        .await
+        .unwrap();
+        assert_eq!(created.status(), StatusCode::CREATED);
+        let body = axum::body::to_bytes(created.into_body(), 65536)
+            .await
+            .unwrap();
+        let id = serde_json::from_slice::<serde_json::Value>(&body).unwrap()["id"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+
+        let token = "c".repeat(64);
+        sqlx::query("INSERT INTO sessions(token_hash,member_id,expires_at) VALUES (?,?,?)")
+            .bind(hex::encode(Sha256::digest(token.as_bytes())))
+            .bind(&member_id)
+            .bind((chrono::Utc::now() + chrono::Duration::days(1)).to_rfc3339())
+            .execute(&state.db)
+            .await
+            .unwrap();
+        let mut member_headers = officer_headers;
+        member_headers.insert("cookie", format!("ph_session={token}").parse().unwrap());
+        let events = portal::gateway(
+            State(state.clone()),
+            Path("events".to_owned()),
+            OriginalUri("/portal/api/events".parse().unwrap()),
+            Method::GET,
+            member_headers.clone(),
+            Bytes::new(),
+        )
+        .await
+        .unwrap();
+        let body = axum::body::to_bytes(events.into_body(), 65536)
+            .await
+            .unwrap();
+        let rows = serde_json::from_slice::<serde_json::Value>(&body).unwrap();
+        assert!(rows.as_array().unwrap().iter().any(|item| item["id"] == id));
+        let approval = portal::gateway(
+            State(state),
+            Path(format!("events/{id}")),
+            OriginalUri(format!("/portal/api/events/{id}").parse().unwrap()),
+            Method::PATCH,
+            member_headers,
+            Bytes::from(r#"{"action":"approve_department","department":"secretariat"}"#),
+        )
+        .await;
+        assert!(matches!(approval, Err(ApiError(StatusCode::FORBIDDEN, _))));
+    }
+
+    #[tokio::test]
+    async fn portal_photo_is_readable_only_by_its_owner() {
+        use base64::Engine as _;
+        let (state, officer_headers, _, member_id) = fixture().await;
+        let mut jpeg = vec![0xff, 0xd8, 0xff];
+        jpeg.extend([0u8; 96]);
+        jpeg.extend([0xff, 0xd9]);
+        let payload = serde_json::json!({"title":"Synthetic photo","photoData":format!("data:image/jpeg;base64,{}", base64::engine::general_purpose::STANDARD.encode(&jpeg))});
+        let created = portal::gateway(
+            State(state.clone()),
+            Path("product/evidence".to_owned()),
+            OriginalUri("/portal/api/product/evidence".parse().unwrap()),
+            Method::POST,
+            officer_headers.clone(),
+            Bytes::from(payload.to_string()),
+        )
+        .await
+        .unwrap();
+        assert_eq!(created.status(), StatusCode::CREATED);
+        let body = axum::body::to_bytes(created.into_body(), 65536)
+            .await
+            .unwrap();
+        let value: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        let media_id = value["item"]["mediaUrl"]
+            .as_str()
+            .unwrap()
+            .split('/')
+            .next_back()
+            .unwrap()
+            .to_owned();
+        let owned = portal::media(
+            State(state.clone()),
+            Path(media_id.clone()),
+            officer_headers.clone(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(owned.status(), StatusCode::OK);
+
+        let token = "d".repeat(64);
+        sqlx::query("INSERT INTO sessions(token_hash,member_id,expires_at) VALUES (?,?,?)")
+            .bind(hex::encode(Sha256::digest(token.as_bytes())))
+            .bind(&member_id)
+            .bind((chrono::Utc::now() + chrono::Duration::days(1)).to_rfc3339())
+            .execute(&state.db)
+            .await
+            .unwrap();
+        let mut other_headers = officer_headers;
+        other_headers.insert("cookie", format!("ph_session={token}").parse().unwrap());
+        let other = portal::media(State(state), Path(media_id), other_headers).await;
+        assert!(matches!(other, Err(ApiError(StatusCode::NOT_FOUND, _))));
+    }
 
     #[tokio::test]
     async fn authenticated_requests_extend_session_to_seventh_calendar_day() {
@@ -418,6 +620,7 @@ mod tests {
             google_client_id: "test".into(),
             bootstrap_admin_email: "admin@example.test".into(),
             allowed_origin: "https://pytorch.ph".into(),
+            public_api_origin: "https://api.pytorch.ph".into(),
             http: reqwest::Client::new(),
             google_keys: tokio::sync::Mutex::new(None),
             workflow_key: None,
