@@ -42,6 +42,23 @@ After the tested binary was deployed (SHA-256 `96a768cf5bb7f9b0bb5beba1dd110c8de
 
 There were no HTTP error responses. `oha`'s request rate includes attempts; the seven aborted requests per endpoint reached the ten-second deadline, so completed-success throughput was about 49.5/s. The quickest responses were about 100 ms, showing that public network/TLS time dominates the earlier loopback latency. The p99 values include client/network variability. Ten seconds at 50 QPS is a bounded smoke load, not a sustainable-capacity claim. Earlier on the same date, public SSH and HTTPS both timed out temporarily while the instance remained running; access recovered before this test. That reachability incident remains a reliability finding separate from request latency.
 
+### Production bounded load ramp after session restore, 2026-09-29
+
+Commit `1ee6741` and API binary SHA-256 `844f4095ef91a87155c681378c2883bb23a0d15534c792c9014d06cc96e07c32` ran on the same 422,160-KiB VPS. The separate Windows Docker client used pinned `oha` 1.15.0 (`sha256:57c2247792c1466c88ecc83ddb9253aa0b58dcb852b1d7f2026a0acf7744c965`) over public HTTPS with valid TLS, keepalive, 16 connections, and 10 seconds per stage. Both read-only endpoints returned empty arrays (2 bytes). Raw results are `results/2026-09-29-auth-restore-{public-events,leaderboard}-{5,20,50,100}.json`.
+
+| Path | Offered QPS | HTTP 200 | Deadline aborts | Attempted req/s | p50 / p95 / p99 ms |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `/public/events` | 5 | 50 | 2 | 5.2 | 104 / 436 / 467 |
+| `/public/events` | 20 | 198 | 3 | 20.1 | 100 / 339 / 416 |
+| `/public/events` | 50 | 495 | 7 | 50.2 | 100 / 133 / 413 |
+| `/public/events` | 100 | 990 | 11 | 100.1 | 99 / 235 / 397 |
+| `/leaderboard` | 5 | 50 | 3 | 5.3 | 102 / 423 / 466 |
+| `/leaderboard` | 20 | 198 | 3 | 20.1 | 100 / 350 / 474 |
+| `/leaderboard` | 50 | 496 | 5 | 50.1 | 98 / 141 / 407 |
+| `/leaderboard` | 100 | 991 | 9 | 100.0 | 98 / 249 / 402 |
+
+Every completed response was HTTP 200; there were no other client errors, and `/health` stayed 200 before and after the ramp. Deadline aborts occurred at the generator window edge and are counted separately. The 100-QPS `/leaderboard` stage used 0.35 API CPU seconds for 991 successes (353 CPU ms/1,000 successes); process RSS and lifetime high-water mark after that stage were both 11.3 MiB. The first runner stopped after the 5-QPS `/public/events` stage because its deadline-abort threshold was too strict for a ten-second window; the completed stage was retained and the remaining ramp resumed. The 5-QPS p95 being higher than the 50-QPS p95 shows the short public-network samples are noisy. This run establishes successful bounded load through 100 offered QPS for empty reads, not sustained capacity or behavior with populated data and authenticated writes.
+
 ## Repeatable HTTP benchmark
 
 Use the upstream `oha` 1.15.0 OCI image (`ghcr.io/hatoo/oha:1.15`, tested digest `sha256:57c2247792c1466c88ecc83ddb9253aa0b58dcb852b1d7f2026a0acf7744c965`) on a separate client. It reports success rate, request rate, and latency percentiles in JSON. Run only public, read-only endpoints. Keep each stage at 10 seconds and concurrency at no more than 16 for the current VPS. Pin the image digest for a formal comparison.
