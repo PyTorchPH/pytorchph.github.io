@@ -15,6 +15,10 @@ const FIXTURES_URL = `${API_ORIGIN}/demo/fixtures`;
 const READ_ONLY_MESSAGE = "This is a read-only demo, so your changes were not saved.";
 const listeners = new Set<() => void>();
 
+function withDemoBasePath(text: string) {
+  return BASE_PATH ? text.replaceAll("\"/demo/", `"${BASE_PATH}/demo/`) : text;
+}
+
 export function readAudience(): DemoAudience {
   try {
     return sessionStorage.getItem(AUDIENCE_KEY) === "officer" ? "officer" : "member";
@@ -97,7 +101,7 @@ function installDemoApi() {
       if (!response.ok) throw new Error(`Demo API returned ${response.status}`);
       return response.text();
     })
-    .then(text => JSON.parse(BASE_PATH ? text.replaceAll("\"/demo/", `"${BASE_PATH}/demo/`) : text) as Fixtures)
+    .then(text => JSON.parse(withDemoBasePath(text)) as Fixtures)
     .catch(error => { fixtures = undefined; throw error; }));
 
   window.fetch = async (input, init) => {
@@ -119,7 +123,12 @@ function installDemoApi() {
       catch { return json({ error: "Sign in to access the member portal." }, 401); }
       if (method === "POST" && url.pathname === "/api/auth/login") return json({ error: "Use official sign in." }, 400);
       const target = `${API_ORIGIN}/portal${url.pathname}${url.search}`;
-      return originalFetch(target, { ...(input instanceof Request ? { method: input.method, headers: input.headers, body: input.body } : {}), ...init, credentials: "include", cache: "no-store" });
+      const response = await originalFetch(target, { ...(input instanceof Request ? { method: input.method, headers: input.headers, body: input.body } : {}), ...init, credentials: "include", cache: "no-store" });
+      const contentType = response.headers.get("content-type");
+      if (method === "GET" && BASE_PATH && url.pathname.startsWith("/api/product/") && response.ok && contentType?.includes("application/json")) {
+        return new Response(withDemoBasePath(await response.text()), { status: response.status, headers: { "Content-Type": contentType, "Cache-Control": "private, no-store" } });
+      }
+      return response;
     }
     // Official auth calls use AUTH_API_ORIGIN directly. Demo views retain their
     // existing response contracts, now supplied by the Rust service.
