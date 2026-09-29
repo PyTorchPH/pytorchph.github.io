@@ -4,9 +4,12 @@ mod auth_email;
 mod demo;
 mod events;
 mod evidence;
+mod integrity;
+mod leaderboard;
 mod mail;
 mod pdf;
 mod portal;
+mod sample;
 
 use axum::{
     Json, Router,
@@ -201,6 +204,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if env::var("SEED_TEMP_TEST_ACCOUNTS").ok().as_deref() == Some("true") {
         let password = env::var("TEMP_TEST_PASSWORD")?;
         auth_email::seed_test_accounts(&db, &password).await?;
+    }
+    if env::var("SEED_SAMPLE_DATA").ok().as_deref() == Some("true") {
+        sample::seed(&db).await?;
     }
     sqlx::query(
         "UPDATE jobs SET status='pending' WHERE status='running' AND kind='leaderboard_refresh'",
@@ -529,11 +535,12 @@ mod tests {
         let counts_before = table_counts(&db).await;
 
         sqlx::migrate!().run(&db).await.unwrap();
-        assert_eq!(
-            table_counts(&db).await,
-            counts_before,
-            "rebuild must keep every row"
-        );
+        let counts_after: Vec<(String, i64)> = table_counts(&db)
+            .await
+            .into_iter()
+            .filter(|(name, _)| counts_before.iter().any(|(before, _)| before == name))
+            .collect();
+        assert_eq!(counts_after, counts_before, "rebuild must keep every row");
         assert_eq!(
             count(&db, "SELECT COUNT(*) FROM pragma_foreign_key_check").await,
             0
@@ -660,6 +667,296 @@ mod tests {
             .await,
             0
         );
+    }
+
+    async fn portal_call(
+        state: &Arc<AppState>,
+        headers: &HeaderMap,
+        method: Method,
+        uri: &str,
+        body: serde_json::Value,
+    ) -> (StatusCode, serde_json::Value) {
+        let path = uri
+            .trim_start_matches("/portal/api/")
+            .split('?')
+            .next()
+            .unwrap()
+            .to_owned();
+        match portal::gateway(
+            State(state.clone()),
+            Path(path),
+            OriginalUri(uri.parse().unwrap()),
+            method,
+            headers.clone(),
+            Bytes::from(body.to_string()),
+        )
+        .await
+        {
+            Ok(response) => {
+                let status = response.status();
+                let bytes = axum::body::to_bytes(response.into_body(), 1 << 22)
+                    .await
+                    .unwrap();
+                (
+                    status,
+                    serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null),
+                )
+            }
+            Err(ApiError(status, message)) => (status, serde_json::json!({ "error": message })),
+        }
+    }
+
+    async fn claim(state: &Arc<AppState>, id: &str, member: &str, origin: &str) {
+        sqlx::query("INSERT INTO evidence_claims(id,member_id,kind,title,source_url,origin,content_hash,status,created_at) VALUES (?,?,'external_talk','Talk','https://example.test/talk',?,?,'pending',?)")
+            .bind(id).bind(member).bind(origin).bind(format!("hash-{id}")).bind(chrono::Utc::now().to_rfc3339())
+            .execute(&state.db).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn officer_review_feeds_leaderboard_and_sanction_appeal_restores_eligibility() {
+        let (state, officer, officer_id, member_id) = fixture().await;
+        let token = "e".repeat(64);
+        sqlx::query("INSERT INTO sessions(token_hash,member_id,expires_at) VALUES (?,?,?)")
+            .bind(hex::encode(Sha256::digest(token.as_bytes())))
+            .bind(&member_id)
+            .bind((chrono::Utc::now() + chrono::Duration::days(1)).to_rfc3339())
+            .execute(&state.db)
+            .await
+            .unwrap();
+        let mut member = officer.clone();
+        member.insert("cookie", format!("ph_session={token}").parse().unwrap());
+        let now = chrono::Utc::now();
+        sqlx::query("INSERT INTO leaderboard_seasons VALUES ('test-now','Test season',?,?)")
+            .bind((now - chrono::Duration::days(1)).to_rfc3339())
+            .bind((now + chrono::Duration::days(1)).to_rfc3339())
+            .execute(&state.db)
+            .await
+            .unwrap();
+        claim(&state, "c-ok", &member_id, "manual").await;
+        claim(&state, "c-fake", &member_id, "manual").await;
+        claim(&state, "c-own", &officer_id, "manual").await;
+
+        let (status, queue) = portal_call(
+            &state,
+            &officer,
+            Method::GET,
+            "/portal/api/officer/evidence",
+            serde_json::json!(null),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+        assert!(
+            queue
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|c| c["provenance"] == "manual_pending")
+        );
+
+        let (status, _) = portal_call(
+            &state,
+            &officer,
+            Method::PATCH,
+            "/portal/api/officer/evidence/c-own",
+            serde_json::json!({"decision":"approve","level":"winner_top_award","reason":""}),
+        )
+        .await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "no self-review");
+        let (status, _) = portal_call(
+            &state,
+            &member,
+            Method::PATCH,
+            "/portal/api/officer/evidence/c-ok",
+            serde_json::json!({"decision":"approve","level":"contributor","reason":""}),
+        )
+        .await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "members cannot review");
+        let (status, approved) = portal_call(
+            &state,
+            &officer,
+            Method::PATCH,
+            "/portal/api/officer/evidence/c-ok",
+            serde_json::json!({"decision":"approve","level":"contributor","reason":""}),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(approved["provenance"], "officer_reviewed");
+        assert_eq!(
+            approved["points"], 60,
+            "contributor = 2 units x 10 x manual weight 3"
+        );
+        assert_eq!(approved["proposedLevel"], "contributor");
+
+        let (_, board) = portal_call(
+            &state,
+            &member,
+            Method::GET,
+            "/portal/api/member/leaderboard?page=1&pageSize=25&view=both",
+            serde_json::json!(null),
+        )
+        .await;
+        let me = board["entries"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|e| e["isCurrentUser"] == true)
+            .unwrap()
+            .clone();
+        assert_eq!(me["verifiedPoints"], 60);
+        assert_eq!(
+            me["pendingPoints"], 30,
+            "one pending manual claim at participation"
+        );
+        assert_eq!(board["season"]["state"], "active");
+        let (_, overview) = portal_call(
+            &state,
+            &member,
+            Method::GET,
+            "/portal/api/member/overview",
+            serde_json::json!(null),
+        )
+        .await;
+        assert_eq!(overview["summary"]["points"], 60);
+        assert_eq!(overview["summary"]["verifiedEvidence"], 1);
+
+        let (status, _) = portal_call(&state, &officer, Method::PATCH, "/portal/api/officer/evidence/c-fake",
+            serde_json::json!({"decision":"confirm_falsification","reason":"Certificate was edited"})).await;
+        assert_eq!(status, StatusCode::OK);
+        let (_, cases) = portal_call(
+            &state,
+            &member,
+            Method::GET,
+            "/portal/api/evidence/integrity",
+            serde_json::json!(null),
+        )
+        .await;
+        let sanction_id = cases[0]["sanctionId"].as_str().unwrap().to_owned();
+        assert_eq!(cases[0]["reason"], "Certificate was edited");
+        let (_, board) = portal_call(
+            &state,
+            &member,
+            Method::GET,
+            "/portal/api/member/leaderboard",
+            serde_json::json!(null),
+        )
+        .await;
+        assert!(
+            board["entries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|e| e["isCurrentUser"] == false),
+            "sanctioned member is not ranked"
+        );
+
+        let (status, _) = portal_call(&state, &member, Method::POST, "/portal/api/evidence/integrity",
+            serde_json::json!({"sanctionId": sanction_id, "note": "I can share the original file."})).await;
+        assert_eq!(status, StatusCode::CREATED);
+        let (status, _) = portal_call(&state, &member, Method::POST, "/portal/api/evidence/integrity",
+            serde_json::json!({"sanctionId": sanction_id, "note": "Second appeal while one is open."})).await;
+        assert_eq!(status, StatusCode::CONFLICT);
+        let (_, appeals) = portal_call(
+            &state,
+            &officer,
+            Method::GET,
+            "/portal/api/officer/evidence/appeals",
+            serde_json::json!(null),
+        )
+        .await;
+        assert_eq!(appeals[0]["violationType"], "manual_falsification");
+        let appeal_id = appeals[0]["id"].as_str().unwrap().to_owned();
+        let (status, _) = portal_call(
+            &state,
+            &officer,
+            Method::PATCH,
+            &format!("/portal/api/officer/evidence/appeals/{appeal_id}"),
+            serde_json::json!({"decision":"restore","reason":"Original file verified"}),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+        let (_, cases) = portal_call(
+            &state,
+            &member,
+            Method::GET,
+            "/portal/api/evidence/integrity",
+            serde_json::json!(null),
+        )
+        .await;
+        assert_eq!(cases, serde_json::json!([]));
+        let (_, board) = portal_call(
+            &state,
+            &member,
+            Method::GET,
+            "/portal/api/member/leaderboard",
+            serde_json::json!(null),
+        )
+        .await;
+        assert!(
+            board["entries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|e| e["isCurrentUser"] == true)
+        );
+
+        sqlx::query("DELETE FROM members WHERE id = ?")
+            .bind(&member_id)
+            .execute(&state.db)
+            .await
+            .unwrap();
+        for table in [
+            "evidence_claims WHERE member_id != '' AND id != 'c-own'",
+            "evidence_claim_reviews",
+            "leaderboard_sanctions",
+            "evidence_appeals",
+        ] {
+            assert_eq!(
+                count(&state.db, &format!("SELECT COUNT(*) FROM {table}")).await,
+                0,
+                "{table}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn sample_data_is_idempotent_ranked_and_removed_by_one_delete() {
+        let (state, officer, _, _) = fixture().await;
+        sample::seed(&state.db).await.unwrap();
+        sample::seed(&state.db).await.unwrap();
+        assert_eq!(
+            count(
+                &state.db,
+                "SELECT COUNT(*) FROM members WHERE is_sample = 1"
+            )
+            .await,
+            8
+        );
+        assert_eq!(
+            count(&state.db, "SELECT COUNT(*) FROM point_ledger").await,
+            36
+        );
+        let (_, board) = portal_call(
+            &state,
+            &officer,
+            Method::GET,
+            "/portal/api/member/leaderboard?season=",
+            serde_json::json!(null),
+        )
+        .await;
+        assert_eq!(board["entries"][0]["displayLabel"], "Ari_Sample");
+
+        sqlx::query("DELETE FROM members WHERE is_sample = 1")
+            .execute(&state.db)
+            .await
+            .unwrap();
+        for table in ["point_ledger", "member_skills", "evidence_claims"] {
+            assert_eq!(
+                count(&state.db, &format!("SELECT COUNT(*) FROM {table}")).await,
+                0,
+                "{table}"
+            );
+        }
+        assert_eq!(count(&state.db, "SELECT COUNT(*) FROM members").await, 2);
     }
 
     #[tokio::test]
