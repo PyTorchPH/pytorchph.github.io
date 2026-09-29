@@ -39,8 +39,8 @@ type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; capa
 const sharedNavItems: NavItem[] = [
   { href: "/dashboard", label: "My Performance", icon: Home },
   { href: "/leaderboards", label: "Leaderboards", icon: Trophy },
-  { href: "/career/evidence", label: "Career Evidence", icon: UserRound, capability: "evidence_read" },
-  { href: "/career/resumes", label: "Resumes & Opportunities", icon: BriefcaseBusiness, capability: "resume_read", alsoActiveOn: ["/jobs/opportunities", "/jobs/analytics", "/jobs/automation"] },
+  { href: "/career/evidence", label: "Career Evidence", icon: UserRound },
+  { href: "/career/resumes", label: "Resumes & Opportunities", icon: BriefcaseBusiness, alsoActiveOn: ["/jobs/opportunities", "/jobs/analytics", "/jobs/automation"] },
   { href: "/events", label: "Community Events", icon: CalendarDays },
   { href: "/dashboard/community", label: "Community Preview", icon: MessageCircle },
   { href: "/dashboard/profile", label: "My Profile", icon: UserCheck },
