@@ -8,6 +8,7 @@ import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import type { MemberPrivacySettings } from "@pytorch-ph/domain-protocol/privacy-feedback";
 
 const toggles: Array<[keyof MemberPrivacySettings, string, string]> = [
+  ["shareAchievements", "Show my achievements on the leaderboard", "Off by default. When on, members who open your leaderboard row see your approved evidence, event placements and verified skills. Anonymous ranking still hides your name and source links."],
   ["hideGoogleIdentity", "Hide Google identity", "OAuth email and provider identity stay out of member-facing views."],
   ["hideRealName", "Hide real name", "Use only the selected leaderboard label outside owner/officer-authorized workflows."],
   ["anonymousRanking", "Anonymous seasonal ranking", "Use a season-scoped alias while preserving your highlighted own row."],
@@ -20,7 +21,7 @@ export function PrivacyControls() {
   const client = useQueryClient();
   const privacy = useQuery({ queryKey: ["member-privacy"], queryFn: () => fetchJson<MemberPrivacySettings>("/api/member/privacy", { cache: "no-store" }) });
   const [draft, setDraft] = useState<MemberPrivacySettings | null>(null);
-  useEffect(() => { if (privacy.data) setDraft(privacy.data); }, [privacy.data]);
+  useEffect(() => { if (privacy.data) setDraft({ ...privacy.data, shareAchievements: privacy.data.shareAchievements ?? false }); }, [privacy.data]);
   const save = useMutation({
     mutationFn: (value: MemberPrivacySettings) => fetchJson<MemberPrivacySettings>("/api/member/privacy", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(value) }),
     onSuccess: (value) => { client.setQueryData(["member-privacy"], value); toast.success("Privacy controls saved."); },

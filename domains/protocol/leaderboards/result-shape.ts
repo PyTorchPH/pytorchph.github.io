@@ -9,7 +9,13 @@ export const identitySettingsSchema = z.object({ username: leaderboardUsernameSc
 export type LeaderboardIdentitySettings = z.infer<typeof identitySettingsSchema> & { reviewRequired: boolean; preview: string };
 export const leaderboardViewSchema = z.enum(["both", "verified", "pending"]);
 export type LeaderboardView = z.infer<typeof leaderboardViewSchema>;
-export type LeaderboardEntry = { rank: number; displayLabel: string; tier: string; division: string; points: number; verifiedPoints: number; pendingPoints: number; streak: number; verifiedSkills: string[]; isCurrentUser: boolean };
+export type LeaderboardEntry = { rank: number; displayLabel: string; tier: string; division: string; points: number; verifiedPoints: number; pendingPoints: number; streak: number; verifiedSkills: string[]; isCurrentUser: boolean; profileId?: string | null };
+// Achievements shown when a member opted in (or for the viewer's own row).
+export type LeaderboardProfile = {
+  standing: LeaderboardEntry;
+  evidence: Array<{ title: string; kind: string; level: string | null; points: number; date: string | null; sourceUrl: string | null }>;
+  placements: Array<{ event: string; place: number | null; points: number; date: string }>;
+};
 export type LeaderboardPayload = {
   season: { slug: string; label: string; state: "active" | "completed"; startsAt: string; endsAt: string };
   entries: LeaderboardEntry[];

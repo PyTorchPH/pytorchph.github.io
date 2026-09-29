@@ -181,6 +181,9 @@ pub async fn gateway(
             "member/leaderboard" => {
                 Some(leaderboard::member_leaderboard(&state.db, &actor, uri.query()).await?)
             }
+            "member/leaderboard/profile" => {
+                Some(leaderboard::member_profile(&state.db, &actor, uri.query()).await?)
+            }
             "member/overview" => {
                 let (_, mut overview) = fixture(&actor.role, &key)
                     .ok_or(ApiError(StatusCode::NOT_FOUND, "Product view not found"))?;
@@ -353,10 +356,17 @@ async fn privacy(db: &SqlitePool, member_id: &str, input: Value) -> ApiResult<Va
     let object = input
         .as_object()
         .ok_or_else(|| bad("Invalid privacy settings"))?;
-    if object.len() != allowed.len()
-        || allowed
+    // shareAchievements is optional so older saved settings stay valid; absent means off.
+    let optional = ["shareAchievements"];
+    if allowed
+        .iter()
+        .any(|key| !object.get(*key).is_some_and(Value::is_boolean))
+        || object
+            .keys()
+            .any(|key| !allowed.contains(&key.as_str()) && !optional.contains(&key.as_str()))
+        || optional
             .iter()
-            .any(|key| !object.get(*key).is_some_and(Value::is_boolean))
+            .any(|key| object.get(*key).is_some_and(|value| !value.is_boolean()))
     {
         return Err(bad("Invalid privacy settings"));
     }

@@ -11,7 +11,6 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
-  CircleDot,
   Cloud,
   Database,
   Download,
@@ -853,27 +852,6 @@ export function CareerEvidenceView({
           ))}
         </div>
       </Card>
-      {evidence.blockers.length > 0 && (
-        <Card className="border-warning/30 bg-warning/10">
-          <CardHeader>
-            <div>
-              <CardTitle>Evidence blockers</CardTitle>
-              <CardDescription>
-                These require a real source or human action.
-              </CardDescription>
-            </div>
-            <AlertTriangle className="text-warning" size={20} />
-          </CardHeader>
-          <ul className="space-y-2 text-sm">
-            {evidence.blockers.map((item) => (
-              <li className="flex gap-2" key={item}>
-                <CircleDot className="mt-1 flex-none text-warning" size={13} />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
       {source && (
         <SourceDialog
           canAutomate={canAutomate}

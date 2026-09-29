@@ -1,7 +1,8 @@
 //! Season leaderboard and member overview computed from the point ledger, pending
 //! evidence, rank tiers and verified skills. Members with an active integrity
 //! sanction are excluded from ranking until an officer restores them.
-use crate::{ApiResult, auth::Viewer, integrity::member_label, internal};
+use crate::{ApiError, ApiResult, auth::Viewer, integrity::member_label, internal};
+use axum::http::StatusCode;
 use chrono::{DateTime, Datelike, FixedOffset, Utc};
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
@@ -43,6 +44,9 @@ struct Entry {
     pending: i64,
     streak: i64,
     skills: Vec<String>,
+    anonymous: bool,
+    // Implicit deny: achievements are visible to others only after the member opts in.
+    shares_achievements: bool,
 }
 
 impl Entry {
@@ -153,10 +157,11 @@ async fn standings(
     season: Option<&Season>,
     now: DateTime<Utc>,
 ) -> ApiResult<Vec<Entry>> {
-    let members: Vec<(String, String, Option<String>, Option<i64>)> = sqlx::query_as(
+    let members: Vec<(String, String, Option<String>, Option<i64>, Option<i64>)> = sqlx::query_as(
         "SELECT m.id, m.public_handle, \
                 (SELECT json_extract(value_json, '$.username') FROM portal_state WHERE scope = m.id AND state_key = '/api/member/leaderboard-identity'), \
-                (SELECT json_extract(value_json, '$.anonymousRanking') FROM portal_state WHERE scope = m.id AND state_key = '/api/member/privacy') \
+                (SELECT json_extract(value_json, '$.anonymousRanking') FROM portal_state WHERE scope = m.id AND state_key = '/api/member/privacy'), \
+                (SELECT json_extract(value_json, '$.shareAchievements') FROM portal_state WHERE scope = m.id AND state_key = '/api/member/privacy') \
          FROM members m WHERE m.role != 'pending' \
          AND NOT EXISTS (SELECT 1 FROM leaderboard_sanctions s WHERE s.member_id = m.id AND s.lifted_at IS NULL)",
     )
@@ -214,7 +219,7 @@ async fn standings(
 
     let mut entries: Vec<Entry> = members
         .iter()
-        .map(|(id, handle, username, anonymous)| Entry {
+        .map(|(id, handle, username, anonymous, shares)| Entry {
             member_id: id.clone(),
             label: if anonymous.unwrap_or(0) == 1 {
                 member_label(id)
@@ -228,6 +233,8 @@ async fn standings(
             pending: provisional.get(id.as_str()).copied().unwrap_or(0),
             streak: weeks.get(id.as_str()).map_or(0, |set| streak(set, now)),
             skills: member_skills.remove(id.as_str()).unwrap_or_default(),
+            anonymous: anonymous.unwrap_or(0) == 1,
+            shares_achievements: shares.unwrap_or(0) == 1,
         })
         .collect();
     entries.sort_by(|a, b| {
@@ -250,6 +257,7 @@ fn entry_json(entry: &Entry, rank: usize, viewer: &str, tiers: &[(String, i64)])
         "streak": entry.streak,
         "verifiedSkills": entry.skills,
         "isCurrentUser": entry.member_id == viewer,
+        "profileId": (entry.shares_achievements || entry.member_id == viewer).then_some(&entry.member_id),
         "tier": tier,
         "division": division,
     })
@@ -400,4 +408,67 @@ pub(crate) async fn overlay_overview(
     });
     overview["meta"] = json!({"mode": "live", "label": "Live standing"});
     Ok(())
+}
+
+/// Achievements of one ranked member: approved evidence and event placements. Visible to the
+/// member themself, or to others only when the member turned on shareAchievements.
+pub(crate) async fn member_profile(
+    db: &SqlitePool,
+    viewer: &Viewer,
+    query: Option<&str>,
+) -> ApiResult<Value> {
+    let now = Utc::now();
+    let target = query_param(query, "id").unwrap_or_default();
+    let all_seasons = seasons(db).await?;
+    let season = select_season(&all_seasons, query_param(query, "season").as_deref(), now);
+    let tiers = tiers(db).await?;
+    let ranked = standings(db, season, now).await?;
+    let (index, entry) = ranked
+        .iter()
+        .enumerate()
+        .find(|(_, entry)| entry.member_id == target)
+        .ok_or(ApiError(StatusCode::NOT_FOUND, "Member is not ranked"))?;
+    if entry.member_id != viewer.id && !entry.shares_achievements {
+        return Err(ApiError(
+            StatusCode::FORBIDDEN,
+            "This member keeps achievements private",
+        ));
+    }
+    let evidence: Vec<(String, String, Option<i64>, Option<String>, String, Option<String>)> = sqlx::query_as(
+        "SELECT c.title, c.kind, c.points, c.reviewed_at, c.source_url, \
+                (SELECT r.verified_level FROM evidence_claim_reviews r WHERE r.claim_id = c.id AND r.verified_level IS NOT NULL ORDER BY r.reviewed_at DESC LIMIT 1) \
+         FROM evidence_claims c WHERE c.member_id = ? AND c.status = 'approved' ORDER BY c.reviewed_at DESC LIMIT 50",
+    )
+    .bind(&entry.member_id)
+    .fetch_all(db)
+    .await
+    .map_err(internal)?;
+    let placements: Vec<(String, Option<i64>, i64, String)> = sqlx::query_as(
+        "SELECT e.title, l.place, l.delta, l.created_at FROM point_ledger l JOIN events e ON e.id = l.event_id \
+         WHERE l.member_id = ? AND l.delta > 0 ORDER BY l.created_at DESC LIMIT 50",
+    )
+    .bind(&entry.member_id)
+    .fetch_all(db)
+    .await
+    .map_err(internal)?;
+    // Source links can identify an anonymous member, so they are withheld for anonymous rows.
+    let evidence: Vec<Value> = evidence
+        .into_iter()
+        .map(|(title, kind, points, reviewed_at, source_url, level)| {
+            json!({
+                "title": title, "kind": kind, "level": level, "points": points.unwrap_or(0),
+                "date": reviewed_at,
+                "sourceUrl": (!entry.anonymous && !source_url.is_empty()).then_some(source_url),
+            })
+        })
+        .collect();
+    let placements: Vec<Value> = placements
+        .into_iter()
+        .map(|(event, place, points, at)| json!({"event": event, "place": place, "points": points, "date": at}))
+        .collect();
+    Ok(json!({
+        "standing": entry_json(entry, index + 1, &viewer.id, &tiers),
+        "evidence": evidence,
+        "placements": placements,
+    }))
 }
