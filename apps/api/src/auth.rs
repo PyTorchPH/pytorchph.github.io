@@ -323,6 +323,62 @@ pub struct MemberListItem {
     role: String,
 }
 
+#[derive(Deserialize)]
+pub struct DeleteAccount {
+    confirm: String,
+}
+
+/// A member leaving PyTorch PH deletes their account; foreign keys cascade every row they
+/// own (sessions, points, claims, attendance, roles, audit, portal state).
+pub async fn delete_account(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Json(input): Json<DeleteAccount>,
+) -> ApiResult<Response> {
+    check_origin(&state, &headers)?;
+    let actor = viewer(&state, &headers).await?;
+    if input.confirm != "DELETE" {
+        return Err(ApiError(
+            StatusCode::BAD_REQUEST,
+            "Type DELETE to confirm account deletion",
+        ));
+    }
+    if actor.role == "admin" {
+        let (admins,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM members WHERE role = 'admin'")
+            .fetch_one(&state.db)
+            .await
+            .map_err(internal)?;
+        if admins <= 1 {
+            return Err(ApiError(
+                StatusCode::CONFLICT,
+                "Assign another admin before deleting the last admin account",
+            ));
+        }
+    }
+    let deleted = sqlx::query("DELETE FROM members WHERE id = ?")
+        .bind(&actor.id)
+        .execute(&state.db)
+        .await
+        .map_err(internal)?
+        .rows_affected();
+    tracing::info!(
+        component = "auth",
+        operation = "delete_account",
+        role = %actor.role,
+        deleted,
+        "auth.account_deleted"
+    );
+    let mut response = Json(serde_json::json!({ "ok": true })).into_response();
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_static("ph_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT"),
+    );
+    response
+        .headers_mut()
+        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    Ok(response)
+}
+
 pub async fn list_members(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
