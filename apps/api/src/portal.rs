@@ -1,4 +1,6 @@
-use crate::{ApiError, ApiResult, AppState, auth, bad, check_origin, internal};
+use crate::{
+    ApiError, ApiResult, AppState, auth, bad, check_origin, integrity, internal, leaderboard,
+};
 use axum::{
     Json,
     body::Bytes,
@@ -174,6 +176,25 @@ pub async fn gateway(
                 read_feedback(&state.db, &actor, uri.query()).await?,
             ));
         }
+        // Leaderboard, integrity and review data come from their tables, not JSON state.
+        let computed = match path.as_str() {
+            "member/leaderboard" => {
+                Some(leaderboard::member_leaderboard(&state.db, &actor, uri.query()).await?)
+            }
+            "member/overview" => {
+                let (_, mut overview) = fixture(&actor.role, &key)
+                    .ok_or(ApiError(StatusCode::NOT_FOUND, "Product view not found"))?;
+                leaderboard::overlay_overview(&state.db, &actor, &mut overview).await?;
+                Some(overview)
+            }
+            "officer/evidence" => Some(integrity::officer_claims(&state.db).await?),
+            "officer/evidence/appeals" => Some(integrity::officer_appeals(&state.db).await?),
+            "evidence/integrity" => Some(integrity::member_integrity(&state.db, &actor.id).await?),
+            _ => None,
+        };
+        if let Some(value) = computed {
+            return Ok(reply(StatusCode::OK, value));
+        }
         let owner = scope(&actor.id, &key);
         if let Some(mut value) = stored(&state.db, owner, &query_key).await? {
             if path.starts_with("product/") {
@@ -199,6 +220,18 @@ pub async fn gateway(
     let input = json_body(&body)?;
     let (status, result) = match (method.as_str(), path.as_str()) {
         ("PUT", "member/privacy") => (StatusCode::OK, privacy(&state.db, &actor.id, input).await?),
+        ("PATCH", _) if path.starts_with("officer/evidence/appeals/") => (
+            StatusCode::OK,
+            integrity::resolve_appeal(&state.db, &actor, &path[25..], &input).await?,
+        ),
+        ("PATCH", _) if path.starts_with("officer/evidence/") => (
+            StatusCode::OK,
+            integrity::review_claim(&state.db, &actor, &path[17..], &input).await?,
+        ),
+        ("POST", "evidence/integrity") => (
+            StatusCode::CREATED,
+            integrity::open_appeal(&state.db, &actor, &input).await?,
+        ),
         ("PUT", "member/leaderboard-identity") => (
             StatusCode::OK,
             identity(&state.db, &actor.id, &actor.role, input).await?,

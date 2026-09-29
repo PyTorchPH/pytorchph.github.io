@@ -22,6 +22,16 @@ MAIL_RELAY_TOKEN=<private bearer token>
 
 The two temporary test accounts are seeded only when `SEED_TEMP_TEST_ACCOUNTS=true` and `TEMP_TEST_PASSWORD` are set during startup. Set the password to the approved temporary value in the private environment file, then remove both settings after the first successful start so later account deletion is durable. The seeder creates `member@admin.ph` as `member` and `officer@admin.ph` as `officer`. They bypass email verification only for the explicitly approved production test.
 
+Sample leaderboard data (8 synthetic `*_Sample` members, weekly points, skills, pending claims) is seeded only when `SEED_SAMPLE_DATA=true` at startup; reruns are idempotent. Every sample row belongs to a member with `is_sample = 1`, so one statement removes all of it through the cascading foreign keys:
+
+```sh
+sqlite3 /var/lib/pytorch-ph-api/portal.db "PRAGMA foreign_keys=ON; DELETE FROM members WHERE is_sample = 1;"
+```
+
+Remove `SEED_SAMPLE_DATA` from the environment file before the next restart, or the rows are seeded again.
+
+Data deletion: `DELETE /members/me` with `{"confirm":"DELETE"}` (same-origin, signed in) deletes the member and every row they own (migration `0005`). Rows that only record the acting officer on other members' or organization data keep the data and set that officer to `NULL`. The last `admin` cannot delete their account.
+
 Before deploying a new binary or migration, back up the SQLite database using its online backup API or `sqlite3 .backup` and preserve the prior binary. Check `GET /health`, role-specific `/auth/me`, and the Postman smoke folder. Roll back by stopping the service, restoring the prior binary and compatible database backup, and restarting. Never roll back a migrated database with an older binary without the matching backup.
 
 The public Pages build sets both `NEXT_PUBLIC_AUTH_API_ORIGIN` and `NEXT_PUBLIC_API_ORIGIN` to `https://api.pytorch.ph`. Login/signup, officer competitive events, entrants, results, attendance import, mail drafts, officer evidence review, and member evidence submission use the Rust API. Authenticated legacy portal views use `/portal/api/*` with member-scoped synthetic state in SQLite; shared external events and feedback use the organization scope. Uploaded demo JPEGs use owner-only `/portal/media/{id}` reads. The seeded fixtures and static AI responses remain synthetic and must not be represented as real member records or live AI output. AI provider settings are intentionally rejected until separately configured. `POST /api/job-market/refresh` remains disabled because ingestion is controlled by the backend.
