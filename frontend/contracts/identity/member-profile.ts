@@ -65,7 +65,7 @@ export type EmploymentInput = {
 export type ProfileInput = {
   gender: string;
   genderDescription?: string;
-  /** Exact age in years (13–100); omitted when agePreferNotToSay is true. */
+  /** Exact age in years (1–120, every age may join); omitted when agePreferNotToSay is true. */
   age?: number;
   agePreferNotToSay?: boolean;
   regionCode: string;

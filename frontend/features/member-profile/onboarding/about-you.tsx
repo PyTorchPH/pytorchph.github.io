@@ -3,7 +3,7 @@
 // "About you" section: gender, exact age, region, and current status.
 // Module map:
 //   AboutYouSection   the section; shows the self-describe box only when that gender is chosen
-//   AgeField          typed age (13–100) with a "Prefer not to say" checkbox beside it
+//   AgeField          typed age (1–120) with a "Prefer not to say" checkbox beside it
 
 import { InfoPopover } from "@pytorch-ph/design-system/info-popover";
 import { SELF_DESCRIBE, type ProfileOptions } from "@pytorch-ph/domain-protocol/identity";
