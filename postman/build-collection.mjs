@@ -11,6 +11,7 @@ const vars = [
   ["jobId", ""], ["runWrites", "false"], ["manualRequest", ""],
   ["runId", ""], ["contentHash", ""], ["entrantId", ""], ["draftRevision", ""],
   ["category", "postman_test"], ["googleFormId", ""], ["internalMailKey", ""],
+  ["portalEventId", ""], ["portalOpportunityId", ""], ["portalEvidenceId", ""], ["portalFeedbackId", ""], ["portalMediaId", ""], ["portalUsername", "postman_demo"], ["photoData", ""],
 ];
 
 function request(name, method, path, { body, status, test, before, manual = false, headers = [] } = {}) {
@@ -112,6 +113,36 @@ const workflow = [
   request("15 Member signout", "POST", "/auth/signout", { before: writeGuard, status: 200 }),
 ];
 
+// These calls use the same authenticated browser contracts as the exported portal.
+// Select a single manualRequest after logging in as the matching role.
+const portal = [
+  request("Portal privacy read", "GET", "/portal/api/member/privacy", { manual: true }),
+  request("Portal privacy save", "PUT", "/portal/api/member/privacy", { manual: true, body: { hideGoogleIdentity: true, hideRealName: false, deviceCacheEnabled: true, anonymousRanking: false, automaticErrorReports: true } }),
+  request("Portal leaderboard identity", "GET", "/portal/api/member/leaderboard-identity", { manual: true }),
+  request("Portal username availability", "GET", "/portal/api/member/leaderboard-identity?username={{portalUsername}}", { manual: true }),
+  request("Portal identity save", "PUT", "/portal/api/member/leaderboard-identity", { manual: true, body: { username: "{{portalUsername}}", mode: "nickname", realNameConsent: false } }),
+  request("Portal opportunities", "GET", "/portal/api/product/opportunities", { manual: true }),
+  request("Portal demo event toggle", "POST", "/portal/api/product/demo-action", { manual: true, body: { action: "toggle_event", id: "event-ignite" } }),
+  request("Portal opportunity create", "POST", "/portal/api/product/opportunities", { manual: true, status: 201, body: { company: "Postman test", title: "Synthetic role", location: "Remote", workMode: "remote", stage: "discovered", fit: 70 }, test: "pm.collectionVariables.set('portalOpportunityId', pm.response.json().opportunity.id);" }),
+  request("Portal opportunity update", "PATCH", "/portal/api/product/opportunities/{{portalOpportunityId}}", { manual: true, body: { company: "Postman test", title: "Synthetic role", location: "Remote", workMode: "remote", stage: "drafted", fit: 70 } }),
+  request("Portal career evidence", "GET", "/portal/api/product/career-evidence", { manual: true }),
+  request("Portal evidence source connect", "POST", "/portal/api/product/sources/github", { manual: true, body: { action: "connect", url: "https://github.com/pytorch-ph" } }),
+  request("Portal evidence create", "POST", "/portal/api/product/evidence", { manual: true, status: 201, body: { item: { title: "Synthetic Postman evidence", description: "Static test data" } }, test: "pm.collectionVariables.set('portalEvidenceId', pm.response.json().item.id);" }),
+  request("Portal evidence update", "PATCH", "/portal/api/product/evidence/{{portalEvidenceId}}", { manual: true, body: { item: { title: "Synthetic Postman evidence", description: "Revised static test data" }, approve: true } }),
+  request("Portal photo upload", "POST", "/portal/api/product/evidence", { manual: true, status: 201, body: { title: "Synthetic Postman photo", photoData: "{{photoData}}" }, test: "pm.collectionVariables.set('portalMediaId', pm.response.json().item.mediaUrl.split('/').pop());" }),
+  request("Portal private photo", "GET", "/portal/media/{{portalMediaId}}", { manual: true, test: "pm.test('JPEG content type', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('image/jpeg'));" }),
+  request("Portal external events", "GET", "/portal/api/events", { manual: true }),
+  request("Portal external event submit", "POST", "/portal/api/events", { manual: true, status: 201, body: { title: "Synthetic Postman event", organizer: "PyTorch PH", summary: "Synthetic external event used to verify production writes.", category: "workshops", scope: "external", startAt: "2026-10-01T09:00:00+08:00", endAt: null, timezone: "Asia/Manila", venue: "Online", registrationUrl: null, registrationDeadline: null, fee: "Free", eligibility: [], requirements: [], sourceUrl: "https://example.com/postman-event", scrapedAt: "2026-09-29T00:00:00Z", contentHash: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", scraperVersion: "postman", confidence: 1, warnings: [] }, test: "pm.collectionVariables.set('portalEventId', pm.response.json().id);" }),
+  request("Portal event interest", "PATCH", "/portal/api/events/{{portalEventId}}", { manual: true, body: { action: "interest" } }),
+  request("Portal feedback read", "GET", "/portal/api/feedback", { manual: true }),
+  request("Portal feedback submit", "POST", "/portal/api/feedback", { manual: true, status: 201, body: { category: "suggestion", description: "Synthetic Postman feedback", route: "/dashboard/", uiState: { title: "Dashboard", viewport: "1280x720", online: true, componentMarkers: [] } }, test: "pm.collectionVariables.set('portalFeedbackId', pm.response.json().id);" }),
+  request("Portal feedback update (officer)", "PATCH", "/portal/api/feedback/{{portalFeedbackId}}", { manual: true, body: { status: "triaged", severity: "low", assignedTo: null, resolution: null } }),
+  request("Portal feedback note (officer)", "POST", "/portal/api/feedback/{{portalFeedbackId}}/notes", { manual: true, status: 201, body: { body: "Synthetic Postman review note" } }),
+  request("Portal AI status (static)", "GET", "/portal/api/backend/local-ai/status", { manual: true, test: "pm.test('static AI', () => pm.expect(pm.response.json().configured).to.eql(false));" }),
+  request("Portal AI analysis (static)", "POST", "/portal/api/product/evidence/analyze", { manual: true, body: { consent: true, evidenceId: "{{portalEvidenceId}}", current: { title: "Synthetic Postman evidence", description: "Static data" } } }),
+  request("Portal AI upskill (static)", "POST", "/portal/api/backend/local-ai/upskill", { manual: true, body: { role: "developer", skills: ["Python"] } }),
+];
+
 const collection = {
   info: { name: "PyTorch PH API", description: "Run Public + Auth smoke first. The Member and officer write workflow requires runWrites=true and persists synthetic records. Manual folders cover admin and external integrations. Uses Postman's cookie jar.", schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
   variable: vars.map(([key, value]) => ({ key, value })),
@@ -122,6 +153,7 @@ const collection = {
     { name: "Signup and Google manual", item: signup },
     { name: "Entity reads manual", item: readsWithIds },
     { name: "Writes manual", item: writes },
+    { name: "Portal production demo contracts", item: portal },
   ],
 };
 writeFileSync(new URL("./PyTorch-PH.postman_collection.json", import.meta.url), `${JSON.stringify(collection, null, 2)}\n`);

@@ -96,6 +96,34 @@
     {
       "key": "internalMailKey",
       "value": ""
+    },
+    {
+      "key": "portalEventId",
+      "value": ""
+    },
+    {
+      "key": "portalOpportunityId",
+      "value": ""
+    },
+    {
+      "key": "portalEvidenceId",
+      "value": ""
+    },
+    {
+      "key": "portalFeedbackId",
+      "value": ""
+    },
+    {
+      "key": "portalMediaId",
+      "value": ""
+    },
+    {
+      "key": "portalUsername",
+      "value": "postman_demo"
+    },
+    {
+      "key": "photoData",
+      "value": ""
     }
   ],
   "item": [
@@ -2790,6 +2818,1353 @@
               "script": {
                 "exec": [
                   "pm.test(\"Record dispatch receipt: HTTP 204\", () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Portal production demo contracts",
+      "item": [
+        {
+          "name": "Portal privacy read",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/member/privacy",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "member",
+                "privacy"
+              ]
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal privacy read: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal privacy save",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/member/privacy",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "member",
+                "privacy"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hideGoogleIdentity\": true,\n  \"hideRealName\": false,\n  \"deviceCacheEnabled\": true,\n  \"anonymousRanking\": false,\n  \"automaticErrorReports\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal privacy save: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal leaderboard identity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/member/leaderboard-identity",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "member",
+                "leaderboard-identity"
+              ]
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal leaderboard identity: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal username availability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/member/leaderboard-identity?username={{portalUsername}}",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "member",
+                "leaderboard-identity?username={{portalUsername}}"
+              ]
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal username availability: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal identity save",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/member/leaderboard-identity",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "member",
+                "leaderboard-identity"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{portalUsername}}\",\n  \"mode\": \"nickname\",\n  \"realNameConsent\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal identity save: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal opportunities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/opportunities",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "opportunities"
+              ]
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal opportunities: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal demo event toggle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/demo-action",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "demo-action"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"toggle_event\",\n  \"id\": \"event-ignite\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal demo event toggle: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal opportunity create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/opportunities",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "opportunities"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company\": \"Postman test\",\n  \"title\": \"Synthetic role\",\n  \"location\": \"Remote\",\n  \"workMode\": \"remote\",\n  \"stage\": \"discovered\",\n  \"fit\": 70\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal opportunity create: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('portalOpportunityId', pm.response.json().opportunity.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal opportunity update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/opportunities/{{portalOpportunityId}}",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "opportunities",
+                "{{portalOpportunityId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company\": \"Postman test\",\n  \"title\": \"Synthetic role\",\n  \"location\": \"Remote\",\n  \"workMode\": \"remote\",\n  \"stage\": \"drafted\",\n  \"fit\": 70\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal opportunity update: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal career evidence",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/career-evidence",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "career-evidence"
+              ]
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal career evidence: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal evidence source connect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/sources/github",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "sources",
+                "github"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"connect\",\n  \"url\": \"https://github.com/pytorch-ph\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal evidence source connect: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal evidence create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/evidence",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "evidence"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": {\n    \"title\": \"Synthetic Postman evidence\",\n    \"description\": \"Static test data\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal evidence create: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('portalEvidenceId', pm.response.json().item.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal evidence update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/evidence/{{portalEvidenceId}}",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "evidence",
+                "{{portalEvidenceId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": {\n    \"title\": \"Synthetic Postman evidence\",\n    \"description\": \"Revised static test data\"\n  },\n  \"approve\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal evidence update: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal photo upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/evidence",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "evidence"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Synthetic Postman photo\",\n  \"photoData\": \"{{photoData}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal photo upload: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('portalMediaId', pm.response.json().item.mediaUrl.split('/').pop());"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal private photo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/media/{{portalMediaId}}",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "media",
+                "{{portalMediaId}}"
+              ]
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal private photo: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.test('JPEG content type', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('image/jpeg'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal external events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/events",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "events"
+              ]
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal external events: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal external event submit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/events",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Synthetic Postman event\",\n  \"organizer\": \"PyTorch PH\",\n  \"summary\": \"Synthetic external event used to verify production writes.\",\n  \"category\": \"workshops\",\n  \"scope\": \"external\",\n  \"startAt\": \"2026-10-01T09:00:00+08:00\",\n  \"endAt\": null,\n  \"timezone\": \"Asia/Manila\",\n  \"venue\": \"Online\",\n  \"registrationUrl\": null,\n  \"registrationDeadline\": null,\n  \"fee\": \"Free\",\n  \"eligibility\": [],\n  \"requirements\": [],\n  \"sourceUrl\": \"https://example.com/postman-event\",\n  \"scrapedAt\": \"2026-09-29T00:00:00Z\",\n  \"contentHash\": \"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n  \"scraperVersion\": \"postman\",\n  \"confidence\": 1,\n  \"warnings\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal external event submit: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('portalEventId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal event interest",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/events/{{portalEventId}}",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "events",
+                "{{portalEventId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"interest\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal event interest: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal feedback read",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/feedback",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "feedback"
+              ]
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal feedback read: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal feedback submit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/feedback",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "feedback"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"suggestion\",\n  \"description\": \"Synthetic Postman feedback\",\n  \"route\": \"/dashboard/\",\n  \"uiState\": {\n    \"title\": \"Dashboard\",\n    \"viewport\": \"1280x720\",\n    \"online\": true,\n    \"componentMarkers\": []\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal feedback submit: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('portalFeedbackId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal feedback update (officer)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/feedback/{{portalFeedbackId}}",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "feedback",
+                "{{portalFeedbackId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"triaged\",\n  \"severity\": \"low\",\n  \"assignedTo\": null,\n  \"resolution\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal feedback update (officer): success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal feedback note (officer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/feedback/{{portalFeedbackId}}/notes",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "feedback",
+                "{{portalFeedbackId}}",
+                "notes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Synthetic Postman review note\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal feedback note (officer): HTTP 201\", () => pm.response.to.have.status(201));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal AI status (static)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/backend/local-ai/status",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "backend",
+                "local-ai",
+                "status"
+              ]
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal AI status (static): success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.test('static AI', () => pm.expect(pm.response.json().configured).to.eql(false));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal AI analysis (static)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/product/evidence/analyze",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "product",
+                "evidence",
+                "analyze"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consent\": true,\n  \"evidenceId\": \"{{portalEvidenceId}}\",\n  \"current\": {\n    \"title\": \"Synthetic Postman evidence\",\n    \"description\": \"Static data\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal AI analysis (static): success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Portal AI upskill (static)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/portal/api/backend/local-ai/upskill",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "portal",
+                "api",
+                "backend",
+                "local-ai",
+                "upskill"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"developer\",\n  \"skills\": [\n    \"Python\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true' || pm.collectionVariables.get('manualRequest') !== pm.info.requestName) pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Portal AI upskill (static): success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
                 ],
                 "type": "text/javascript"
               }

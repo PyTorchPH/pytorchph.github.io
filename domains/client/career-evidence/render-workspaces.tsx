@@ -656,12 +656,45 @@ export function CareerEvidenceView({
     setUploading(true);
     setActionError("");
     try {
-      const form = new FormData();
-      form.set("file", file);
-      form.set("title", file.name.replace(/\.[^.]+$/, ""));
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 10 * 1024 * 1024) {
+        throw new Error("Select a JPEG, PNG, or WebP photo no larger than 10 MB.");
+      }
+      const title = file.name.replace(/\.[^.]+$/, "");
+      let requestBody: BodyInit;
+      let headers: HeadersInit | undefined;
+      if (process.env.NEXT_PUBLIC_API_ORIGIN) {
+        const bitmap = await createImageBitmap(file);
+        try {
+          const canvas = document.createElement("canvas");
+          let photoData = "";
+          for (const [edge, quality] of [[800, 0.82], [640, 0.72], [480, 0.62], [360, 0.52]]) {
+            const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height));
+            canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+            canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+            const context = canvas.getContext("2d");
+            if (!context) throw new Error("Photo processing is unavailable.");
+            context.fillStyle = "#fff";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            photoData = canvas.toDataURL("image/jpeg", quality);
+            if (photoData.length <= 350_000) break;
+          }
+          if (photoData.length > 350_000) throw new Error("This photo is too detailed for the demo upload limit.");
+          requestBody = JSON.stringify({ title, photoData });
+          headers = { "Content-Type": "application/json" };
+        } finally {
+          bitmap.close();
+        }
+      } else {
+        const form = new FormData();
+        form.set("file", file);
+        form.set("title", title);
+        requestBody = form;
+      }
       const response = await fetch("/api/product/evidence", {
         method: "POST",
-        body: form,
+        headers,
+        body: requestBody,
       });
       const payload = await response.json();
       if (!response.ok)
