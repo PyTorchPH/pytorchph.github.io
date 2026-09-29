@@ -17,5 +17,15 @@ declare const chrome: {
     remove(tabId: number): Promise<void>;
     captureVisibleTab(windowId: number, options: { format: "jpeg" | "png"; quality?: number }): Promise<string>;
   };
-  storage: { local: { get(keys: string[], callback: (value: Record<string, unknown>) => void): void; set(value: Record<string, unknown>): void } };
+  storage: {
+    local: {
+      get(keys: string[]): Promise<Record<string, unknown>>;
+      set(value: Record<string, unknown>): Promise<void>;
+      remove(key: string): Promise<void>;
+    };
+  };
+  permissions: {
+    contains(permissions: { origins: string[] }): Promise<boolean>;
+    request(permissions: { origins: string[] }): Promise<boolean>;
+  };
 };

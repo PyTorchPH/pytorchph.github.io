@@ -10,6 +10,8 @@ const PACKAGE_FILES = [
   "background.js",
   "portal-bridge.js",
   "source-collector.js",
+  "local-ai.js",
+  "popup.js",
   ...ICON_SIZES.map((size) => `icons/icon-${size}.png`),
 ];
 
