@@ -43,3 +43,17 @@ An authenticated request, including the demo fixture fetch, renews a valid sessi
 The portal entry and login page check `GET /auth/me` before displaying sign in. A valid member session opens the member demo view; an officer/admin session opens the officer demo view. `POST /auth/signout` requires the portal `Origin`, deletes the server-side session, and expires the cookie. The Pages demo also clears its fictional audience selection. An API error leaves sign in available and never treats a browser-stored demo choice as authentication.
 
 Measured latency and the bounded public benchmark procedure are in `../docs/PERFORMANCE.md`.
+
+
+## Resilience: admission queue, disk spool, memory budget
+
+Requests pass a bouncer before any handler runs:
+
+1. Up to `API_MAX_INFLIGHT` requests run at once (default: vCPUs × 2).
+2. The rest wait in a RAM priority queue (binary heap) of `API_RAM_QUEUE_DEPTH` (default 64), served by class: auth → reads → writes → heavy uploads/sync.
+3. When the RAM queue is full, the request is written to the SQLite `request_spool` table on the SSD and answered `202` with `x-queued: 1` and a job id. `API_SPOOL_WORKERS` (default 1) replay spooled requests highest priority first; the portal follows `GET /queue/{id}` and receives the stored response. Results expire after `API_RESULT_TTL_HOURS` (default 24).
+4. Only a full disk budget (`API_SPOOL_MAX_MB`, default 500) answers `503` with `Retry-After`. Auth requests never spill (their responses set cookies); they wait in RAM.
+
+`/health` reports `inflight`, `ramQueue` and `spooled`. Set the `API_*` values in `/etc/pytorch-ph-api.env`.
+
+Host budget (`setup-host.sh`, run once with sudo): a 1 GB `/swapfile`, `vm.swappiness=10`, and the systemd drop-in `pytorch-ph-api.resources.conf` (`MemoryHigh=50%`, `MemoryMax=90%`, `CPUWeight`/`IOWeight` 200). Edit that one file to give room to other services on the host. Rollback: remove the drop-in, `systemctl daemon-reload`, `swapoff /swapfile`, delete its `/etc/fstab` line.
