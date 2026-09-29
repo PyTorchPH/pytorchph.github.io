@@ -19,11 +19,11 @@ throughout the Philippines, independently of any school affiliation.
 
 - Login and registration accept a syntactically valid email from any domain. Input is trimmed;
   malformed addresses, weak passwords, mismatched confirmation, and missing consent remain invalid.
-- Email-format validation never claims ownership verification. Supabase confirmation establishes
+- Email-format validation never claims ownership verification. The Rust API email verification code establishes
   ownership; authentication errors remain visible without logging credentials.
 - Removing the school-domain allowlist never grants membership, officer status, or administrative
   access. Existing server-side role checks, membership gates, and database RLS remain authoritative.
-- Local synthetic accounts remain loopback-only; production, Vercel, and CI select Supabase.
+- Local synthetic accounts remain loopback-only; production and CI authenticate through the Rust API.
 - PH uses its own package namespace, runtime paths, local session cookie, and `PYTORCH_PH_*`
   settings. Existing FIT runtime data, credentials, and deployment configuration are not copied.
 - Public branding, signup instructions, and synthetic community examples do not imply school

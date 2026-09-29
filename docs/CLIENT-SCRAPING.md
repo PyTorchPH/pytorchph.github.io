@@ -1,20 +1,20 @@
 # Client-Side Scraping — CONFIRMED (v1)
 
 > ✅ **STATUS: CONFIRMED** with the user. Defines how personal-achievement scraping (Facebook
-> posts, GitHub projects) runs **on the user's own device** and pushes results to Supabase. Feeds
+> posts, GitHub projects) runs **on the user's own device** and pushes results to the Rust API. Feeds
 > the points engine ([`POINTS-ENGINE.md`](POINTS-ENGINE.md)) and the activity pipeline
 > ([`ORG-OPERATIONS.md`](ORG-OPERATIONS.md)). Privacy follows SPECIFICATION §6.
 
 ## Purpose
 
-The MVP is **Supabase-only serverless — no VPS, no EC2, no permanent backend**. We still need to
+The MVP has **one small backend (the Rust API) and no server-side scraping**. We still need to
 collect a member's own posts and projects to award points. The decision: **scrape client-side**.
 A **browser extension / headless client on the USER's device** does the scraping using the user's
-own logged-in session, then **pushes structured results to Supabase**. There is **no server-side
+own logged-in session, then **pushes structured results to the Rust API**. There is **no server-side
 scraping**.
 
 > Bakit client-side: walang server na kailangan i-maintain, ang user mismo ang may session at
-> consent, at hindi tayo nagho-host ng third-party credentials. Supabase lang ang sink.
+> consent, at hindi tayo nagho-host ng third-party credentials. Rust API lang ang sink.
 
 ---
 
@@ -29,14 +29,14 @@ flowchart TD
         PKG[Normalize → structured JSON]
         EXT --> SESS --> SCRAPE --> PKG
     end
-    PKG -->|push, authenticated| SB[(Supabase<br/>Layer 2 raw, RLS)]
+    PKG -->|push, authenticated| SB[(Rust API<br/>Layer 2 raw, owner-scoped)]
     SB --> NORM[AI normalization<br/>SPECIFICATION §8]
     NORM --> PTS[Points engine]
     SB -. never .-> SRV[X No server-side scraper]
 ```
 
 - **No server-side scraping** — the dashed `SRV` node is explicitly out of scope.
-- The client only ever talks to Supabase, authenticated as the user (RLS enforced).
+- The client only ever talks to the Rust API, authenticated as the user (owner-scoped).
 
 ---
 
@@ -63,7 +63,7 @@ client/extension runtime:
 ```mermaid
 flowchart LR
     A[Legacy: visible Playwright<br/>user watches Chromium] --> B[Target: headless<br/>background client]
-    B --> C[Push JSON to Supabase]
+    B --> C[Push JSON to the Rust API]
 ```
 
 ---
@@ -122,7 +122,7 @@ flowchart LR
    (legacy vendors exist but are visible-mode).
 3. **Scheduling** — on-demand (user clicks) vs background interval; how to schedule without a
    server (browser alarms? manual trigger?).
-4. **Push auth** — how the client authenticates to Supabase (user JWT) and how RLS scopes the
+4. **Push auth** — how the client authenticates to the Rust API (session cookie) and how ownership scopes the
    write to the owner only.
 5. **GitHub path** — official GitHub API (no scraping needed) vs DOM scraping for projects.
 6. **Consent UX** — explicit per-vendor consent + what the user sees before/after a scrape.

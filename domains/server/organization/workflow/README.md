@@ -49,4 +49,4 @@ flowchart TD
 - **RAG infrastructure** (vector store / retrieval) → `ingest.ts`.
 - **Email surface** (Gmail API / org mail) + recipient resolution → `downstream.ts`.
 - **Facebook Page API** token → `downstream.ts`.
-- **Departments + roles + voting** model in Supabase → `approval.ts`, `scoring.ts`.
+- **Departments + roles + voting** model in the Rust API → `approval.ts`, `scoring.ts`.

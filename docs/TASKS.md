@@ -48,7 +48,7 @@ commands · config-driven roles/regex/templates · unit+integration suite (172 p
 > `scripts/board_tasks.json`.
 
 - **Foundation** (Todo, this week): P1.1 architecture+ADRs · P1.2 normalized schema+ERD ·
-  P1.3 migrations+seed · P1.4 RLS policies · P1.5 Supabase auth · P1.6 Next.js scaffold ·
+  P1.3 migrations+seed · P1.4 owner-scope checks · P1.5 Rust API auth · P1.6 Next.js scaffold ·
   P1.7 raw-input UI · P1.8 AI extraction · P1.9 normalized extraction · P1.10 resume generator.
 - **Profiles & Analytics** (Backlog): P2.11 public profile · P2.12 career score · P2.13 platform
   analytics+leaderboards · P2.14 resume templates.

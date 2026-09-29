@@ -15,11 +15,11 @@ npm run dev
 
 The launcher first ensures the versioned synthetic scenario in `var/state/demo/product.sqlite3`, then
 starts one Next.js process for `members.ph.localhost:3100` and `officers.ph.localhost:3100`. These mirror
-two domains on one Vercel project. Supabase role data enforces access; hostname selection never grants
+two local hostnames. Role data from the Rust API enforces access; hostname selection never grants
 officer authority. Automatic synthetic sign-in lives under `development/`, outside this package.
 
 Local mode is an editable demo with one primary synthetic student and four supporting lifecycle
-personas. Supabase mode is production and never falls back to demo records. Inspect or restore the
+personas. Deployed portals read the Rust API and never fall back to demo records. Inspect or restore the
 local scenario with `npm run demo:status` and `npm run demo:reset`; reset creates a timestamped
 backup under `var/state/demo/backups/` before restoring the canonical seed.
 
@@ -36,17 +36,17 @@ documented in [`docs/HYBRID-TRUST-ARCHITECTURE.md`](../../docs/HYBRID-TRUST-ARCH
   omit diagnostics and officer payloads; production officer access additionally requires
   `member_profiles.is_officer` or an admin role.
 - Next.js route handlers proxy only allowlisted FastAPI endpoints to a fixed loopback base URL.
-- `development/process-lab` can start local Supabase and exercise normal sign-in externally through
+- `development/process-lab` can start the local product services and exercise normal sign-in externally through
   Playwright/CDP. Product routes contain no test session or sign-in bypass.
 - FastAPI owns ingestion, persistent snapshots, job automation, and permission enforcement.
-- `PYTORCH_PH_DATA_PROVIDER=local|supabase` selects exactly one provider. Local mode normalizes
-  the existing FastAPI/SQLite services; production mode uses the authenticated Supabase RPC.
+- The local product store (development only) normalizes
+  the existing FastAPI/SQLite services; the deployed static portal uses the Rust API gateway.
 - React never queries storage tables directly. `/api/product/*` returns stable visual view models.
 - `PYTORCH_PH_DATA_PROVIDER=local` selects the labeled, synthetic, external-write-disabled demo.
-  `supabase` selects production data and never falls back to fixtures.
+  the Rust API serves production data and never falls back to fixtures.
 - Command Center analytics keep fixed chart/card dimensions when a series is missing and render a
   centered `Data unavailable` watermark; unavailable data is never replaced with fixture values.
-- Supabase Auth uses cookie-backed server sessions. Production ignores the local sign-in bypass.
+- The Rust API issues an HttpOnly `ph_session` cookie. Production ignores the local sign-in bypass.
 - The canonical browser UI reads a sanitized development capability manifest. Missing provider
   sessions or artifacts stay visible but locked; analytics filters read existing snapshots only.
 - Career evidence enters resume and analytics processing through `RetrievalMiddleman`; analytics

@@ -9,7 +9,7 @@ domains/client/         browser-visible feature components and interactions
 domains/server/         Vercel-only feature operations
 domains/protocol/       shared request, response, event, and validation shapes
 design-system/          reusable visual primitives
-supabase/               database migrations, RLS, and deterministic local seed
+apps/api/               Rust API: auth, sessions, SQLite migrations, evidence, leaderboards
 development/            local access, Process Lab, and patched Prefect dashboard
 legacy/python/          retained Python reference engine and organization prototypes
 tests/                  cross-package verification and benchmarks
@@ -48,10 +48,10 @@ not implementation files. This is a build boundary, not three deployments.
 ## Web topology
 
 One Next.js build serves two hostnames. The hostname selects the presentation; the authenticated
-Supabase profile decides permission. A member cannot gain officer access by opening the officer
+member role in the Rust API decides permission. A member cannot gain officer access by opening the officer
 hostname. Unknown hosts default to member behavior.
 
-Browser code uses Supabase directly only for Auth with the public anon key. Application database
+Browser code talks only to the Rust API, authenticated by its HttpOnly session cookie. Application database
 reads and writes use same-origin Vercel route handlers; privileged keys remain server-only and RLS
 remains mandatory.
 

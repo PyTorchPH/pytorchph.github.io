@@ -2,7 +2,7 @@
 logic_id: leaderboards.verification-views
 code_paths:
   - domains/protocol/leaderboards
-  - domains/server/leaderboards
+  - apps/api/src/main.rs
   - apps/portal/app/leaderboards
 tests:
   - apps/portal/tests/member-command-center.test.ts

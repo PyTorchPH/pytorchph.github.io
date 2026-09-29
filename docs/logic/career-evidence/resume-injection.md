@@ -5,7 +5,7 @@ code_paths:
   - domains/server/career-evidence
   - domains/server/resumes
   - domains/client/career-evidence
-  - supabase/migrations
+  - apps/api/migrations
 tests:
   - apps/portal/tests/resume-injection-contract.test.ts
 feedback_events:
@@ -25,7 +25,7 @@ unknown legacy kinds fail closed to `project` so a project cannot become employm
 when a user saves an item as `project`. Project organization metadata MAY remain as source context,
 but it MUST NOT create an Experience entry.
 
-The trusted server persists `evidenceKind` as `career_evidence_items.evidence_kind`. Supabase detail
+The trusted server persists `evidenceKind` as `career_evidence_items.evidence_kind`. Rust API detail
 projection returns it to the client. Resume injection accepts only `user_verified` evidence.
 
 Acceptance tests prove that professional experience never appears under Projects, personal projects

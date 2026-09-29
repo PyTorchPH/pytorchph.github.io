@@ -111,7 +111,7 @@ flowchart LR
 This is **design-now, build-later**. The runtime depends on things the user must still provide:
 
 - **Scraping infra** — the client-side scraping path in [`CLIENT-SCRAPING.md`](CLIENT-SCRAPING.md)
-  must exist first (no server-side scraping; runs on the user's device, pushes to Supabase).
+  must exist first (no server-side scraping; runs on the user's device, pushes to the Rust API).
 - **Account / API access** — credentials or API access for the competition sources and any OSINT
   lookups. The user provides these; we don't host third-party credentials.
 

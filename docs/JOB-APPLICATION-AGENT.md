@@ -42,7 +42,7 @@ models, mangolekta ng data, saka tayo mag-train.
    anything is final.*
 
 3. **New NCD-fed module, multi-user-ready.** Resume/profile facts come from the **NCD** via the
-   **P1.10 Resume Generator**. Traces + strategy memory live in **Supabase** (RLS, owner-scoped).
+   **P1.10 Resume Generator**. Traces + strategy memory live in the **Rust API** (owner-scoped).
    Built multi-user from the start; **the user is the first test user**.
 
 > ⚠️ Read **§13 ToS, ethics & boundaries** before building anything. Most job sites forbid
@@ -57,7 +57,7 @@ models, mangolekta ng data, saka tayo mag-train.
 flowchart TD
     NCD[(Normalized Career DB<br/>SPECIFICATION §5 Layer 3)] --> RG[P1.10 Resume Generator]
     RG --> JAE[Job Application Expert<br/>reasoning module]
-    JAE <--> RAG[(Action RAG<br/>traces · strategies · Supabase)]
+    JAE <--> RAG[(Action RAG<br/>traces · strategies · Rust API)]
     JAE --> BR[Browser runtime<br/>Browser Use / Playwright]
     BR --> SITE[ATS / job site<br/>in user's session]
     BR -->|observation: DOM + screenshot| JAE
@@ -439,7 +439,7 @@ platform + workflow, and adapt them. Plan-from-scratch is the fallback, not the 
 - **Common validation errors** + the recovery that worked (§8)
 - **Recovery procedures** and **navigation strategies** (§3, §4)
 
-### Trace record schema (Supabase, RLS owner-scoped)
+### Trace record schema (Rust API, owner-scoped)
 
 ```jsonc
 {
@@ -613,12 +613,12 @@ flowchart LR
 2. **Account / credentials handling.** How does the agent operate **inside the user's logged-in
    session** without ever holding third-party credentials? Where do site logins live, and how is
    re-auth on expired sessions handled (§8) without storing passwords?
-3. **Secrets management.** Model API keys, Supabase keys — env/secret-manager, never in traces or
+3. **Secrets management.** Model API keys, API server secrets — env/secret-manager, never in traces or
    client bundle (per global security rules).
 4. **Per-site ToS review.** Who reviews each site's Terms before enabling it (§13)? Need a documented
    opt-in checklist + a kill-switch per vendor.
 5. **Trace data privacy / PII in screenshots.** What's the redaction pipeline before a screenshot or
-   trace hits Supabase (§11, §13)? Scrub strategy + encryption + retention period?
+   trace hits the Rust API (§11, §13)? Scrub strategy + encryption + retention period?
 6. **Eval ground truth.** How do we capture golden traces and measure success **without submitting
    spam to real employers** (§15)? Which vendors offer sandbox/demo boards?
 7. **CAPTCHA frequency.** If a target ATS challenges constantly, the HITL handoff may make it

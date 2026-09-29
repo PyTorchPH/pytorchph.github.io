@@ -28,7 +28,7 @@ occupied port, must fail visibly through the Next.js process output.
 - `npm start` delegates to `@pytorch-ph/portal` rather than duplicating framework commands.
 - The portal uses `next start`, which serves the optimized production output created by `next build`.
 - Production preview does not run the development orchestrator, local auto-login launcher, or
-  Supabase lifecycle; those remain separately managed local services.
+  Rust API lifecycle; those remain separately managed local services.
 - Startup failures remain visible and must not silently fall back to `next dev`.
 
 ## Acceptance tests

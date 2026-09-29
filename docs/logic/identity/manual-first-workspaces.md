@@ -4,7 +4,6 @@ code_paths:
   - domains/protocol/identity
   - domains/client/navigation
   - domains/client/career-evidence
-  - apps/portal/app/api/capabilities
 tests:
   - apps/portal/tests/capabilities.test.ts
   - apps/portal/tests/product-gateway.test.ts
