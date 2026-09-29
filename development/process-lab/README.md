@@ -12,16 +12,16 @@ npm run setup
 npm run dev
 ```
 
-`npm run dev` starts local Supabase, one Next.js process, Prefect, and separate member/officer
-browser profiles. The profiles use the deterministic accounts from `supabase/seed.sql` and sign in
-through normal local Supabase Auth without displaying credential entry.
+`npm run dev` starts one Next.js process, Prefect, and separate member/officer
+browser profiles. The profiles use the deterministic accounts from `development/local-access/accounts.mjs` and sign in
+through the local sign-in form.
 
 - Member: `http://members.ph.localhost:3100`
 - Officer: `http://officers.ph.localhost:3100`
 - Prefect: `http://127.0.0.1:4200`
 
 Use `npm run dev:manual-login` when you explicitly want to test the visible login form. The automatic
-helper refuses production, Vercel, remote Supabase, and non-loopback portal URLs.
+helper refuses production, CI, remote APIs, and non-loopback portal URLs.
 
 ## Prefect dashboard
 

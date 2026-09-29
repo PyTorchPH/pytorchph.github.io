@@ -161,7 +161,7 @@ flowchart LR
 
 ## 8. Suggested code shape (separation of concern)
 
-Re-implemented on the new stack (Next.js + Supabase serverless), but the interfaces echo the
+Re-implemented on the new stack (Next.js + Rust API), but the interfaces echo the
 legacy engine's adapter discipline:
 
 - `LinkIngestor` (mode: `deterministic | ai`) → `PointsPackage` (structured JSON)

@@ -68,7 +68,7 @@ into **Layer-2 raw posts**, which the existing AI normalization (SPECIFICATION �
 ```mermaid
 flowchart TD
     IN["Input: platform + user identity/handle"] --> AGENT[Own-Profile Scraper Agent<br/>autonomous browser brain]
-    AGENT <--> RAG[(Action RAG<br/>navigation traces · Supabase<br/>SHARED with Job agent)]
+    AGENT <--> RAG[(Action RAG<br/>navigation traces · Rust API<br/>SHARED with Job agent)]
     AGENT --> CDP[Browser runtime<br/>CDP-attach to user's session]
     CDP --> PROFILE["User's OWN profile<br/>(NOT feed, NOT search)"]
     PROFILE -->|"observation: DOM + a11y + screenshot"| AGENT
@@ -317,7 +317,7 @@ flowchart LR
 4. **Vision-model need.** How often is the VLM fallback (§2–§3) actually required vs heuristics? Cost
    and latency depend on the answer; want to measure before committing to a vision model.
 5. **Trace privacy / PII in screenshots.** Navigation screenshots of the user's own profile contain
-   PII → redaction pipeline + encryption + retention before anything hits Supabase (§7).
+   PII → redaction pipeline + encryption + retention before anything hits the Rust API (§7).
 6. **Own-authored detection robustness.** How reliably can the agent tell **authored-by-me** from
    reshares/others on an unknown shell? False positives leak others' content into the résumé pipeline.
 7. **Feed vs profile vs search disambiguation.** The riskiest mis-land (§2) — need a confident,

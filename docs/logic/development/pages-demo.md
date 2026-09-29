@@ -2,7 +2,6 @@
 logic_id: development.pages-demo
 code_paths:
   - apps/pages-demo/app/demo-api.ts
-  - apps/pages-demo/app/demo-identity.ts
   - apps/pages-demo/app/demo-accounts.tsx
   - apps/pages-demo/app/layout.tsx
   - apps/pages-demo/next.config.mjs
@@ -31,8 +30,8 @@ app shell, member dashboard, officer command center, and workspaces—without sc
   responses; the seed file initializes it only when no snapshot exists.
   Locked capabilities and offline services keep their captured 403/503 states.
 - Writes never leave the browser: non-GET API calls return a read-only notice (403). The portal
-  login form accepts the example accounts locally; registration and Google sign-in use a Supabase
-  stub (`demo-identity.ts`, aliased only in this app) that explains the demo.
+  login form accepts the example accounts through `onExampleSignIn` (defined only in this app);
+  without an API origin, registration and Google sign-in explain that they need the PyTorch PH API.
 - The example account lives in `sessionStorage`; no cookies or authenticated sessions are created.
 - A real Rust API session is checked through `/auth/me` at portal entry and login. Valid member and
   officer roles select the matching fictional view without showing the login form. Sign out revokes

@@ -23,7 +23,7 @@
 
 ## Reuse and verification
 
-Reused the existing Next.js, React, Zod, and Supabase stack with its lockfile. No replacement
+Reused the existing Next.js, React, and Zod stack with its lockfile (the backend later moved to the Rust API). No replacement
 framework or authentication provider was introduced. The installed observability CLI has no
 `tech` or `reuse` command; source selection is recorded here and through `obs change plan`.
 
@@ -35,15 +35,13 @@ eligible domains and rejection cases without weakening existing checks.
 Sources:
 
 - [Next.js deployment reference](https://github.com/vercel/next.js/blob/canary/docs/01-app/01-getting-started/17-deploying.mdx): full framework support requires a server; static export supports a subset.
-- [Supabase password authentication](https://supabase.com/docs/guides/auth/passwords): email/password signup and ownership confirmation.
-- [Supabase row-level security](https://supabase.com/docs/guides/database/postgres/row-level-security): database authorization is distinct from email eligibility.
 
 ## Deployment and rollback
 
 Use Node.js-compatible hosting for server routes, cookies, and APIs. The repository name does not
 make this application a static GitHub Pages site. No live deployment, account change, database
 operation, or schema migration was performed. Production needs a separately configured PH
-Supabase project and approved environment values.
+Rust API deployment and approved environment values.
 
 To restore the prior demo, stop the PH process, retain subsequent work, and extract the backup
 into a separate folder for comparison before replacing this worktree. Original FIT remains available.

@@ -1,7 +1,7 @@
 # Hybrid Trust, Device Storage, and Feedback Architecture
 
 Status: architecture direction and development showcase. Officer peer replication is **not yet a
-production capability**. Supabase remains the only authoritative day-to-day data store.
+production capability**. The Rust API (SQLite) remains the only authoritative day-to-day data store.
 
 ## 1. Outcome and non-negotiable boundary
 
@@ -9,7 +9,7 @@ The system may use powerful member and officer devices, but device ownership is 
 truth. A browser, laptop owner, extension, malware process, or local administrator can change local
 state. Therefore:
 
-- **Supabase is authoritative** for authenticated profiles, paid membership state, scraper-ingested
+- **The Rust API is authoritative** for authenticated profiles, membership state, scraper-ingested
   evidence, approved points, leaderboard source events, and audit records.
 - **Vercel orchestrates** web requests, health/freshness checks, signed synchronization manifests,
   and bounded background dispatch. It does not ask a random peer which record should win.
@@ -23,7 +23,7 @@ state. Therefore:
 flowchart LR
   M[Member browser\nencrypted IndexedDB drafts] -->|manual/untrusted proposal| V[Vercel gateway]
   S[Normal visible scraper] -->|server-validated provenance event| V
-  V -->|authorized append| DB[(Supabase authority)]
+  V -->|authorized append| DB[(Rust API authority)]
   DB -->|signed snapshot manifest| V
   V -->|encrypted bounded replica| O1[Officer witness 1]
   V -->|encrypted bounded replica| O2[Officer witness 2]
@@ -58,7 +58,7 @@ include schema/version/expiry metadata, and expose **Export**, **Delete local da
 device vault** controls. Browser storage can still be deleted by the user, browser policy, storage
 pressure, profile reset, or device loss; “persistent” is best effort, not a backup promise.
 
-Do not place credentials, Supabase service keys, OAuth refresh tokens, raw cookies, payment details,
+Do not place credentials, API secrets, OAuth refresh tokens, raw cookies, payment details,
 or officer replica keys in the application cache. Service workers must never cache authenticated API
 responses unless a response is explicitly designed and encrypted for offline use.
 
@@ -66,14 +66,14 @@ responses unless a response is explicitly designed and encrypted for offline use
 
 1. Register an officer device after officer authentication, device-key generation, and explicit
    approval. A role change or reported device revokes it.
-2. Supabase produces a monotonically increasing snapshot sequence and signed manifest containing
+2. The Rust API produces a monotonically increasing snapshot sequence and signed manifest containing
    schema version, chunk hashes, creation time, and previous-manifest hash.
 3. Vercel announces only the latest signed manifest. Online officer witnesses report their stored
    sequence, chunk hashes, free capacity, and last successful verification.
 4. A node fetches encrypted chunks from the authoritative export path or another node only after
    verifying the manifest signature. Peer content never wins solely by majority vote.
 5. Vercel compares attestations. Hash disagreement, rollback, impossible future sequence, or stale
-   heartbeat opens an officer incident. Supabase plus its managed backups remain the recovery root.
+   heartbeat opens an officer incident. The Rust API database plus its backups remain the recovery root.
 6. Quorum is a **monitoring signal**, not authorization. Two compromised laptops must not rewrite an
    authoritative record.
 
@@ -97,7 +97,7 @@ information.
 Useful additional loops:
 
 - onboarding funnel: identity created → payment viewed → proof submitted → human activation;
-- stale-data loop: Supabase snapshot age and officer witness freshness;
+- stale-data loop: API snapshot age and officer witness freshness;
 - integrity loop: source hash mismatch, local edit downgrade, duplicate claim, or clock anomaly;
 - outcome loop: event attendance, evidence review latency, resume use, and job application result;
 - privacy loop: export/delete requests, hidden-identity usage, revoked consent propagation time;
@@ -112,10 +112,10 @@ Metrics must be aggregate, retention-bounded, and never used to infer sensitive 
 | Member changes browser/IndexedDB data | Fake or altered manual claims | Treat client data as proposals; server validation; provenance downgrade on edit |
 | XSS or malicious extension reads local drafts | Privacy loss | CSP, output encoding, dependency audit, encryption at rest, minimal retention |
 | Officer laptop compromise | Replica disclosure or false attestation | Encrypted chunks, non-exportable key, revocation, least-data replicas, no DB credentials |
-| Majority of witnesses collude | False quorum signal | Supabase-signed manifests remain root of truth; quorum never authorizes writes |
+| Majority of witnesses collude | False quorum signal | API-signed manifests remain root of truth; quorum never authorizes writes |
 | Stale/offline peer advertises old data | Rollback/confusion | Monotonic sequence, expiry, previous-hash chain, freshness threshold |
 | Vercel account compromise | Bad orchestration or UI deployment | protected deployments, MFA, signed manifests from separate key boundary, audit alerts |
-| Supabase service-role key leak | Full authority compromise | server-only secret, rotation, scoped functions, no browser exposure, incident playbook |
+| API server secret leak | Full authority compromise | server-only secret, rotation, scoped functions, no browser exposure, incident playbook |
 | Feedback text or screenshot leaks PII | Privacy breach | structured diagnostics, redaction, attachment preview + separate consent, retention limits |
 | Payment-proof storage leaks financial data | Financial/privacy harm | private bucket, short retention, officer-only review, never store account credentials |
 | Officer covertly inspects member cache | Insider abuse and loss of trust | prohibit by architecture; explicit member export/consent; immutable officer access audit |
@@ -124,7 +124,7 @@ Metrics must be aggregate, retention-bounded, and never used to infer sensitive 
 
 ## 7. Staged rollout
 
-1. **Current:** Supabase authority, RLS/RPC projections, local synthetic demo, privacy-safe feedback,
+1. **Current:** Rust API authority, owner-scoped projections, local synthetic demo, privacy-safe feedback,
    anonymous ranking, and officer-reviewed membership.
 2. **Device vault:** IndexedDB encryption, schema migrations, export/delete, storage-persistence request,
    and provenance downgrade tests.

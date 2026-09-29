@@ -1,8 +1,8 @@
 # PyTorch PH System — Org-Ops Data Model
 
 > Layer: Org-Operations (Layer 1 foundation + Layer 5 analytics extension).
-> Stack: Supabase Postgres (serverless). RLS mandatory on every user-owned table.
-> Migrations: `supabase/migrations/0001_org_activities.sql`,
+> Stack: SQLite behind the Rust API (`apps/api`). Every user-owned row is owner-scoped and cascades on member deletion.
+> Migrations: `apps/api/migrations/` (this document is the target model; the migrations are authoritative),
 >   `0002_points_leaderboard.sql`, `0003_referrals_growth.sql`.
 
 ---
@@ -340,7 +340,7 @@ Not exposed to end users.
 
 2. **`(SELECT auth.uid())` pattern** is used in every policy that checks the calling user's identity. This ensures the expression is evaluated once per statement, not once per row.
 
-3. **`point_events` has no client INSERT/UPDATE/DELETE policy.** All mutations go through service_role (Edge Functions). This makes the ledger append-only and tamper-evident from the client's perspective. `service_role` bypasses RLS in Supabase.
+3. **`point_events` has no client INSERT/UPDATE/DELETE policy.** All mutations go through the Rust API's officer review handler. This makes the ledger append-only and tamper-evident from the client's perspective.
 
 4. **`leaderboard` materialized view has no RLS** (Postgres does not support RLS on matviews). Safety is structural: the view selects only `member_id` (UUID), `nickname`, `avatar_url`, and aggregate metrics. No email, phone, or raw data appears in the view schema.
 
@@ -386,7 +386,7 @@ The application layer must translate between these when reading from or writing 
 
 ## Open Questions
 
-1. **Leaderboard refresh scheduling.** `REFRESH MATERIALIZED VIEW CONCURRENTLY leaderboard` needs to be triggered after `point_events` inserts. Options: (a) pg_cron extension job (scheduled), (b) Edge Function hook, (c) trigger-based on `point_events`. The right choice depends on how frequently points are awarded. pg_cron is not available on all Supabase plans — confirm before using.
+1. **Leaderboard refresh scheduling.** `REFRESH MATERIALIZED VIEW CONCURRENTLY leaderboard` needs to be triggered after `point_events` inserts. Options: (a) scheduled job in the Rust API, (b) recompute inside the officer review transaction, (c) trigger-based on `point_events`. The right choice depends on how frequently points are awarded. A scheduler is not available on every host — confirm before using.
 
 2. **Officer multi-department support.** The current schema supports one `officer_department` per `member_profiles` row. If an officer serves multiple departments (e.g. an executive who also acts as secretary), the schema needs a `member_officer_departments` junction table. Not implemented yet — confirm org structure.
 
@@ -406,7 +406,7 @@ The application layer must translate between these when reading from or writing 
 
 > Layer: Org-Operations extension — Layer 3 (Normalized, skills taxonomy) +
 > Layer 5 (Analytics, per-skill leaderboard + competition matching).
-> Migrations: `supabase/migrations/0004_skills.sql`, `0005_competition_intel.sql`.
+> Migrations: `apps/api/migrations/` (skills and competitions).
 
 ---
 

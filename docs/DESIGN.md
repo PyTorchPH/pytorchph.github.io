@@ -31,4 +31,4 @@ Cards use 8px radius, 1px boundaries, and restrained hover lift. Buttons use con
 Use 150ms to 300ms transitions for hover, drawers, tabs, cards, and drag states. Canvas particles and parallax must respect reduced-motion preferences. Motion should show state or depth, not distract from task work.
 
 ## Security UI Notes
-The frontend may mock roles for prototype visibility, but role permissions must be enforced server-side through Supabase Auth, RLS, and Edge Functions in production. Social linking copy must make clear parsing is client-side and consent-based.
+The frontend may mock roles for prototype visibility, but role permissions must be enforced server-side by the Rust API in production. Social linking copy must make clear parsing is client-side and consent-based.

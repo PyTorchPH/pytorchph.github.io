@@ -8,8 +8,6 @@ code_paths:
   - development/local-workspace/start.mjs
   - domains/server/identity/session
   - domains/client/identity/session
-  - apps/portal/app/api/auth
-  - apps/portal/proxy.ts
 tests:
   - tests/node/workspace-boundaries.test.mjs
   - apps/portal/tests/product-gateway.test.ts
@@ -24,7 +22,7 @@ related_logic: []
 
 The local workspace opens separate visible member and officer browser profiles and authenticates
 deterministic synthetic accounts against the local SQLite database. Non-loopback and production
-requests use Supabase. Local authentication is unavailable in production, Vercel, and CI.
+requests use the Rust API. Local authentication is unavailable in production and CI.
 
 ## States and contract
 
@@ -49,9 +47,9 @@ and leaves the other production boundaries unchanged.
 - Missing local auth state, an unavailable browser, or a non-loopback/production runtime fails
   closed. Credentials, cookies, and tokens are never written to feedback output.
 - Provider selection requires both a non-production runtime and an exact loopback hostname.
-  Client-controlled host text alone never activates local authentication in production or Vercel.
-- `npm run dev` defaults to local SQLite for product data, credentials, and sessions. It does not
-  start Supabase. `npm run dev -- --supabase` explicitly starts and selects Supabase.
+  Client-controlled host text alone never activates local authentication in production or CI.
+- `npm run dev` uses local SQLite for product data, credentials, and sessions. Deployed accounts
+  and sessions live in the Rust API (`apps/api`).
 - Local sessions use opaque random tokens. SQLite stores only token hashes; browser cookies are
   `HttpOnly`, `SameSite=Lax`, host-scoped, and expire deterministically.
 - Local account lookup, session creation, session validation, revocation, and role authorization
@@ -59,8 +57,6 @@ and leaves the other production boundaries unchanged.
 - Local workspace child processes resolve Node package-manager launchers for the host platform.
   Windows invokes npm's JavaScript entry points through Node, avoiding unsupported direct batch-file
   spawning; POSIX hosts retain `npm`/`npx`.
-- Supabase startup and key discovery execute only in explicit Supabase mode. Its status payload is
-  never copied to local logs.
 - The Prefect local state directory is created before its server starts, so a clean workspace can
   initialize its SQLite metadata without a manual filesystem step.
 - Python child processes use UTF-8 output on Windows so Prefect/process-lab diagnostics cannot fail
@@ -89,9 +85,9 @@ passwords or session tokens. Missing/expired/revoked sessions produce an anonymo
 - The auto-login watcher uses a referenced keepalive handle and closes both browser contexts when
   the process receives a stop signal.
 - The integrated development launcher pins `PYTORCH_PH_DATA_PROVIDER` to `local`.
-- The default launcher mode is local, and the Supabase product provider requires an explicit flag.
+- The launcher always uses the local product store.
 - Loopback development selects SQLite auth; production, Vercel, CI, and non-loopback hosts select
-  Supabase regardless of caller-controlled headers.
+  the Rust API regardless of caller-controlled headers.
 - Local login verifies seeded member/officer accounts, persists only a token hash, authorizes each
   portal by role, and deletes both cookie and SQLite session on sign-out.
 - Workspace setup and startup resolve npm-family commands to executable Windows Node entry points.

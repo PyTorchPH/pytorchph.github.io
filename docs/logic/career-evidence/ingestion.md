@@ -3,10 +3,9 @@ logic_id: career-evidence.ingestion
 code_paths:
   - domains/protocol/career-evidence
   - domains/server/career-evidence
-  - supabase/migrations
+  - apps/api/migrations
 tests:
   - apps/portal/tests/evidence-integrity-contracts.test.ts
-  - apps/portal/tests/supabase-migrations.test.ts
 feedback_events:
   - evidence.submission_accepted
   - evidence.submission_rejected

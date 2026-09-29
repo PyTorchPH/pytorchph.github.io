@@ -14,7 +14,7 @@ PyTorch Philippines Platform is a community intelligence hub. It turns member ac
 Focused, technical, campus-proud. The product should feel like a serious engineering command center with a warm PyTorch signal: dark, precise, energetic, and trustworthy without becoming decorative.
 
 ## Anti-references
-Avoid generic SaaS hero pages, AI-dashboard cliches, over-purple gradient surfaces, gamified toy interfaces, and public leaderboard designs that expose private student data. Avoid forms that imply real credential capture before Supabase Auth and RLS are wired.
+Avoid generic SaaS hero pages, AI-dashboard cliches, over-purple gradient surfaces, gamified toy interfaces, and public leaderboard designs that expose private student data. Avoid forms that imply real credential capture before Rust API authentication and RLS are wired.
 
 ## Design Principles
 - Normalize first: every screen should imply structured data behind generated views.

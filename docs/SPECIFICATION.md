@@ -47,15 +47,15 @@ from an output.
 
 ```mermaid
 flowchart TD
-    FE[Frontend — Next.js on Vercel] --> Auth[Supabase Auth]
-    Auth --> DB[(Supabase Database)]
+    FE[Frontend — static Next.js on GitHub Pages] --> Auth[Rust API auth]
+    Auth --> DB[(SQLite via Rust API)]
     DB --> NCD[Normalized Career Database]
     NCD --> AI[AI Processing]
     AI --> OUT[Generated Outputs<br/>resume · profile · analytics]
     OUT --> FE
 ```
 
-- **MVP is serverless:** Vercel (frontend + serverless functions) + Supabase (auth, Postgres,
+- **MVP is small:** GitHub Pages (static frontend) + one Rust API (auth, SQLite,
   storage, RLS). No permanent backend.
 - **A backend is optional and future** (verification, scheduled jobs, AI queue, payments — see §13).
 
@@ -175,7 +175,7 @@ trending certifications · emerging industries · average resume score · anonym
 
 ## 12. Authentication & Authorization
 
-**Supabase Auth** — Google, GitHub, Email now; Microsoft, LinkedIn, Facebook later.
+**Rust API auth** — Google and Email now; GitHub, Microsoft, LinkedIn, Facebook later.
 
 **Roles:** Anonymous · Authenticated · Premium · Research · Moderator · Admin · Super Admin.
 
@@ -189,7 +189,7 @@ trending certifications · emerging industries · average resume score · anonym
 
 ## 13. Future Backend
 
-Current: `Frontend → Supabase`. Future: `Frontend → Backend API → Supabase`.
+Current: `Frontend → Rust API → SQLite`.
 
 Backend responsibilities: verification · scheduled jobs · AI queue · notifications · payment ·
 automation · scraping · background tasks.
@@ -238,7 +238,7 @@ Two kinds of "model" exist in this system and must not be confused:
 - Use Row Level Security (RLS) for user privacy.
 - Expose only curated public-profile fields.
 - Build for AI extensibility from the start (adapter layer).
-- Keep the MVP serverless (Vercel + Supabase), with a future path to a backend.
+- Keep the MVP small (static frontend + one Rust API).
 
 ---
 
@@ -276,7 +276,7 @@ Test AI outputs · validate database consistency · test RLS · regression testi
 **Outputs:** test cases · bug reports · acceptance criteria.
 
 ### 🚀 DevOps / Infrastructure (future)
-Deploy Vercel · configure Supabase · future backend deploy · CI/CD & monitoring.
+Deploy GitHub Pages · deploy the Rust API · CI/CD & monitoring.
 **Outputs:** deployment pipeline · infrastructure documentation · monitoring setup.
 
 ---
@@ -284,7 +284,7 @@ Deploy Vercel · configure Supabase · future backend deploy · CI/CD & monitori
 ## 18. Migration: from `resume-build-chopper` to `pytorch-ph-system`
 
 The previous project was a **Python CLI resume builder** (single output). It is being
-**superseded**. The decision is **start fresh** on the new stack (Next.js + Supabase), not to
+**superseded**. The decision is **start fresh** on the new stack (Next.js + Rust API), not to
 incrementally refactor the Python codebase into the platform.
 
 ### What carries over as *reference* (not as runtime)
@@ -312,7 +312,7 @@ leaderboards · trained PyTorch models · web-first UX.
 ## 19. Glossary
 
 - **NCD** — Normalized Career Database; the single source of truth.
-- **RLS** — Row Level Security; per-row Postgres access control in Supabase.
+- **Owner scope** — every user-owned row is readable and writable only by its member (enforced by the Rust API).
 - **Generated output** — any disposable artifact derived from the NCD (resume, profile, etc.).
 - **Adapter layer** — the single interface in front of all LLM/model providers.
 - **PH** — PyTorch Philippines; participation does not require school affiliation.
