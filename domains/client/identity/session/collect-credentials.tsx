@@ -113,7 +113,7 @@ export function LoginForm({ demoControls, onAuthenticated }: { demoControls?: Re
         onSubmit={form.handleSubmit(async ({ email: submittedEmail, password }) => {
           setError("");
           try {
-            if (STATIC_DEMO && /^(demo\.member|demo\.officer)@example\.org$/i.test(submittedEmail) && password === "demo-password") {
+            if (STATIC_DEMO && !API_ORIGIN && /^(demo\.member|demo\.officer)@example\.org$/i.test(submittedEmail) && password === "demo-password") {
               const response = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: submittedEmail }) });
               if (!response.ok) throw new Error("Example sign in failed.");
               const viewer = await response.json() as OfficialViewer;

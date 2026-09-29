@@ -80,6 +80,17 @@ function installDemoApi() {
   (window as { __phDemoApi?: boolean }).__phDemoApi = true;
   const originalFetch = window.fetch.bind(window);
   let fixtures: Promise<Fixtures> | undefined;
+  let session: Promise<DemoAudience> | undefined;
+  const verifiedAudience = () => (session ??= originalFetch(`${API_ORIGIN}/auth/me`, { credentials: "include", cache: "no-store" })
+    .then(async response => {
+      if (!response.ok) throw new Error(`Session check returned ${response.status}`);
+      const viewer = await response.json() as { role: string };
+      const audience: DemoAudience = viewer.role === "officer" || viewer.role === "admin" ? "officer" : "member";
+      try { sessionStorage.setItem(AUDIENCE_KEY, audience); } catch { /* Session still authorizes API data. */ }
+      listeners.forEach(listener => listener());
+      return audience;
+    })
+    .catch(error => { session = undefined; throw error; }));
   // Captured data links synthetic media as "/demo/..."; project sites serve it under the base path.
   const loadFixtures = () => (fixtures ??= originalFetch(FIXTURES_URL, { cache: "no-store", credentials: "include" })
     .then(response => {
@@ -92,15 +103,20 @@ function installDemoApi() {
   window.fetch = async (input, init) => {
     const url = requestUrl(input);
     if (url.origin !== window.location.origin || !url.pathname.startsWith("/api/")) return originalFetch(input, init);
-    // Official auth calls use AUTH_API_ORIGIN directly. Demo views retain their
-    // existing response contracts, now supplied by the Rust service.
     const method = requestMethod(input, init);
-    if (method === "POST" && url.pathname === "/api/auth/login") return login(init);
     if (method === "POST" && url.pathname === "/api/auth/signout") {
       try { sessionStorage.removeItem(AUDIENCE_KEY); } catch { /* Storage may be unavailable. */ }
+      session = undefined;
       listeners.forEach(listener => listener());
       return json({ ok: true });
     }
+    if (API_ORIGIN) {
+      try { await verifiedAudience(); }
+      catch { return json({ error: "Sign in to access the member portal." }, 401); }
+    }
+    // Official auth calls use AUTH_API_ORIGIN directly. Demo views retain their
+    // existing response contracts, now supplied by the Rust service.
+    if (method === "POST" && url.pathname === "/api/auth/login") return API_ORIGIN ? json({ error: "Use official sign in." }, 400) : login(init);
     if (method !== "GET" && method !== "HEAD") return json({ error: READ_ONLY_MESSAGE }, 403);
     try {
       const fixture = lookup(await loadFixtures(), url);

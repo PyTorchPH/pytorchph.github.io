@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "PyTorch PH API",
-    "description": "Run Public + Auth smoke after deployment. Signup and mutation folders are manual and skipped unless runWrites=true. Member and officer sessions are sequential and use Postman's cookie jar.",
+    "description": "Run Public + Auth smoke first. The Member and officer write workflow requires runWrites=true and persists synthetic records. Manual folders cover admin and external integrations. Uses Postman's cookie jar.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -68,6 +68,34 @@
     {
       "key": "manualRequest",
       "value": ""
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "contentHash",
+      "value": ""
+    },
+    {
+      "key": "entrantId",
+      "value": ""
+    },
+    {
+      "key": "draftRevision",
+      "value": ""
+    },
+    {
+      "key": "category",
+      "value": "postman_test"
+    },
+    {
+      "key": "googleFormId",
+      "value": ""
+    },
+    {
+      "key": "internalMailKey",
+      "value": ""
     }
   ],
   "item": [
@@ -102,6 +130,41 @@
                 "exec": [
                   "pm.test(\"Health: HTTP 200\", () => pm.response.to.have.status(200));",
                   "pm.test('healthy', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Demo fixtures",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/demo/fixtures",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "demo",
+                "fixtures"
+              ]
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Demo fixtures: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('synthetic member and officer views', () => { const body = pm.response.json(); pm.expect(body).to.have.keys('member', 'officer'); });"
                 ],
                 "type": "text/javascript"
               }
@@ -222,7 +285,7 @@
               "script": {
                 "exec": [
                   "pm.test(\"Member password login: HTTP 200\", () => pm.response.to.have.status(200));",
-                  "pm.test('member role', () => pm.expect(pm.response.json().role).to.eql('member'));"
+                  "pm.test('member role', () => pm.expect(pm.response.json().role).to.eql('member')); pm.collectionVariables.set('memberId', pm.response.json().id);"
                 ],
                 "type": "text/javascript"
               }
@@ -475,6 +538,785 @@
               "script": {
                 "exec": [
                   "pm.test(\"Pending evidence: HTTP 200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Member and officer write workflow",
+      "item": [
+        {
+          "name": "01 Member login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/auth/password",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "auth",
+                "password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{memberPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest(); const id = pm.variables.replaceIn('{{$guid}}').replaceAll('-', ''); pm.collectionVariables.set('runId', id); pm.collectionVariables.set('contentHash', id + pm.variables.replaceIn('{{$guid}}').replaceAll('-', ''));"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"01 Member login: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('member role', () => pm.expect(pm.response.json().role).to.eql('member')); pm.collectionVariables.set('memberId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Member cannot create event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/events",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman denied {{runId}}\",\n  \"category\": \"competitive\",\n  \"startsAt\": \"2020-01-01T00:00:00Z\",\n  \"entrantKind\": \"individual\",\n  \"placePoints\": [\n    10\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"02 Member cannot create event: HTTP 403\", () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Member submits evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/evidence",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "evidence"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"personal_project\",\n  \"title\": \"Postman test {{runId}}\",\n  \"sourceUrl\": \"https://github.com/pytorch-ph/postman-test\",\n  \"contentHash\": \"{{contentHash}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"03 Member submits evidence: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('claimId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Member reads own evidence",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/evidence/me",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "evidence",
+                "me"
+              ]
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"04 Member reads own evidence: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('submitted claim is visible', () => pm.expect(pm.response.json().some(item => item.id === pm.collectionVariables.get('claimId'))).to.eql(true));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Officer login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/auth/password",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "auth",
+                "password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{officerEmail}}\",\n  \"password\": \"{{officerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"05 Officer login: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('officer role', () => pm.expect(pm.response.json().role).to.eql('officer'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Officer sees member",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/members",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "members"
+              ]
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"06 Officer sees member: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('member is eligible', () => pm.expect(pm.response.json().some(item => item.id === pm.collectionVariables.get('memberId'))).to.eql(true));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Officer creates competitive event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/events",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman test {{runId}}\",\n  \"category\": \"competitive\",\n  \"startsAt\": \"2020-01-01T00:00:00Z\",\n  \"entrantKind\": \"individual\",\n  \"placePoints\": [\n    10\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"07 Officer creates competitive event: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('eventId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 Officer adds entrant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/events/{{eventId}}/entrants",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "events",
+                "{{eventId}}",
+                "entrants"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman test entrant\",\n  \"memberIds\": [\n    \"{{memberId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"08 Officer adds entrant: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('entrantId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Officer publishes results",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/events/{{eventId}}/results",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "events",
+                "{{eventId}}",
+                "results"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedRevision\": 0,\n  \"placements\": [\n    {\n      \"place\": 1,\n      \"entrantId\": \"{{entrantId}}\"\n    }\n  ],\n  \"reason\": \"Postman test result\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"09 Officer publishes results: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('result revision advanced', () => pm.expect(pm.response.json().revision).to.eql(1));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Officer reads results",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/events/{{eventId}}/results",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "events",
+                "{{eventId}}",
+                "results"
+              ]
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"10 Officer reads results: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('result persisted', () => pm.expect(pm.response.json().revision).to.eql(1));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 Officer sees pending evidence",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/evidence/pending",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "evidence",
+                "pending"
+              ]
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"11 Officer sees pending evidence: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('member claim is pending', () => pm.expect(pm.response.json().some(item => item.id === pm.collectionVariables.get('claimId'))).to.eql(true));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 Officer rejects test evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/evidence/{{claimId}}/review",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "evidence",
+                "{{claimId}}",
+                "review"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"reject\",\n  \"reason\": \"Synthetic Postman test claim\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"12 Officer rejects test evidence: HTTP 204\", () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 Member login again",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/auth/password",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "auth",
+                "password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{memberPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"13 Member login again: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('member role restored', () => pm.expect(pm.response.json().role).to.eql('member'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 Member sees reviewed claim",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/evidence/me",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "evidence",
+                "me"
+              ]
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"14 Member sees reviewed claim: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('review persisted', () => pm.expect(pm.response.json().find(item => item.id === pm.collectionVariables.get('claimId'))?.status).to.eql('rejected'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 Member signout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/auth/signout",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "auth",
+                "signout"
+              ]
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (pm.collectionVariables.get('runWrites') !== 'true') pm.execution.skipRequest();"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"15 Member signout: HTTP 200\", () => pm.response.to.have.status(200));"
                 ],
                 "type": "text/javascript"
               }
@@ -1015,7 +1857,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Postman Test\",\n  \"category\": \"talk\",\n  \"starts_at\": \"2026-12-01T00:00:00Z\",\n  \"competitive\": false\n}",
+              "raw": "{\n  \"title\": \"Postman Test\",\n  \"category\": \"competitive\",\n  \"startsAt\": \"2020-01-01T00:00:00Z\",\n  \"entrantKind\": \"individual\",\n  \"placePoints\": [\n    10\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1038,7 +1880,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Create event: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Create event: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('eventId', pm.response.json().id);"
                 ],
                 "type": "text/javascript"
               }
@@ -1072,7 +1915,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"member_ids\": [\n    \"{{memberId}}\"\n  ]\n}",
+              "raw": "{\n  \"name\": \"Postman member\",\n  \"memberIds\": [\n    \"{{memberId}}\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1095,7 +1938,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Add entrant: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Add entrant: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('entrantId', pm.response.json().id);"
                 ],
                 "type": "text/javascript"
               }
@@ -1129,7 +1973,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"placements\": []\n}",
+              "raw": "{\n  \"expectedRevision\": 0,\n  \"placements\": [\n    {\n      \"place\": 1,\n      \"entrantId\": \"{{entrantId}}\"\n    }\n  ],\n  \"reason\": \"Postman test result\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1187,7 +2031,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"form_id\": \"{{googleFormId}}\"\n}",
+              "raw": "{\n  \"formId\": \"{{googleFormId}}\",\n  \"points\": 10\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1242,7 +2086,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"source\": \"postman\"\n}",
+              "raw": "{\n  \"kind\": \"personal_project\",\n  \"title\": \"Postman test evidence\",\n  \"sourceUrl\": \"https://github.com/pytorch-ph/postman-test\",\n  \"contentHash\": \"{{contentHash}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1265,7 +2109,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Submit evidence: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Submit evidence: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('claimId', pm.response.json().id);"
                 ],
                 "type": "text/javascript"
               }
@@ -1298,7 +2143,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"claims\": []\n}",
+              "raw": "{\n  \"schemaVersion\": 1,\n  \"source\": \"github\",\n  \"origin\": \"extension_scrape\",\n  \"pageUrl\": \"https://github.com/pytorch-ph/postman-test\",\n  \"contentHash\": \"sha256:{{contentHash}}\",\n  \"items\": [\n    {\n      \"title\": \"Postman extension test\",\n      \"text\": \"Static validation data\",\n      \"sourceUrl\": \"https://github.com/pytorch-ph/postman-test\",\n      \"evidenceKind\": \"project\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1321,7 +2166,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Submit extension envelope: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Submit extension envelope: HTTP 201\", () => pm.response.to.have.status(201));"
                 ],
                 "type": "text/javascript"
               }
@@ -1355,7 +2200,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"decision\": \"reject\"\n}",
+              "raw": "{\n  \"decision\": \"reject\",\n  \"reason\": \"Postman test rejection\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1378,7 +2223,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Review evidence: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Review evidence: HTTP 204\", () => pm.response.to.have.status(204));"
                 ],
                 "type": "text/javascript"
               }
@@ -1469,7 +2314,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sender_role\": \"officer\"\n}",
+              "raw": "{\n  \"requiredRoles\": [\n    \"secretariat\"\n  ],\n  \"senderRole\": \"secretariat\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1492,7 +2337,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Set mail route: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Set mail route: HTTP 204\", () => pm.response.to.have.status(204));"
                 ],
                 "type": "text/javascript"
               }
@@ -1525,7 +2370,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"subject\": \"Postman Test\",\n  \"body\": \"Test\"\n}",
+              "raw": "{\n  \"category\": \"{{category}}\",\n  \"recipients\": [\n    \"postman@example.invalid\"\n  ],\n  \"subject\": \"Postman Test\",\n  \"body\": \"Static test draft, never send\",\n  \"pdfText\": null\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1548,7 +2393,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Create mail draft: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Create mail draft: HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json(); pm.collectionVariables.set('draftId', body.id); pm.collectionVariables.set('draftRevision', body.revision);"
                 ],
                 "type": "text/javascript"
               }
@@ -1586,7 +2432,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"subject\": \"Postman Test\"\n}",
+              "raw": "{\n  \"subject\": \"Postman Test revised\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1609,7 +2455,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Edit mail draft: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Edit mail draft: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.collectionVariables.set('draftRevision', pm.response.json().revision);"
                 ],
                 "type": "text/javascript"
               }
@@ -1644,7 +2491,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{}",
+              "raw": "{\n  \"revision\": {{draftRevision}},\n  \"role\": \"secretariat\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1667,7 +2514,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Approve mail draft: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Approve mail draft: HTTP 204\", () => pm.response.to.have.status(204));"
                 ],
                 "type": "text/javascript"
               }
@@ -1702,7 +2549,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{}",
+              "raw": "{\n  \"revision\": {{draftRevision}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1725,7 +2572,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Release mail draft: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Release mail draft: HTTP 204\", () => pm.response.to.have.status(204));"
                 ],
                 "type": "text/javascript"
               }
@@ -1760,7 +2607,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"outcome\": \"failed\"\n}",
+              "raw": "{\n  \"status\": \"failed\",\n  \"reason\": \"Postman test reconciliation\",\n  \"externalMessageId\": null\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1783,7 +2630,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Reconcile mail dispatch: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Reconcile mail dispatch: HTTP 204\", () => pm.response.to.have.status(204));"
                 ],
                 "type": "text/javascript"
               }
@@ -1800,12 +2647,8 @@
                 "value": "{{siteOrigin}}"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{internalMailKey}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+                "key": "x-workflow-key",
+                "value": "{{internalMailKey}}"
               }
             ],
             "url": {
@@ -1818,15 +2661,6 @@
                 "mail",
                 "claim"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             },
             "description": "Manual contract check. Set required collection variables, then enable runWrites=true. Do not run against production unless the intended effect is approved."
           },
@@ -1861,8 +2695,8 @@
                 "value": "{{siteOrigin}}"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{internalMailKey}}"
+                "key": "x-workflow-key",
+                "value": "{{internalMailKey}}"
               }
             ],
             "url": {
@@ -1910,8 +2744,8 @@
                 "value": "{{siteOrigin}}"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{internalMailKey}}"
+                "key": "x-workflow-key",
+                "value": "{{internalMailKey}}"
               },
               {
                 "key": "Content-Type",
@@ -1932,7 +2766,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{}",
+              "raw": "{\n  \"status\": \"failed\",\n  \"externalMessageId\": null\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1955,7 +2789,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Record dispatch receipt: success status\", () => pm.expect(pm.response.code).to.be.within(200, 299));"
+                  "pm.test(\"Record dispatch receipt: HTTP 204\", () => pm.response.to.have.status(204));"
                 ],
                 "type": "text/javascript"
               }

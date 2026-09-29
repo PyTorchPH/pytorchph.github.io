@@ -36,6 +36,7 @@ jobs:
       - name: Build the member portal demo
         env:
           NEXT_PUBLIC_AUTH_API_ORIGIN: https://api.pytorch.ph
+          NEXT_PUBLIC_API_ORIGIN: https://api.pytorch.ph
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
         run: |
           npm ci --no-audit --no-fund
