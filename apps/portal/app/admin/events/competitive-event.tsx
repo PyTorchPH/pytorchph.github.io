@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Card } from "@pytorch-ph/design-system/card";
 import { Input, Label } from "@pytorch-ph/design-system/input";
+import Link from "next/link";
 import { OfficialGoogleConnect, type OfficialViewer } from "../../../components/official-google-connect";
 
 const apiOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || "";
@@ -131,11 +132,11 @@ export function CompetitiveEventForm() {
     });
   }
 
-  if (!apiOrigin || !googleClientId) return <Card className="bg-surface"><p className="text-sm text-muted">Competitive-event backend is not configured for this build.</p></Card>;
+  if (!apiOrigin) return <Card className="bg-surface"><p className="text-sm text-muted">Competitive-event backend is not configured for this build.</p></Card>;
 
   return <Card className="space-y-5 bg-surface">
     <div><h3 className="font-heading text-lg font-semibold">Internal events and competitions</h3><p className="text-sm text-muted">Set placements when creating a competition; select official winners after it starts.</p></div>
-    {!viewer ? <div><p className="mb-2 text-sm">Connect your officer Google account to the official backend.</p><OfficialGoogleConnect onConnected={() => void refresh().catch((error: Error) => setMessage(error.message))} onError={setMessage} /></div> : viewer.role !== "officer" && viewer.role !== "admin" ? <p className="text-sm text-muted">Officer approval is required.</p> : <>
+    {!viewer ? <div><p className="mb-2 text-sm">Sign in with an approved officer account.</p>{googleClientId ? <OfficialGoogleConnect onConnected={() => void refresh().catch((error: Error) => setMessage(error.message))} onError={setMessage} /> : <Link className="text-accent underline" href="/login/">Go to sign in</Link>}</div> : viewer.role !== "officer" && viewer.role !== "admin" ? <p className="text-sm text-muted">Officer approval is required.</p> : <>
       <div className="grid gap-3 sm:grid-cols-2">
         <div><Label htmlFor="competition-title">Event title</Label><Input id="competition-title" value={title} onChange={(event) => setTitle(event.target.value)} /></div>
         <div><Label htmlFor="competition-category">Category</Label><select className="w-full border border-border bg-canvas p-2" id="competition-category" value={category} onChange={(event) => setCategory(event.target.value)}><option value="talk">Talk</option><option value="workshop">Workshop</option><option value="hackathon">Hackathon</option><option value="competitive">Other competition</option><option value="mini_contest">Talk/workshop mini contest</option></select></div>
