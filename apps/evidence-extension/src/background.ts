@@ -1,5 +1,8 @@
+import { aiClear, aiComplete, aiConfigure, aiStatus, LocalAIError, type CompletionRequest, type LocalAIConfig } from "./local-ai.js";
+
 type EvidenceSource = "facebook" | "linkedin" | "github";
-type BridgeCommand = { type: string; requestId: string; source?: EvidenceSource; provider?: EvidenceSource; profileUrl?: string };
+type BridgeCommand = { type: string; requestId: string; source?: EvidenceSource; provider?: EvidenceSource; profileUrl?: string; config?: LocalAIConfig; request?: CompletionRequest };
+const AI_TYPES = ["PYTORCH_PH_AI_STATUS", "PYTORCH_PH_AI_CONFIGURE", "PYTORCH_PH_AI_CLEAR", "PYTORCH_PH_AI_COMPLETE"];
 type Identity = { provider: EvidenceSource; handle: string; profileUrl: string };
 
 const PAGE_LOAD_TIMEOUT_MS = 20_000;
@@ -182,7 +185,7 @@ function collectActive(command: BridgeCommand, respond: (value: unknown) => void
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
   const command = message as Partial<BridgeCommand>;
-  const known = ["PYTORCH_PH_COLLECT_ACTIVE", "PYTORCH_PH_CAPTURE_VISIBLE", "PYTORCH_PH_VERIFY_IDENTITY", "PYTORCH_PH_COLLECT_PROFILE"];
+  const known = ["PYTORCH_PH_COLLECT_ACTIVE", "PYTORCH_PH_CAPTURE_VISIBLE", "PYTORCH_PH_VERIFY_IDENTITY", "PYTORCH_PH_COLLECT_PROFILE", ...AI_TYPES];
   if (!command.type || !known.includes(command.type) || typeof command.requestId !== "string") return;
   const requestId = command.requestId;
   if (!isPortalSender(sender)) {
@@ -191,6 +194,10 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   }
   if (command.type === "PYTORCH_PH_COLLECT_ACTIVE") {
     collectActive(command as BridgeCommand, respond);
+    return true;
+  }
+  if (AI_TYPES.includes(command.type)) {
+    handleLocalAI(command as BridgeCommand).then(respond);
     return true;
   }
   const provider = command.provider;
@@ -205,3 +212,16 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     : { ok: false, requestId, code: command.type === "PYTORCH_PH_CAPTURE_VISIBLE" ? "capture_failed" : "collection_failed" }));
   return true;
 });
+
+// Local AI commands. Replies carry status or text only; the stored key never leaves the extension.
+async function handleLocalAI(command: BridgeCommand) {
+  const requestId = command.requestId;
+  try {
+    if (command.type === "PYTORCH_PH_AI_STATUS") return { ok: true, requestId, status: await aiStatus() };
+    if (command.type === "PYTORCH_PH_AI_CONFIGURE") return { ok: true, requestId, status: await aiConfigure(command.config ?? { provider: "", model: "" }) };
+    if (command.type === "PYTORCH_PH_AI_CLEAR") { await aiClear(); return { ok: true, requestId }; }
+    return { ok: true, requestId, text: await aiComplete(command.request ?? { prompt: "" }) };
+  } catch (error) {
+    return { ok: false, requestId, code: "local_ai_failed", message: error instanceof LocalAIError ? error.message : "The local AI request failed." };
+  }
+}

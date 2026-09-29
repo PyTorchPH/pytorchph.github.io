@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "PyTorch PH Evidence Collector",
-  "description": "Collect your own GitHub, LinkedIn and Facebook profile evidence for the PyTorch PH portal, and attach screenshots to bug reports.",
-  "version": "0.2.0",
+  "description": "Collect your own GitHub, LinkedIn and Facebook profile evidence for the PyTorch PH portal, attach screenshots to bug reports, and run your own AI key locally.",
+  "version": "0.3.0",
   "minimum_chrome_version": "120",
   "icons": {
     "16": "icons/icon-16.png",
@@ -20,7 +20,16 @@
     "https://*.linkedin.com/*",
     "https://github.com/*",
     "https://pytorch.ph/*",
-    "https://*.pytorch.ph/*"
+    "https://*.pytorch.ph/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*",
+    "https://openrouter.ai/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
   ],
   "background": {
     "service_worker": "background.js",

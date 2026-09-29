@@ -1,1 +1,2 @@
 body{background:#141416;color:#fff7ed;font:14px system-ui;margin:0;min-width:280px}main{padding:18px}p{color:#c9c2ba;line-height:1.5;margin-bottom:0}
+section{border-top:1px solid #3a3a40;margin-top:14px;padding-top:12px}h2{font-size:13px;margin:0 0 4px}button{background:#ee4c2c;border:0;color:#fff;cursor:pointer;display:block;font:600 13px system-ui;margin-top:10px;padding:8px 12px;width:100%}button#ai-clear{background:transparent;border:1px solid #5a5a60;color:#fff7ed}button[hidden]{display:none}
