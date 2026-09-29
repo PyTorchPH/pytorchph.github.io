@@ -1,5 +1,6 @@
 use crate::{
-    ApiError, ApiResult, AppState, auth, bad, check_origin, integrity, internal, leaderboard,
+    ApiError, ApiResult, AppState, accounts, auth, bad, check_origin, integrity, internal,
+    leaderboard, reports,
 };
 use axum::{
     Json,
@@ -127,6 +128,10 @@ fn limited(value: &str, max: usize) -> bool {
 }
 
 fn json_body(bytes: &[u8]) -> ApiResult<Value> {
+    // DELETE requests carry no body.
+    if bytes.is_empty() {
+        return Ok(Value::Null);
+    }
     serde_json::from_slice(bytes).map_err(|_| bad("Invalid JSON body"))
 }
 
@@ -193,6 +198,14 @@ pub async fn gateway(
             "officer/evidence" => Some(integrity::officer_claims(&state.db).await?),
             "officer/evidence/appeals" => Some(integrity::officer_appeals(&state.db).await?),
             "evidence/integrity" => Some(integrity::member_integrity(&state.db, &actor.id).await?),
+            "member/accounts" => Some(accounts::list(&state.db, &actor).await?),
+            attachments
+                if attachments.starts_with("feedback/")
+                    && attachments.ends_with("/attachments") =>
+            {
+                let id = &attachments[9..attachments.len() - 12];
+                Some(reports::attachments(&state.db, &actor, id).await?)
+            }
             _ => None,
         };
         if let Some(value) = computed {
@@ -223,6 +236,18 @@ pub async fn gateway(
     let input = json_body(&body)?;
     let (status, result) = match (method.as_str(), path.as_str()) {
         ("PUT", "member/privacy") => (StatusCode::OK, privacy(&state.db, &actor.id, input).await?),
+        ("POST", _) if path.starts_with("feedback/") && path.ends_with("/attachments") => (
+            StatusCode::CREATED,
+            reports::add_attachment(&state.db, &actor, &path[9..path.len() - 12], &input).await?,
+        ),
+        ("PUT", _) if path.starts_with("member/accounts/") => (
+            StatusCode::OK,
+            accounts::verify(&state.db, &actor, &path[16..], &input).await?,
+        ),
+        ("DELETE", _) if path.starts_with("member/accounts/") => (
+            StatusCode::OK,
+            accounts::remove(&state.db, &actor, &path[16..]).await?,
+        ),
         ("PATCH", _) if path.starts_with("officer/evidence/appeals/") => (
             StatusCode::OK,
             integrity::resolve_appeal(&state.db, &actor, &path[25..], &input).await?,
@@ -583,7 +608,7 @@ async fn opportunity(
     Ok(json!({"opportunity":record}))
 }
 
-async fn feedback_rows(db: &SqlitePool) -> ApiResult<Vec<Value>> {
+pub(crate) async fn feedback_rows(db: &SqlitePool) -> ApiResult<Vec<Value>> {
     let value = stored(db, ORG, "/api/feedback")
         .await?
         .unwrap_or_else(|| json!([]));
@@ -599,6 +624,15 @@ async fn read_feedback(
     query: Option<&str>,
 ) -> ApiResult<Value> {
     let mut rows = feedback_rows(db).await?;
+    let kinds = reports::attachment_kinds(db).await?;
+    for row in rows.iter_mut() {
+        let id = row
+            .get("id")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_owned();
+        row["attachments"] = json!(kinds.get(&id).cloned().unwrap_or_default());
+    }
     if actor.role != "officer" && actor.role != "admin" {
         rows.retain(|item| item.get("reporterId").and_then(Value::as_str) == Some(&actor.id));
     }
