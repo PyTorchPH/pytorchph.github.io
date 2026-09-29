@@ -10,31 +10,13 @@ import { Button } from "@pytorch-ph/design-system/button";
 import { Card } from "@pytorch-ph/design-system/card";
 import { Progress } from "@pytorch-ph/design-system/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@pytorch-ph/design-system/table";
+import { MemberProfileDialog } from "./member-profile-dialog";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import { rankForPoints, type LeaderboardPayload, type LeaderboardView } from "@pytorch-ph/domain-protocol/leaderboards";
 
 const subscribeToLocation = () => () => undefined;
 // A profile QR code opens this page with ?member=<leaderboard name>.
 const readHighlightedMember = () => new URLSearchParams(window.location.search).get("member");
-const officialApiOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || "";
-type OfficialRank = { rank: number; memberId: string; displayName: string; points: number };
-
-function OfficialLeaderboard() {
-  const query = useQuery({
-    queryKey: ["official-leaderboard", officialApiOrigin],
-    enabled: Boolean(officialApiOrigin),
-    queryFn: async () => {
-      const response = await fetch(`${officialApiOrigin}/leaderboard`, { cache: "no-store" });
-      if (!response.ok) throw new Error("Official leaderboard is unavailable.");
-      return response.json() as Promise<OfficialRank[]>;
-    },
-  });
-  if (!officialApiOrigin) return null;
-  return <Card className="overflow-hidden bg-surface p-0"><div className="border-b border-border p-4"><h2 className="font-bold">Official organization points</h2><p className="text-xs text-muted">Server verified events, attendance, and evidence. Updated after the backend refresh job.</p></div>
-    {query.isError ? <p className="p-4 text-sm" role="alert">Official points are temporarily unavailable.</p> : <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Rank</TableHead><TableHead>Member</TableHead><TableHead>Verified points</TableHead></TableRow></TableHeader><TableBody>{query.data?.map((entry) => <TableRow key={entry.memberId}><TableCell>#{entry.rank}</TableCell><TableCell>{entry.displayName}</TableCell><TableCell>{entry.points.toLocaleString()}</TableCell></TableRow>)}{query.data?.length === 0 && <TableRow><TableCell colSpan={3}>No official points yet.</TableCell></TableRow>}</TableBody></Table></div>}
-  </Card>;
-}
-
 function countdown(endsAt?: string) {
   if (!endsAt) return "—";
   const days = Math.max(0, Math.ceil((new Date(endsAt).getTime() - Date.now()) / 86_400_000));
@@ -46,15 +28,15 @@ export default function LeaderboardsPage() {
   const [season, setSeason] = useState("");
   const [page, setPage] = useState(1);
   const [view, setView] = useState<LeaderboardView>("both");
+  const [openProfile, setOpenProfile] = useState<string | null>(null);
   const params = useMemo(() => new URLSearchParams({ page: String(page), pageSize: "25", view, ...(skill ? { skill } : {}), ...(season ? { season } : {}) }), [page, season, skill, view]);
-  const query = useQuery({ queryKey: ["member-leaderboard", season, skill, view, page], enabled: !officialApiOrigin, queryFn: () => fetchJson<LeaderboardPayload>(`/api/member/leaderboard?${params}`, { cache: "no-store" }) });
+  const query = useQuery({ queryKey: ["member-leaderboard", season, skill, view, page], queryFn: () => fetchJson<LeaderboardPayload>(`/api/member/leaderboard?${params}`, { cache: "no-store" }) });
   const data = query.data;
   const highlighted = useSyncExternalStore(subscribeToLocation, readHighlightedMember, () => null);
   const highlightedEntry = highlighted ? data?.entries.find((entry) => entry.displayLabel === highlighted) : undefined;
   const current = data?.entries.find((entry) => entry.isCurrentUser);
   const range = current ? rankForPoints(current.points) : null;
   const progress = range ? range.ceiling ? ((current!.points - range.floor) / (range.ceiling - range.floor)) * 100 : 100 : 0;
-  if (officialApiOrigin) return <AppShell><div className="space-y-5"><section className="page-hero" data-tour="leaderboards-heading"><Badge variant="success">Official verified points</Badge><h1 className="mt-4 text-3xl font-extrabold">Organization leaderboard</h1><p className="mt-2 text-muted">Ranks come from officer-published results, verified attendance, and approved evidence.</p></section><OfficialLeaderboard /></div></AppShell>;
   return <AppShell>
     <div className="space-y-5">
       <section className="page-hero" data-tour="leaderboards-heading">
@@ -75,9 +57,10 @@ export default function LeaderboardsPage() {
       <Card className="overflow-hidden bg-surface p-0" data-tour="leaderboards-table">
         <div className="flex items-center justify-between border-b border-border p-4"><div><h2 className="font-bold">{skill ? "Skill point view" : "Global point view"}</h2><p className="mt-1 text-xs text-muted">Points descending · ties are peers · stable pagination does not imply a higher rank</p></div><ShieldCheck className="text-success" /></div>
         {query.isError ? <div className="p-8 text-center"><p className="font-semibold">Leaderboard unavailable</p><p className="mt-2 text-sm text-muted">Live mode does not substitute synthetic rankings.</p></div> :
-        <div className="overflow-x-auto"><Table className="min-w-[780px]"><TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Tier</TableHead><TableHead>Points</TableHead><TableHead>Verified</TableHead><TableHead>Pending</TableHead><TableHead>Top verified skills</TableHead></TableRow></TableHeader><TableBody>{data?.entries.map((row) => <TableRow className={row.displayLabel === highlighted && !row.isCurrentUser ? "bg-info/10 outline outline-2 -outline-offset-2 outline-info" : row.isCurrentUser ? "border-y-2 border-accent bg-[linear-gradient(90deg,rgb(var(--accent-rgb)/.1),rgb(var(--accent-rgb)/.1))] shadow-[inset_5px_0_0_rgb(var(--accent-rgb))]" : ""} data-current-user={row.isCurrentUser || undefined} data-highlighted={row.displayLabel === highlighted || undefined} key={`${row.displayLabel}-${row.points}`}><TableCell className="font-semibold">{row.displayLabel}{row.isCurrentUser && <Badge className="ml-2 shadow-lg shadow-accent/30" variant="orange">You</Badge>}</TableCell><TableCell>{row.tier} {row.division}</TableCell><TableCell className="font-mono">{row.points.toLocaleString()}</TableCell><TableCell className="font-mono">{row.verifiedPoints.toLocaleString()}</TableCell><TableCell className="font-mono">{row.pendingPoints.toLocaleString()}</TableCell><TableCell><div className="flex flex-wrap gap-1">{row.verifiedSkills.slice(0,5).map((item) => <Badge key={item}>{item}</Badge>)}</div></TableCell></TableRow>)}{data?.entries.length === 0 && <TableRow><TableCell className="py-10 text-center text-muted" colSpan={6}>No points for this verification view and season.</TableCell></TableRow>}</TableBody></Table></div>}
+        <div className="overflow-x-auto"><Table className="min-w-[780px]"><TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Tier</TableHead><TableHead>Points</TableHead><TableHead>Verified</TableHead><TableHead>Pending</TableHead><TableHead>Top verified skills</TableHead></TableRow></TableHeader><TableBody>{data?.entries.map((row) => <TableRow className={row.displayLabel === highlighted && !row.isCurrentUser ? "bg-info/10 outline outline-2 -outline-offset-2 outline-info" : row.isCurrentUser ? "border-y-2 border-accent bg-[linear-gradient(90deg,rgb(var(--accent-rgb)/.1),rgb(var(--accent-rgb)/.1))] shadow-[inset_5px_0_0_rgb(var(--accent-rgb))]" : ""} data-current-user={row.isCurrentUser || undefined} data-highlighted={row.displayLabel === highlighted || undefined} key={`${row.displayLabel}-${row.points}`}><TableCell className="font-semibold">{row.profileId ? <button className="focus-ring font-semibold underline-offset-4 hover:text-accent hover:underline" onClick={() => setOpenProfile(row.profileId ?? null)} title="View achievements" type="button">{row.displayLabel}</button> : <span title="Achievements are private">{row.displayLabel}</span>}{row.isCurrentUser && <Badge className="ml-2 shadow-lg shadow-accent/30" variant="orange">You</Badge>}</TableCell><TableCell>{row.tier} {row.division}</TableCell><TableCell className="font-mono">{row.points.toLocaleString()}</TableCell><TableCell className="font-mono">{row.verifiedPoints.toLocaleString()}</TableCell><TableCell className="font-mono">{row.pendingPoints.toLocaleString()}</TableCell><TableCell><div className="flex flex-wrap gap-1">{row.verifiedSkills.slice(0,5).map((item) => <Badge key={item}>{item}</Badge>)}</div></TableCell></TableRow>)}{data?.entries.length === 0 && <TableRow><TableCell className="py-10 text-center text-muted" colSpan={6}>No points for this verification view and season.</TableCell></TableRow>}</TableBody></Table></div>}
         <div className="flex items-center justify-between border-t border-border p-4 text-sm text-muted"><span>{data ? `${data.total} ranked members` : "Loading…"}</span><div className="flex gap-2"><Button disabled={page===1} onClick={() => setPage((value) => Math.max(1,value-1))} size="sm" variant="outline">Previous</Button><Button disabled={!data || page*data.pageSize>=data.total} onClick={() => setPage((value) => value+1)} size="sm" variant="outline">Next</Button></div></div>
       </Card>
     </div>
+    {openProfile && <MemberProfileDialog onClose={() => setOpenProfile(null)} profileId={openProfile} season={season} />}
   </AppShell>;
 }

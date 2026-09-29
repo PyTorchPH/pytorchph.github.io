@@ -57,8 +57,12 @@ function Header({ data, capabilityKey, notices }: { data: ProductViewData; capab
 type Automation = { state: string; reason: string; missing: string[] };
 
 // Page-wide rules live behind hover/tap chips in the hero instead of banners above the content.
-function HeroNotices({ safety, automation, view }: { safety: string; automation: Automation | null; view: ProductView }) {
+function HeroNotices({ safety, automation, view, blockers }: { safety: string; automation: Automation | null; view: ProductView; blockers: string[] }) {
   return <div className="flex flex-wrap justify-end gap-2">
+    {blockers.length > 0 && <InfoPopover className="border-warning/50 text-warning" label={`${blockers.length} action${blockers.length === 1 ? "" : "s"} needed`} showLabel title="Evidence blockers">
+      <p className="text-muted">These require a real source or human action.</p>
+      <ul className="mt-2 space-y-2">{blockers.map((item) => <li className="flex gap-2" key={item}><CircleDot className="mt-1 flex-none text-warning" size={13} />{item}</li>)}</ul>
+    </InfoPopover>}
     <span data-tour="permission-boundary"><InfoPopover label="Permission boundary" showLabel title="Permission boundary"><p className="text-muted">{safety}</p></InfoPopover></span>
     {automation && <span data-automation-state={automation.state}><InfoPopover label={automation.state === "available" ? "Automation available" : "Manual mode"} showLabel title={automation.state === "available" ? "Automation available" : "Manual mode"}>
       <p className="text-muted">{automation.reason}</p>
@@ -89,7 +93,6 @@ function EvidenceView({ data }: { data: ProductViewData }) {
       <Card className="bg-surface"><CardHeader><div><CardTitle>Source inventory</CardTitle><CardDescription>Status is evidence-specific, not a login shortcut.</CardDescription></div><Badge variant={evidence.ready ? "success" : "warning"}>{evidence.phase}</Badge></CardHeader><div className="space-y-2">{evidence.sources.length ? evidence.sources.map((source) => <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-elevated p-3" key={source.id}><div><p className="font-semibold">{source.label}</p><p className="mt-1 text-xs text-muted">{source.kind}</p></div><Badge variant={source.status === "blocked" ? "warning" : "success"}>{source.status}</Badge></div>) : <EmptyInline text="No approved sources have been added." />}</div></Card>
       <Card className="bg-surface"><CardHeader><div><CardTitle>Verified profile</CardTitle><CardDescription>Only compact normalized facts are exposed here.</CardDescription></div><UserCheck className="text-accent" size={20} /></CardHeader><div className="grid gap-2 sm:grid-cols-2">{evidence.profileFacts.length ? evidence.profileFacts.map((fact) => <div className="rounded-lg border border-border bg-elevated p-3" key={`${fact.label}-${fact.value}`}><p className="text-xs capitalize text-muted">{fact.label}</p><p className="mt-2 break-words text-sm font-semibold">{fact.value}</p></div>) : <EmptyInline text="No verified profile facts yet." />}</div>{evidence.skills.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{evidence.skills.map((skill) => <Badge key={skill}>{skill}</Badge>)}</div>}</Card>
     </section>
-    {evidence.blockers.length > 0 && <Card className="border-warning/30 bg-warning/10"><CardHeader><div><CardTitle>Evidence blockers</CardTitle><CardDescription>These require a real source or human action.</CardDescription></div><AlertTriangle className="text-warning" size={20} /></CardHeader><ul className="space-y-2 text-sm">{evidence.blockers.map((item) => <li className="flex gap-2" key={item}><CircleDot className="mt-1 flex-none text-warning" size={13} />{item}</li>)}</ul></Card>}
   </div>;
 }
 
@@ -178,7 +181,7 @@ function ProductContent({ view, capabilityKey, safety, children }: Props) {
   const query = useQuery({ enabled: capability.state !== "locked", queryKey: queryKeys.product(view), queryFn: () => fetchJson<ProductViewData>(`/api/product/${view}`, { cache: "no-store" }) });
   const data = query.data || null;
   const error = query.error instanceof Error ? query.error.message : "";
-  const notices = <HeroNotices automation={automation} safety={safety} view={view} />;
+  const notices = <HeroNotices automation={automation} blockers={data?.evidence?.blockers ?? []} safety={safety} view={view} />;
   return <>
     {data ? <Header capabilityKey={capabilityKey} data={data} notices={notices} /> : <header className="page-hero flex items-start justify-between gap-4" data-tour="page-heading"><div><p className="data-label mb-2 text-xs uppercase tracking-widest text-accent">Product workspace</p><h1 className="text-3xl font-bold">{capability.state === "locked" ? workspaceTitles[view] : "Loading workspace…"}</h1>{capability.state === "locked" && <p className="mt-2 max-w-3xl leading-7 text-muted">{capability.reason}</p>}</div><div className="flex flex-col items-end gap-2"><Badge data-tour="service-status">{capability.state === "locked" ? "Locked" : "Checking access"}</Badge>{notices}</div></header>}
     {/* Page-specific panels (e.g. official evidence submission) render inside the shell, below the hero. */}

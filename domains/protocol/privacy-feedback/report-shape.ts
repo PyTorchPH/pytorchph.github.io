@@ -6,6 +6,8 @@ export const memberPrivacySettingsSchema = z.object({
   deviceCacheEnabled: z.boolean(),
   anonymousRanking: z.boolean(),
   automaticErrorReports: z.boolean(),
+  // Implicit deny: achievements stay private until the member turns this on.
+  shareAchievements: z.boolean().default(false),
 }).strict();
 
 export type MemberPrivacySettings = z.infer<typeof memberPrivacySettingsSchema>;
