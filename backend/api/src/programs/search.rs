@@ -5,9 +5,13 @@
 //! Module map (caller-first):
 //!   programs_for_level   empty text → the whole level (short lists only); else keyword search
 //!   ├─ whole_level       ordered by group, then name
-//!   └─ matching          FTS5 prefix query ranked by bm25 (acronym and name weigh most)
+//!   └─ matching          FTS5 prefix candidates, then each keyword claims its own word
+//!                        (reference_data::matching); fullest name coverage first
 use super::Program;
-use crate::{ApiResult, internal, reference_data::fts_query};
+use crate::{
+    ApiResult, internal,
+    reference_data::{CANDIDATE_POOL, Searchable, fts_query, rank_matches},
+};
 use sqlx::SqlitePool;
 
 /// Levels whose whole list fits in a dropdown.
@@ -22,7 +26,7 @@ pub(crate) async fn programs_for_level(
     limit: usize,
 ) -> ApiResult<Vec<Program>> {
     match fts_query(text) {
-        Some(query) => matching(db, level, &query, limit).await,
+        Some(query) => matching(db, level, &query, text, limit).await,
         None if LISTED_WHOLE.contains(&level) => whole_level(db, level).await,
         None => Ok(Vec::new()),
     }
@@ -41,17 +45,24 @@ async fn matching(
     db: &SqlitePool,
     level: &str,
     query: &str,
+    text: &str,
     limit: usize,
 ) -> ApiResult<Vec<Program>> {
-    sqlx::query_as(sqlx::AssertSqlSafe(format!(
+    let candidates: Vec<Program> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT p.code, p.name, p.short_name, p.group_name \
          FROM program_search JOIN programs p ON p.rowid = program_search.rowid \
          WHERE program_search MATCH ? AND p.level = ? ORDER BY {RANKING}, p.name LIMIT ?"
     )))
     .bind(query)
     .bind(level)
-    .bind(limit as i64)
+    .bind(CANDIDATE_POOL)
     .fetch_all(db)
     .await
-    .map_err(internal)
+    .map_err(internal)?;
+    Ok(rank_matches(candidates, text, limit, |program| {
+        Searchable {
+            name: &program.name,
+            other_fields: vec![&program.short_name, &program.group_name],
+        }
+    }))
 }

@@ -2,7 +2,10 @@
 //! aliases (acronyms, trade names, tickers), and city; verified companies rank before
 //! member-added ones.
 use super::Company;
-use crate::{ApiResult, internal, reference_data::fts_query};
+use crate::{
+    ApiResult, internal,
+    reference_data::{CANDIDATE_POOL, Searchable, fts_query, rank_matches},
+};
 use sqlx::SqlitePool;
 
 // Column weights for bm25, in index order: name, aliases, city.
@@ -16,14 +19,24 @@ pub(crate) async fn search_companies(
     let Some(query) = fts_query(text) else {
         return Ok(Vec::new());
     };
-    sqlx::query_as(sqlx::AssertSqlSafe(format!(
+    let candidates: Vec<Company> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT c.id, c.name, c.aliases, c.city, c.industry, c.origin \
          FROM company_search JOIN companies c ON c.rowid = company_search.rowid \
          WHERE company_search MATCH ? ORDER BY c.origin = 'member', {RANKING}, c.name LIMIT ?"
     )))
     .bind(query)
-    .bind(limit as i64)
+    .bind(CANDIDATE_POOL)
     .fetch_all(db)
     .await
-    .map_err(internal)
+    .map_err(internal)?;
+    let mut ranked = rank_matches(candidates, text, CANDIDATE_POOL as usize, |company| {
+        Searchable {
+            name: &company.name,
+            other_fields: vec![&company.aliases, &company.city],
+        }
+    });
+    // Verified companies stay ahead of member-added ones; coverage order holds within each.
+    ranked.sort_by_key(|company| company.origin == "member");
+    ranked.truncate(limit);
+    Ok(ranked)
 }

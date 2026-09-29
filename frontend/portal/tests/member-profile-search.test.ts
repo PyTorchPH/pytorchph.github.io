@@ -17,6 +17,13 @@ test("every keyword must prefix some word, in any order (the server's rule)", ()
   assert.equal(matchesKeywords(record, searchKeywords("calamba sti")), false);
 });
 
+test("a repeated keyword needs its own word, so a shared word cannot satisfy it twice", () => {
+  const query = searchKeywords("Bachelor of Science in Compute Science");
+  assert.equal(matchesKeywords(searchKeywords("Bachelor of Science in Computer Science"), query), true);
+  assert.equal(matchesKeywords(searchKeywords("Bachelor of Science in Computer Engineering"), query), false);
+  assert.equal(matchesKeywords(searchKeywords("Science Studies"), searchKeywords("s sci")), true);
+});
+
 test("adding or extending words refines; changing earlier words does not", () => {
   assert.equal(refines("colle", "college"), true);
   assert.equal(refines("college", "college sti"), true);
