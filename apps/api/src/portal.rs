@@ -1,6 +1,6 @@
 use crate::{
-    ApiError, ApiResult, AppState, accounts, auth, bad, check_origin, integrity, internal,
-    leaderboard, reports,
+    ApiError, ApiResult, AppState, accounts, analytics, auth, bad, check_origin, integrity,
+    internal, leaderboard, reports,
 };
 use axum::{
     Json,
@@ -206,20 +206,20 @@ pub async fn gateway(
         let owner = scope(&actor.id, &key);
         if let Some(mut value) = stored(&state.db, owner, &query_key).await? {
             if path.starts_with("product/") {
-                overlay_product(&state.db, &actor.id, &mut value).await?;
+                overlay_view(&state.db, &actor, &path, &mut value).await?;
             }
             return Ok(reply(StatusCode::OK, value));
         }
         if let Some(mut value) = stored(&state.db, owner, &key).await? {
             if path.starts_with("product/") {
-                overlay_product(&state.db, &actor.id, &mut value).await?;
+                overlay_view(&state.db, &actor, &path, &mut value).await?;
             }
             return Ok(reply(StatusCode::OK, value));
         }
         let (status, mut value) = fixture(&actor.role, &query_key)
             .ok_or(ApiError(StatusCode::NOT_FOUND, "Product view not found"))?;
         if status == StatusCode::OK && path.starts_with("product/") {
-            overlay_product(&state.db, &actor.id, &mut value).await?;
+            overlay_view(&state.db, &actor, &path, &mut value).await?;
         }
         return Ok(reply(status, value));
     }
@@ -308,7 +308,7 @@ pub async fn gateway(
         ("POST", "backend/local-ai/settings") => {
             return Err(ApiError(
                 StatusCode::UNPROCESSABLE_ENTITY,
-                "AI provider configuration is separate from this demo",
+                "Saving AI provider keys on the server is not enabled yet",
             ));
         }
         ("POST", "job-market/refresh") => {
@@ -334,9 +334,12 @@ fn static_ai(path: &str) -> Value {
         "backend/local-ai/status" | "backend/local-ai/settings" => {
             json!({"configured":false,"provider":"static","baseUrl":"","model":"","apiKeyPresent":false,"apiVersion":"","project":"","region":"","middleware":"static","source":"demo-fixture"})
         }
-        "backend/local-ai/providers" => {
-            json!({"middleware":"static","providers":[{"id":"static","label":"Static test data","modelPlaceholder":"static-demo","apiKeyRequired":false,"baseUrlRequired":false,"help":"AI provider configuration is separate from this demo."}]})
-        }
+        // The LiteLLM provider catalog (same list as the resume builder's local config).
+        "backend/local-ai/providers" => json!({
+            "middleware": "litellm",
+            "providers": serde_json::from_str::<Value>(include_str!("../seeds/ai-providers.json"))
+                .unwrap_or_else(|_| json!([])),
+        }),
         _ => json!({"configured":false,"provider":"static","model":""}),
     }
 }
@@ -487,6 +490,20 @@ async fn demo_action(
     }
     save(db, member_id, view_key, &view).await?;
     Ok(json!({"ok":true,"state":{"updatedId":id,"action":action}}))
+}
+
+// Member-owned state first; officers also get live Command Center analytics.
+async fn overlay_view(
+    db: &SqlitePool,
+    actor: &auth::Viewer,
+    path: &str,
+    view: &mut Value,
+) -> ApiResult<()> {
+    overlay_product(db, &actor.id, view).await?;
+    if path == "product/dashboard" && is_officer(&actor.role) {
+        analytics::overlay_dashboard(db, view).await?;
+    }
+    Ok(())
 }
 
 async fn overlay_product(db: &SqlitePool, member_id: &str, view: &mut Value) -> ApiResult<()> {

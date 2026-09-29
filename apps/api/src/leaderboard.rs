@@ -301,8 +301,19 @@ pub(crate) async fn member_leaderboard(
             .map(|(_, label)| label.clone())
     });
 
-    let ranked: Vec<(usize, Entry)> = standings(db, season, now)
-        .await?
+    let all = standings(db, season, now).await?;
+    // Share of ranked members holding each verified skill, for the community skill radar.
+    let skill_mix: Vec<Value> = skills
+        .iter()
+        .map(|(_, label)| {
+            let holders = all
+                .iter()
+                .filter(|entry| entry.skills.contains(label))
+                .count();
+            json!({"skill": label, "score": (holders * 100).checked_div(all.len()).unwrap_or(0)})
+        })
+        .collect();
+    let ranked: Vec<(usize, Entry)> = all
         .into_iter()
         .enumerate()
         .map(|(index, entry)| (index + 1, entry))
@@ -327,6 +338,7 @@ pub(crate) async fn member_leaderboard(
         "total": ranked.len(),
         "skills": skills.iter().map(|(slug, label)| json!({"slug": slug, "label": label})).collect::<Vec<_>>(),
         "seasons": all_seasons.iter().map(|s| json!({"slug": s.slug, "label": s.label, "state": s.state(now)})).collect::<Vec<_>>(),
+        "skillMix": skill_mix,
         "meta": {"mode": "live", "label": "Live leaderboard"},
     }))
 }
