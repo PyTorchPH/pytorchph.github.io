@@ -3,6 +3,7 @@
 //! Module map (caller-first):
 //!   parse_profile              whole submission → Profile (or the first problem found)
 //!   ├─ parse_gender            gender plus the self-description it may require
+//!   ├─ parse_age               exact age 13–100, or an explicit "prefer not to say"
 //!   ├─ parse_status            student / professional / both / seeking / other
 //!   ├─ parse_interests         up to MAX_INTERESTS known interest codes
 //!   ├─ parse_education         required while studying
@@ -17,11 +18,15 @@ const MAX_INTERESTS: usize = 10;
 const MAX_TEXT: usize = 120;
 const MAX_GENDER_DESCRIPTION: usize = 60;
 const MAX_SCHOOL_NAME: usize = 160;
+const MAX_SCHOOL_CODE: usize = 40;
+const MIN_AGE: i64 = 13;
+const MAX_AGE: i64 = 100;
 
 pub(crate) struct Profile {
     pub(crate) gender: String,
     pub(crate) gender_description: Option<String>,
-    pub(crate) age_range: String,
+    /// None when the member prefers not to say.
+    pub(crate) age: Option<i64>,
     pub(crate) region_code: String,
     pub(crate) status: Status,
     pub(crate) channel: String,
@@ -94,7 +99,7 @@ pub(crate) fn parse_profile(input: &Value) -> ApiResult<Profile> {
     Ok(Profile {
         gender,
         gender_description,
-        age_range: known_option(input, "ageRange", "ageRanges", "Choose an age range")?,
+        age: parse_age(input)?,
         region_code: known_option(input, "regionCode", "regions", "Choose a region")?,
         status,
         channel: known_option(
@@ -129,6 +134,19 @@ fn parse_gender(input: &Value) -> ApiResult<(String, Option<String>)> {
     let description = bounded_text(input.get("genderDescription"), MAX_GENDER_DESCRIPTION)
         .ok_or_else(|| bad("Describe your gender in up to 60 characters"))?;
     Ok((gender, Some(description)))
+}
+
+// An exact age, or an explicit "prefer not to say"; a missing answer is an error, not a default.
+fn parse_age(input: &Value) -> ApiResult<Option<i64>> {
+    if input.get("agePreferNotToSay").and_then(Value::as_bool) == Some(true) {
+        return Ok(None);
+    }
+    input
+        .get("age")
+        .and_then(Value::as_i64)
+        .filter(|age| is_accepted_age(*age))
+        .map(Some)
+        .ok_or_else(|| bad("Enter your age (13 to 100) or choose prefer not to say"))
 }
 
 fn parse_status(input: &Value) -> ApiResult<Status> {
@@ -186,8 +204,9 @@ fn parse_school_choice(school: &Value) -> ApiResult<SchoolChoice> {
             .map(SchoolChoice::Unlisted)
             .ok_or_else(|| bad("Enter your school's name"));
     }
-    catalog::school(code)
-        .map(|found| SchoolChoice::Listed(found.code.clone()))
+    // The code is checked against the school directory when the profile is saved.
+    (!code.is_empty() && code.len() <= MAX_SCHOOL_CODE)
+        .then(|| SchoolChoice::Listed(code.to_owned()))
         .ok_or_else(|| bad("Choose your school from the list"))
 }
 
@@ -258,6 +277,11 @@ fn is_self_described(gender: &str) -> bool {
 #[inline]
 fn is_unlisted_school(code: &str) -> bool {
     code == UNLISTED_SCHOOL
+}
+
+#[inline]
+fn is_accepted_age(age: i64) -> bool {
+    (MIN_AGE..=MAX_AGE).contains(&age)
 }
 
 #[inline]

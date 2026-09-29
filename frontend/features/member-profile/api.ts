@@ -14,7 +14,7 @@ export const PROFILE_QUERY_KEY = ["member-profile"] as const;
 export const PROFILE_OPTIONS_QUERY_KEY = ["member-profile", "options"] as const;
 export const DEMOGRAPHICS_QUERY_KEY = ["officer-demographics"] as const;
 
-const SEARCH_LIMIT = 20;
+export const SEARCH_LIMIT = 20;
 // Same origin rule as credentials/official-auth.ts: reference data is public and lives on the auth API.
 const API_ORIGIN = (process.env.NEXT_PUBLIC_AUTH_API_ORIGIN ?? process.env.NEXT_PUBLIC_API_ORIGIN ?? "").replace(/\/$/, "");
 

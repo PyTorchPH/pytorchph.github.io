@@ -11,13 +11,22 @@
 //!   read_profile                 GET /api/member/profile
 //!   └─ profile_view              rows → the same shape the form submits
 use super::input::{CompanyChoice, Education, Employment, Profile, SchoolChoice, parse_profile};
-use crate::{ApiError, ApiResult, identity::session::Viewer, internal};
+use crate::{
+    ApiError, ApiResult,
+    identity::session::Viewer,
+    internal,
+    schools::{display::school_label, find_school},
+};
 use axum::http::StatusCode;
 use serde_json::{Value, json};
 use sqlx::{Sqlite, SqlitePool, Transaction};
 use uuid::Uuid;
 
 type Tx<'a> = Transaction<'a, Sqlite>;
+
+/// Today's age from the age given on `recorded_on` (whole years since then are added).
+pub(crate) const CURRENT_AGE: &str =
+    "CAST(age + (julianday('now') - julianday(recorded_on)) / 365.2425 AS INTEGER)";
 
 // Mental model: validate everything first, then rewrite the member's answer rows in one
 // transaction so a profile is never half saved.
@@ -31,6 +40,7 @@ pub(crate) async fn save_profile(
     write_core(&mut tx, &actor.id, &profile).await?;
     replace_optional_rows(&mut tx, &actor.id).await?;
     write_gender_description(&mut tx, &actor.id, &profile).await?;
+    write_age(&mut tx, &actor.id, profile.age).await?;
     write_consent(&mut tx, &actor.id, profile.analytics_consent).await?;
     write_interests(&mut tx, &actor.id, &profile.interests).await?;
     if let Some(education) = &profile.education {
@@ -51,8 +61,8 @@ pub(crate) async fn save_profile(
 
 async fn write_core(tx: &mut Tx<'_>, member_id: &str, profile: &Profile) -> ApiResult<()> {
     let now = now();
-    sqlx::query("INSERT INTO member_profiles(member_id,gender,age_range,region_code,status,channel,completed_at,updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(member_id) DO UPDATE SET gender=excluded.gender, age_range=excluded.age_range, region_code=excluded.region_code, status=excluded.status, channel=excluded.channel, updated_at=excluded.updated_at")
-        .bind(member_id).bind(&profile.gender).bind(&profile.age_range).bind(&profile.region_code)
+    sqlx::query("INSERT INTO member_profiles(member_id,gender,region_code,status,channel,completed_at,updated_at) VALUES (?,?,?,?,?,?,?) ON CONFLICT(member_id) DO UPDATE SET gender=excluded.gender, region_code=excluded.region_code, status=excluded.status, channel=excluded.channel, updated_at=excluded.updated_at")
+        .bind(member_id).bind(&profile.gender).bind(&profile.region_code)
         .bind(profile.status.code()).bind(&profile.channel).bind(&now).bind(&now)
         .execute(&mut **tx).await.map_err(internal)?;
     Ok(())
@@ -61,6 +71,7 @@ async fn write_core(tx: &mut Tx<'_>, member_id: &str, profile: &Profile) -> ApiR
 async fn replace_optional_rows(tx: &mut Tx<'_>, member_id: &str) -> ApiResult<()> {
     for table in [
         "member_gender_descriptions",
+        "member_ages",
         "member_analytics_consents",
         "member_interests",
         "member_education",
@@ -94,6 +105,21 @@ async fn write_gender_description(
     Ok(())
 }
 
+// The age is kept with the day it was given, so reports can compute today's age.
+async fn write_age(tx: &mut Tx<'_>, member_id: &str, age: Option<i64>) -> ApiResult<()> {
+    let Some(age) = age else {
+        return Ok(());
+    };
+    sqlx::query("INSERT INTO member_ages(member_id, age, recorded_on) VALUES (?, ?, ?)")
+        .bind(member_id)
+        .bind(age)
+        .bind(chrono::Utc::now().format("%Y-%m-%d").to_string())
+        .execute(&mut **tx)
+        .await
+        .map_err(internal)?;
+    Ok(())
+}
+
 async fn write_consent(tx: &mut Tx<'_>, member_id: &str, consented: bool) -> ApiResult<()> {
     if !consented {
         return Ok(());
@@ -119,9 +145,22 @@ async fn write_interests(tx: &mut Tx<'_>, member_id: &str, interests: &[String])
     Ok(())
 }
 
+// A listed school must exist in the directory; the member picked it from the search results.
+async fn listed_school<'a>(tx: &mut Tx<'_>, code: &'a str) -> ApiResult<&'a str> {
+    let found: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM schools WHERE code = ?")
+        .bind(code)
+        .fetch_optional(&mut **tx)
+        .await
+        .map_err(internal)?;
+    found.map(|_| code).ok_or(ApiError(
+        StatusCode::UNPROCESSABLE_ENTITY,
+        "Choose your school from the list",
+    ))
+}
+
 async fn write_education(tx: &mut Tx<'_>, member_id: &str, education: &Education) -> ApiResult<()> {
     let school_code = match &education.school {
-        SchoolChoice::Listed(code) => code.as_str(),
+        SchoolChoice::Listed(code) => listed_school(tx, code).await?,
         SchoolChoice::Unlisted(_) => super::catalog::UNLISTED_SCHOOL,
     };
     sqlx::query("INSERT INTO member_education(member_id, school_code, level, program, year_level) VALUES (?, ?, ?, ?, ?)")
@@ -186,10 +225,13 @@ async fn resolve_company(tx: &mut Tx<'_>, company: &CompanyChoice) -> ApiResult<
 // Mental model: `complete` is simply whether the core row exists; the rest is read back into
 // the same shape the form submits so it can be edited in place.
 pub(crate) async fn read_profile(db: &SqlitePool, actor: &Viewer) -> ApiResult<Value> {
-    let core: Option<(String, String, String, String, String)> = sqlx::query_as(
-        "SELECT gender, age_range, region_code, status, channel FROM member_profiles WHERE member_id = ?",
+    let core: Option<(String, String, String, String)> = sqlx::query_as(
+        "SELECT gender, region_code, status, channel FROM member_profiles WHERE member_id = ?",
     )
-    .bind(&actor.id).fetch_optional(db).await.map_err(internal)?;
+    .bind(&actor.id)
+    .fetch_optional(db)
+    .await
+    .map_err(internal)?;
     let Some(core) = core else {
         return Ok(json!({"complete": false, "profile": null}));
     };
@@ -199,9 +241,16 @@ pub(crate) async fn read_profile(db: &SqlitePool, actor: &Viewer) -> ApiResult<V
 async fn profile_view(
     db: &SqlitePool,
     member_id: &str,
-    core: (String, String, String, String, String),
+    core: (String, String, String, String),
 ) -> ApiResult<Value> {
-    let (gender, age_range, region_code, status, channel) = core;
+    let (gender, region_code, status, channel) = core;
+    let age: Option<(i64,)> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        "SELECT {CURRENT_AGE} FROM member_ages WHERE member_id = ?"
+    )))
+    .bind(member_id)
+    .fetch_optional(db)
+    .await
+    .map_err(internal)?;
     let description: Option<(String,)> =
         sqlx::query_as("SELECT description FROM member_gender_descriptions WHERE member_id = ?")
             .bind(member_id)
@@ -228,16 +277,21 @@ async fn profile_view(
         "SELECT e.company_id, c.name, e.industry_code, e.job_role, e.experience_range FROM member_employment e JOIN companies c ON c.id = e.company_id WHERE e.member_id = ?",
     ).bind(member_id).fetch_optional(db).await.map_err(internal)?;
     let mut view = json!({
-        "gender": gender, "ageRange": age_range, "regionCode": region_code, "status": status, "channel": channel,
+        "gender": gender, "regionCode": region_code, "status": status, "channel": channel,
         "interests": interests.into_iter().map(|(code,)| code).collect::<Vec<_>>(),
         "analyticsConsent": consent.is_some(),
     });
+    match age {
+        Some((age,)) => view["age"] = json!(age),
+        None => view["agePreferNotToSay"] = json!(true),
+    }
     if let Some((description,)) = description {
         view["genderDescription"] = json!(description);
     }
     if let Some((code, level, program, year_level, unlisted)) = education {
-        let label = super::catalog::school(&code)
-            .map(|school| school.name.clone())
+        let label = find_school(db, &code)
+            .await?
+            .map(|school| school_label(&school))
             .or(unlisted.clone());
         view["schoolLabel"] = json!(label);
         view["school"] = json!({"code": code, "unlistedName": unlisted, "level": level, "program": program, "yearLevel": year_level});

@@ -28,7 +28,8 @@
     "demo:reset": "tsx scripts/demo-data.ts reset --confirm",
     "test:tours:e2e": "node tests/product-tour.e2e.mjs",
     "test:nationwide": "tsx --test tests/nationwide-membership.test.ts",
-    "test:community": "tsx --test tests/community-demo.test.ts tests/peer-summary.test.ts tests/event-sources.test.ts"
+    "test:community": "tsx --test tests/community-demo.test.ts tests/peer-summary.test.ts tests/event-sources.test.ts",
+    "test:profile": "tsx --test tests/member-profile-search.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

@@ -21,7 +21,8 @@ export type ProfileOptions = {
   regions: ProfileOption[];
 };
 
-export type SchoolOption = { code: string; label: string; type: string; region: string };
+// label: name with campus ("Sacred Heart College - Lucena"); detail: "SHC · Lucena City, Quezon · College / university".
+export type SchoolOption = { code: string; label: string; detail: string; acronym: string; level: string; sector: string; city: string; province: string };
 export type CompanyOption = { id: string; label: string };
 
 export type SchoolInput = {
@@ -43,7 +44,9 @@ export type EmploymentInput = {
 export type ProfileInput = {
   gender: string;
   genderDescription?: string;
-  ageRange: string;
+  /** Exact age in years (13–100); omitted when agePreferNotToSay is true. */
+  age?: number;
+  agePreferNotToSay?: boolean;
   regionCode: string;
   status: string;
   channel: string;

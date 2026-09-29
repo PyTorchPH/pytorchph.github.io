@@ -14,6 +14,7 @@ use super::credentials::{
     claim_hashing_slot, code_hash, enforce_rate_limit, is_eight_digit_code, normalize_email,
     password_hash,
 };
+use super::password_policy::{PASSWORD_POLICY, meets_password_policy};
 use super::relay::RelayConfig;
 use crate::{
     ApiError, ApiResult, AppState, check_origin,
@@ -64,6 +65,9 @@ pub async fn start_signup(
     check_origin(&state, &headers)?;
     let email = normalize_email(&input.email)
         .ok_or(ApiError(StatusCode::BAD_REQUEST, "Invalid email address"))?;
+    if !meets_password_policy(&input.password) {
+        return Err(ApiError(StatusCode::BAD_REQUEST, PASSWORD_POLICY));
+    }
     if !is_valid_registration(&input) {
         return Err(ApiError(
             StatusCode::BAD_REQUEST,
@@ -95,7 +99,7 @@ pub async fn start_signup(
 
 #[inline]
 fn is_valid_registration(input: &SignupStart) -> bool {
-    (8..=1024).contains(&input.password.len())
+    meets_password_policy(&input.password)
         && input.name.trim().len() >= 2
         && input.name.len() <= 100
         && (3..=24).contains(&input.username.len())

@@ -14,7 +14,8 @@ export type EmploymentDraft = { companyId: string; companyLabel: string; newComp
 export type ProfileDraft = {
   gender: string;
   genderDescription: string;
-  ageRange: string;
+  age: string;
+  agePreferNotToSay: boolean;
   regionCode: string;
   status: string;
   channel: string;
@@ -28,9 +29,11 @@ const MAX_INTERESTS = 10;
 const MAX_TEXT = 120;
 const MAX_GENDER_TEXT = 60;
 const MAX_YEAR_LEVEL = 8;
+export const MIN_AGE = 13;
+export const MAX_AGE = 100;
 
 export const emptyDraft = (): ProfileDraft => ({
-  gender: "", genderDescription: "", ageRange: "", regionCode: "", status: "", channel: "", interests: [], analyticsConsent: false,
+  gender: "", genderDescription: "", age: "", agePreferNotToSay: false, regionCode: "", status: "", channel: "", interests: [], analyticsConsent: false,
   school: { code: "", label: "", unlistedName: "", level: "", program: "", yearLevel: "" },
   employment: { companyId: "", companyLabel: "", newCompanyName: "", isNewCompany: false, industry: "", jobRole: "", experienceRange: "" },
 });
@@ -41,7 +44,7 @@ export function draftFromProfile(profile: ProfileStatus["profile"]): ProfileDraf
   const { school, employment } = profile;
   return {
     ...blank,
-    gender: profile.gender, genderDescription: profile.genderDescription ?? "", ageRange: profile.ageRange, regionCode: profile.regionCode,
+    gender: profile.gender, genderDescription: profile.genderDescription ?? "", age: profile.age ? String(profile.age) : "", agePreferNotToSay: Boolean(profile.agePreferNotToSay), regionCode: profile.regionCode,
     status: profile.status, channel: profile.channel, interests: [...profile.interests], analyticsConsent: profile.analyticsConsent,
     school: school ? { code: school.code, label: profile.schoolLabel ?? "", unlistedName: school.unlistedName ?? "", level: school.level, program: school.program, yearLevel: String(school.yearLevel) } : blank.school,
     employment: employment ? {
@@ -53,7 +56,8 @@ export function draftFromProfile(profile: ProfileStatus["profile"]): ProfileDraf
 
 // Returns a message for the first broken rule, or null when the draft can be sent.
 export function findDraftProblem(draft: ProfileDraft): string | null {
-  if (!draft.gender || !draft.ageRange || !draft.regionCode || !draft.status || !draft.channel) return "Please answer every question in About you.";
+  if (!draft.gender || !draft.regionCode || !draft.status || !draft.channel) return "Please answer every question in About you.";
+  if (!draft.agePreferNotToSay && !isAcceptedAge(draft.age)) return `Enter your age (${MIN_AGE}–${MAX_AGE}) or choose “Prefer not to say”.`;
   if (draft.gender === SELF_DESCRIBE && !isBoundedText(draft.genderDescription, MAX_GENDER_TEXT)) return `Describe your gender in 1–${MAX_GENDER_TEXT} characters.`;
   if (draft.interests.length > MAX_INTERESTS) return `Pick at most ${MAX_INTERESTS} interests.`;
   const schoolProblem = needsSchool(draft.status) ? findSchoolProblem(draft.school) : null;
@@ -82,7 +86,8 @@ export function toProfileInput(draft: ProfileDraft): ProfileInput {
   return {
     gender: draft.gender,
     genderDescription: draft.gender === SELF_DESCRIBE ? draft.genderDescription.trim() : undefined,
-    ageRange: draft.ageRange, regionCode: draft.regionCode, status: draft.status, channel: draft.channel,
+    ...(draft.agePreferNotToSay ? { agePreferNotToSay: true } : { age: Number(draft.age) }),
+    regionCode: draft.regionCode, status: draft.status, channel: draft.channel,
     interests: draft.interests, analyticsConsent: draft.analyticsConsent,
     school: needsSchool(draft.status) ? {
       code: school.code, unlistedName: school.code === UNLISTED_SCHOOL ? school.unlistedName.trim() : undefined,
@@ -95,5 +100,7 @@ export function toProfileInput(draft: ProfileDraft): ProfileInput {
     } : undefined,
   };
 }
+
+const isAcceptedAge = (value: string) => /^\d{1,3}$/.test(value.trim()) && Number(value) >= MIN_AGE && Number(value) <= MAX_AGE;
 
 const isBoundedText = (value: string, max: number) => value.trim().length >= 1 && value.trim().length <= max;

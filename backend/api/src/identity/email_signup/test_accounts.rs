@@ -3,8 +3,9 @@
 //! Module map (caller-first):
 //!   seed_test_accounts     one member and one officer sharing TEMP_TEST_PASSWORD
 //!   ├─ ensure_member       inserts the member once; keeps the officer an officer
-//!   └─ ensure_credentials  password credentials that bypass email verification
+//!   └─ ensure_credentials  password credentials that bypass email verification (re-seed rotates)
 use super::credentials::password_hash;
+use super::password_policy::{PASSWORD_POLICY, meets_password_policy};
 use chrono::Utc;
 use sqlx::SqlitePool;
 use uuid::Uuid;
@@ -17,6 +18,9 @@ const TEST_ACCOUNTS: [(&str, &str, &str); 2] = [
 ];
 
 pub async fn seed_test_accounts(db: &SqlitePool, password: &str) -> SeedResult {
+    if !meets_password_policy(password) {
+        return Err(format!("TEMP_TEST_PASSWORD rejected: {PASSWORD_POLICY}").into());
+    }
     for (email, role, handle) in TEST_ACCOUNTS {
         ensure_member(db, email, role, handle).await?;
         ensure_credentials(db, email, password).await?;
@@ -47,7 +51,8 @@ async fn ensure_member(db: &SqlitePool, email: &str, role: &str, handle: &str) -
 
 async fn ensure_credentials(db: &SqlitePool, email: &str, password: &str) -> SeedResult {
     let hash = password_hash(password).map_err(|_| "password hashing failed")?;
-    sqlx::query("INSERT INTO email_credentials(member_id,password_hash,verified_at) SELECT id,?,? FROM members WHERE email=? ON CONFLICT(member_id) DO NOTHING")
+    // TEMP_TEST_PASSWORD is the source of truth: re-seeding with a new value rotates the password.
+    sqlx::query("INSERT INTO email_credentials(member_id,password_hash,verified_at) SELECT id,?,? FROM members WHERE email=? ON CONFLICT(member_id) DO UPDATE SET password_hash=excluded.password_hash")
         .bind(hash).bind(Utc::now().to_rfc3339()).bind(email).execute(db).await?;
     Ok(())
 }

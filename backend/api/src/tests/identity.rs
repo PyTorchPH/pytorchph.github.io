@@ -224,7 +224,7 @@ async fn email_signup_requires_the_current_code_and_creates_one_member() {
 #[tokio::test]
 async fn temporary_test_accounts_keep_member_and_officer_roles() {
     let (state, headers, _, _) = fixture().await;
-    email_signup::seed_test_accounts(&state.db, "test-password")
+    email_signup::seed_test_accounts(&state.db, "Sample#Pass9")
         .await
         .unwrap();
     for (email, role) in [
@@ -236,7 +236,7 @@ async fn temporary_test_accounts_keep_member_and_officer_roles() {
             headers.clone(),
             Json(email_signup::PasswordLogin {
                 email: email.into(),
-                password: "test-password".into(),
+                password: "Sample#Pass9".into(),
             }),
         )
         .await
@@ -319,6 +319,50 @@ async fn verified_accounts_are_canonical_unique_and_cascade() {
         .unwrap();
     assert_eq!(
         count(&state.db, "SELECT COUNT(*) FROM member_accounts").await,
+        0
+    );
+}
+
+#[tokio::test]
+async fn reseeding_test_accounts_rotates_their_password() {
+    let (state, headers, _, _) = fixture().await;
+    email_signup::seed_test_accounts(&state.db, "Sample#Pass9")
+        .await
+        .unwrap();
+    email_signup::seed_test_accounts(&state.db, "Rotated#Pass7")
+        .await
+        .unwrap();
+    let login = |password: &str| {
+        email_signup::password_login(
+            State(state.clone()),
+            headers.clone(),
+            Json(email_signup::PasswordLogin {
+                email: "member@admin.ph".into(),
+                password: password.into(),
+            }),
+        )
+    };
+    assert!(login("Sample#Pass9").await.is_err());
+    assert_eq!(
+        login("Rotated#Pass7").await.unwrap().status(),
+        StatusCode::OK
+    );
+}
+
+#[tokio::test]
+async fn weak_test_account_password_is_rejected() {
+    let (state, _, _, _) = fixture().await;
+    assert!(
+        email_signup::seed_test_accounts(&state.db, "test-password")
+            .await
+            .is_err()
+    );
+    assert_eq!(
+        count(
+            &state.db,
+            "SELECT COUNT(*) FROM members WHERE email LIKE '%@admin.ph'"
+        )
+        .await,
         0
     );
 }

@@ -5,11 +5,11 @@
 //   RegisterForm            the verification step (after sign-up) above the registration form
 //   VerificationCodeForm    8-digit code → POST /auth/email/verify → /onboarding (Complete your profile)
 //   RegistrationForm        name, username, email, passwords and Terms/Privacy consent
-//   ├─ PasswordStrengthHint weak / fair / strong hint under the password
+//   ├─ PasswordRequirements  live checklist of the password rules
 //   └─ TermsConsent         required checkbox; Terms / Privacy Notice links open modals (identity/legal)
 //   startEmailSignup        POST /auth/email/start (or explains why sign-up is unavailable)
 //   EmailFormatHint         live "valid email" feedback
-//   isCompleteCode / passwordStrength   small predicates
+//   isCompleteCode          small predicate
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LegalLink } from "../../legal";
 import { AuthShell } from "../render-shell";
-import { emailSchema, registerSchema, type RegisterValues } from "@pytorch-ph/domain-protocol/identity";
+import { emailSchema, passwordRules, registerSchema, type RegisterValues } from "@pytorch-ph/domain-protocol/identity";
 import { ErrorBanner, Field, FieldError } from "./field";
 import { hasAuthApi, isStaticDemo, officialAuth } from "./official-auth";
 
@@ -104,7 +104,7 @@ function RegistrationForm({ error, hidden, onError, onCodeSent }: RegistrationFo
         type="password"
         {...form.register("password")}
       />
-      {password && <PasswordStrengthHint password={password} />}
+      <PasswordRequirements password={password} />
       <FieldError message={form.formState.errors.password?.message} />
       <Field
         aria-invalid={Boolean(form.formState.errors.confirm)}
@@ -150,17 +150,15 @@ function usePrefilledEmail(apply: (email: string) => void) {
   }, []);
 }
 
-const STRENGTH_LABELS =["Weak", "Weak", "Fair", "Strong", "Strong"] as const;
-
-function PasswordStrengthHint({ password }: { password: string }) {
-  const score = passwordStrength(password);
-  const tone = score >= 3 ? "text-success" : score === 2 ? "text-warning" : "text-accent";
-  return <p className={`font-mono text-xs ${tone}`} aria-live="polite">Password strength: {STRENGTH_LABELS[score]} — use 12+ characters with mixed case, numbers, and symbols.</p>;
+// Every rule is listed from the start and ticks as the password meets it.
+function PasswordRequirements({ password }: { password: string }) {
+  return <ul aria-label="Password requirements" aria-live="polite" className="grid gap-1 font-mono text-xs sm:grid-cols-2">
+    {passwordRules.map((rule) => {
+      const met = rule.test(password);
+      return <li className={met ? "text-success" : "text-muted"} key={rule.label}>{met ? "✓" : "○"} {rule.label}</li>;
+    })}
+  </ul>;
 }
-
-// 0–4: one point each for length ≥ 12, mixed case, a digit, a symbol.
-const passwordStrength = (password: string) =>
-  [password.length >= 12, /[a-z]/.test(password) && /[A-Z]/.test(password), /\d/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length;
 
 async function startEmailSignup(details: { email: string; name: string; username: string; password: string }) {
   if (hasAuthApi()) {

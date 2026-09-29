@@ -1900,6 +1900,7 @@ dependencies = [
  "axum",
  "base64 0.22.1",
  "chrono",
+ "flate2",
  "hex",
  "hmac 0.12.1",
  "jsonwebtoken",

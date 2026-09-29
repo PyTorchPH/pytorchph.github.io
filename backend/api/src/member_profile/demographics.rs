@@ -3,10 +3,11 @@
 //!
 //! Module map (caller-first):
 //!   demographics            GET /api/officer/demographics
+//!   ├─ age_buckets        current age → the range officers see
 //!   ├─ grouped_counts       one breakdown: label per code, counted
 //!   │   └─ labelled         code → catalog label (or the stored name)
 //!   └─ suppress_small_groups
-use super::catalog;
+use super::{catalog, store::CURRENT_AGE};
 use crate::{ApiResult, internal};
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
@@ -34,16 +35,32 @@ pub(crate) async fn demographics(db: &SqlitePool) -> ApiResult<Value> {
         "minimumGroupSize": MINIMUM_GROUP_SIZE,
         "breakdowns": {
             "gender": breakdown(format!("SELECT gender, COUNT(*) FROM member_profiles WHERE member_id IN ({CONSENTED}) GROUP BY gender"), Some("genders")).await?,
-            "ageRange": breakdown(format!("SELECT age_range, COUNT(*) FROM member_profiles WHERE member_id IN ({CONSENTED}) GROUP BY age_range"), Some("ageRanges")).await?,
+            "ageRange": breakdown(age_buckets(), Some("ageRanges")).await?,
             "region": breakdown(format!("SELECT region_code, COUNT(*) FROM member_profiles WHERE member_id IN ({CONSENTED}) GROUP BY region_code"), Some("regions")).await?,
             "status": breakdown(format!("SELECT status, COUNT(*) FROM member_profiles WHERE member_id IN ({CONSENTED}) GROUP BY status"), Some("statuses")).await?,
             "channel": breakdown(format!("SELECT channel, COUNT(*) FROM member_profiles WHERE member_id IN ({CONSENTED}) GROUP BY channel"), Some("channels")).await?,
             "interest": breakdown(format!("SELECT interest_code, COUNT(*) FROM member_interests WHERE member_id IN ({CONSENTED}) GROUP BY interest_code"), Some("interests")).await?,
             "industry": breakdown(format!("SELECT industry_code, COUNT(*) FROM member_employment WHERE member_id IN ({CONSENTED}) GROUP BY industry_code"), Some("industries")).await?,
             "company": breakdown(format!("SELECT c.name, COUNT(*) FROM member_employment e JOIN companies c ON c.id = e.company_id WHERE e.member_id IN ({CONSENTED}) GROUP BY c.name"), None).await?,
-            "school": breakdown(format!("SELECT e.school_code, COUNT(*) FROM member_education e WHERE e.member_id IN ({CONSENTED}) GROUP BY e.school_code"), Some("schools")).await?,
+            "school": breakdown(school_names(), None).await?,
         },
     }))
+}
+
+// Officers only ever see ranges: each consenting member's current age falls into one bucket,
+// and a member without an age row preferred not to say.
+// Schools are named (with their campus city) by joining the directory; unlisted ones stay grouped.
+fn school_names() -> String {
+    format!(
+        "SELECT CASE WHEN e.school_code = '{unlisted}' THEN 'School not listed'          ELSE COALESCE(s.name || CASE WHEN s.city <> '' THEN ' - ' || s.city ELSE '' END, e.school_code) END AS school, COUNT(*)          FROM member_education e LEFT JOIN schools s ON s.code = e.school_code          WHERE e.member_id IN ({CONSENTED}) GROUP BY school",
+        unlisted = catalog::UNLISTED_SCHOOL
+    )
+}
+
+fn age_buckets() -> String {
+    format!(
+        "SELECT CASE WHEN a.current IS NULL THEN 'prefer_not_to_say'          WHEN a.current < 18 THEN 'under_18' WHEN a.current < 25 THEN '18_24'          WHEN a.current < 35 THEN '25_34' WHEN a.current < 45 THEN '35_44' ELSE '45_plus' END AS bucket, COUNT(*)          FROM member_profiles p LEFT JOIN (SELECT member_id, {CURRENT_AGE} AS current FROM member_ages) a ON a.member_id = p.member_id          WHERE p.member_id IN ({CONSENTED}) GROUP BY bucket"
+    )
 }
 
 async fn grouped_counts(
@@ -64,10 +81,6 @@ async fn grouped_counts(
 
 fn labelled(list: Option<&'static str>, code: &str) -> String {
     match list {
-        Some("schools") if code == catalog::UNLISTED_SCHOOL => "School not listed".to_owned(),
-        Some("schools") => {
-            catalog::school(code).map_or_else(|| code.to_owned(), |school| school.name.clone())
-        }
         Some(list) => catalog::option_label(list, code).unwrap_or(code).to_owned(),
         None => code.to_owned(),
     }
