@@ -17,7 +17,6 @@ import {
   Settings,
   Shield,
   Trophy,
-  Unplug,
   UserCheck,
   UserRound,
   X
@@ -53,7 +52,6 @@ const officerNavItems: NavItem[] = [
   { href: "/admin/events", label: "Event Workflow", icon: ClipboardList },
   { href: "/admin/evidence", label: "Evidence Review", icon: Search },
   { href: "/reports", label: "Reports & Feedback", icon: Bot },
-  { href: "/connections", label: "Connections", icon: Unplug, capability: "connections" },
 ];
 
 function AppShellContent({ children }: { children: React.ReactNode }) {
