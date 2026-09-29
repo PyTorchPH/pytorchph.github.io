@@ -6,12 +6,14 @@
 //!   ├─ parse_age               exact age 13–100, or an explicit "prefer not to say"
 //!   ├─ parse_status            student / professional / both / seeking / other
 //!   ├─ parse_interests         up to MAX_INTERESTS known interest codes
-//!   ├─ parse_education         required while studying
+//!   ├─ parse_education         required while studying; the level sets grade/year range and program
+//!   │   ├─ level_rule          elementary 1–6 · junior high 7–10 · senior high 11–12 · college 1–8
+//!   │   └─ parse_program_choice a catalog program/strand code, or an unlisted program's name
 //!   │   └─ parse_school_choice  a CHED school code, or an unlisted school's name
 //!   └─ parse_employment        required while working
 //!       └─ parse_company_choice an existing company id, or a new company name
 use super::catalog::{self, UNLISTED_SCHOOL};
-use crate::{ApiResult, bad};
+use crate::{ApiResult, bad, programs::UNLISTED_PROGRAM};
 use serde_json::Value;
 
 const MAX_INTERESTS: usize = 10;
@@ -70,8 +72,47 @@ impl Status {
 pub(crate) struct Education {
     pub(crate) school: SchoolChoice,
     pub(crate) level: String,
-    pub(crate) program: String,
+    /// Strand or program; None for elementary, which has none.
+    pub(crate) program: Option<ProgramChoice>,
     pub(crate) year_level: i64,
+}
+
+/// What each school level asks for: its grade/year range and whether it has a program.
+struct LevelRule {
+    years: std::ops::RangeInclusive<i64>,
+    has_program: bool,
+    year_message: &'static str,
+}
+
+fn level_rule(level: &str) -> LevelRule {
+    match level {
+        "elementary" => LevelRule {
+            years: 1..=6,
+            has_program: false,
+            year_message: "Choose a grade from 1 to 6",
+        },
+        "junior_high" => LevelRule {
+            years: 7..=10,
+            has_program: true,
+            year_message: "Choose a grade from 7 to 10",
+        },
+        "senior_high" => LevelRule {
+            years: 11..=12,
+            has_program: true,
+            year_message: "Choose grade 11 or 12",
+        },
+        _ => LevelRule {
+            years: 1..=8,
+            has_program: true,
+            year_message: "Choose a year level from 1 to 8",
+        },
+    }
+}
+
+/// A catalog program or strand, or a program the catalog lacks (kept apart for analytics).
+pub(crate) enum ProgramChoice {
+    Listed(String),
+    Unlisted(String),
 }
 
 pub(crate) enum SchoolChoice {
@@ -182,19 +223,41 @@ fn parse_interests(input: &Value) -> ApiResult<Vec<String>> {
     Ok(dedupe(codes))
 }
 
+// Mental model: the level decides the rest: which grade/year range is valid and whether a
+// strand or program is asked for (elementary and junior high have none).
 fn parse_education(school: Option<&Value>) -> ApiResult<Education> {
     let school = school.ok_or_else(|| bad("Tell us about your school"))?;
+    let level = known_option(school, "level", "schoolLevels", "Choose your school level")?;
+    let rule = level_rule(&level);
     let year_level = school
         .get("yearLevel")
         .and_then(Value::as_i64)
-        .filter(|year| is_year_level(*year));
+        .filter(|year| rule.years.contains(year))
+        .ok_or_else(|| bad(rule.year_message))?;
+    let program = if rule.has_program {
+        Some(parse_program_choice(school)?)
+    } else {
+        None
+    };
     Ok(Education {
         school: parse_school_choice(school)?,
-        level: known_option(school, "level", "schoolLevels", "Choose your school level")?,
-        program: bounded_text(school.get("program"), MAX_TEXT)
-            .ok_or_else(|| bad("Enter your program or strand"))?,
-        year_level: year_level.ok_or_else(|| bad("Choose a year level from 1 to 8"))?,
+        level,
+        program,
+        year_level,
     })
+}
+
+// The code is checked against the catalog (and this level) when the profile is saved.
+fn parse_program_choice(school: &Value) -> ApiResult<ProgramChoice> {
+    let code = text(school, "programCode");
+    if code == UNLISTED_PROGRAM {
+        return bounded_text(school.get("unlistedProgram"), MAX_TEXT)
+            .map(ProgramChoice::Unlisted)
+            .ok_or_else(|| bad("Type your program or strand"));
+    }
+    (!code.is_empty() && code.len() <= MAX_SCHOOL_CODE)
+        .then(|| ProgramChoice::Listed(code.to_owned()))
+        .ok_or_else(|| bad("Choose your program or strand from the list"))
 }
 
 fn parse_school_choice(school: &Value) -> ApiResult<SchoolChoice> {
@@ -282,9 +345,4 @@ fn is_unlisted_school(code: &str) -> bool {
 #[inline]
 fn is_accepted_age(age: i64) -> bool {
     (MIN_AGE..=MAX_AGE).contains(&age)
-}
-
-#[inline]
-fn is_year_level(year: i64) -> bool {
-    (1..=8).contains(&year)
 }

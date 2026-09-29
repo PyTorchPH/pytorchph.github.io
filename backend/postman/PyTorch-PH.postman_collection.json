@@ -338,6 +338,76 @@
           ]
         },
         {
+          "name": "Senior high strands",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/reference/programs?level=senior_high",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "reference",
+                "programs?level=senior_high"
+              ]
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Senior high strands: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('whole strand list', () => pm.expect(pm.response.json().map((p) => p.shortName)).to.include('STEM'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "College program search",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{siteOrigin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{apiOrigin}}/reference/programs?level=undergraduate&q=bscs&limit=5",
+              "host": [
+                "{{apiOrigin}}"
+              ],
+              "path": [
+                "reference",
+                "programs?level=undergraduate&q=bscs&limit=5"
+              ]
+            },
+            "description": "Automated smoke check. Uses the Postman cookie jar for the current role."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"College program search: HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test('BSCS found', () => pm.expect(pm.response.json().map((p) => p.label)).to.include('Bachelor of Science in Computer Science'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
           "name": "Company search",
           "request": {
             "method": "GET",

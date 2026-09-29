@@ -223,3 +223,52 @@ async fn pending_accounts_become_members_when_approval_is_dropped() {
         1
     );
 }
+
+#[tokio::test]
+async fn senior_high_years_become_grades_and_programs_move_to_their_own_table() {
+    let db = SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    let mut before = sqlx::migrate!();
+    before.migrations = std::borrow::Cow::Owned(
+        before
+            .migrations
+            .iter()
+            .filter(|m| m.version < 14)
+            .cloned()
+            .collect(),
+    );
+    before.run(&db).await.unwrap();
+    let now = chrono::Utc::now().to_rfc3339();
+    sqlx::query("INSERT INTO members(id,google_sub,email,display_name,public_handle,role,created_at) VALUES ('m1','m1','m1@example.test','M','M-1','member',?)").bind(&now).execute(&db).await.unwrap();
+    sqlx::query("INSERT INTO member_profiles(member_id,gender,region_code,status,channel,completed_at,updated_at) VALUES ('m1','female','04','student','friends',?,?)").bind(&now).bind(&now).execute(&db).await.unwrap();
+    sqlx::query("INSERT INTO member_education(member_id,school_code,level,program,year_level) VALUES ('m1','unlisted','senior_high','ABM',2)").execute(&db).await.unwrap();
+    sqlx::query(
+        "INSERT INTO member_unlisted_schools(member_id,school_name) VALUES ('m1','Our Town High')",
+    )
+    .execute(&db)
+    .await
+    .unwrap();
+
+    sqlx::migrate!().run(&db).await.unwrap();
+
+    let (level, grade): (String, i64) =
+        sqlx::query_as("SELECT level, year_level FROM member_education")
+            .fetch_one(&db)
+            .await
+            .unwrap();
+    assert_eq!((level.as_str(), grade), ("senior_high", 12));
+    // Migration 0016 then keeps earlier free-text programs as "unlisted" with their text.
+    let (code, program): (String, String) = sqlx::query_as("SELECT p.program_code, u.program_name FROM member_education_programs p JOIN member_unlisted_programs u ON u.member_id = p.member_id")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!((code.as_str(), program.as_str()), ("unlisted", "ABM"));
+    let (school,): (String,) = sqlx::query_as("SELECT school_name FROM member_unlisted_schools")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(school, "Our Town High");
+}

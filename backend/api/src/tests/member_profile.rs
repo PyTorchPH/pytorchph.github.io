@@ -21,7 +21,7 @@ fn student_professional_profile(consent: bool) -> Value {
         "channel": first_code("channels"),
         "interests": [first_code("interests")],
         "analyticsConsent": consent,
-        "school": {"code": TEST_SCHOOL, "level": "undergraduate", "program": "BS Computer Science", "yearLevel": 3},
+        "school": {"code": TEST_SCHOOL, "level": "undergraduate", "programCode": "test-bscs", "yearLevel": 3},
         "employment": {"newCompanyName": "Acme Robotics PH", "industry": first_code("industries"), "jobRole": "ML intern", "experienceRange": "under_1"},
     })
 }
@@ -340,4 +340,174 @@ async fn unknown_school_code_is_rejected_on_save() {
     )
     .await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+}
+
+fn studying_at(level: &str, year: i64, program: Option<&str>) -> Value {
+    let mut input = student_professional_profile(true);
+    input["status"] = json!("student");
+    input.as_object_mut().unwrap().remove("employment");
+    input["school"] = json!({"code": TEST_SCHOOL, "level": level, "yearLevel": year});
+    if let Some(program) = program {
+        input["school"]["programCode"] = json!(program);
+    }
+    input
+}
+
+#[tokio::test]
+async fn each_school_level_accepts_only_its_grades_and_asks_for_a_program_only_when_it_has_one() {
+    let (state, officer_headers, _, member_id) = fixture().await;
+    let headers = member_session(&state, &officer_headers, &member_id, &"7".repeat(64)).await;
+    let save = |input: Value| {
+        portal_call(
+            &state,
+            &headers,
+            Method::PUT,
+            "/portal/api/member/profile",
+            input,
+        )
+    };
+
+    let (status, saved) = save(studying_at("elementary", 6, None)).await;
+    assert_eq!(status, StatusCode::OK, "{saved}");
+    assert_eq!(saved["profile"]["school"]["programCode"], Value::Null);
+    assert_eq!(
+        count(&state.db, "SELECT COUNT(*) FROM member_education_programs").await,
+        0
+    );
+
+    let (status, saved) = save(studying_at("senior_high", 11, Some("test-stem"))).await;
+    assert_eq!(status, StatusCode::OK, "{saved}");
+    assert_eq!(
+        saved["profile"]["programLabel"],
+        "Science, Technology, Engineering, and Mathematics"
+    );
+
+    for (level, year, program) in [
+        ("elementary", 7, None),
+        ("junior_high", 6, None),
+        ("senior_high", 2, Some("STEM")),
+        ("senior_high", 12, None),
+        ("undergraduate", 9, Some("BSCS")),
+    ] {
+        let (status, _) = save(studying_at(level, year, program)).await;
+        assert_ne!(
+            status,
+            StatusCode::OK,
+            "{level} {year} {program:?} should be rejected"
+        );
+    }
+}
+
+#[tokio::test]
+async fn unlisted_program_keeps_its_typed_name_apart_from_the_catalog() {
+    let (state, officer_headers, _, member_id) = fixture().await;
+    let headers = member_session(&state, &officer_headers, &member_id, &"6".repeat(64)).await;
+    let mut input = studying_at("undergraduate", 2, Some("unlisted"));
+    input["school"]["unlistedProgram"] = json!("BS Quantum Basketweaving");
+    let (status, saved) = portal_call(
+        &state,
+        &headers,
+        Method::PUT,
+        "/portal/api/member/profile",
+        input,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{saved}");
+    assert_eq!(saved["profile"]["programLabel"], "BS Quantum Basketweaving");
+    assert_eq!(
+        count(&state.db, "SELECT COUNT(*) FROM member_unlisted_programs").await,
+        1
+    );
+}
+
+#[tokio::test]
+async fn program_and_company_directories_search_by_keywords_and_acronyms() {
+    let (state, _, _, _) = fixture().await;
+    crate::programs::load_program_catalog(&state.db)
+        .await
+        .unwrap();
+    crate::companies::load_company_directory(&state.db)
+        .await
+        .unwrap();
+
+    let names =
+        |rows: Vec<crate::programs::Program>| rows.into_iter().map(|p| p.name).collect::<Vec<_>>();
+    let bscs = names(
+        crate::programs::programs_for_level(&state.db, "undergraduate", "bscs", 10)
+            .await
+            .unwrap(),
+    );
+    assert!(
+        bscs.iter()
+            .any(|name| name == "Bachelor of Science in Computer Science"),
+        "{bscs:?}"
+    );
+    let reordered = names(
+        crate::programs::programs_for_level(
+            &state.db,
+            "undergraduate",
+            "computer bachelor science",
+            50,
+        )
+        .await
+        .unwrap(),
+    );
+    assert!(
+        reordered
+            .iter()
+            .any(|name| name == "Bachelor of Science in Computer Science"),
+        "{reordered:?}"
+    );
+    let strands = names(
+        crate::programs::programs_for_level(&state.db, "senior_high", "", 50)
+            .await
+            .unwrap(),
+    );
+    assert!(
+        strands.len() >= 10 && strands.iter().any(|name| name.starts_with("Humanities")),
+        "{strands:?}"
+    );
+    assert!(
+        crate::programs::programs_for_level(&state.db, "undergraduate", "", 50)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+
+    let companies = crate::companies::search_companies(&state.db, "pldt", 10)
+        .await
+        .unwrap();
+    assert!(
+        companies.iter().any(|company| company.name == "PLDT"),
+        "{companies:?}"
+    );
+    let by_alias = crate::companies::search_companies(&state.db, "glo", 10)
+        .await
+        .unwrap();
+    assert!(
+        by_alias
+            .iter()
+            .any(|company| company.name == "Globe Telecom"),
+        "{by_alias:?}"
+    );
+}
+
+#[tokio::test]
+async fn member_added_company_becomes_searchable_at_once_and_stays_unverified() {
+    let (state, officer_headers, _, member_id) = fixture().await;
+    let headers = member_session(&state, &officer_headers, &member_id, &"5".repeat(64)).await;
+    let (status, _) = portal_call(
+        &state,
+        &headers,
+        Method::PUT,
+        "/portal/api/member/profile",
+        student_professional_profile(true),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let found = crate::companies::search_companies(&state.db, "acme robotics", 10)
+        .await
+        .unwrap();
+    assert_eq!(found.len(), 1);
+    assert!(!crate::companies::display::is_verified(&found[0]));
 }

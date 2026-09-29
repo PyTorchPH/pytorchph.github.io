@@ -1,17 +1,23 @@
-//! Public lookups for the profile form: answer options, school search, company search.
-//! Both searches treat every typed word as its own keyword, in any order.
+//! Public lookups for the profile form: answer options, school, program, and company search.
+//! Every search treats each typed word as its own prefix keyword, in any order.
 //!
 //! Module map (caller-first):
 //!   profile_options   GET /reference/profile-options
-//!   schools           GET /reference/schools?q=&limit=     (FTS5 directory, crate::schools)
-//!   companies         GET /reference/companies?q=&limit=   (every word must appear in the name)
+//!   schools           GET /reference/schools?q=&limit=            (crate::schools)
+//!   programs          GET /reference/programs?level=&q=&limit=    (crate::programs; short
+//!                     levels return their whole list when q is empty)
+//!   companies         GET /reference/companies?q=&limit=          (crate::companies)
 //!   └─ search_limit   bounded result size
 use super::catalog;
 use crate::{
-    ApiResult, AppState, internal,
+    ApiResult, AppState, bad,
+    companies::{
+        display::{company_detail, is_verified},
+        search_companies,
+    },
+    programs::programs_for_level,
     schools::{
         display::{school_detail, school_label},
-        search::keywords,
         search_schools,
     },
 };
@@ -28,6 +34,14 @@ const MAX_LIMIT: usize = 50;
 
 #[derive(Deserialize)]
 pub(crate) struct Search {
+    #[serde(default)]
+    q: String,
+    limit: Option<usize>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct ProgramSearch {
+    level: String,
     #[serde(default)]
     q: String,
     limit: Option<usize>,
@@ -60,33 +74,51 @@ pub(crate) async fn schools(
     )))
 }
 
-// Companies stay a small SQL table, so each keyword is one LIKE; names matching the first word
-// earlier rank first. With no keywords every company matches.
+pub(crate) async fn programs(
+    State(state): State<Arc<AppState>>,
+    Query(search): Query<ProgramSearch>,
+) -> ApiResult<Json<Value>> {
+    if !catalog::has_option("schoolLevels", &search.level) {
+        return Err(bad("Choose a school level"));
+    }
+    let rows = programs_for_level(
+        &state.db,
+        &search.level,
+        &search.q,
+        search_limit(search.limit),
+    )
+    .await?;
+    Ok(Json(Value::Array(
+        rows.iter()
+            .map(|program| {
+                json!({
+                    "code": program.code,
+                    "label": program.name,
+                    "shortName": program.short_name,
+                    "group": program.group_name,
+                })
+            })
+            .collect(),
+    )))
+}
+
 pub(crate) async fn companies(
     State(state): State<Arc<AppState>>,
     Query(search): Query<Search>,
 ) -> ApiResult<Json<Value>> {
-    let words = keywords(&search.q);
-    let filters = if words.is_empty() {
-        "1 = 1".to_owned()
-    } else {
-        vec!["lower(name) LIKE '%' || ? || '%'"; words.len()].join(" AND ")
-    };
-    let mut query = sqlx::query_as::<_, (String, String)>(sqlx::AssertSqlSafe(format!(
-        "SELECT id, name FROM companies WHERE {filters} ORDER BY instr(lower(name), ?), name LIMIT ?"
-    )));
-    for word in &words {
-        query = query.bind(word.clone());
-    }
-    let rows = query
-        .bind(words.first().cloned().unwrap_or_default())
-        .bind(search_limit(search.limit) as i64)
-        .fetch_all(&state.db)
-        .await
-        .map_err(internal)?;
+    let rows = search_companies(&state.db, &search.q, search_limit(search.limit)).await?;
     Ok(Json(Value::Array(
-        rows.into_iter()
-            .map(|(id, name)| json!({"id": id, "label": name}))
+        rows.iter()
+            .map(|company| {
+                json!({
+                    "id": company.id,
+                    "label": company.name,
+                    "detail": company_detail(company),
+                    "aliases": company.aliases,
+                    "city": company.city,
+                    "verified": is_verified(company),
+                })
+            })
             .collect(),
     )))
 }

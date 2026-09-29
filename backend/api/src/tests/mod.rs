@@ -63,6 +63,11 @@ async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
         .execute(&db)
         .await
         .unwrap();
+    // A few catalog programs, one per level the profile tests use.
+    sqlx::query("INSERT INTO programs(code,level,name,short_name,group_name) VALUES ('test-bscs','undergraduate','Bachelor of Science in Computer Science','BSCS','Software'), ('test-stem','senior_high','Science, Technology, Engineering, and Mathematics','STEM','Academic track'), ('test-ste','junior_high','Science, Technology, and Engineering','STE','Special curricular program')")
+        .execute(&db)
+        .await
+        .unwrap();
     let officer = Uuid::new_v4().to_string();
     let member = Uuid::new_v4().to_string();
     for (id, role) in [(&officer, "officer"), (&member, "member")] {
