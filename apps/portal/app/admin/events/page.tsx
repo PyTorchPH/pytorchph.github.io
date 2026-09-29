@@ -112,5 +112,6 @@ function EventWorkflowContent() {
 }
 
 export default function EventWorkflowPage() {
+  if (process.env.NEXT_PUBLIC_API_ORIGIN) return <AppShell><div className="space-y-6"><section className="page-hero"><Badge variant="orange">Officers only</Badge><h1 className="mt-3 text-3xl font-extrabold">Official event workflow</h1><p className="mt-3 text-muted">Events, entrants, results, and mail drafts are saved to the organization API.</p></section><CompetitiveEventForm /><MailWorkflow /></div></AppShell>;
   return <AppShell><EventWorkflowContent /></AppShell>;
 }
