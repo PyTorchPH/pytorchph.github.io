@@ -26,7 +26,7 @@ surface for a junior dev to own end-to-end.
 ## Files owned
 
 ```
-legacy/python/resume_builder/renderers/
+backend/legacy-python/resume_builder/renderers/
 ├── base.py              # Renderer ABC + shared write()
 ├── registry.py          # get_renderer(fmt, templates_dir)
 ├── latex_renderer.py

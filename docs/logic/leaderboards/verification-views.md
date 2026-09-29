@@ -1,12 +1,12 @@
 ---
 logic_id: leaderboards.verification-views
 code_paths:
-  - domains/protocol/leaderboards
-  - apps/api/src/main.rs
-  - apps/portal/app/leaderboards
+  - frontend/contracts/leaderboards
+  - backend/api/src/main.rs
+  - frontend/portal/app/leaderboards
 tests:
-  - apps/portal/tests/member-command-center.test.ts
-  - apps/portal/tests/member-command-center.e2e.mjs
+  - frontend/portal/tests/member-command-center.test.ts
+  - frontend/portal/tests/member-command-center.e2e.mjs
 feedback_events:
   - leaderboard.view_loaded
 related_logic:

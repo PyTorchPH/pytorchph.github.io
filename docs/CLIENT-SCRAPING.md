@@ -47,7 +47,7 @@ real Chromium the user watches). The **target** is a **headless background proce
 side. Use the existing files as the **blueprint** — port the *ideas*, re-implement for the
 client/extension runtime:
 
-| Legacy file (`legacy/python/resume_builder/sources/social/`) | Role today | Carries over as |
+| Legacy file (`backend/legacy-python/resume_builder/sources/social/`) | Role today | Carries over as |
 |---|---|---|
 | `headless_browser.py` | `PlaywrightSession` (default **visible**) + `scroll_collect` infinite-scroll | Headless background session + scroll-to-load logic |
 | `aggregator.py` | parallel dispatch, per-vendor cache (TTL 6h), dedupe, failure isolation | Client-side scheduler + local cache + dedupe |

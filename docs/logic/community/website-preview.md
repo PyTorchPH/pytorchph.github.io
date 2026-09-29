@@ -1,11 +1,11 @@
 ---
 logic_id: community.website-preview
 code_paths:
-  - apps/portal/app/dashboard/community
-  - apps/portal/app/community-preview
-  - domains/client/navigation/render-shell.tsx
+  - frontend/portal/app/dashboard/community
+  - frontend/portal/app/community-preview
+  - frontend/features/navigation/render-shell.tsx
 tests:
-  - apps/portal/tests/community-demo.test.ts
+  - frontend/portal/tests/community-demo.test.ts
 feedback_events: []
 related_logic:
   - leaderboards.verification-views

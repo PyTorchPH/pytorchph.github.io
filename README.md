@@ -30,14 +30,14 @@ npm run build
 
 ## GitHub Pages
 
-https://pytorch.ph serves the public site from `site/` and a static member portal demo at
+https://pytorch.ph serves the public site from `frontend/public-site/` and a static member portal demo at
 `/portal/`, built and deployed by `.github/workflows/deploy-pages.yml` on every push to `main`.
-See [`site/README.md`](site/README.md) for local preview.
+See [`frontend/public-site/README.md`](frontend/public-site/README.md) for local preview.
 
 ## Production
 
 The Next.js application needs Node.js-compatible hosting; GitHub Pages cannot run its server routes.
-Configure the portal build (`NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_AUTH_API_ORIGIN`) using `.env.example` in hosting or `apps/portal/.env.local`;
+Configure the portal build (`NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_AUTH_API_ORIGIN`) using `.env.example` in hosting or `frontend/portal/.env.local`;
 retain email confirmation and RLS.
 Use `npm run build` and `npm start`. Production never uses local demo authentication.
 No live deployment or data migration is included in this adaptation.
@@ -46,12 +46,15 @@ No live deployment or data migration is included in this adaptation.
 
 | Path | Purpose |
 |---|---|
-| `site` | Public website (Jekyll fork of the PyTorch Korea and pytorch.org sites) |
-| `apps/portal` | Member/officer portals |
-| `apps/pages-demo` | Static portal demo served under `/portal/` on GitHub Pages |
-| `domains` | Shared protocols, server decisions, and client features |
-| `design-system` | Shared visual components |
-| `development` | Local launchers and optional automation tools |
+| `backend/api` | Rust API (auth, portal gateway, evidence, leaderboards, profiles) |
+| `backend/legacy-python` | Retained Python engine, operator tools, and tests |
+| `frontend/public-site` | Public website (Jekyll fork of the PyTorch Korea and pytorch.org sites) |
+| `frontend/portal` | Member/officer portals |
+| `frontend/portal-static` | Static portal demo served under `/portal/` on GitHub Pages |
+| `frontend/extension` | Chrome evidence extension |
+| `frontend/features`, `frontend/contracts` | Client features and shared request/response shapes |
+| `frontend/design-system` | Shared visual components |
+| `development` | Local launchers, local server, and optional automation tools |
 | `docs/PH-MIGRATION.md` | Provenance, sources, scope, and rollback |
 | `observability.project.toml` | Existing PH identity in the shared Codex harness |
 

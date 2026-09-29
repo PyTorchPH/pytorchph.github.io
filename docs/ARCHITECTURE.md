@@ -1,22 +1,28 @@
 # Repository architecture
 
-The repository is feature-first at the domain level and boundary-first inside `domains/`.
+Top level splits by runtime: everything the server runs is in `backend/`, everything the browser
+runs is in `frontend/`, and local-only tooling is in `development/`. Inside each, folders are feature-first.
 
 ```text
-apps/portal/            Next.js and Vercel entry points
-apps/academic-records/  thin FEU SOLAR login, scrape, and resume-injection commands
-domains/client/         browser-visible feature components and interactions
-domains/server/         Vercel-only feature operations
-domains/protocol/       shared request, response, event, and validation shapes
-design-system/          reusable visual primitives
-apps/api/               Rust API: auth, sessions, SQLite migrations, evidence, leaderboards
-development/            local access, Process Lab, and patched Prefect dashboard
-legacy/python/          retained Python reference engine and organization prototypes
-tests/                  cross-package verification and benchmarks
-docs/                   architecture and operating guidance
-config/, tools/, scripts/  shared data, manual/operator tools, and repo automation
-var/                    ignored local cache, state, sessions, environments, logs, and run files
-out/                    ignored human-reviewable reports, captures, and exports
+backend/api/                    Rust API: auth, sessions, SQLite migrations, evidence, leaderboards, profiles
+backend/config/                 shared data read by the backend and legacy engine
+backend/postman/                API collection and its route validator
+backend/legacy-python/          retained Python reference engine, operator tools, and their tests
+frontend/public-site/           public Jekyll website served at https://pytorch.ph
+frontend/portal/                Next.js member/officer portal entry points
+frontend/portal-static/         static export of the portal served under /portal/ on GitHub Pages
+frontend/extension/             Chrome MV3 evidence extension (local AI keys stay here)
+frontend/features/              browser-visible feature components and interactions
+frontend/contracts/             shared request, response, event, and validation shapes
+frontend/design-system/         reusable visual primitives
+development/local-server/       local-only feature operations behind the dev launcher
+development/academic-records/   thin FEU SOLAR login, scrape, and resume-injection commands
+development/                    local access, Process Lab, launchers, and patched Prefect dashboard
+tests/node/                     cross-package verification
+docs/                           architecture and operating guidance
+scripts/                        repo automation
+var/                            ignored local cache, state, sessions, environments, logs, and run files
+out/                            ignored human-reviewable reports, captures, and exports
 ```
 
 ## Naming
@@ -24,9 +30,9 @@ out/                    ignored human-reviewable reports, captures, and exports
 Folders provide context; filenames state the action or artifact without repeating their parents:
 
 ```text
-domains/client/events/registration/collect-input.tsx
-domains/server/events/registration/validate-request.ts
-domains/protocol/events/registration/request-shape.ts
+frontend/features/events/registration/collect-input.tsx
+development/local-server/events/registration/validate-request.ts
+frontend/contracts/events/registration/request-shape.ts
 ```
 
 Formal names are used only when the behavior fits: `status-transitions`, `dependency-graph`,
@@ -35,11 +41,11 @@ Formal names are used only when the behavior fits: `status-transitions`, `depend
 ## Dependency direction
 
 ```text
-apps/portal  -> client + server + protocol + design-system
-client       -> protocol + design-system
-server       -> protocol
-protocol     -> no client/server implementation
-production   -X-> development
+frontend/portal    -> features + contracts + design-system
+features           -> contracts + design-system
+local-server       -> contracts
+contracts          -> no features/server implementation
+production         -X-> development
 ```
 
 The three domain branches are private npm workspace packages. Their exports expose feature names,

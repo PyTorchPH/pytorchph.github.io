@@ -1,6 +1,6 @@
 # Generated artifacts (scraped data, media, screenshots, built resumes)
 /out/
-/apps/pages-demo/out/
+/frontend/portal-static/out/
 /.cache/
 /var/*
 !/var/README.md
@@ -62,4 +62,4 @@ Thumbs.db
 /AI Campus Hackathon – Day 1 Submission (1).docx
 
 # Local API data and build output
-apps/api/var/
+backend/api/var/

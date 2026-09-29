@@ -124,8 +124,8 @@ flowchart LR
 
 A member submits a **link**; ingestion produces a structured JSON **package** that flows through
 the pipeline. Two ingestion modes — directly mirroring the legacy engine's mode switch
-(`legacy/python/resume_builder/models.py` → `Mode.STATIC` / `Mode.AI`, selected via `--mode` in
-`legacy/python/resume_builder/cli.py`):
+(`backend/legacy-python/resume_builder/models.py` → `Mode.STATIC` / `Mode.AI`, selected via `--mode` in
+`backend/legacy-python/resume_builder/cli.py`):
 
 | Mode | Legacy analogue | Mechanism | When |
 |---|---|---|---|

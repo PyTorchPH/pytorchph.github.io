@@ -1,10 +1,10 @@
 ---
 logic_id: community.discord-access-and-safety
 code_paths:
-  - domains/protocol/discord-community
-  - domains/server/discord-community
+  - frontend/contracts/discord-community
+  - development/local-server/discord-community
 tests:
-  - apps/portal/tests/discord-community.test.ts
+  - frontend/portal/tests/discord-community.test.ts
 feedback_events:
   - discord.role_sync.planned
   - discord.role_sync.held

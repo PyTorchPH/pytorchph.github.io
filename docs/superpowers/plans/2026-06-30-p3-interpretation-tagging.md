@@ -25,14 +25,14 @@
 
 | File | Responsibility |
 |---|---|
-| `legacy/python/resume_builder/interpretation/__init__.py` | public API + `interpret()` orchestrator |
-| `legacy/python/resume_builder/interpretation/models.py` | `RetrievedSource`, `TagRunReport`, `UserProfile` |
-| `legacy/python/resume_builder/interpretation/middleman.py` | `RetrievalMiddleman.gather(...)` → `list[RetrievedSource]` |
-| `legacy/python/resume_builder/interpretation/tagger.py` | `ProjectTagger.tag(source)` → `TaggedProject` (LLM) |
-| `legacy/python/resume_builder/interpretation/runner.py` | `ParallelTagRunner.run(sources)` → `(list[TaggedProject], TagRunReport)` |
-| `legacy/python/resume_builder/interpretation/compiler.py` | `compile_tags(results)` → concatenated `list[TaggedProject]` |
-| `legacy/python/resume_builder/interpretation/normalizer.py` | `GlobalNormalizer.normalize(projects)` → `IndustryClassification` |
-| `legacy/python/resume_builder/interpretation/profile.py` | `build_user_profile(...)` + `ProfileSink.save(...)` |
+| `backend/legacy-python/resume_builder/interpretation/__init__.py` | public API + `interpret()` orchestrator |
+| `backend/legacy-python/resume_builder/interpretation/models.py` | `RetrievedSource`, `TagRunReport`, `UserProfile` |
+| `backend/legacy-python/resume_builder/interpretation/middleman.py` | `RetrievalMiddleman.gather(...)` → `list[RetrievedSource]` |
+| `backend/legacy-python/resume_builder/interpretation/tagger.py` | `ProjectTagger.tag(source)` → `TaggedProject` (LLM) |
+| `backend/legacy-python/resume_builder/interpretation/runner.py` | `ParallelTagRunner.run(sources)` → `(list[TaggedProject], TagRunReport)` |
+| `backend/legacy-python/resume_builder/interpretation/compiler.py` | `compile_tags(results)` → concatenated `list[TaggedProject]` |
+| `backend/legacy-python/resume_builder/interpretation/normalizer.py` | `GlobalNormalizer.normalize(projects)` → `IndustryClassification` |
+| `backend/legacy-python/resume_builder/interpretation/profile.py` | `build_user_profile(...)` + `ProfileSink.save(...)` |
 | `tests/unit/interpretation/__init__.py` | (empty) test package marker |
 | `tests/unit/interpretation/test_*.py` | one per module + orchestrator |
 
@@ -41,8 +41,8 @@
 ### Task 1: Core models — `RetrievedSource`, `TagRunReport`, `UserProfile`
 
 **Files:**
-- Create: `legacy/python/resume_builder/interpretation/__init__.py`
-- Create: `legacy/python/resume_builder/interpretation/models.py`
+- Create: `backend/legacy-python/resume_builder/interpretation/__init__.py`
+- Create: `backend/legacy-python/resume_builder/interpretation/models.py`
 - Test: `tests/unit/interpretation/__init__.py`, `tests/unit/interpretation/test_models.py`
 
 **Interfaces:**
@@ -80,7 +80,7 @@ Expected: FAIL with `ModuleNotFoundError: resume_builder.interpretation`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/interpretation/__init__.py
+# backend/legacy-python/resume_builder/interpretation/__init__.py
 """P3 — interpretation & tagging package."""
 from __future__ import annotations
 
@@ -90,7 +90,7 @@ __all__ = ["RetrievedSource", "TagRunReport", "UserProfile"]
 ```
 
 ```python
-# legacy/python/resume_builder/interpretation/models.py
+# backend/legacy-python/resume_builder/interpretation/models.py
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -135,7 +135,7 @@ Expected: PASS (3 passed). Also create an empty `tests/unit/interpretation/__ini
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/interpretation/__init__.py legacy/python/resume_builder/interpretation/models.py tests/unit/interpretation/__init__.py tests/unit/interpretation/test_models.py
+git add backend/legacy-python/resume_builder/interpretation/__init__.py backend/legacy-python/resume_builder/interpretation/models.py tests/unit/interpretation/__init__.py tests/unit/interpretation/test_models.py
 git commit -m "feat(interpretation): core models (RetrievedSource, TagRunReport, UserProfile)"
 ```
 
@@ -144,7 +144,7 @@ git commit -m "feat(interpretation): core models (RetrievedSource, TagRunReport,
 ### Task 2: `RetrievalMiddleman` — gather all sources into one envelope
 
 **Files:**
-- Create: `legacy/python/resume_builder/interpretation/middleman.py`
+- Create: `backend/legacy-python/resume_builder/interpretation/middleman.py`
 - Test: `tests/unit/interpretation/test_middleman.py`
 
 **Interfaces:**
@@ -190,7 +190,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/interpretation/middleman.py
+# backend/legacy-python/resume_builder/interpretation/middleman.py
 from __future__ import annotations
 
 from ..extraction.models import CleanedSource
@@ -234,7 +234,7 @@ Expected: PASS (2 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/interpretation/middleman.py tests/unit/interpretation/test_middleman.py
+git add backend/legacy-python/resume_builder/interpretation/middleman.py tests/unit/interpretation/test_middleman.py
 git commit -m "feat(interpretation): RetrievalMiddleman gathers project/post/document sources"
 ```
 
@@ -243,7 +243,7 @@ git commit -m "feat(interpretation): RetrievalMiddleman gathers project/post/doc
 ### Task 3: `ProjectTagger` — tag ONE source via the LLM
 
 **Files:**
-- Create: `legacy/python/resume_builder/interpretation/tagger.py`
+- Create: `backend/legacy-python/resume_builder/interpretation/tagger.py`
 - Test: `tests/unit/interpretation/test_tagger.py`
 
 **Interfaces:**
@@ -296,7 +296,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/interpretation/tagger.py
+# backend/legacy-python/resume_builder/interpretation/tagger.py
 from __future__ import annotations
 
 from ..industry import TaggedProject
@@ -345,7 +345,7 @@ Expected: PASS (2 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/interpretation/tagger.py tests/unit/interpretation/test_tagger.py
+git add backend/legacy-python/resume_builder/interpretation/tagger.py tests/unit/interpretation/test_tagger.py
 git commit -m "feat(interpretation): ProjectTagger tags one source via the LLM"
 ```
 
@@ -354,7 +354,7 @@ git commit -m "feat(interpretation): ProjectTagger tags one source via the LLM"
 ### Task 4: `ParallelTagRunner` — fan-out + reconciliation/KPI + bounded retry
 
 **Files:**
-- Create: `legacy/python/resume_builder/interpretation/runner.py`
+- Create: `backend/legacy-python/resume_builder/interpretation/runner.py`
 - Test: `tests/unit/interpretation/test_runner.py`
 
 **Interfaces:**
@@ -419,7 +419,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/interpretation/runner.py
+# backend/legacy-python/resume_builder/interpretation/runner.py
 from __future__ import annotations
 
 import logging
@@ -481,7 +481,7 @@ Expected: PASS (2 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/interpretation/runner.py tests/unit/interpretation/test_runner.py
+git add backend/legacy-python/resume_builder/interpretation/runner.py tests/unit/interpretation/test_runner.py
 git commit -m "feat(interpretation): ParallelTagRunner with reconciliation/KPI + bounded retry"
 ```
 
@@ -490,7 +490,7 @@ git commit -m "feat(interpretation): ParallelTagRunner with reconciliation/KPI +
 ### Task 5: `TagCompiler` — concatenate (no merge)
 
 **Files:**
-- Create: `legacy/python/resume_builder/interpretation/compiler.py`
+- Create: `backend/legacy-python/resume_builder/interpretation/compiler.py`
 - Test: `tests/unit/interpretation/test_compiler.py`
 
 **Interfaces:**
@@ -526,7 +526,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/interpretation/compiler.py
+# backend/legacy-python/resume_builder/interpretation/compiler.py
 from __future__ import annotations
 
 from ..industry import TaggedProject
@@ -550,7 +550,7 @@ Expected: PASS (2 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/interpretation/compiler.py tests/unit/interpretation/test_compiler.py
+git add backend/legacy-python/resume_builder/interpretation/compiler.py tests/unit/interpretation/test_compiler.py
 git commit -m "feat(interpretation): TagCompiler concatenates tagging results"
 ```
 
@@ -559,7 +559,7 @@ git commit -m "feat(interpretation): TagCompiler concatenates tagging results"
 ### Task 6: `GlobalNormalizer` — merge industries + skills (AI + deterministic fallback)
 
 **Files:**
-- Create: `legacy/python/resume_builder/interpretation/normalizer.py`
+- Create: `backend/legacy-python/resume_builder/interpretation/normalizer.py`
 - Test: `tests/unit/interpretation/test_normalizer.py`
 
 **Interfaces:**
@@ -616,7 +616,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/interpretation/normalizer.py
+# backend/legacy-python/resume_builder/interpretation/normalizer.py
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -688,7 +688,7 @@ Expected: PASS (2 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/interpretation/normalizer.py tests/unit/interpretation/test_normalizer.py
+git add backend/legacy-python/resume_builder/interpretation/normalizer.py tests/unit/interpretation/test_normalizer.py
 git commit -m "feat(interpretation): GlobalNormalizer merges industries + skills (AI + fallback)"
 ```
 
@@ -697,8 +697,8 @@ git commit -m "feat(interpretation): GlobalNormalizer merges industries + skills
 ### Task 7: `ProfileSink` + `interpret()` orchestrator (the user-profile catcher)
 
 **Files:**
-- Create: `legacy/python/resume_builder/interpretation/profile.py`
-- Modify: `legacy/python/resume_builder/interpretation/__init__.py` (export the orchestrator + new names)
+- Create: `backend/legacy-python/resume_builder/interpretation/profile.py`
+- Modify: `backend/legacy-python/resume_builder/interpretation/__init__.py` (export the orchestrator + new names)
 - Test: `tests/unit/interpretation/test_profile.py`, `tests/unit/interpretation/test_orchestrator.py`
 
 **Interfaces:**
@@ -766,7 +766,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/interpretation/profile.py
+# backend/legacy-python/resume_builder/interpretation/profile.py
 from __future__ import annotations
 
 from pathlib import Path
@@ -797,7 +797,7 @@ class ProfileSink:
 ```
 
 ```python
-# legacy/python/resume_builder/interpretation/__init__.py  (replace file)
+# backend/legacy-python/resume_builder/interpretation/__init__.py  (replace file)
 """P3 — interpretation & tagging package."""
 from __future__ import annotations
 
@@ -849,7 +849,7 @@ Run: `.venv/Scripts/python.exe -m pytest -q`
 Expected: PASS (no regressions).
 
 ```bash
-git add legacy/python/resume_builder/interpretation/profile.py legacy/python/resume_builder/interpretation/__init__.py tests/unit/interpretation/test_profile.py tests/unit/interpretation/test_orchestrator.py
+git add backend/legacy-python/resume_builder/interpretation/profile.py backend/legacy-python/resume_builder/interpretation/__init__.py tests/unit/interpretation/test_profile.py tests/unit/interpretation/test_orchestrator.py
 git commit -m "feat(interpretation): ProfileSink + interpret() orchestrator (user-profile catcher)"
 ```
 

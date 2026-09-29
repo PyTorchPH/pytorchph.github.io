@@ -1,11 +1,11 @@
 ---
 logic_id: identity.nationwide-membership
 code_paths:
-  - domains/protocol/identity/credential-shape.ts
-  - domains/client/identity/session/collect-credentials.tsx
-  - apps/portal/app/page.tsx
+  - frontend/contracts/identity/credential-shape.ts
+  - frontend/features/identity/session/collect-credentials.tsx
+  - frontend/portal/app/page.tsx
 tests:
-  - apps/portal/tests/nationwide-membership.test.ts
+  - frontend/portal/tests/nationwide-membership.test.ts
 feedback_events:
   - local_auth.session_created
   - local_auth.session_rejected

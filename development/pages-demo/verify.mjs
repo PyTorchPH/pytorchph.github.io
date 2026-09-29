@@ -5,10 +5,10 @@ import { extname, resolve } from "node:path";
 import { chromium } from "playwright";
 import { PORTAL_BASE_PATH } from "./portal-base-path.mjs";
 
-// Serves the Pages layout: the public site (site/_site, when built) at / and the portal demo under /portal/.
+// Serves the Pages layout: the public site (frontend/public-site/_site, when built) at / and the portal demo under /portal/.
 const root = resolve(import.meta.dirname, "../..");
-const portalOut = resolve(root, "apps/pages-demo/out");
-const siteOut = resolve(root, "site/_site");
+const portalOut = resolve(root, "frontend/portal-static/out");
+const siteOut = resolve(root, "frontend/public-site/_site");
 assert.ok(existsSync(resolve(portalOut, ".nojekyll")), "Run npm run build:pages first.");
 const mime = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".txt": "text/plain", ".woff2": "font/woff2", ".webp": "image/webp", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg" };
 const fileFor = pathname => {
@@ -39,7 +39,7 @@ try {
   browser = await chromium.launch({ headless: true, executablePath: process.env.PH_DEMO_BROWSER || (existsSync(chrome) ? chrome : undefined) });
   // The product tour starts on a first visit and covers the page; first check it, then run the rest with tours seen.
   const firstVisit = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
-  const demoSeed = readFileSync(resolve(root, "apps/api/seeds/demo-fixtures.json"));
+  const demoSeed = readFileSync(resolve(root, "backend/api/seeds/demo-fixtures.json"));
   await firstVisit.route("https://api.pytorch.ph/demo/fixtures", route => route.fulfill({ ...demoResponse, body: demoSeed }));
   const tourPage = await firstVisit.newPage();
   await tourPage.goto(`${url}/dashboard/`, { waitUntil: "networkidle" });

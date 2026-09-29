@@ -1,11 +1,11 @@
 ---
 logic_id: career-evidence.ingestion
 code_paths:
-  - domains/protocol/career-evidence
-  - domains/server/career-evidence
-  - apps/api/migrations
+  - frontend/contracts/career-evidence
+  - development/local-server/career-evidence
+  - backend/api/migrations
 tests:
-  - apps/portal/tests/evidence-integrity-contracts.test.ts
+  - frontend/portal/tests/evidence-integrity-contracts.test.ts
 feedback_events:
   - evidence.submission_accepted
   - evidence.submission_rejected

@@ -120,11 +120,11 @@ logical reading order, avoid text-as-image and layout-only tables that scramble 
 ## Files touched (anticipated)
 
 - `config/roles.json` — new role.
-- `legacy/python/resume_builder/pipeline.py` — `_filter_projects_by_role` + wiring.
-- `legacy/python/resume_builder/extractors/static_extractor.py` — tighter fallback scoring.
-- `legacy/python/resume_builder/synthesizers/ai_synth.py` — prompt note (projects per role).
+- `backend/legacy-python/resume_builder/pipeline.py` — `_filter_projects_by_role` + wiring.
+- `backend/legacy-python/resume_builder/extractors/static_extractor.py` — tighter fallback scoring.
+- `backend/legacy-python/resume_builder/synthesizers/ai_synth.py` — prompt note (projects per role).
 - `config/templates/resume.html.j2` — two-column.
-- `legacy/python/resume_builder/renderers/pdf_renderer.py` — two-frame reportlab layout.
+- `backend/legacy-python/resume_builder/renderers/pdf_renderer.py` — two-frame reportlab layout.
 - `config/templates/resume.tex.j2` — paracol.
 - Tests for the new filter (relevant kept, irrelevant dropped, multi-role, empty-safe).
 

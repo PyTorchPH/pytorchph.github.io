@@ -1,12 +1,12 @@
 ---
 logic_id: privacy-feedback.operational-events
 code_paths:
-  - domains/protocol/privacy-feedback
-  - apps/api/src/portal/mod.rs
-  - domains/client/privacy-feedback
+  - frontend/contracts/privacy-feedback
+  - backend/api/src/portal/mod.rs
+  - frontend/features/privacy-feedback
 tests:
-  - apps/portal/tests/operational-events.test.ts
-  - apps/portal/tests/trust-center.test.ts
+  - frontend/portal/tests/operational-events.test.ts
+  - frontend/portal/tests/trust-center.test.ts
 feedback_events:
   - operation.succeeded
   - operation.stopped

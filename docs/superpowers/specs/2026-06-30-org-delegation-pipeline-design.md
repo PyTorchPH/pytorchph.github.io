@@ -2,10 +2,10 @@
 
 > **Status:** APPROVED (design) — 2026-06-30. Awaiting written-spec review before planning.
 > **Owner:** PyTorch Philippines Chapter
-> **Extends:** the existing Org Operations layer — `domains/server/organization/workflow/` (TypeScript pipeline: ingest,
+> **Extends:** the existing Org Operations layer — `development/local-server/organization/workflow/` (TypeScript pipeline: ingest,
 > briefs, documents, routing, approval middleman, scoring) + `docs/ORG-OPERATIONS.md` + the ORG.* board
 > items (ORG.2 DepartmentBriefGenerator, ORG.3 DocumentInjector, ORG.4 approval UI, ORG.10 data model).
-> Reuses the P3 parallel-agent pattern (`legacy/python/resume_builder/interpretation/`).
+> Reuses the P3 parallel-agent pattern (`backend/legacy-python/resume_builder/interpretation/`).
 
 ---
 

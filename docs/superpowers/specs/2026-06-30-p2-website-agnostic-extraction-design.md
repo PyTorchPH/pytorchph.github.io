@@ -141,9 +141,9 @@ AI-touching unit is `ExtractionRuleEngine`, behind a mockable LLM seam).
 
 ## 8. Reuses (do not reinvent)
 
-- `ExtractionRule` model — already in `legacy/python/resume_builder/industry.py`.
-- Playwright / headless browser runtime — already in `legacy/python/resume_builder/sources/social/`.
-- `gh api` git-tree access — pattern already in `legacy/python/resume_builder/sources/github.py`.
+- `ExtractionRule` model — already in `backend/legacy-python/resume_builder/industry.py`.
+- Playwright / headless browser runtime — already in `backend/legacy-python/resume_builder/sources/social/`.
+- `gh api` git-tree access — pattern already in `backend/legacy-python/resume_builder/sources/github.py`.
 
 ## 9. Open / deferred
 

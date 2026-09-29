@@ -24,13 +24,13 @@
 
 | File | Responsibility |
 |---|---|
-| `legacy/python/resume_builder/extraction/__init__.py` | Public API re-exports (`CleanedSource`, `extract_website`, `collect_repo_markdown`, `ExtractionRuleEngine`, `SourceFetcher`). |
-| `legacy/python/resume_builder/extraction/models.py` | `CleanedSource` model + token-cap constants. |
-| `legacy/python/resume_builder/extraction/skeleton.py` | `build_skeleton(html)` + `template_fingerprint(html)`. |
-| `legacy/python/resume_builder/extraction/rules.py` | CSS-subset matcher, `apply_rules(html, rule)`, `ExtractionRuleEngine`. |
-| `legacy/python/resume_builder/extraction/fetch.py` | `SourceFetcher` (static-first + headless fallback + thinness heuristic). |
-| `legacy/python/resume_builder/extraction/github_traversal.py` | `collect_repo_markdown(full_name, gh_json)` (README.* + docs/*.md). |
-| `legacy/python/resume_builder/extraction/web.py` | `extract_website(url, fetcher, engine, ...)` orchestrator. |
+| `backend/legacy-python/resume_builder/extraction/__init__.py` | Public API re-exports (`CleanedSource`, `extract_website`, `collect_repo_markdown`, `ExtractionRuleEngine`, `SourceFetcher`). |
+| `backend/legacy-python/resume_builder/extraction/models.py` | `CleanedSource` model + token-cap constants. |
+| `backend/legacy-python/resume_builder/extraction/skeleton.py` | `build_skeleton(html)` + `template_fingerprint(html)`. |
+| `backend/legacy-python/resume_builder/extraction/rules.py` | CSS-subset matcher, `apply_rules(html, rule)`, `ExtractionRuleEngine`. |
+| `backend/legacy-python/resume_builder/extraction/fetch.py` | `SourceFetcher` (static-first + headless fallback + thinness heuristic). |
+| `backend/legacy-python/resume_builder/extraction/github_traversal.py` | `collect_repo_markdown(full_name, gh_json)` (README.* + docs/*.md). |
+| `backend/legacy-python/resume_builder/extraction/web.py` | `extract_website(url, fetcher, engine, ...)` orchestrator. |
 | `tests/unit/test_extraction_skeleton.py` | skeleton + fingerprint tests. |
 | `tests/unit/test_extraction_rules.py` | matcher, `apply_rules`, engine cache tests. |
 | `tests/unit/test_extraction_fetch.py` | static/headless/thinness tests. |
@@ -42,8 +42,8 @@
 ### Task 1: `CleanedSource` model + package scaffold
 
 **Files:**
-- Create: `legacy/python/resume_builder/extraction/__init__.py`
-- Create: `legacy/python/resume_builder/extraction/models.py`
+- Create: `backend/legacy-python/resume_builder/extraction/__init__.py`
+- Create: `backend/legacy-python/resume_builder/extraction/models.py`
 - Test: `tests/unit/test_extraction_skeleton.py` (shared module file, first test lands here in Task 2; this task tests the model inline)
 - Test: `tests/unit/test_extraction_models.py`
 
@@ -77,7 +77,7 @@ Expected: FAIL with `ModuleNotFoundError: resume_builder.extraction`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/extraction/__init__.py
+# backend/legacy-python/resume_builder/extraction/__init__.py
 """P2 — website-agnostic extraction package."""
 from __future__ import annotations
 
@@ -87,7 +87,7 @@ __all__ = ["CleanedSource", "CHARS_PER_TOKEN", "DEFAULT_TOKEN_CAP", "DEFAULT_CAP
 ```
 
 ```python
-# legacy/python/resume_builder/extraction/models.py
+# backend/legacy-python/resume_builder/extraction/models.py
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -117,7 +117,7 @@ Expected: PASS (2 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/extraction/__init__.py legacy/python/resume_builder/extraction/models.py tests/unit/test_extraction_models.py
+git add backend/legacy-python/resume_builder/extraction/__init__.py backend/legacy-python/resume_builder/extraction/models.py tests/unit/test_extraction_models.py
 git commit -m "feat(extraction): CleanedSource model + package scaffold"
 ```
 
@@ -126,7 +126,7 @@ git commit -m "feat(extraction): CleanedSource model + package scaffold"
 ### Task 2: DOM skeleton + template fingerprint
 
 **Files:**
-- Create: `legacy/python/resume_builder/extraction/skeleton.py`
+- Create: `backend/legacy-python/resume_builder/extraction/skeleton.py`
 - Test: `tests/unit/test_extraction_skeleton.py`
 
 **Interfaces:**
@@ -180,7 +180,7 @@ Expected: FAIL with `ModuleNotFoundError` / `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/extraction/skeleton.py
+# backend/legacy-python/resume_builder/extraction/skeleton.py
 from __future__ import annotations
 
 import hashlib
@@ -248,7 +248,7 @@ Expected: PASS (3 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/extraction/skeleton.py tests/unit/test_extraction_skeleton.py
+git add backend/legacy-python/resume_builder/extraction/skeleton.py tests/unit/test_extraction_skeleton.py
 git commit -m "feat(extraction): DOM skeleton + template fingerprint"
 ```
 
@@ -257,7 +257,7 @@ git commit -m "feat(extraction): DOM skeleton + template fingerprint"
 ### Task 3: Rule applier (CSS-subset matcher)
 
 **Files:**
-- Create: `legacy/python/resume_builder/extraction/rules.py`
+- Create: `backend/legacy-python/resume_builder/extraction/rules.py`
 - Test: `tests/unit/test_extraction_rules.py`
 
 **Interfaces:**
@@ -320,7 +320,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/extraction/rules.py
+# backend/legacy-python/resume_builder/extraction/rules.py
 from __future__ import annotations
 
 import re
@@ -416,7 +416,7 @@ Expected: PASS (5 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/extraction/rules.py tests/unit/test_extraction_rules.py
+git add backend/legacy-python/resume_builder/extraction/rules.py tests/unit/test_extraction_rules.py
 git commit -m "feat(extraction): deterministic rule applier (CSS-subset matcher)"
 ```
 
@@ -425,7 +425,7 @@ git commit -m "feat(extraction): deterministic rule applier (CSS-subset matcher)
 ### Task 4: `ExtractionRuleEngine` (AI rule-gen + fingerprint cache)
 
 **Files:**
-- Modify: `legacy/python/resume_builder/extraction/rules.py` (append the engine)
+- Modify: `backend/legacy-python/resume_builder/extraction/rules.py` (append the engine)
 - Test: `tests/unit/test_extraction_rules.py` (append)
 
 **Interfaces:**
@@ -487,7 +487,7 @@ Expected: FAIL with `ImportError: cannot import name 'ExtractionRuleEngine'`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/extraction/rules.py  (append; add imports at top)
+# backend/legacy-python/resume_builder/extraction/rules.py  (append; add imports at top)
 from ..llm.base import LLMProvider
 from .skeleton import build_skeleton, template_fingerprint
 
@@ -536,7 +536,7 @@ Expected: PASS (8 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/extraction/rules.py tests/unit/test_extraction_rules.py
+git add backend/legacy-python/resume_builder/extraction/rules.py tests/unit/test_extraction_rules.py
 git commit -m "feat(extraction): ExtractionRuleEngine with fingerprint cache"
 ```
 
@@ -545,7 +545,7 @@ git commit -m "feat(extraction): ExtractionRuleEngine with fingerprint cache"
 ### Task 5: `SourceFetcher` (static-first + headless fallback)
 
 **Files:**
-- Create: `legacy/python/resume_builder/extraction/fetch.py`
+- Create: `backend/legacy-python/resume_builder/extraction/fetch.py`
 - Test: `tests/unit/test_extraction_fetch.py`
 
 **Interfaces:**
@@ -597,7 +597,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/extraction/fetch.py
+# backend/legacy-python/resume_builder/extraction/fetch.py
 from __future__ import annotations
 
 import logging
@@ -665,7 +665,7 @@ Expected: PASS (4 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/extraction/fetch.py tests/unit/test_extraction_fetch.py
+git add backend/legacy-python/resume_builder/extraction/fetch.py tests/unit/test_extraction_fetch.py
 git commit -m "feat(extraction): SourceFetcher with static-first + headless fallback"
 ```
 
@@ -674,7 +674,7 @@ git commit -m "feat(extraction): SourceFetcher with static-first + headless fall
 ### Task 6: GitHub markdown traversal
 
 **Files:**
-- Create: `legacy/python/resume_builder/extraction/github_traversal.py`
+- Create: `backend/legacy-python/resume_builder/extraction/github_traversal.py`
 - Test: `tests/unit/test_extraction_github.py`
 
 **Interfaces:**
@@ -749,7 +749,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/extraction/github_traversal.py
+# backend/legacy-python/resume_builder/extraction/github_traversal.py
 from __future__ import annotations
 
 import base64
@@ -816,7 +816,7 @@ Expected: PASS (3 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/extraction/github_traversal.py tests/unit/test_extraction_github.py
+git add backend/legacy-python/resume_builder/extraction/github_traversal.py tests/unit/test_extraction_github.py
 git commit -m "feat(extraction): GitHub README + docs markdown traversal"
 ```
 
@@ -825,8 +825,8 @@ git commit -m "feat(extraction): GitHub README + docs markdown traversal"
 ### Task 7: `extract_website` orchestrator + token cap + public API
 
 **Files:**
-- Create: `legacy/python/resume_builder/extraction/web.py`
-- Modify: `legacy/python/resume_builder/extraction/__init__.py` (export the public surface)
+- Create: `backend/legacy-python/resume_builder/extraction/web.py`
+- Modify: `backend/legacy-python/resume_builder/extraction/__init__.py` (export the public surface)
 - Test: `tests/unit/test_extraction_web.py`
 
 **Interfaces:**
@@ -888,7 +888,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/resume_builder/extraction/web.py
+# backend/legacy-python/resume_builder/extraction/web.py
 from __future__ import annotations
 
 from .fetch import SourceFetcher
@@ -917,7 +917,7 @@ def extract_website(
 ```
 
 ```python
-# legacy/python/resume_builder/extraction/__init__.py  (replace file)
+# backend/legacy-python/resume_builder/extraction/__init__.py  (replace file)
 """P2 — website-agnostic extraction package."""
 from __future__ import annotations
 
@@ -951,7 +951,7 @@ Run: `.venv/Scripts/python.exe -m pytest tests/unit/test_extraction_*.py -v`
 Expected: PASS (all extraction tests green).
 
 ```bash
-git add legacy/python/resume_builder/extraction/web.py legacy/python/resume_builder/extraction/__init__.py tests/unit/test_extraction_web.py
+git add backend/legacy-python/resume_builder/extraction/web.py backend/legacy-python/resume_builder/extraction/__init__.py tests/unit/test_extraction_web.py
 git commit -m "feat(extraction): website orchestrator + token cap + public API"
 ```
 

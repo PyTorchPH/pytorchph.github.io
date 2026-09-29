@@ -1,10 +1,10 @@
 ---
 logic_id: client-automation.evidence-extension
 code_paths:
-  - apps/evidence-extension
-  - domains/client/client-automation
+  - frontend/extension
+  - frontend/features/client-automation
 tests:
-  - apps/portal/tests/extension-contracts.test.ts
+  - frontend/portal/tests/extension-contracts.test.ts
   - tests/node/logic-doc-contracts.test.mjs
 feedback_events:
   - extension.detected

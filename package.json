@@ -5,17 +5,17 @@
     "node": ">=22.13.0 <25"
   },
   "workspaces": [
-    "apps/academic-records",
-    "apps/evidence-extension",
-    "apps/portal",
-    "domains/client",
-    "domains/server",
-    "domains/protocol",
-    "design-system",
+    "development/academic-records",
+    "frontend/extension",
+    "frontend/portal",
+    "frontend/features",
+    "development/local-server",
+    "frontend/contracts",
+    "frontend/design-system",
     "development/local-access",
     "development/local-workspace",
     "development/prefect-dashboard",
-    "apps/pages-demo"
+    "frontend/portal-static"
   ],
   "scripts": {
     "setup": "npm ci --ignore-scripts --no-audit --no-fund",
