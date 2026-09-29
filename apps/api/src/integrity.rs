@@ -21,7 +21,7 @@ pub(crate) fn member_label(member_id: &str) -> String {
 }
 
 // The officer department responsible for a claim follows from its kind.
-fn department(kind: &str) -> &'static str {
+pub(crate) fn department(kind: &str) -> &'static str {
     match kind {
         "external_competition" | "external_participation" => "external_relations",
         _ => "academics",
