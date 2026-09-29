@@ -34,6 +34,17 @@ const COVERS: Array<{ match: RegExp; icon: LucideIcon; tone: string }> = [
   { match: /talk|meetup|summit/i, icon: Mic, tone: "from-fuchsia-500/80 to-purple-700/90" },
   { match: /orientation|study|learning/i, icon: GraduationCap, tone: "from-emerald-500/80 to-teal-700/90" },
 ];
+// Tabs group the organization categories (talk, workshop, hackathon, competitive, mini contest)
+// and the chapter programme types (orientation, clinic, study group, ...).
+const EVENT_TABS: Array<{ id: string; label: string; match: RegExp }> = [
+  { id: "talks", label: "Talks", match: /talk|meetup|summit|webinar|forum/i },
+  { id: "workshops", label: "Workshops", match: /workshop|clinic|lab/i },
+  { id: "hackathons", label: "Hackathons", match: /hackathon/i },
+  { id: "competitions", label: "Competitions", match: /competitive|contest|competition/i },
+  { id: "learning", label: "Learning sessions", match: /orientation|study|learning|bootcamp|course/i },
+];
+const tabOf = (kind: string) => EVENT_TABS.find((tab) => tab.match.test(kind))?.id ?? "other";
+
 const coverFor = (kind: string) => COVERS.find((cover) => cover.match.test(kind)) ?? { icon: CalendarDays, tone: "from-accent/80 to-slate-800/90" };
 
 function EventCover({ event, large = false }: { event: UpcomingEvent; large?: boolean }) {
@@ -90,6 +101,7 @@ function EventsContent() {
   const client = useQueryClient();
   const { events, dashboard, loading, failed } = useUpcomingEvents();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [tab, setTab] = useState("all");
   const toggleRegistration = useMutation({
     mutationFn: (id: string) => fetchJson("/api/product/demo-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "toggle_event", id }) }),
     onSuccess: async () => { await client.invalidateQueries({ queryKey: queryKeys.product("dashboard") }); toast.success("Registration updated."); },
@@ -99,6 +111,8 @@ function EventsContent() {
   const priorityLabel = hasPriorityEnrollment(tier) ? "Priority seat" : tier === "active" ? "Early access" : "Standard queue";
   const PriorityIcon = hasPriorityEnrollment(tier) ? Crown : Bell;
   const open = events.find((event) => event.id === openId) ?? null;
+  const tabs = [{ id: "all", label: "All events", count: events.length }, ...[...EVENT_TABS, { id: "other", label: "Other" }].map((item) => ({ id: item.id, label: item.label, count: events.filter((event) => tabOf(event.kind) === item.id).length })).filter((item) => item.count > 0)];
+  const shown = tab === "all" ? events : events.filter((event) => tabOf(event.kind) === tab);
 
   return <div className="space-y-8">
     <section className="page-hero" data-tour="events-heading">
@@ -108,12 +122,14 @@ function EventsContent() {
       </div>
     </section>
 
-    {failed ? <p className="text-sm text-muted" role="alert">Events are unavailable right now.</p> : <section aria-label="Upcoming events" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" data-tour="events-grid">
-      {events.map((event) => <button className="focus-ring group overflow-hidden border border-border bg-surface text-left transition-colors hover:border-accent" key={event.id} onClick={() => setOpenId(event.id)} type="button">
+    <div aria-label="Event types" className="flex flex-wrap gap-2" role="tablist">{tabs.map((item) => <button aria-selected={tab === item.id} className={`focus-ring border px-4 py-2 text-sm font-semibold ${tab === item.id ? "border-accent bg-accentSoft text-accent" : "border-border text-muted hover:text-ink"}`} key={item.id} onClick={() => setTab(item.id)} role="tab" type="button">{item.label} <span className="ml-1 font-mono text-xs">{item.count}</span></button>)}</div>
+
+    {failed ? <p className="text-sm text-muted" role="alert">Events are unavailable right now.</p> : <section aria-label="Upcoming events" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" data-tour="events-grid" role="tabpanel">
+      {shown.map((event) => <button className="focus-ring group overflow-hidden border border-border bg-surface text-left transition-colors hover:border-accent" key={event.id} onClick={() => setOpenId(event.id)} type="button">
         <EventCover event={event} />
         <h2 className="p-4 text-base font-bold leading-snug tracking-[-0.01em] group-hover:text-accent">{event.title}</h2>
       </button>)}
-      {!events.length && <p className="text-sm text-muted">{loading ? "Loading events…" : "No upcoming events yet."}</p>}
+      {!shown.length && <p className="text-sm text-muted">{loading ? "Loading events…" : "No upcoming events of this type yet."}</p>}
     </section>}
 
     {open && <EventDetails event={open} onClose={() => setOpenId(null)} onToggle={dashboard?.meta.mode === "local_demo" && open.chapter ? () => toggleRegistration.mutate(open.chapter!.id) : undefined} priorityLabel={priorityLabel} toggling={toggleRegistration.isPending} />}

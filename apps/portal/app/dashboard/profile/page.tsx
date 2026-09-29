@@ -1,37 +1,28 @@
 "use client";
 
-import { AtSign, Facebook, Linkedin, Medal, Plug, Sparkles, UserRound } from "lucide-react";
+import { Facebook, Github, Linkedin, Medal, Plug, Sparkles, UserRound } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AppShell } from "@pytorch-ph/domain-client/navigation";
-import { useCapabilities } from "@pytorch-ph/domain-client/onboarding";
 import { SkillBarChart, SkillRadarChart } from "@pytorch-ph/domain-client/organization";
-import { GatePanel, IdentityCodes } from "@pytorch-ph/domain-client/identity";
-import { Badge } from "@pytorch-ph/design-system/badge";
+import { IdentityCodes } from "@pytorch-ph/domain-client/identity";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import { Button } from "@pytorch-ph/design-system/button";
-import { SegmentedTabs } from "@pytorch-ph/design-system/tabs";
-import { userTiers, type UserTier } from "@pytorch-ph/domain-protocol/identity";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import type { LeaderboardIdentitySettings } from "@pytorch-ph/domain-protocol/leaderboards";
-import type { MemberPrivacySettings, MembershipStatus } from "@pytorch-ph/domain-protocol/privacy-feedback";
+import type { MembershipStatus } from "@pytorch-ph/domain-protocol/privacy-feedback";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { toast } from "sonner";
 
+type VerifiedAccount = { provider: "github" | "linkedin" | "facebook"; handle: string; profileUrl: string };
+const PROVIDER_ICONS = { github: { icon: Github, label: "GitHub" }, linkedin: { icon: Linkedin, label: "LinkedIn" }, facebook: { icon: Facebook, label: "Facebook" } } as const;
+
 type UpskillPlan = { summary: string; recommendations: Array<{ focusSkill: string; rationale: string; nextStep: string; evidenceIds: string[] }>; warnings: string[] };
 
-const tierTabs = [
-  { value: "active", label: "Active" },
-  { value: "leaderboard", label: "Elite" },
-  { value: "general", label: "General" }
-] satisfies Array<{ value: UserTier; label: string }>;
-
 function ProfileContent() {
-  const [tier, setTier] = useState<UserTier>("active");
-  const manifest = useCapabilities();
-  const officerPortal = manifest.portal.audience === "officer";
-  const effectiveTier = officerPortal ? tier : manifest.portal.userTier;
-  const privacy = useQuery({ queryKey: ["member-privacy"], queryFn: () => fetchJson<MemberPrivacySettings>("/api/member/privacy", { cache: "no-store" }) });
+  // Only accounts verified through the extension count as connected.
+  const accounts = useQuery({ queryKey: ["member-accounts"], queryFn: () => fetchJson<VerifiedAccount[]>("/api/member/accounts", { cache: "no-store" }) });
   const identity = useQuery({ queryKey: ["leaderboard-identity"], queryFn: () => fetchJson<LeaderboardIdentitySettings>("/api/member/leaderboard-identity", { cache: "no-store" }) });
   const evidence = useQuery({ queryKey: ["product", "career-evidence"], queryFn: () => fetchJson<ProductViewData>("/api/product/career-evidence", { cache: "no-store" }) });
   const membership = useQuery({ queryKey: ["membership-status", false], queryFn: () => fetchJson<MembershipStatus>("/api/membership/status", { cache: "no-store" }) });
@@ -46,8 +37,8 @@ function ProfileContent() {
     onSuccess: setUpskillPlan,
     onError: (error) => toast.error(error instanceof Error ? error.message : "UpSkill planning failed."),
   });
-  const identityLinks = (evidence.data?.evidence?.sources || []).flatMap((source) => source.connectionStatus === "connected" && source.configuredUrl?.startsWith("https://") ? [{ id: source.id, label: source.label, url: source.configuredUrl }] : []);
-  const memberLabel = privacy.data?.hideRealName !== false ? identity.data?.preview || "Member #7A82F" : "Mika Santos";
+  const identityLinks = (accounts.data || []).map((account) => ({ id: account.provider, label: PROVIDER_ICONS[account.provider].label, url: account.profileUrl }));
+  const memberLabel = identity.data?.preview || identity.data?.username || "Member";
 
   return (
     <>
@@ -56,7 +47,6 @@ function ProfileContent() {
           <h1 className="text-3xl font-bold tracking-[-0.02em]">My profile</h1>
           <p className="mt-2 text-muted">Your identity, QR codes, connected accounts, and skills.</p>
         </div>
-        {officerPortal ? <SegmentedTabs items={tierTabs} onChange={setTier} value={tier} /> : <Badge variant="orange">{userTiers[effectiveTier].label}</Badge>}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_0.75fr]">
@@ -67,50 +57,29 @@ function ProfileContent() {
                 <UserRound size={30} />
               </div>
               <div>
-                <h2 className="text-xl font-bold tracking-[-0.02em]">{officerPortal ? "Mika Santos · Alex_Rivera" : memberLabel}</h2>
+                <h2 className="text-xl font-bold tracking-[-0.02em]">{memberLabel}</h2>
                 <p className="text-sm text-muted">PyTorch Philippines member · {membership.data?.state === "active" ? "Membership active (free)" : "Membership under review"}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge variant="orange">Computer Vision</Badge>
-                  <Badge variant="success">AI Study Circles</Badge>
-                  <Badge>2026 member</Badge>
-                </div>
               </div>
             </div>
-            <Badge variant="orange">{userTiers[effectiveTier].label}</Badge>
           </div>
         </Card>
 
         <Card className="bg-elevated">
           <CardHeader>
             <div>
-              <CardTitle>Social connectors</CardTitle>
-              <CardDescription>Client-side parsing only; raw text stays private until reviewed.</CardDescription>
+              <CardTitle>Connected accounts</CardTitle>
+              <CardDescription>Verified with the PyTorch PH extension.</CardDescription>
             </div>
             <Plug className="text-accent" size={20} />
           </CardHeader>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <button className="focus-ring flex items-center justify-between rounded-lg border border-border bg-surface p-3 text-left transition-all duration-300 ease-in-out hover:bg-elevated" type="button">
-              <span className="flex items-center gap-2 font-semibold"><AtSign size={18} /> Google</span>
-              <Badge variant={privacy.data?.hideGoogleIdentity === false ? "success" : "warning"}>{officerPortal || privacy.data?.hideGoogleIdentity === false ? "Connected" : "Hidden"}</Badge>
-            </button>
-            <button className="focus-ring flex items-center justify-between rounded-lg border border-border bg-surface p-3 text-left transition-all duration-300 ease-in-out hover:bg-elevated" type="button">
-              <span className="flex items-center gap-2 font-semibold"><Linkedin size={18} /> LinkedIn</span>
-              <Badge variant="success">Linked</Badge>
-            </button>
-            <button className="focus-ring flex items-center justify-between rounded-lg border border-border bg-surface p-3 text-left transition-all duration-300 ease-in-out hover:bg-elevated" type="button">
-              <span className="flex items-center gap-2 font-semibold"><Facebook size={18} /> Facebook</span>
-              <Badge>Ready</Badge>
-            </button>
-          </div>
+          {accounts.data?.length ? <ul aria-label="Verified accounts" className="flex flex-wrap gap-2">
+            {accounts.data.map((account) => { const { icon: Icon, label } = PROVIDER_ICONS[account.provider]; return <li key={account.provider}><a aria-label={`${label}: ${account.handle}`} className="focus-ring flex h-11 w-11 items-center justify-center border border-border bg-surface text-ink hover:border-accent hover:text-accent" href={account.profileUrl} rel="noreferrer" target="_blank" title={`${label} · ${account.handle}`}><Icon aria-hidden="true" size={20} /></a></li>; })}
+          </ul> : <p className="text-sm text-muted">{accounts.isLoading ? "Loading…" : <>No verified accounts yet. <Link className="font-semibold text-accent underline underline-offset-2" href="/settings#accounts">Verify one in Settings</Link>.</>}</p>}
         </Card>
       </div>
 
       <div className="mt-4">
         <IdentityCodes links={identityLinks} username={identity.data?.username || ""} />
-      </div>
-
-      <div className="mt-4">
-        <GatePanel tier={effectiveTier} />
       </div>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
