@@ -60,3 +60,6 @@ Thumbs.db
 
 # stray submission doc, kept on disk only
 /AI Campus Hackathon – Day 1 Submission (1).docx
+
+# Local API data and build output
+apps/api/var/
