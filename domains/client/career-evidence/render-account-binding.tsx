@@ -12,6 +12,7 @@ import { InfoPopover } from "@pytorch-ph/design-system/info-popover";
 import { fetchJson, queryKeys } from "@pytorch-ph/domain-client/transport";
 import type { EvidenceSource, ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { isAutomaticSource, SourceDialog, sourceTone } from "./render-workspaces";
+import { VerifiedAccounts } from "./render-verified-accounts";
 
 const extensionLabels: Record<ExtensionStatus["state"], { label: string; tone: "success" | "warning" | "default" }> = {
   checking: { label: "Checking…", tone: "default" },
@@ -60,6 +61,8 @@ export function AccountBinding() {
       <div className="flex flex-wrap items-center gap-3"><Badge variant={status.tone}>{status.label}</Badge>{extension.state !== "available" && <Link className="text-sm font-semibold text-accent underline underline-offset-2" href="/setup/evidence-extension">How to install</Link>}</div>
     </div>
     <p className="mt-3 flex items-start gap-2 text-sm text-muted"><Smartphone aria-hidden="true" className="mt-0.5 flex-none" size={16} /><span>{phoneOrApp ? "Account binding is not available on this device. Open pytorch.ph in a desktop browser to bind an account." : "Available on the website in a desktop browser only. The mobile app cannot run the browser extension."}</span></p>
+
+    {!phoneOrApp && <VerifiedAccounts extensionReady={extension.state === "available"} />}
 
     {query.isError ? <p className="mt-4 text-sm text-muted">Accounts are unavailable right now.</p> : <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {sources.map((source) => <li key={source.id}>

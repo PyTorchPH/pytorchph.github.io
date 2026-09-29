@@ -37,6 +37,16 @@ export type FeedbackReport = FeedbackReportInput & {
   resolution: string | null;
   createdAt: string;
   updatedAt: string;
+  attachments?: Array<ReportAttachment["kind"]>;
+  notes?: Array<{ id: string; body: string; actorId: string; createdAt: string }>;
+};
+
+export type ReportAttachment = {
+  kind: "logs" | "page_state" | "screenshot";
+  mime: string;
+  size: number;
+  createdAt: string;
+  content: unknown;
 };
 
 export type FeedbackReportPage = {

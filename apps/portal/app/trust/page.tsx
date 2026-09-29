@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AppDialog } from "@pytorch-ph/design-system/dialog";
 import { Activity, Database, HardDrive, LockKeyhole, Network, Radio, ShieldCheck, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@pytorch-ph/domain-client/navigation";
@@ -8,7 +10,7 @@ import { useCapabilities } from "@pytorch-ph/domain-client/onboarding";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
-import { PrivacyControls } from "@pytorch-ph/domain-client/privacy-feedback";
+import { PrivacyControls, ReportDiagnostics } from "@pytorch-ph/domain-client/privacy-feedback";
 import type { FeedbackReport } from "@pytorch-ph/domain-protocol/privacy-feedback";
 
 const nodeDemo = [
@@ -21,6 +23,7 @@ const nodeDemo = [
 function TrustContent() {
   const manifest = useCapabilities();
   const officer = manifest.portal.audience === "officer";
+  const [openReport, setOpenReport] = useState<FeedbackReport | null>(null);
   const reports = useQuery({ queryKey: ["feedback-reports"], queryFn: () => fetchJson<FeedbackReport[]>("/api/feedback", { cache: "no-store" }) });
   return <div className="space-y-5">
     <section className="page-hero" data-testid="trust-center">
@@ -37,10 +40,11 @@ function TrustContent() {
       <Card className="bg-surface"><CardHeader><div><CardTitle>{officer ? "Replica quorum preview" : "Personal visibility controls"}</CardTitle><CardDescription>{officer ? "Architecture preview only—officer peer replication is not enabled." : "These settings persist in the local demo and map to owner-only Rust API fields in production."}</CardDescription></div>{officer ? <Radio className="text-accent" /> : <LockKeyhole className="text-accent" />}</CardHeader>
         {officer ? <div className="space-y-2">{nodeDemo.map((node) => <div className="flex items-center justify-between rounded-lg border border-border p-3" key={node.name}><div><p className="font-semibold">{node.name}</p><p className="mt-1 text-xs text-muted">{node.detail}</p></div><Badge variant={node.status === "online" ? "success" : "warning"}>{node.status}</Badge></div>)}</div> : <PrivacyControls />}
       </Card>
-      <Card className="bg-surface"><CardHeader><div><CardTitle>{officer ? "Incoming feedback" : "Your feedback receipts"}</CardTitle><CardDescription>Structured diagnostics exclude raw HTML, screenshots, credentials, and local cache content.</CardDescription></div><Activity className="text-accent" /></CardHeader><div className="space-y-2">{reports.data?.slice(0,6).map((report) => <div className="rounded-lg border border-border p-3" key={report.id}><div className="flex items-center justify-between"><span className="font-semibold capitalize">{report.category.replaceAll("_", " ")}</span><Badge>{report.status}</Badge></div><p className="mt-1 text-xs text-muted">{report.route} · {report.id.slice(0,8).toUpperCase()}</p></div>)}{!reports.data?.length && <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted">No reports yet. Use the Report button to test the feedback loop.</p>}</div></Card>
+      <Card className="bg-surface"><CardHeader><div><CardTitle>{officer ? "Incoming feedback" : "Your feedback receipts"}</CardTitle><CardDescription>Open a report to see what was sent with it. Attachments are visible only to you and officers.</CardDescription></div><Activity className="text-accent" /></CardHeader><div className="space-y-2">{reports.data?.slice(0,6).map((report) => <button className="block w-full rounded-lg border border-border p-3 text-left hover:border-accent" key={report.id} onClick={() => setOpenReport(report)} type="button"><div className="flex items-center justify-between"><span className="font-semibold capitalize">{report.category.replaceAll("_", " ")}</span><Badge>{report.status}</Badge></div><p className="mt-1 text-xs text-muted">{report.route} · {report.id.slice(0,8).toUpperCase()}</p></button>)}{!reports.data?.length && <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted">No reports yet. Use the Report button to test the feedback loop.</p>}</div></Card>
     </section>
 
     <Card className="border-warning/30 bg-warning/10"><div className="flex gap-3"><TriangleAlert className="flex-none text-warning" /><div><h2 className="font-bold">Known limitation</h2><p className="mt-2 text-sm leading-6 text-muted">A member controls their browser and can alter local storage. Local/manual claims therefore remain unverified until a server-owned source or officer-reviewed workflow produces a signed provenance event. Covert officer access to a member device is intentionally prohibited.</p></div></div></Card>
+    {openReport && <AppDialog description={`${openReport.status} · ${openReport.route} · ${openReport.id.slice(0, 8).toUpperCase()}`} onClose={() => setOpenReport(null)} title={openReport.category.replaceAll("_", " ")}><div className="space-y-4 p-5 sm:p-6"><p className="border border-border bg-elevated p-3 text-sm">{openReport.description || "No note was added."}</p>{openReport.resolution && <p className="text-sm"><span className="text-muted">Resolution: </span>{openReport.resolution}</p>}<ReportDiagnostics report={openReport} /></div></AppDialog>}
   </div>;
 }
 
