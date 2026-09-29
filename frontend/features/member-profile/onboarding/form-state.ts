@@ -6,9 +6,10 @@
 //   findDraftProblem   first client-side rule the draft breaks (mirrors the server 422 rules)
 //   toProfileInput     PUT body; drops blocks the chosen status does not need
 
-import { SELF_DESCRIBE, UNLISTED_SCHOOL, needsEmployment, needsSchool, type ProfileInput, type ProfileStatus } from "@pytorch-ph/domain-protocol/identity";
+import { SELF_DESCRIBE, UNLISTED_PROGRAM, UNLISTED_SCHOOL, schoolLevelRule, needsEmployment, needsSchool, type ProfileInput, type ProfileStatus } from "@pytorch-ph/domain-protocol/identity";
 
-export type SchoolDraft = { code: string; label: string; unlistedName: string; level: string; program: string; yearLevel: string };
+// programCode: a catalog code or UNLISTED_PROGRAM (then unlistedProgram holds the typed name).
+export type SchoolDraft = { code: string; label: string; unlistedName: string; level: string; programCode: string; programLabel: string; unlistedProgram: string; yearLevel: string };
 export type EmploymentDraft = { companyId: string; companyLabel: string; newCompanyName: string; isNewCompany: boolean; industry: string; jobRole: string; experienceRange: string };
 
 export type ProfileDraft = {
@@ -28,13 +29,12 @@ export type ProfileDraft = {
 const MAX_INTERESTS = 10;
 const MAX_TEXT = 120;
 const MAX_GENDER_TEXT = 60;
-const MAX_YEAR_LEVEL = 8;
 export const MIN_AGE = 13;
 export const MAX_AGE = 100;
 
 export const emptyDraft = (): ProfileDraft => ({
   gender: "", genderDescription: "", age: "", agePreferNotToSay: false, regionCode: "", status: "", channel: "", interests: [], analyticsConsent: false,
-  school: { code: "", label: "", unlistedName: "", level: "", program: "", yearLevel: "" },
+  school: { code: "", label: "", unlistedName: "", level: "", programCode: "", programLabel: "", unlistedProgram: "", yearLevel: "" },
   employment: { companyId: "", companyLabel: "", newCompanyName: "", isNewCompany: false, industry: "", jobRole: "", experienceRange: "" },
 });
 
@@ -46,7 +46,7 @@ export function draftFromProfile(profile: ProfileStatus["profile"]): ProfileDraf
     ...blank,
     gender: profile.gender, genderDescription: profile.genderDescription ?? "", age: profile.age ? String(profile.age) : "", agePreferNotToSay: Boolean(profile.agePreferNotToSay), regionCode: profile.regionCode,
     status: profile.status, channel: profile.channel, interests: [...profile.interests], analyticsConsent: profile.analyticsConsent,
-    school: school ? { code: school.code, label: profile.schoolLabel ?? "", unlistedName: school.unlistedName ?? "", level: school.level, program: school.program, yearLevel: String(school.yearLevel) } : blank.school,
+    school: school ? { code: school.code, label: profile.schoolLabel ?? "", unlistedName: school.unlistedName ?? "", level: school.level, programCode: school.programCode ?? "", programLabel: profile.programLabel ?? "", unlistedProgram: school.unlistedProgram ?? "", yearLevel: String(school.yearLevel) } : blank.school,
     employment: employment ? {
       companyId: employment.companyId ?? "", companyLabel: profile.companyLabel ?? "", newCompanyName: employment.newCompanyName ?? "",
       isNewCompany: Boolean(employment.newCompanyName), industry: employment.industry, jobRole: employment.jobRole, experienceRange: employment.experienceRange,
@@ -68,9 +68,12 @@ export function findDraftProblem(draft: ProfileDraft): string | null {
 function findSchoolProblem(school: SchoolDraft): string | null {
   if (!school.code) return "Choose your school, or pick “My school isn't listed”.";
   if (school.code === UNLISTED_SCHOOL && !isBoundedText(school.unlistedName, MAX_TEXT)) return "Type your school's name.";
-  if (!school.level || !isBoundedText(school.program, MAX_TEXT)) return "Add your school level and program.";
+  if (!school.level) return "Choose your school level.";
+  const rule = schoolLevelRule(school.level);
+  if (rule.programLabel && !school.programCode) return `Choose your ${rule.programLabel.toLowerCase()}, or pick "not listed".`;
+  if (rule.programLabel && school.programCode === UNLISTED_PROGRAM && !isBoundedText(school.unlistedProgram, MAX_TEXT)) return `Type your ${rule.programLabel.toLowerCase()}.`;
   const year = Number(school.yearLevel);
-  if (!Number.isInteger(year) || year < 1 || year > MAX_YEAR_LEVEL) return `Year level must be 1–${MAX_YEAR_LEVEL}.`;
+  if (!Number.isInteger(year) || year < rule.min || year > rule.max) return `${rule.yearLabel} must be ${rule.min}–${rule.max}.`;
   return null;
 }
 
@@ -91,7 +94,7 @@ export function toProfileInput(draft: ProfileDraft): ProfileInput {
     interests: draft.interests, analyticsConsent: draft.analyticsConsent,
     school: needsSchool(draft.status) ? {
       code: school.code, unlistedName: school.code === UNLISTED_SCHOOL ? school.unlistedName.trim() : undefined,
-      level: school.level, program: school.program.trim(), yearLevel: Number(school.yearLevel),
+      level: school.level, ...programInput(school), yearLevel: Number(school.yearLevel),
     } : undefined,
     employment: needsEmployment(draft.status) ? {
       companyId: employment.isNewCompany ? undefined : employment.companyId,
@@ -99,6 +102,13 @@ export function toProfileInput(draft: ProfileDraft): ProfileInput {
       industry: employment.industry, jobRole: employment.jobRole.trim(), experienceRange: employment.experienceRange,
     } : undefined,
   };
+}
+
+// Only levels with a program send one; an unlisted program carries its typed name.
+function programInput(school: SchoolDraft): { programCode?: string; unlistedProgram?: string } {
+  if (!schoolLevelRule(school.level).programLabel) return {};
+  if (school.programCode === UNLISTED_PROGRAM) return { programCode: UNLISTED_PROGRAM, unlistedProgram: school.unlistedProgram.trim() };
+  return { programCode: school.programCode };
 }
 
 const isAcceptedAge = (value: string) => /^\d{1,3}$/.test(value.trim()) && Number(value) >= MIN_AGE && Number(value) <= MAX_AGE;

@@ -109,8 +109,16 @@ try {
   await signIn(MEMBER_EMAIL, TEST_PASSWORD);
   await page.waitForURL(`**${PORTAL_BASE_PATH}/onboarding/`);
   await page.getByText("Welcome! Finish creating your account").waitFor();
+  // Programs come from the catalog: senior high strands in a dropdown, college degrees by search.
+  await page.locator("#profile-status").selectOption("student");
+  await page.locator("#profile-school-level").selectOption("senior_high");
+  await page.locator("#profile-program option", { hasText: "STEM — Science, Technology, Engineering, and Mathematics" }).first().waitFor({ state: "attached" });
+  await page.getByText("Grade (11–12)").waitFor();
+  await page.locator("#profile-school-level").selectOption("undergraduate");
+  await page.locator("#profile-program").fill("bscs");
+  await page.getByRole("option", { name: /Bachelor of Science in Computer Science/ }).first().waitFor();
   api.state.profileComplete = true;
-  checks.push("first-timer-onboarding-gate");
+  checks.push("first-timer-onboarding-gate", "program-catalog-dropdown-and-search");
 
   // Members see their performance, peers, and the ranking guide, but no officer tools.
   await page.goto(`${url}/dashboard/`, { waitUntil: "networkidle" });

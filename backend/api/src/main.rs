@@ -13,9 +13,13 @@
 //!   officer      Command Center analytics
 //!   organization departments, positions, reporting lines, reserved officer seats
 //!   member_profile  onboarding profile, reference catalogs, consented demographics
-//!   schools      PH school directory (DepEd, CHED, TESDA) with multi-keyword FTS5 search
+//!   schools      PH school directory (DepEd, CHED) with multi-keyword FTS5 search
+//!   programs     program/strand catalog (DepEd, PSA PSCED, TESDA) per school level
+//!   companies    company directory (Wikidata, GLEIF, PSE, curated) plus member-added companies
+//!   reference_data  shared seed versioning and keyword search for the directories above
 //!   seed         demo fixtures and sample members
 mod app;
+mod companies;
 mod events;
 mod evidence;
 mod feedback;
@@ -27,6 +31,8 @@ mod member_profile;
 mod officer;
 mod organization;
 mod portal;
+mod programs;
+mod reference_data;
 mod schools;
 mod seed;
 #[cfg(test)]

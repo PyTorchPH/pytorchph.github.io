@@ -50,6 +50,8 @@ const publicReads = [
   request("Leaderboard", "GET", "/leaderboard"),
   request("Profile options", "GET", "/reference/profile-options", { test: "pm.test('answer lists', () => pm.expect(pm.response.json()).to.include.keys('genders', 'regions', 'interests'));" }),
   request("School search", "GET", "/reference/schools?q=university&limit=5", { test: "pm.test('at most 5 schools', () => pm.expect(pm.response.json()).to.be.an('array').with.length.at.most(5));" }),
+  request("Senior high strands", "GET", "/reference/programs?level=senior_high", { test: "pm.test('whole strand list', () => pm.expect(pm.response.json().map((p) => p.shortName)).to.include('STEM'));" }),
+  request("College program search", "GET", "/reference/programs?level=undergraduate&q=bscs&limit=5", { test: "pm.test('BSCS found', () => pm.expect(pm.response.json().map((p) => p.label)).to.include('Bachelor of Science in Computer Science'));" }),
   request("Company search", "GET", "/reference/companies?q=a&limit=5", { test: "pm.test('at most 5 companies', () => pm.expect(pm.response.json()).to.be.an('array').with.length.at.most(5));" }),
 ];
 const auth = [

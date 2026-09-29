@@ -6,10 +6,11 @@
 //   ├─ answerAuth        /auth/password · /auth/me · /auth/signout
 //   ├─ answerPortal      /portal/api/* → profile gate, forced failures, fixtures
 //   │   └─ fixtureFor    exact path+query, then path, then same endpoint
-//   ├─ answerReference   /reference/profile-options · schools · companies
+//   ├─ answerReference   /reference/profile-options · schools · programs · companies
 //   └─ answerDirectReads /public/events · /events · /members (empty lists)
 
 import { readFileSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { resolve } from "node:path";
 
 export const TEST_PASSWORD = "Sample#Pass9";
@@ -19,6 +20,9 @@ const root = resolve(import.meta.dirname, "../../..");
 const fixtures = JSON.parse(readFileSync(resolve(root, "backend/api/seeds/demo-fixtures.json"), "utf8"));
 const profileOptions = JSON.parse(readFileSync(resolve(root, "backend/api/seeds/reference/profile-options.json"), "utf8"));
 const schools = JSON.parse(readFileSync(resolve(root, "backend/api/seeds/reference/schools.json"), "utf8")).rows;
+// code, level, name, short_name, group_name — the same catalog the API loads.
+const programs = gunzipSync(readFileSync(resolve(root, "backend/api/seeds/reference/programs.tsv.gz"))).toString("utf8").trim().split("\n").slice(1).map(line => line.split("\t"));
+const WHOLE_LIST_LEVELS = new Set(["junior_high", "senior_high"]);
 
 // Mental model: one mutable session per browser context; each test step flips `state` to shape
 // what the next page load sees (who is signed in, whether their profile is complete, what fails).
@@ -80,6 +84,15 @@ function fixtureFor(audience, path, search) {
   return sameEndpoint ? views[sameEndpoint] : undefined;
 }
 
+function programsFor(level, query) {
+  const words = query.split(/\s+/).filter(Boolean);
+  if (words.length === 0 && !WHOLE_LIST_LEVELS.has(level)) return [];
+  return programs
+    .filter(([, rowLevel, name, short, group]) => rowLevel === level && words.every(word => `${name} ${short} ${group}`.toLowerCase().split(/[^a-z0-9]+/).some(token => token.startsWith(word))))
+    .slice(0, words.length ? 20 : 200)
+    .map(([code, , name, shortName, group]) => ({ code, label: name, shortName, group }));
+}
+
 // Pages that read the Rust API directly (events, member lists) get empty lists: layout, not data, is under test.
 function answerDirectReads(state, url) {
   if (url.pathname === "/public/events") return { status: 200, body: [] };
@@ -94,6 +107,7 @@ function answerReference(url) {
     const rows = schools.filter(([, name]) => name.toLowerCase().includes(query)).slice(0, 10);
     return { status: 200, body: rows.map(([code, label, type, region]) => ({ code, label, type, region })) };
   }
-  if (url.pathname === "/reference/companies") return { status: 200, body: [{ id: "co-globe", label: "Globe Telecom" }].filter(item => item.label.toLowerCase().includes(query)) };
+  if (url.pathname === "/reference/companies") return { status: 200, body: [{ id: "co-globe", label: "Globe Telecom", detail: "GLO · Manila", aliases: "GLO", city: "Manila", verified: true }].filter(item => item.label.toLowerCase().includes(query)) };
+  if (url.pathname === "/reference/programs") return { status: 200, body: programsFor(url.searchParams.get("level") ?? "", query) };
   return null;
 }

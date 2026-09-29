@@ -3,6 +3,7 @@
 //!
 //! Module map (caller-first):
 //!   demographics            GET /api/officer/demographics
+//!   ├─ program_names     catalog program names (unlisted grouped)
 //!   ├─ age_buckets        current age → the range officers see
 //!   ├─ grouped_counts       one breakdown: label per code, counted
 //!   │   └─ labelled         code → catalog label (or the stored name)
@@ -43,6 +44,7 @@ pub(crate) async fn demographics(db: &SqlitePool) -> ApiResult<Value> {
             "industry": breakdown(format!("SELECT industry_code, COUNT(*) FROM member_employment WHERE member_id IN ({CONSENTED}) GROUP BY industry_code"), Some("industries")).await?,
             "company": breakdown(format!("SELECT c.name, COUNT(*) FROM member_employment e JOIN companies c ON c.id = e.company_id WHERE e.member_id IN ({CONSENTED}) GROUP BY c.name"), None).await?,
             "school": breakdown(school_names(), None).await?,
+            "program": breakdown(program_names(), None).await?,
         },
     }))
 }
@@ -54,6 +56,13 @@ fn school_names() -> String {
     format!(
         "SELECT CASE WHEN e.school_code = '{unlisted}' THEN 'School not listed'          ELSE COALESCE(s.name || CASE WHEN s.city <> '' THEN ' - ' || s.city ELSE '' END, e.school_code) END AS school, COUNT(*)          FROM member_education e LEFT JOIN schools s ON s.code = e.school_code          WHERE e.member_id IN ({CONSENTED}) GROUP BY school",
         unlisted = catalog::UNLISTED_SCHOOL
+    )
+}
+
+// Programs are catalog names, so analytics group identical answers; unlisted ones stay together.
+fn program_names() -> String {
+    format!(
+        "SELECT COALESCE(c.name, 'Program not listed') AS program, COUNT(*)          FROM member_education_programs p LEFT JOIN programs c ON c.code = p.program_code          WHERE p.member_id IN ({CONSENTED}) GROUP BY program"
     )
 }
 

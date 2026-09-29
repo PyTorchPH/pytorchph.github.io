@@ -10,11 +10,14 @@
 //!       └─ resolve_company       an existing company, or a new one added to the shared list
 //!   read_profile                 GET /api/member/profile
 //!   └─ profile_view              rows → the same shape the form submits
-use super::input::{CompanyChoice, Education, Employment, Profile, SchoolChoice, parse_profile};
+use super::input::{
+    CompanyChoice, Education, Employment, Profile, ProgramChoice, SchoolChoice, parse_profile,
+};
 use crate::{
     ApiError, ApiResult,
     identity::session::Viewer,
     internal,
+    programs::{UNLISTED_PROGRAM, program_fits_level},
     schools::{display::school_label, find_school},
 };
 use axum::http::StatusCode;
@@ -23,6 +26,19 @@ use sqlx::{Sqlite, SqlitePool, Transaction};
 use uuid::Uuid;
 
 type Tx<'a> = Transaction<'a, Sqlite>;
+
+/// school_code, level, program (absent for elementary / junior high), year_level, unlisted school name.
+/// school_code, level, year_level, unlisted school name, program_code, catalog program name,
+/// unlisted program name (program columns are absent for elementary).
+type EducationRow = (
+    String,
+    String,
+    i64,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+);
 
 /// Today's age from the age given on `recorded_on` (whole years since then are added).
 pub(crate) const CURRENT_AGE: &str =
@@ -158,14 +174,51 @@ async fn listed_school<'a>(tx: &mut Tx<'_>, code: &'a str) -> ApiResult<&'a str>
     ))
 }
 
+// A listed program must belong to the chosen level; an unlisted one keeps its typed name apart.
+async fn write_program(
+    tx: &mut Tx<'_>,
+    member_id: &str,
+    level: &str,
+    program: &ProgramChoice,
+) -> ApiResult<()> {
+    let code = match program {
+        ProgramChoice::Listed(code) if program_fits_level(tx, code, level).await? => code.as_str(),
+        ProgramChoice::Listed(_) => {
+            return Err(ApiError(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "Choose your program or strand from the list",
+            ));
+        }
+        ProgramChoice::Unlisted(_) => UNLISTED_PROGRAM,
+    };
+    sqlx::query("INSERT INTO member_education_programs(member_id, program_code) VALUES (?, ?)")
+        .bind(member_id)
+        .bind(code)
+        .execute(&mut **tx)
+        .await
+        .map_err(internal)?;
+    if let ProgramChoice::Unlisted(name) = program {
+        sqlx::query("INSERT INTO member_unlisted_programs(member_id, program_name) VALUES (?, ?)")
+            .bind(member_id)
+            .bind(name)
+            .execute(&mut **tx)
+            .await
+            .map_err(internal)?;
+    }
+    Ok(())
+}
+
 async fn write_education(tx: &mut Tx<'_>, member_id: &str, education: &Education) -> ApiResult<()> {
     let school_code = match &education.school {
         SchoolChoice::Listed(code) => listed_school(tx, code).await?,
         SchoolChoice::Unlisted(_) => super::catalog::UNLISTED_SCHOOL,
     };
-    sqlx::query("INSERT INTO member_education(member_id, school_code, level, program, year_level) VALUES (?, ?, ?, ?, ?)")
-        .bind(member_id).bind(school_code).bind(&education.level).bind(&education.program).bind(education.year_level)
+    sqlx::query("INSERT INTO member_education(member_id, school_code, level, year_level) VALUES (?, ?, ?, ?)")
+        .bind(member_id).bind(school_code).bind(&education.level).bind(education.year_level)
         .execute(&mut **tx).await.map_err(internal)?;
+    if let Some(program) = &education.program {
+        write_program(tx, member_id, &education.level, program).await?;
+    }
     if let SchoolChoice::Unlisted(name) = &education.school {
         sqlx::query("INSERT INTO member_unlisted_schools(member_id, school_name) VALUES (?, ?)")
             .bind(member_id)
@@ -270,8 +323,8 @@ async fn profile_view(
     .fetch_all(db)
     .await
     .map_err(internal)?;
-    let education: Option<(String, String, String, i64, Option<String>)> = sqlx::query_as(
-        "SELECT e.school_code, e.level, e.program, e.year_level, u.school_name FROM member_education e LEFT JOIN member_unlisted_schools u ON u.member_id = e.member_id WHERE e.member_id = ?",
+    let education: Option<EducationRow> = sqlx::query_as(
+        "SELECT e.school_code, e.level, e.year_level, u.school_name, p.program_code, c.name, up.program_name          FROM member_education e          LEFT JOIN member_unlisted_schools u ON u.member_id = e.member_id          LEFT JOIN member_education_programs p ON p.member_id = e.member_id          LEFT JOIN programs c ON c.code = p.program_code          LEFT JOIN member_unlisted_programs up ON up.member_id = e.member_id          WHERE e.member_id = ?",
     ).bind(member_id).fetch_optional(db).await.map_err(internal)?;
     let employment: Option<(String, String, String, String, String)> = sqlx::query_as(
         "SELECT e.company_id, c.name, e.industry_code, e.job_role, e.experience_range FROM member_employment e JOIN companies c ON c.id = e.company_id WHERE e.member_id = ?",
@@ -288,13 +341,16 @@ async fn profile_view(
     if let Some((description,)) = description {
         view["genderDescription"] = json!(description);
     }
-    if let Some((code, level, program, year_level, unlisted)) = education {
+    if let Some((code, level, year_level, unlisted, program_code, program_name, unlisted_program)) =
+        education
+    {
         let label = find_school(db, &code)
             .await?
             .map(|school| school_label(&school))
             .or(unlisted.clone());
         view["schoolLabel"] = json!(label);
-        view["school"] = json!({"code": code, "unlistedName": unlisted, "level": level, "program": program, "yearLevel": year_level});
+        view["programLabel"] = json!(program_name.or(unlisted_program.clone()));
+        view["school"] = json!({"code": code, "unlistedName": unlisted, "level": level, "yearLevel": year_level, "programCode": program_code, "unlistedProgram": unlisted_program});
     }
     if let Some((company_id, company_name, industry, job_role, experience)) = employment {
         view["companyLabel"] = json!(company_name);

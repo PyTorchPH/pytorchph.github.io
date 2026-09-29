@@ -4,11 +4,12 @@
 //   fetchProfile / saveProfile          GET / PUT /api/member/profile (portal, proxied in the static demo)
 //   fetchProfileOptions                 GET {API_ORIGIN}/reference/profile-options
 //   searchSchools / searchCompanies     GET {API_ORIGIN}/reference/{schools,companies}?q=&limit=20
+//   fetchPrograms                       GET {API_ORIGIN}/reference/programs?level=&q= (whole short lists)
 //   fetchDemographics                   GET /api/officer/demographics
 //   referenceUrl                        builds a reference URL on the auth API origin
 
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
-import type { CompanyOption, Demographics, ProfileInput, ProfileOptions, ProfileStatus, SchoolOption } from "@pytorch-ph/domain-protocol/identity";
+import type { CompanyOption, Demographics, ProfileInput, ProfileOptions, ProfileStatus, ProgramOption, SchoolOption } from "@pytorch-ph/domain-protocol/identity";
 
 export const PROFILE_QUERY_KEY = ["member-profile"] as const;
 export const PROFILE_OPTIONS_QUERY_KEY = ["member-profile", "options"] as const;
@@ -37,6 +38,12 @@ export function fetchProfileOptions(): Promise<ProfileOptions> {
 
 export function searchSchools(query: string): Promise<SchoolOption[]> {
   return fetchJson<SchoolOption[]>(referenceUrl("schools", query));
+}
+
+// Short levels (junior/senior high) return their whole list when query is empty.
+export function fetchPrograms(level: string, query = ""): Promise<ProgramOption[]> {
+  const params = new URLSearchParams({ level, q: query.trim(), limit: String(SEARCH_LIMIT) });
+  return fetchJson<ProgramOption[]>(`${API_ORIGIN}/reference/programs?${params}`);
 }
 
 export function searchCompanies(query: string): Promise<CompanyOption[]> {

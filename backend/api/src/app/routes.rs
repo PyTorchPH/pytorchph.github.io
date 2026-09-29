@@ -77,6 +77,7 @@ fn platform_routes() -> Router<Arc<AppState>> {
         )
         .route("/reference/schools", get(reference::schools))
         .route("/reference/companies", get(reference::companies))
+        .route("/reference/programs", get(reference::programs))
 }
 
 fn identity_routes() -> Router<Arc<AppState>> {

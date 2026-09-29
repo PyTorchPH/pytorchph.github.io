@@ -14,7 +14,7 @@ import type { DemographicBreakdown, DemographicCount } from "@pytorch-ph/domain-
 import { DEMOGRAPHICS_QUERY_KEY, fetchDemographics } from "../api";
 
 const BREAKDOWN_TITLES: [DemographicBreakdown, string][] = [
-  ["status", "Status"], ["ageRange", "Age range"], ["gender", "Gender"], ["region", "Region"], ["school", "School"],
+  ["status", "Status"], ["ageRange", "Age range"], ["gender", "Gender"], ["region", "Region"], ["school", "School"], ["program", "Program / strand"],
   ["company", "Company"], ["industry", "Industry"], ["interest", "Interests"], ["channel", "Found us through"],
 ];
 

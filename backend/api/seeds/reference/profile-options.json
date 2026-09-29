@@ -22,7 +22,9 @@
     { "code": "other", "label": "Other" }
   ],
   "schoolLevels": [
-    { "code": "senior_high", "label": "Senior high school" },
+    { "code": "elementary", "label": "Elementary (Grade 1–6)" },
+    { "code": "junior_high", "label": "Junior high school (Grade 7–10)" },
+    { "code": "senior_high", "label": "Senior high school (Grade 11–12)" },
     { "code": "undergraduate", "label": "College / undergraduate" },
     { "code": "graduate", "label": "Graduate school" },
     { "code": "technical_vocational", "label": "Technical-vocational" }
