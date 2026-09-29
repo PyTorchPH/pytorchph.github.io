@@ -22,6 +22,8 @@ export type LeaderboardPayload = {
   page: number; pageSize: number; total: number;
   skills: Array<{ slug: string; label: string }>;
   seasons: Array<{ slug: string; label: string; state: "active" | "completed" }>;
+  // Share (0-100) of ranked members holding each verified skill.
+  skillMix?: Array<{ skill: string; score: number }>;
   view: LeaderboardView;
   meta: { mode: "local_demo" | "production"; label: string };
 };

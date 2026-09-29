@@ -6,6 +6,8 @@ import {
   Bot,
   BriefcaseBusiness,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   CircleHelp,
   ClipboardList,
   Home,
@@ -21,7 +23,7 @@ import {
   UserRound,
   X
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CapabilityKey } from "@pytorch-ph/domain-protocol/identity";
 import { cn } from "@pytorch-ph/design-system/merge-classes";
 import { CapabilityProvider, useCapabilities } from "@pytorch-ph/domain-client/onboarding";
@@ -31,6 +33,8 @@ import { Button } from "@pytorch-ph/design-system/button";
 import { Sheet } from "@pytorch-ph/design-system/sheet";
 import { Progress } from "@pytorch-ph/design-system/progress";
 import { SiteHeader } from "@pytorch-ph/domain-client/public-site";
+
+const SIDEBAR_KEY = "pytorch-ph-sidebar";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; capability?: CapabilityKey; alsoActiveOn?: string[] };
 
@@ -58,6 +62,14 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   // Static hosting serves routes with a trailing slash; navigation links are written without one.
   const pathname = usePathname().replace(/\/+$/, "") || "/";
   const [open, setOpen] = useState(false);
+  // Desktop only: the sidebar can be collapsed; the choice is remembered in this browser.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => { try { setCollapsed(localStorage.getItem(SIDEBAR_KEY) === "collapsed"); } catch { /* storage unavailable */ } }, []);
+  const toggleSidebar = () => setCollapsed((current) => {
+    const next = !current;
+    try { localStorage.setItem(SIDEBAR_KEY, next ? "collapsed" : "open"); } catch { /* storage unavailable */ }
+    return next;
+  });
   const manifest = useCapabilities();
   const officerPortal = manifest.portal.audience === "officer";
   const hasTour = useHasProductTour();
@@ -129,15 +141,6 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
         </div>
         <p className="text-xs leading-5 text-muted">{officerPortal ? "Role checks run before officer data or diagnostics are returned." : "Officer diagnostics and operational payloads are excluded from this portal."}</p>
       </div>
-      <Button
-        className="mt-3 w-full justify-start gap-3"
-        data-tour="tour-help"
-        onClick={requestProductTour}
-        type="button"
-        variant="ghost"
-      >
-        <CircleHelp size={18} /> Help / Tour
-      </Button>
       <SignOutButton />
     </aside>
   );
@@ -148,9 +151,10 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
         className="sticky top-0"
         start={<Button aria-label="Open menu" className="lg:hidden" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary"><Menu size={18} /></Button>}
       />
-      <div className="hidden lg:fixed lg:bottom-0 lg:left-0 lg:top-20 lg:block">{sidebar}</div>
+      <div className={cn("hidden lg:fixed lg:bottom-0 lg:left-0 lg:top-20", collapsed ? "lg:hidden" : "lg:block")}>{sidebar}</div>
+      <button aria-expanded={!collapsed} aria-label={collapsed ? "Open sidebar" : "Close sidebar"} className={cn("focus-ring fixed top-24 z-40 hidden h-10 w-6 items-center justify-center border border-l-0 border-border bg-surface text-muted shadow-md hover:text-accent lg:flex", collapsed ? "left-0" : "left-72")} onClick={toggleSidebar} title={collapsed ? "Open sidebar" : "Close sidebar"} type="button">{collapsed ? <ChevronRight aria-hidden="true" size={16} /> : <ChevronLeft aria-hidden="true" size={16} />}</button>
       <Sheet onOpenChange={setOpen} open={open}>{sidebar}</Sheet>
-      <main className="lg:pl-72">
+      <main className={cn("transition-[padding] duration-200", collapsed ? "lg:pl-6" : "lg:pl-72")}>
         <div className="relative mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
           {/* Sits in the top-right corner of the page hero that follows it. */}
           {hasTour && <div className="on-dark absolute right-4 top-3 z-10 sm:right-6 lg:right-8 lg:top-4" data-page-tour>
