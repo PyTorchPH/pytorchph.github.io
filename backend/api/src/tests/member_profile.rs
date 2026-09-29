@@ -529,3 +529,34 @@ async fn a_young_member_can_save_their_age() {
     assert_eq!(status, StatusCode::OK, "{saved}");
     assert_eq!(saved["profile"]["age"], 8);
 }
+
+#[tokio::test]
+async fn repeated_keywords_need_their_own_words_so_the_exact_program_wins() {
+    let (state, _, _, _) = fixture().await;
+    crate::programs::load_program_catalog(&state.db)
+        .await
+        .unwrap();
+    for query in [
+        "Bachelor of Science in Compute Science",
+        "computer science science bachelor of in",
+    ] {
+        let found: Vec<String> =
+            crate::programs::programs_for_level(&state.db, "undergraduate", query, 20)
+                .await
+                .unwrap()
+                .into_iter()
+                .map(|program| program.name)
+                .collect();
+        assert_eq!(
+            found.first().map(String::as_str),
+            Some("Bachelor of Science in Computer Science"),
+            "{query}: {found:?}"
+        );
+        assert!(
+            !found
+                .iter()
+                .any(|name| name == "Bachelor of Science in Computer Engineering"),
+            "{query}: {found:?}"
+        );
+    }
+}
