@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight, Download, ExternalLink, Maximize2, Minus, Pl
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from "pdfjs-dist";
 import { Button } from "@pytorch-ph/design-system/button";
 import type { ResumeTemplateId } from "@pytorch-ph/domain-protocol/resumes";
+import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
+import { resumePdfBytes } from "./export-document";
 
 type FitMode = "page" | "width" | "manual";
 
@@ -19,19 +21,30 @@ export function ResumePdfViewer({ template }: { template: ResumeTemplateId }) {
   const [surfaceSize, setSurfaceSize] = useState({ width: 0, height: 0 });
   const [shownScale, setShownScale] = useState(1);
   const [error, setError] = useState("");
-  const pdfUrl = `/api/product/resume-preview?template=${template}&disposition=inline`;
-  const downloadUrl = `/api/product/resume-preview?template=${template}&disposition=attachment`;
+  // The PDF is built in the browser from the member's resume profile, so the viewer needs no
+  // server PDF route; the blob URL also backs "open in new tab" and "download".
+  const [pdfUrl, setPdfUrl] = useState("");
+  const downloadUrl = pdfUrl;
 
   useEffect(() => {
     let active = true;
     let loaded: PDFDocumentProxy | null = null;
-    void import("pdfjs-dist").then(async (pdfjs) => {
+    let objectUrl = "";
+    void (async () => {
+      const response = await fetch("/api/product/resumes", { cache: "no-store" });
+      if (!response.ok) throw new Error(`Resume data unavailable (${response.status}).`);
+      const view = await response.json() as ProductViewData;
+      if (!view.resumeProfile) throw new Error("Add Career Evidence to build your resume profile first.");
+      const bytes = await resumePdfBytes(view.resumeProfile, template);
+      objectUrl = URL.createObjectURL(new Blob([bytes.slice()], { type: "application/pdf" }));
+      if (active) setPdfUrl(objectUrl);
+      const pdfjs = await import("pdfjs-dist");
       pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
-      loaded = await pdfjs.getDocument({ url: pdfUrl, withCredentials: true }).promise;
+      loaded = await pdfjs.getDocument({ data: bytes }).promise;
       if (active) setDocument(loaded);
-    }).catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Could not load the PDF preview."); });
-    return () => { active = false; void loaded?.cleanup(); };
-  }, [pdfUrl]);
+    })().catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Could not load the PDF preview."); });
+    return () => { active = false; void loaded?.cleanup(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [template]);
 
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -80,10 +93,10 @@ export function ResumePdfViewer({ template }: { template: ResumeTemplateId }) {
     <header className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-border bg-elevated px-3 py-2" aria-label="PDF controls">
       <div className="flex items-center gap-1"><Button aria-label="Previous page" disabled={page <= 1} onClick={() => setPage((value) => value - 1)} size="icon" variant="ghost"><ChevronLeft /></Button><span className="min-w-20 text-center font-mono text-xs">{page} / {document?.numPages || "—"}</span><Button aria-label="Next page" disabled={!document || page >= document.numPages} onClick={() => setPage((value) => value + 1)} size="icon" variant="ghost"><ChevronRight /></Button></div>
       <div className="flex items-center gap-1 text-ink"><Button aria-label="Zoom out" className="text-ink" onClick={() => zoom(-0.1)} size="icon" variant="ghost"><Minus /></Button><span className="min-w-14 text-center font-mono text-xs">{Math.round(shownScale * 100)}%</span><Button aria-label="Zoom in" className="text-ink" onClick={() => zoom(0.1)} size="icon" variant="ghost"><Plus /></Button><Button aria-label="Fit whole page" className={fitMode === "page" ? undefined : "text-ink"} onClick={() => setFitMode("page")} size="sm" variant={fitMode === "page" ? "secondary" : "ghost"}><Maximize2 size={15} />Fit Page</Button><Button aria-label="Fit page width" className={fitMode === "width" ? undefined : "text-ink"} onClick={() => setFitMode("width")} size="sm" variant={fitMode === "width" ? "secondary" : "ghost"}><Rows3 size={15} />Fit Width</Button></div>
-      <div className="flex items-center gap-1"><Button asChild size="icon" variant="ghost"><a aria-label="Open PDF in new tab" href={pdfUrl} rel="noreferrer" target="_blank"><ExternalLink /></a></Button><Button asChild size="icon" variant="ghost"><a aria-label="Download PDF" download href={downloadUrl}><Download /></a></Button></div>
+      <div className="flex items-center gap-1"><Button asChild size="icon" variant="ghost"><a aria-label="Open PDF in new tab" href={pdfUrl} rel="noreferrer" target="_blank"><ExternalLink /></a></Button><Button asChild size="icon" variant="ghost"><a aria-label="Download PDF" download={`pytorch-ph-resume-${template}.pdf`} href={downloadUrl}><Download /></a></Button></div>
     </header>
     <div className="relative flex min-h-0 flex-1 items-start justify-center overflow-auto p-4" data-testid="pdf-surface" ref={surfaceRef}>
-      {error ? <div className="m-auto max-w-md rounded-xl border border-danger/30 bg-danger/10 p-5 text-sm"><strong>PDF preview unavailable</strong><p className="mt-2 text-muted">{error}</p><div className="mt-4 flex gap-2"><Button asChild size="sm" variant="secondary"><a href={pdfUrl} target="_blank">Open PDF</a></Button><Button asChild size="sm"><a download href={downloadUrl}>Download</a></Button></div></div> : !document ? <p className="m-auto text-sm text-muted">Loading actual PDF…</p> : <canvas className="bg-white shadow-2xl" ref={canvasRef} />}
+      {error ? <div className="m-auto max-w-md rounded-xl border border-danger/30 bg-danger/10 p-5 text-sm"><strong>PDF preview unavailable</strong><p className="mt-2 text-muted">{error}</p><div className="mt-4 flex gap-2"><Button asChild size="sm" variant="secondary"><a href={pdfUrl} target="_blank">Open PDF</a></Button><Button asChild size="sm"><a download={`pytorch-ph-resume-${template}.pdf`} href={downloadUrl}>Download</a></Button></div></div> : !document ? <p className="m-auto text-sm text-muted">Loading actual PDF…</p> : <canvas className="bg-white shadow-2xl" ref={canvasRef} />}
     </div>
   </main>;
 }

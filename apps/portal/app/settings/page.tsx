@@ -13,6 +13,7 @@ import { Button } from "@pytorch-ph/design-system/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import { Input, Label } from "@pytorch-ph/design-system/input";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
+import { LeaveCommunity } from "../../components/leave-community";
 import type { LeaderboardIdentitySettings } from "@pytorch-ph/domain-protocol/leaderboards";
 
 type Mode = LeaderboardIdentitySettings["mode"];
@@ -97,5 +98,6 @@ export default function SettingsPage() {
       <CardHeader><div><CardTitle>Privacy &amp; integrity</CardTitle><CardDescription>Choose what leaves your device and what other members see. <Link className="text-accent underline underline-offset-2" href="/trust">How your data is protected and verified</Link></CardDescription></div><LockKeyhole aria-hidden="true" className="text-accent" /></CardHeader>
       <PrivacyControls />
     </Card>
+    <LeaveCommunity />
   </AppShell>;
 }
