@@ -2,7 +2,7 @@
 logic_id: privacy-feedback.operational-events
 code_paths:
   - domains/protocol/privacy-feedback
-  - apps/api/src/portal.rs
+  - apps/api/src/portal/mod.rs
   - domains/client/privacy-feedback
 tests:
   - apps/portal/tests/operational-events.test.ts
