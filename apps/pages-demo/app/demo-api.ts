@@ -67,18 +67,6 @@ function lookup(fixtures: Fixtures, url: URL) {
   return sameEndpoint ? byAudience[sameEndpoint] : undefined;
 }
 
-function login(init?: RequestInit) {
-  let email = "";
-  try {
-    email = String(JSON.parse(String(init?.body ?? "{}")).email ?? "");
-  } catch {
-    // Malformed demo input falls back to the member example.
-  }
-  const audience: DemoAudience = email.toLowerCase().includes("officer") ? "officer" : "member";
-  try { sessionStorage.setItem(AUDIENCE_KEY, audience); } catch { /* member fallback */ }
-  return json({ provider: "local", role: audience === "officer" ? "admin" : "member" });
-}
-
 function installDemoApi() {
   if (typeof window === "undefined" || (window as { __phDemoApi?: boolean }).__phDemoApi) return;
   (window as { __phDemoApi?: boolean }).__phDemoApi = true;
@@ -121,7 +109,6 @@ function installDemoApi() {
     if (API_ORIGIN) {
       try { await verifiedAudience(); }
       catch { return json({ error: "Sign in to access the member portal." }, 401); }
-      if (method === "POST" && url.pathname === "/api/auth/login") return json({ error: "Use official sign in." }, 400);
       const target = `${API_ORIGIN}/portal${url.pathname}${url.search}`;
       const response = await originalFetch(target, { ...(input instanceof Request ? { method: input.method, headers: input.headers, body: input.body } : {}), ...init, credentials: "include", cache: "no-store" });
       const contentType = response.headers.get("content-type");
@@ -132,7 +119,6 @@ function installDemoApi() {
     }
     // Official auth calls use AUTH_API_ORIGIN directly. Demo views retain their
     // existing response contracts, now supplied by the Rust service.
-    if (method === "POST" && url.pathname === "/api/auth/login") return login(init);
     if (method !== "GET" && method !== "HEAD") return json({ error: READ_ONLY_MESSAGE }, 403);
     try {
       const fixture = lookup(await loadFixtures(), url);

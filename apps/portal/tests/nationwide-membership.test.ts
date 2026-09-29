@@ -35,7 +35,7 @@ test("nationwide eligibility does not elevate member tiers or officer routes", (
   assert.equal(audienceForHost("officers.ph.localhost.attacker.example:3100"), "member");
   assert.equal(isOfficerOnlyPath("/admin/dashboard"), true);
   assert.equal(memberDestination("/admin/dashboard"), "/dashboard");
-  assert.equal(authenticationProvider("public.example.org"), "supabase");
+  assert.equal(authenticationProvider("public.example.org"), "rust-api");
 });
 
 test("public website and authentication copy are nationwide and do not claim format validates ownership", () => {
@@ -46,5 +46,5 @@ test("public website and authentication copy are nationwide and do not claim for
   assert.match(landing, /nationwide/i);
   assert.doesNotMatch([landing, credentials, shell].join("\n"), /FEU|FIT-email|FIT-VERIFIED|school email verified|@fit\.edu\.ph|@feutech\.edu\.ph|Campus Engine|student chapter/i);
   assert.match(credentials, /Valid email format/);
-  assert.match(credentials, /Check your email to confirm/);
+  assert.match(credentials, /Enter the 8-digit code sent to/);
 });

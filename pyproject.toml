@@ -1,6 +1,6 @@
 [project]
 # Legacy engine package for the PyTorch PH System (AI Career Intelligence Platform).
-# The platform itself is being built fresh on Next.js + Supabase (see docs/SPECIFICATION.md);
+# The platform itself is built on Next.js + the Rust API in apps/api (see docs/SPECIFICATION.md);
 # this Python package is retained as the reference AI-pipeline prototype.
 name = "pytorch-ph-system"
 version = "0.1.0"

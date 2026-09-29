@@ -78,7 +78,7 @@ const common = {
     fullName: "Alex Rivera", headline: "Software & Machine Learning Developer", email: "alex.rivera@example.test", location: "Metro Manila, Philippines", summary: "Synthetic fourth-year computer-science persona focused on evidence-backed machine-learning products, reliable web systems, and practical technical education.",
     experience: [{ title: "Workshop Facilitator", organization: "AI Study Circles", dateLabel: "May 2026", bullets: ["Facilitated a hands-on model-training workshop and resolved participant setup issues."] }],
     projects: [{ title: "Community Vision Demo", summary: "Image-classification prototype presented to a mixed technical audience.", bullets: ["Evaluated the prototype on 1,200 labelled images from the approved project dataset.", "Explained the training workflow and evaluation results during a community showcase."] }, { title: "Responsible Sensor Prototype", summary: "Collaborative hackathon prototype with documented limitations and data-handling constraints.", bullets: ["Connected implementation decisions with an explicit responsible-use review."] }],
-    skillGroups: [{ name: "Python", items: ["PyTorch", "FastAPI"] }, { name: "JavaScript", items: ["React", "Next.js"] }, { name: "Data", items: ["PostgreSQL", "Supabase"] }],
+    skillGroups: [{ name: "Python", items: ["PyTorch", "FastAPI"] }, { name: "JavaScript", items: ["React", "Next.js"] }, { name: "Data", items: ["PostgreSQL", "SQLite"] }],
     education: [],
   },
   operations: {
@@ -102,7 +102,7 @@ const common = {
     { id: "opp-6", company: "OpenField Research", title: "AI Research Assistant", location: "Remote — Singapore", workMode: "remote", stage: "discovered", fit: 64, salaryBand: "Unknown", nextStage: "drafted" },
   ],
   connections: [
-    { id: "supabase", label: "Supabase", category: "database" as const, status: "disconnected" as const, detail: "Configure production environment variables." },
+    { id: "rust-api", label: "PyTorch PH API", category: "database" as const, status: "disconnected" as const, detail: "Configure production environment variables." },
     { id: "github", label: "GitHub", category: "identity" as const, status: "connected" as const, detail: "Approved development fixture." },
     { id: "indeed", label: "Indeed", category: "job_site" as const, status: "verification_required" as const, detail: "Human verification required before automation." },
     { id: "linkedin", label: "LinkedIn evidence", category: "social" as const, status: "connected" as const, detail: "User-approved visible session; read-only evidence collection." },

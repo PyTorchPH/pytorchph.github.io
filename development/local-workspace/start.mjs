@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { commandInvocation, run, stopTogether, waitFor } from "./processes.mjs";
+import { run, stopTogether, waitFor } from "./processes.mjs";
 import { runtimePath, workspaceRoot as root } from "./runtime-paths.mjs";
 
 if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
@@ -9,27 +9,9 @@ if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
 }
 
 const python = runtimePath("environments", "process-lab", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
-const supabasePrefix = ["--yes", "supabase@latest"];
-const manual = process.argv.includes("--manual-login");
-const supabaseProvider = process.argv.includes("--supabase");
-
-let status = "";
-if (supabaseProvider) {
-  const supabaseStart = commandInvocation("npx", [...supabasePrefix, "start"]);
-  execFileSync(supabaseStart.command, supabaseStart.args, { cwd: root, stdio: ["inherit", "ignore", "inherit"] });
-  const supabaseStatus = commandInvocation("npx", [...supabasePrefix, "status", "-o", "env"]);
-  status = execFileSync(supabaseStatus.command, supabaseStatus.args, { cwd: root, encoding: "utf8" });
-}
-const values = Object.fromEntries(status.split(/\r?\n/).filter((line) => line.includes("=")).map((line) => {
-  const index = line.indexOf("=");
-  return [line.slice(0, index), line.slice(index + 1).replace(/^['"]|['"]$/g, "")];
-}));
 const environment = {
   ...process.env,
-  NEXT_PUBLIC_SUPABASE_URL: values.API_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: values.ANON_KEY,
-  SUPABASE_SERVICE_ROLE_KEY: values.SERVICE_ROLE_KEY || "",
-  PYTORCH_PH_DATA_PROVIDER: supabaseProvider ? "supabase" : "local",
+  PYTORCH_PH_DATA_PROVIDER: "local",
   PYTORCH_PH_MEMBER_HOSTS: "members.ph.localhost:3100,localhost:3100,127.0.0.1:3100",
   PYTORCH_PH_OFFICER_HOSTS: "officers.ph.localhost:3100",
   PYTORCH_PH_MEMBER_URL: "http://members.ph.localhost:3100",
@@ -47,13 +29,11 @@ const environment = {
 };
 mkdirSync(environment.PREFECT_HOME, { recursive: true });
 
-if (!supabaseProvider) {
-  execFileSync("node", ["--import", "tsx", resolve(root, "development/local-access/seed-local-auth.ts")], {
-    cwd: root,
-    env: environment,
-    stdio: "inherit",
-  });
-}
+execFileSync("node", ["--import", "tsx", resolve(root, "development/local-access/seed-local-auth.ts")], {
+  cwd: root,
+  env: environment,
+  stdio: "inherit",
+});
 
 execFileSync("node", [resolve(root, "development/prefect-dashboard/build-dashboard.mjs")], {
   cwd: root,
@@ -74,7 +54,6 @@ try {
   const lab = runtimePath("environments", "process-lab", process.platform === "win32" ? "Scripts/pytorch-ph-process-lab.exe" : "bin/pytorch-ph-process-lab");
   execFileSync(lab, ["configure"], { cwd: root, env: environment, stdio: "inherit" });
   execFileSync(lab, ["open", "--workflow", "member-experience"], { cwd: root, env: environment, stdio: "inherit" });
-  if (!manual) processes.push(run("node", [resolve(root, "development/local-access/watch-login.mjs")], { cwd: root, env: environment }));
   await new Promise((resolvePromise) => processes[0].once("exit", resolvePromise));
 } finally {
   stop();

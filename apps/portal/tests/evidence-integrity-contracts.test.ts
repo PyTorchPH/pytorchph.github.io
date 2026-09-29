@@ -21,20 +21,12 @@ test("appeals are bounded and cannot invent a third resolution", () => {
   assert.equal(evidenceAppealDecisionSchema.safeParse({ decision: "delete", reason: "Erase it." }).success, false);
 });
 
-test("database authority awards points only inside officer review", () => {
-  const migration = readFileSync(new URL("../../../supabase/migrations/0011_extension_integrity_feedback.sql", import.meta.url), "utf8");
-  const submission = migration.slice(migration.indexOf("FUNCTION submit_evidence_envelope"), migration.indexOf("FUNCTION ingest_operational_event"));
-  assert.equal(submission.includes("INSERT INTO point_events"), false);
-  assert.match(migration, /IF requested_decision='approve'[\s\S]+INSERT INTO point_events/);
-  assert.match(migration, /anomaly signals alone never create sanctions/i);
-});
-
-test("manual workspace mutations have trusted provenance columns", () => {
-  const migration = readFileSync(new URL("../../../supabase/migrations/0012_manual_first_workspaces.sql", import.meta.url), "utf8");
-  assert.match(migration, /collection_origin[\s\S]+manual[\s\S]+automated_scrape/);
-  assert.match(migration, /mutation_origin[\s\S]+manual[\s\S]+ai_assisted[\s\S]+extension_scrape/);
-  assert.match(migration, /market_opportunity_revisions[\s\S]+record_origin/);
-  assert.match(migration, /browser payloads cannot choose/i);
+test("API authority awards points only inside officer review", () => {
+  const handlers = readFileSync(new URL("../../../apps/api/src/evidence.rs", import.meta.url), "utf8");
+  const review = handlers.indexOf("pub async fn review_claim");
+  assert.ok(review > 0, "officer review handler exists");
+  assert.equal(handlers.slice(0, review).includes("INSERT INTO point_ledger"), false);
+  assert.match(handlers.slice(review), /INSERT INTO point_ledger/);
 });
 
 test("local evidence submission is idempotent and creates reviewable pending claims", async () => {

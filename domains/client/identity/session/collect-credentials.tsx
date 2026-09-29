@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthShell } from "./render-shell";
-import { createSupabaseBrowserClient } from "@pytorch-ph/domain-client/identity";
 import { emailSchema, loginSchema, registerSchema, type LoginValues, type RegisterValues } from "@pytorch-ph/domain-protocol/identity";
 
 const API_ORIGIN = (process.env.NEXT_PUBLIC_AUTH_API_ORIGIN ?? process.env.NEXT_PUBLIC_API_ORIGIN ?? "").replace(/\/$/, "");
@@ -64,7 +63,8 @@ function Field({ icon: Icon, className: _className, ...props }: FieldProps) {
   );
 }
 
-export function LoginForm({ demoControls, onAuthenticated }: { demoControls?: ReactNode; onAuthenticated?: (role: string) => void } = {}) {
+// Static demos pass onExampleSignIn to accept their fictional accounts; it returns true when it handled the sign in.
+export function LoginForm({ demoControls, onAuthenticated, onExampleSignIn }: { demoControls?: ReactNode; onAuthenticated?: (role: string) => void; onExampleSignIn?: (email: string, password: string) => boolean } = {}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [checkingSession, setCheckingSession] = useState(Boolean(API_ORIGIN));
@@ -113,22 +113,14 @@ export function LoginForm({ demoControls, onAuthenticated }: { demoControls?: Re
         onSubmit={form.handleSubmit(async ({ email: submittedEmail, password }) => {
           setError("");
           try {
-            if (STATIC_DEMO && !API_ORIGIN && /^(demo\.member|demo\.officer)@example\.org$/i.test(submittedEmail) && password === "demo-password") {
-              const response = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: submittedEmail }) });
-              if (!response.ok) throw new Error("Example sign in failed.");
-              const viewer = await response.json() as OfficialViewer;
-              await enterAfterAuthentication(viewer.role);
-              return;
-            }
+            if (!API_ORIGIN && onExampleSignIn?.(submittedEmail, password)) return;
             if (API_ORIGIN) {
               const viewer = await officialAuth<OfficialViewer>("/auth/password", { email: submittedEmail, password });
               await enterAfterAuthentication(viewer.role);
               return;
             }
-            const response = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: submittedEmail, password, remember: form.getValues("remember") }) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || "Sign in failed.");
-            await enterAfterAuthentication();
+            // Accounts live in the PyTorch PH API; without it only the example accounts can sign in.
+            throw new Error(STATIC_DEMO ? "Use an example account from the demo bar below." : "Sign in requires the PyTorch PH API.");
           } catch (reason) {
             setError(reason instanceof Error ? reason.message : "Sign in failed.");
           }
@@ -170,7 +162,7 @@ export function LoginForm({ demoControls, onAuthenticated }: { demoControls?: Re
         </button>
       </form>
       <div className="my-5 flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-elevated" />or<span className="h-px flex-1 bg-elevated" /></div>
-      {API_ORIGIN ? (GOOGLE_CLIENT_ID ? <GoogleButton onConnected={viewer => { void enterAfterAuthentication(viewer.role); }} onError={setError} /> : <p className="text-center text-sm text-muted">Google sign-in awaits configuration.</p>) : <button className="focus-ring flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-elevated py-3 text-sm font-semibold text-ink hover:border-accent/40" onClick={async () => { setError(""); try { const supabase = createSupabaseBrowserClient(); const result = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback?next=/membership` } }); if (result.error) throw result.error; } catch (reason) { setError(reason instanceof Error ? reason.message : "Google sign in failed."); } }} type="button"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-white font-bold text-[#4285f4]">G</span>Continue with Google</button>}
+      {API_ORIGIN ? (GOOGLE_CLIENT_ID ? <GoogleButton onConnected={viewer => { void enterAfterAuthentication(viewer.role); }} onError={setError} /> : <p className="text-center text-sm text-muted">Google sign-in awaits configuration.</p>) : <p className="text-center text-sm text-muted">Google sign-in requires the PyTorch PH API.</p>}
       <p className="mt-2 text-center text-xs leading-5 text-muted">Your Google email is used for authentication and membership checks. It is hidden from member-facing rankings by default.</p>
       <div className="mt-8 text-center text-sm text-muted">
         New to the community? <Link className="text-accent underline underline-offset-2" href="/register">Register</Link>
@@ -214,15 +206,7 @@ export function RegisterForm() {
               setVerificationEmail(submittedEmail);
               return;
             }
-            const supabase = createSupabaseBrowserClient();
-            const result = await supabase.auth.signUp({ email: submittedEmail, password, options: { data: { display_name: name.trim(), leaderboard_username: username.trim() } } });
-            if (result.error) throw result.error;
-            if (result.data.session) {
-              router.replace("/membership");
-              router.refresh();
-            } else {
-              setError("Check your email to confirm the account before signing in.");
-            }
+            throw new Error(STATIC_DEMO ? "Account creation is disabled in this static demo. Use an example account on the sign-in page." : "Registration requires the PyTorch PH API.");
           } catch (reason) {
             setError(reason instanceof Error ? reason.message : "Registration failed.");
           }

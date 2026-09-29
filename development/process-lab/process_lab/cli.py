@@ -37,7 +37,7 @@ def main() -> int:
         "demo", help="Start the beginner tutorial with safe synthetic local data."
     )
     subparsers.add_parser(
-        "up", help="Start local Supabase, product services, browser tabs, and Prefect UI."
+        "up", help="Start local product services, browser tabs, and Prefect UI."
     )
     server = subparsers.add_parser("server", help="Start Prefect's maintained local UI/API.")
     server.add_argument("--host", default="127.0.0.1")

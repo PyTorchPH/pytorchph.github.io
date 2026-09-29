@@ -9,7 +9,8 @@ export const productViews = [
 ] as const;
 
 export type ProductView = (typeof productViews)[number];
-export type ProductProvider = "local" | "supabase";
+// Product views are served by the local demo store or, when deployed, the Rust API gateway.
+export type ProductProvider = "local";
 export type ProductSource = "live" | "demo";
 export type AnalyticsState = "live" | "demo" | "unavailable";
 

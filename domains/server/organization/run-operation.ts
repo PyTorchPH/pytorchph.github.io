@@ -16,9 +16,7 @@ import {
   type EventPackage,
   type ExternalEvent,
 } from "@pytorch-ph/domain-protocol/organization";
-import { configuredProductProvider } from "@pytorch-ph/domain-server/career-evidence";
 import { localDemoDatabasePath } from "@pytorch-ph/domain-server/career-evidence";
-import { createSupabaseServerClient } from "@pytorch-ph/domain-server/identity";
 import { configuredMailAdapter } from "./send-message";
 
 function openOperationsDatabase() {
@@ -61,80 +59,54 @@ function assertOfficer(viewer: ViewerContext) {
 
 export async function readEvidenceClaims(viewer: ViewerContext): Promise<EvidenceClaim[]> {
   assertOfficer(viewer);
-  if (configuredProductProvider() === "local") {
-    const db = openOperationsDatabase();
-    try { return db.prepare("SELECT payload FROM evidence_claims_demo").all().map((row) => JSON.parse(String(row.payload))); }
-    finally { db.close(); }
-  }
-  const client = await createSupabaseServerClient();
-  const { data, error } = await client.from("evidence_claims").select("id,title,source,provenance,department,source_url,content_hash,approved_points,updated_at,member_id,origin,proposed_level,normalized_payload,warnings,risk_signals,decision_reason").order("updated_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data || []).map((row) => ({ id: row.id, memberLabel: `Member ${row.member_id.slice(0, 8).toUpperCase()}`, title: row.title, source: row.source, provenance: row.provenance, department: row.department, sourceUrl: row.source_url, contentHash: row.content_hash, points: row.approved_points, origin: row.origin, proposedLevel: row.proposed_level || undefined, normalizedPayload: row.normalized_payload, warnings: row.warnings, riskSignals: row.risk_signals, decisionReason: row.decision_reason, updatedAt: row.updated_at }));
+  const db = openOperationsDatabase();
+  try { return db.prepare("SELECT payload FROM evidence_claims_demo").all().map((row) => JSON.parse(String(row.payload))); }
+  finally { db.close(); }
 }
 
 export async function reviewEvidenceClaim(viewer: ViewerContext, id: string, review: EvidenceReview): Promise<EvidenceClaim> {
   assertOfficer(viewer);
-  if (configuredProductProvider() === "local") {
-    const db = openOperationsDatabase();
-    try {
-      const row = db.prepare("SELECT payload FROM evidence_claims_demo WHERE id=?").get(id) as { payload: string } | undefined;
-      if (!row) throw new Error("Claim not found.");
-      const claim = JSON.parse(row.payload) as EvidenceClaim;
-      if (!["manual_pending", "scraped_pending", "disputed"].includes(claim.provenance)) throw new Error("Only pending claims require officer judgment.");
-      const extensionClaim = claim.origin === "extension_scrape" || (!claim.origin && claim.source !== "manual");
-      if (review.decision === "scraper_defect" && !extensionClaim) throw new Error("Scraper defect requires extension evidence.");
-      if (review.decision === "confirm_falsification" && extensionClaim) throw new Error("Falsification decision requires manual evidence.");
-      if (review.decision === "confirm_tampering" && !extensionClaim) throw new Error("Tampering decision requires extension evidence.");
-      const approved = review.decision === "approve";
-      const units = { participation: 1, contributor: 2, finalist_lead: 3, winner_top_award: 4 }[review.level || "participation"];
-      const weight = claim.source === "github" ? 2 : 3;
-      const updated = { ...claim, provenance: approved ? "officer_reviewed" as const : review.decision === "scraper_defect" ? "disputed" as const : "rejected" as const, proposedLevel: review.level || claim.proposedLevel, decisionReason: review.reason || null, points: approved ? units * 10 * weight : 0, updatedAt: new Date().toISOString() };
-      db.prepare("UPDATE evidence_claims_demo SET payload=? WHERE id=?").run(JSON.stringify(updated), id);
-      return updated;
-    } finally { db.close(); }
-  }
-  const client = await createSupabaseServerClient();
-  const { data, error } = await client.rpc("review_evidence_claim", { requested_claim: id, requested_decision: review.decision, requested_level: review.level || null, requested_reason: review.reason });
-  if (error) throw new Error(error.message);
-  return data as EvidenceClaim;
+  const db = openOperationsDatabase();
+  try {
+    const row = db.prepare("SELECT payload FROM evidence_claims_demo WHERE id=?").get(id) as { payload: string } | undefined;
+    if (!row) throw new Error("Claim not found.");
+    const claim = JSON.parse(row.payload) as EvidenceClaim;
+    if (!["manual_pending", "scraped_pending", "disputed"].includes(claim.provenance)) throw new Error("Only pending claims require officer judgment.");
+    const extensionClaim = claim.origin === "extension_scrape" || (!claim.origin && claim.source !== "manual");
+    if (review.decision === "scraper_defect" && !extensionClaim) throw new Error("Scraper defect requires extension evidence.");
+    if (review.decision === "confirm_falsification" && extensionClaim) throw new Error("Falsification decision requires manual evidence.");
+    if (review.decision === "confirm_tampering" && !extensionClaim) throw new Error("Tampering decision requires extension evidence.");
+    const approved = review.decision === "approve";
+    const units = { participation: 1, contributor: 2, finalist_lead: 3, winner_top_award: 4 }[review.level || "participation"];
+    const weight = claim.source === "github" ? 2 : 3;
+    const updated = { ...claim, provenance: approved ? "officer_reviewed" as const : review.decision === "scraper_defect" ? "disputed" as const : "rejected" as const, proposedLevel: review.level || claim.proposedLevel, decisionReason: review.reason || null, points: approved ? units * 10 * weight : 0, updatedAt: new Date().toISOString() };
+    db.prepare("UPDATE evidence_claims_demo SET payload=? WHERE id=?").run(JSON.stringify(updated), id);
+    return updated;
+  } finally { db.close(); }
 }
 
 export async function readMemberEvidenceIntegrity(userId: string): Promise<EvidenceIntegrityCase[]> {
   if (!userId) throw new Error("Authentication required.");
-  if (configuredProductProvider() === "local") return [];
-  const client = await createSupabaseServerClient();
-  const { data, error } = await client.rpc("member_evidence_integrity");
-  if (error) throw new Error(error.message);
-  return (data || []) as EvidenceIntegrityCase[];
+  // Integrity cases are served by the Rust API; this local store records none.
+  return [];
 }
 
 export async function openEvidenceAppeal(userId: string, input: unknown) {
   if (!userId) throw new Error("Authentication required.");
-  const value = evidenceAppealRequestSchema.parse(input);
-  if (configuredProductProvider() === "local") throw new Error("No active local-demo sanction is available to appeal.");
-  const client = await createSupabaseServerClient();
-  const { data, error } = await client.rpc("open_evidence_appeal", { requested_sanction: value.sanctionId, requested_note: value.note });
-  if (error) throw new Error(error.message);
-  return { appealId: data };
+  evidenceAppealRequestSchema.parse(input);
+  // Appeals are served by the Rust API; the local demo store holds no sanctions.
+  throw new Error("No active local-demo sanction is available to appeal.");
 }
 
 export async function readOfficerEvidenceAppeals(viewer: ViewerContext): Promise<OfficerEvidenceAppeal[]> {
   assertOfficer(viewer);
-  if (configuredProductProvider() === "local") return [];
-  const client = await createSupabaseServerClient();
-  const { data, error } = await client.rpc("officer_evidence_appeals");
-  if (error) throw new Error(error.message);
-  return (data || []) as OfficerEvidenceAppeal[];
+  return [] as OfficerEvidenceAppeal[];
 }
 
 export async function resolveEvidenceAppeal(viewer: ViewerContext, appealId: string, input: unknown) {
   assertOfficer(viewer);
-  const value = evidenceAppealDecisionSchema.parse(input);
-  if (configuredProductProvider() === "local") throw new Error("No active local-demo appeal is available.");
-  const client = await createSupabaseServerClient();
-  const { error } = await client.rpc("resolve_evidence_appeal", { requested_appeal: appealId, requested_decision: value.decision, requested_reason: value.reason });
-  if (error) throw new Error(error.message);
-  return { resolved: true };
+  evidenceAppealDecisionSchema.parse(input);
+  throw new Error(`No active local-demo appeal ${appealId} is available.`);
 }
 
 function jsonArray<T>(value: unknown): T[] {
@@ -171,19 +143,9 @@ const localEventQuery = `SELECT e.*,m.subject email_subject,m.body email_body,m.
 
 export async function readExternalEvents(viewer: ViewerContext): Promise<ExternalEvent[]> {
   if (!viewer.userId) throw new Error("Authentication required.");
-  if (configuredProductProvider() === "local") {
-    const db = openOperationsDatabase();
-    try { return db.prepare(`${localEventQuery} ORDER BY e.created_at DESC`).all(viewer.userId).map((row) => rowToEvent(row as Record<string, unknown>, viewer)); }
-    finally { db.close(); }
-  }
-  const client = await createSupabaseServerClient();
-  const { data, error } = await client.rpc("external_event_feed");
-  if (error) throw new Error(error.message);
-  const mode = viewer.isOfficer ? configuredMailAdapter().mode : "copy_export";
-  return (data || []).map((row: Record<string, unknown>) => {
-    const event = rowToEvent(row, viewer);
-    return event.emailDraft ? { ...event, emailDraft: { ...event.emailDraft, deliveryMode: mode } } : event;
-  });
+  const db = openOperationsDatabase();
+  try { return db.prepare(`${localEventQuery} ORDER BY e.created_at DESC`).all(viewer.userId).map((row) => rowToEvent(row as Record<string, unknown>, viewer)); }
+  finally { db.close(); }
 }
 
 export async function submitExternalEvent(viewer: ViewerContext, input: unknown): Promise<ExternalEvent> {
@@ -191,18 +153,12 @@ export async function submitExternalEvent(viewer: ViewerContext, input: unknown)
   const payload = eventPackageSchema.parse(input);
   const required = requiredDepartmentsByCategory[payload.category];
   const id = randomUUID(); const createdAt = new Date().toISOString();
-  if (configuredProductProvider() === "local") {
-    const db = openOperationsDatabase();
-    try {
-      db.prepare("INSERT INTO external_events_demo (id,submitted_by,payload,status,interested,interest_count,approvals,approval_total,created_at,revision,required_departments,approved_departments) VALUES (?,?,?,?,0,0,0,?,?,1,?,?)")
-        .run(id, viewer.userId, JSON.stringify(payload), "not_sado_approved", required.length, createdAt, JSON.stringify(required), "[]");
-      return rowToEvent({ id, submitted_by: viewer.userId, payload: JSON.stringify(payload), status: "not_sado_approved", interested: 0, interest_count: 0, revision: 1, required_departments: JSON.stringify(required), approved_departments: "[]", created_at: createdAt }, viewer);
-    } finally { db.close(); }
-  }
-  const client = await createSupabaseServerClient();
-  const { data, error } = await client.rpc("submit_external_event", { requested: payload, requested_departments: required });
-  if (error) throw new Error(error.message);
-  return rowToEvent(data as Record<string, unknown>, viewer);
+  const db = openOperationsDatabase();
+  try {
+    db.prepare("INSERT INTO external_events_demo (id,submitted_by,payload,status,interested,interest_count,approvals,approval_total,created_at,revision,required_departments,approved_departments) VALUES (?,?,?,?,0,0,0,?,?,1,?,?)")
+      .run(id, viewer.userId, JSON.stringify(payload), "not_sado_approved", required.length, createdAt, JSON.stringify(required), "[]");
+    return rowToEvent({ id, submitted_by: viewer.userId, payload: JSON.stringify(payload), status: "not_sado_approved", interested: 0, interest_count: 0, revision: 1, required_departments: JSON.stringify(required), approved_departments: "[]", created_at: createdAt }, viewer);
+  } finally { db.close(); }
 }
 
 function makeMailDraft(payload: EventPackage) {
@@ -287,32 +243,5 @@ async function localEventAction(viewer: ViewerContext, id: string, action: Event
 
 export async function eventAction(viewer: ViewerContext, id: string, action: EventAction): Promise<ExternalEvent> {
   if (!viewer.userId) throw new Error("Authentication required.");
-  if (configuredProductProvider() === "local") return localEventAction(viewer, id, action);
-  if (action.action !== "interest") assertOfficer(viewer);
-  const client = await createSupabaseServerClient();
-  if (action.action === "approve_email") {
-    const event = (await readExternalEvents(viewer)).find((item) => item.id === id);
-    if (!event?.emailDraft || event.status !== "email_review") throw new Error("The exact final email is not ready for approval.");
-    const adapter = configuredMailAdapter();
-    const recipient = process.env.PYTORCH_PH_SADO_EMAIL || "reviewed-export@local.invalid";
-    const idempotencyKey = createHash("sha256").update(`${id}:${event.revision}:${event.emailDraft.revisionHash}`).digest("hex");
-    const { data: claim, error: claimError } = await client.rpc("claim_external_event_delivery", { requested_event: id, requested_key: idempotencyKey, requested_mode: adapter.mode });
-    if (claimError) throw new Error(claimError.message);
-    if (claim?.alreadyDelivered) return (await readExternalEvents(viewer)).find((item) => item.id === id)!;
-    try {
-      const receipt = await adapter.deliverApproved({ to: [recipient], subject: event.emailDraft.subject, body: event.emailDraft.body, revisionHash: event.emailDraft.revisionHash }, idempotencyKey);
-      const { error } = await client.rpc("finish_external_event_delivery", { requested_event: id, requested_key: idempotencyKey, requested_provider: receipt.provider, requested_message: receipt.messageId });
-      if (error) throw new Error(error.message);
-    } catch (error) {
-      await client.rpc("fail_external_event_delivery", { requested_event: id, requested_key: idempotencyKey });
-      throw error;
-    }
-  } else {
-    const detail = action.action === "record_sado_approval" || action.action === "confirm_manual_delivery" ? action.detail : action.action === "approve_department" ? action.department || null : null;
-    const { error } = await client.rpc("transition_external_event", { requested_event: id, requested_action: action.action, requested_detail: detail });
-    if (error) throw new Error(error.message);
-  }
-  const result = (await readExternalEvents(viewer)).find((item) => item.id === id);
-  if (!result) throw new Error("Event not found.");
-  return result;
+  return localEventAction(viewer, id, action);
 }
