@@ -96,7 +96,11 @@ function installDemoApi() {
     // existing response contracts, now supplied by the Rust service.
     const method = requestMethod(input, init);
     if (method === "POST" && url.pathname === "/api/auth/login") return login(init);
-    if (method === "POST" && url.pathname === "/api/auth/signout") return json({ ok: true });
+    if (method === "POST" && url.pathname === "/api/auth/signout") {
+      try { sessionStorage.removeItem(AUDIENCE_KEY); } catch { /* Storage may be unavailable. */ }
+      listeners.forEach(listener => listener());
+      return json({ ok: true });
+    }
     if (method !== "GET" && method !== "HEAD") return json({ error: READ_ONLY_MESSAGE }, 403);
     try {
       const fixture = lookup(await loadFixtures(), url);

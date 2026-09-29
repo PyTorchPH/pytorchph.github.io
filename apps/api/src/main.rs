@@ -240,6 +240,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/auth/email/verify", post(auth_email::verify_signup))
         .route("/auth/password", post(auth_email::password_login))
         .route("/auth/me", get(auth::me))
+        .route("/auth/signout", post(auth::signout))
         .route("/members", get(auth::list_members))
         .route("/members/{id}/approve", post(auth::approve_member))
         .route(
@@ -432,6 +433,36 @@ mod tests {
         headers.insert("origin", "https://pytorch.ph".parse().unwrap());
         headers.insert("cookie", format!("ph_session={token}").parse().unwrap());
         (state, headers, officer, member)
+    }
+
+    #[tokio::test]
+    async fn signout_revokes_server_session_and_clears_cookie() {
+        let (state, headers, _, _) = fixture().await;
+        assert!(auth::viewer(&state, &headers).await.is_ok());
+        let mut wrong_origin = headers.clone();
+        wrong_origin.insert("origin", "https://elsewhere.example".parse().unwrap());
+        assert!(matches!(
+            auth::signout(State(state.clone()), wrong_origin).await,
+            Err(ApiError(StatusCode::FORBIDDEN, _))
+        ));
+        assert!(auth::viewer(&state, &headers).await.is_ok());
+        let response = auth::signout(State(state.clone()), headers.clone())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let cookie = response
+            .headers()
+            .get("set-cookie")
+            .unwrap()
+            .to_str()
+            .unwrap();
+        assert!(cookie.starts_with("ph_session=;"));
+        assert!(cookie.contains("Max-Age=0"));
+        assert!(response.headers().get("cache-control").is_some());
+        assert!(matches!(
+            auth::viewer(&state, &headers).await,
+            Err(ApiError(StatusCode::UNAUTHORIZED, _))
+        ));
     }
 
     #[tokio::test]

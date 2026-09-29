@@ -27,4 +27,6 @@ The public Pages build sets `NEXT_PUBLIC_AUTH_API_ORIGIN=https://api.pytorch.ph`
 
 An authenticated request, including the demo fixture fetch, renews a valid session through the end of the seventh UTC calendar day after the request. The API updates SQLite and returns a matching `Secure; HttpOnly; SameSite=Lax` cookie with `Expires` and `Max-Age`; an expired session is never renewed. Browser requests must use `credentials: "include"`. Existing unexpired sessions renew on their next request without a database migration.
 
+The portal entry and login page check `GET /auth/me` before displaying sign in. A valid member session opens the member demo view; an officer/admin session opens the officer demo view. `POST /auth/signout` requires the portal `Origin`, deletes the server-side session, and expires the cookie. The Pages demo also clears its fictional audience selection. An API error leaves sign in available and never treats a browser-stored demo choice as authentication.
+
 Measured latency and the bounded public benchmark procedure are in `../docs/PERFORMANCE.md`.

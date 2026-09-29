@@ -20,6 +20,7 @@ Rust/Axum service for server-authoritative member access, internal competitive-e
 |---|---|---|
 | `GET /demo/fixtures` | Public | Fictional member and officer view responses stored in SQLite; never real member records |
 | `POST /auth/google`, `GET /auth/me` | Google user | Establish/read session |
+| `POST /auth/signout` | Signed-in browser | Revoke the presented session and expire its cookie; valid portal `Origin` required |
 | `GET /members`, `POST /members/{id}/approve` | Officer/admin | Eligible members and onboarding |
 | `POST /events`, `GET /events` | Officer | Create/list internal events |
 | `POST /events/{id}/entrants`, `GET /events/{id}/entrants` | Officer | Register/list eligible entrants |

@@ -34,6 +34,9 @@ app shell, member dashboard, officer command center, and workspaces—without sc
   login form accepts the example accounts locally; registration and Google sign-in use a Supabase
   stub (`demo-identity.ts`, aliased only in this app) that explains the demo.
 - The example account lives in `sessionStorage`; no cookies or authenticated sessions are created.
+- A real Rust API session is checked through `/auth/me` at portal entry and login. Valid member and
+  officer roles select the matching fictional view without showing the login form. Sign out revokes
+  the API session and clears the fictional selection; a saved demo choice alone never restores login.
 - All numbers, names, events, and roles are fictional. The login page labels the example accounts
   and offers member and officer view controls without fixed banners.
 - The build finishes `apps/pages-demo/out` with the portal's public files (synthetic media, setup

@@ -2,7 +2,7 @@ use crate::{ApiError, ApiResult, AppState, check_origin, internal};
 use axum::{
     Json,
     extract::{Path, State},
-    http::{HeaderMap, HeaderValue, StatusCode},
+    http::{HeaderMap, HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
 };
 use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header, jwk::JwkSet};
@@ -179,6 +179,9 @@ pub(crate) async fn issue_session(state: &AppState, viewer: Viewer) -> ApiResult
     response
         .headers_mut()
         .insert("set-cookie", session_cookie(&token, expires)?);
+    response
+        .headers_mut()
+        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
     Ok(response)
 }
 
@@ -240,6 +243,9 @@ pub async fn refresh_session(
             match session_cookie(&token, expires) {
                 Ok(cookie) => {
                     response.headers_mut().insert("set-cookie", cookie);
+                    response
+                        .headers_mut()
+                        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
                 }
                 Err(error) => return error.into_response(),
             }
@@ -274,6 +280,39 @@ pub async fn require_officer(state: &AppState, headers: &HeaderMap) -> ApiResult
 
 pub async fn me(State(state): State<Arc<AppState>>, headers: HeaderMap) -> ApiResult<Json<Viewer>> {
     Ok(Json(viewer(&state, &headers).await?))
+}
+
+pub async fn signout(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+) -> ApiResult<Response> {
+    check_origin(&state, &headers)?;
+    let revoked = if let Some(token) = session_token(&headers) {
+        let hash = hex::encode(Sha256::digest(token.as_bytes()));
+        sqlx::query("DELETE FROM sessions WHERE token_hash = ?")
+            .bind(hash)
+            .execute(&state.db)
+            .await
+            .map_err(internal)?
+            .rows_affected()
+    } else {
+        0
+    };
+    tracing::info!(
+        component = "auth",
+        operation = "signout",
+        revoked,
+        "auth.session_signed_out"
+    );
+    let mut response = Json(serde_json::json!({ "ok": true })).into_response();
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_static("ph_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT"),
+    );
+    response
+        .headers_mut()
+        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    Ok(response)
 }
 
 #[derive(Serialize)]
