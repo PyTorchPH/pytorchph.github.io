@@ -1281,6 +1281,18 @@ async fn product_evidence(
         items.insert(0, item.clone());
     }
     save(db, member_id, "/api/product/career-evidence", &view).await?;
+    if state == "user_verified" {
+        integrity::queue_manual_claim(
+            db,
+            member_id,
+            &id,
+            item["evidenceKind"].as_str().unwrap_or("project"),
+            title,
+            source,
+            item["description"].as_str().unwrap_or(""),
+        )
+        .await?;
+    }
     Ok(json!({"item":item}))
 }
 

@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
   AlertTriangle,
-  ArrowRight,
   Bot,
   Check,
   CheckCircle2,
@@ -23,7 +22,6 @@ import {
   Globe2,
   ImageIcon,
   Link2,
-  LockKeyhole,
   Network,
   Pencil,
   Plug,
@@ -957,26 +955,6 @@ export function ResumeStudioView({ data }: { data: ProductViewData }) {
   };
   return (
     <>
-      <Card className="mb-4 border-accent/25 bg-accentSoft">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex gap-3">
-            <LockKeyhole className="mt-1 flex-none text-accent" size={20} />
-            <div>
-              <p className="font-semibold">Read-only normalized snapshot</p>
-              <p className="mt-1 text-sm leading-6 text-muted">
-                Templates inject approved Career Evidence. They cannot edit the
-                underlying details.
-              </p>
-            </div>
-          </div>
-          <Link
-            className="focus-ring inline-flex items-center gap-2 border border-accent/30 px-4 py-2 text-sm font-semibold text-accent"
-            href="/career/evidence"
-          >
-            Edit in Career Evidence <ArrowRight size={15} />
-          </Link>
-        </div>
-      </Card>
       <section className="grid gap-4 md:grid-cols-3">
         {resumeTemplates.map((item, index) => (
           <button

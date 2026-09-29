@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import Link from "next/link";
+import { InfoPopover } from "@pytorch-ph/design-system/info-popover";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -45,11 +47,28 @@ function SourceBadge({ data }: { data: ProductViewData }) {
   return <Badge variant={data.meta.source === "live" ? "success" : "orange"}><Database size={13} />{data.meta.label}</Badge>;
 }
 
-function Header({ data, capabilityKey }: { data: ProductViewData; capabilityKey: CapabilityKey }) {
+function Header({ data, capabilityKey, notices }: { data: ProductViewData; capabilityKey: CapabilityKey; notices: ReactNode }) {
   return <header className="page-hero flex flex-wrap items-start justify-between gap-4" data-tour="page-heading">
     <div><p className="data-label mb-2 text-xs uppercase tracking-widest text-accent">{data.heading.eyebrow}</p><h1 className="text-3xl font-bold tracking-[-0.02em]">{data.heading.title}</h1><p className="mt-2 max-w-3xl leading-7 text-muted">{data.heading.description}</p></div>
-    <div className="flex flex-wrap gap-2" data-tour="service-status"><CapabilityStatus capabilityKey={capabilityKey} /><SourceBadge data={data} /></div>
+    <div className="flex flex-col items-end gap-2"><div className="flex flex-wrap gap-2" data-tour="service-status"><CapabilityStatus capabilityKey={capabilityKey} /><SourceBadge data={data} /></div>{notices}</div>
   </header>;
+}
+
+type Automation = { state: string; reason: string; missing: string[] };
+
+// Page-wide rules live behind hover/tap chips in the hero instead of banners above the content.
+function HeroNotices({ safety, automation, view }: { safety: string; automation: Automation | null; view: ProductView }) {
+  return <div className="flex flex-wrap justify-end gap-2">
+    <span data-tour="permission-boundary"><InfoPopover label="Permission boundary" showLabel title="Permission boundary"><p className="text-muted">{safety}</p></InfoPopover></span>
+    {automation && <span data-automation-state={automation.state}><InfoPopover label={automation.state === "available" ? "Automation available" : "Manual mode"} showLabel title={automation.state === "available" ? "Automation available" : "Manual mode"}>
+      <p className="text-muted">{automation.reason}</p>
+      {automation.state === "locked" && automation.missing.length > 0 && <p className="mt-2 text-xs text-muted">Automated tools require: {automation.missing.join(", ")}. Manual workspace actions remain available.</p>}
+    </InfoPopover></span>}
+    {view === "resumes" && <InfoPopover label="Read-only snapshot" showLabel title="Read-only normalized snapshot">
+      <p className="text-muted">Templates inject approved Career Evidence. They cannot edit the underlying details.</p>
+      <Link className="mt-3 inline-flex items-center gap-2 font-semibold text-accent" href="/career/evidence">Edit in Career Evidence <ArrowRight size={15} /></Link>
+    </InfoPopover>}
+  </div>;
 }
 
 function EvidenceView({ data }: { data: ProductViewData }) {
@@ -159,12 +178,11 @@ function ProductContent({ view, capabilityKey, safety, children }: Props) {
   const query = useQuery({ enabled: capability.state !== "locked", queryKey: queryKeys.product(view), queryFn: () => fetchJson<ProductViewData>(`/api/product/${view}`, { cache: "no-store" }) });
   const data = query.data || null;
   const error = query.error instanceof Error ? query.error.message : "";
+  const notices = <HeroNotices automation={automation} safety={safety} view={view} />;
   return <>
-    {data ? <Header capabilityKey={capabilityKey} data={data} /> : <header className="page-hero flex items-start justify-between gap-4" data-tour="page-heading"><div><p className="data-label mb-2 text-xs uppercase tracking-widest text-accent">Product workspace</p><h1 className="text-3xl font-bold">{capability.state === "locked" ? workspaceTitles[view] : "Loading workspace…"}</h1>{capability.state === "locked" && <p className="mt-2 max-w-3xl leading-7 text-muted">{capability.reason}</p>}</div><Badge data-tour="service-status">{capability.state === "locked" ? "Locked" : "Checking access"}</Badge></header>}
+    {data ? <Header capabilityKey={capabilityKey} data={data} notices={notices} /> : <header className="page-hero flex items-start justify-between gap-4" data-tour="page-heading"><div><p className="data-label mb-2 text-xs uppercase tracking-widest text-accent">Product workspace</p><h1 className="text-3xl font-bold">{capability.state === "locked" ? workspaceTitles[view] : "Loading workspace…"}</h1>{capability.state === "locked" && <p className="mt-2 max-w-3xl leading-7 text-muted">{capability.reason}</p>}</div><div className="flex flex-col items-end gap-2"><Badge data-tour="service-status">{capability.state === "locked" ? "Locked" : "Checking access"}</Badge>{notices}</div></header>}
     {/* Page-specific panels (e.g. official evidence submission) render inside the shell, below the hero. */}
     {children}
-    <Card className="mb-4 border-accent/25 bg-accentSoft" data-tour="permission-boundary"><div className="flex gap-3"><ShieldCheck className="mt-0.5 flex-none text-accent" size={20} /><div><strong>Permission boundary</strong><p className="mt-1 text-sm text-muted">{safety}</p></div></div></Card>
-    {automation && <Card className="mb-4 bg-surface" data-automation-state={automation.state}><div className="flex items-start gap-3">{automation.state === "available" ? <Sparkles className="mt-0.5 flex-none text-success" size={19}/> : <LockKeyhole className="mt-0.5 flex-none text-warning" size={19}/>}<div><strong>{automation.state === "available" ? "Automation available" : "Manual mode"}</strong><p className="mt-1 text-sm text-muted">{automation.reason}</p>{automation.state === "locked" && automation.missing.length > 0 && <p className="mt-2 text-xs text-muted">Automated tools require: {automation.missing.join(", ")}. Manual workspace actions remain available.</p>}</div></div></Card>}
     <div data-tour="service-data"><CapabilityGate capabilityKey={capabilityKey}><div data-tour="page-content">{error ? <Card className="bg-surface"><div className="flex gap-3"><AlertTriangle className="flex-none text-accent" /><div><CardTitle>Product data unavailable</CardTitle><p className="mt-2 text-sm text-muted">{error}</p></div></div></Card> : data ? <><ViewBody canScrapeEvidence={evidenceScrape.state === "available"} canWriteEvidence={evidenceWrite.state === "available"} data={data} view={view} /><div className="mt-4"><DeveloperDiagnostics data={data.diagnostics} /></div></> : <Card className="bg-surface"><div className="flex items-center gap-3 text-muted"><Server className="animate-pulse" size={20} />Connecting to the active data provider…</div></Card>}</div></CapabilityGate></div>
   </>;
 }

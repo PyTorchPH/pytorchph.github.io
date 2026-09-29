@@ -11,7 +11,6 @@ import { Card } from "@pytorch-ph/design-system/card";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import type { EvidenceClaim, EvidenceReview, OfficerEvidenceAppeal } from "@pytorch-ph/domain-protocol/organization";
 import { departmentLabel } from "../../events/event-labels";
-import { OfficialEvidenceReview } from "./official-review";
 
 // Officers verify the evidence that earns points, one claim at a time, and resolve appeals.
 function EvidenceReviewContent() {
@@ -54,6 +53,5 @@ function EvidenceReviewContent() {
 }
 
 export default function EvidenceReviewPage() {
-  if (process.env.NEXT_PUBLIC_API_ORIGIN) return <AppShell><OfficialEvidenceReview /></AppShell>;
   return <AppShell><EvidenceReviewContent /></AppShell>;
 }
