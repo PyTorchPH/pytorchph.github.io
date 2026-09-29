@@ -50,9 +50,19 @@ try {
 
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   let demoApiRequests = 0;
+  let activeRole = null;
   await context.route("https://api.pytorch.ph/demo/fixtures", route => {
     demoApiRequests += 1;
     return route.fulfill({ ...demoResponse, body: demoSeed });
+  });
+  await context.route("https://api.pytorch.ph/auth/me", route => route.fulfill({
+    ...demoResponse,
+    status: activeRole ? 200 : 401,
+    body: JSON.stringify(activeRole ? { role: activeRole } : { error: "Authentication required" }),
+  }));
+  await context.route("https://api.pytorch.ph/auth/signout", route => {
+    activeRole = null;
+    return route.fulfill({ ...demoResponse, body: JSON.stringify({ ok: true }) });
   });
   await context.addInitScript(() => {
     const read = Storage.prototype.getItem;
@@ -143,12 +153,27 @@ try {
     await page.goto(`${url}${path}`, { waitUntil: "networkidle" });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `Mobile overflow: ${path}`);
   }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  activeRole = "member";
+  await page.goto(`${url}/`, { waitUntil: "networkidle" });
+  await heading(memberHeading);
+  assert.equal(await page.getByRole("heading", { name: "Officer desk", exact: true }).count(), 0);
+  assert.equal(await page.locator('input[type="password"]').count(), 0, "A restored member session must skip sign in");
+  activeRole = "officer";
+  await page.goto(`${url}/login/`, { waitUntil: "networkidle" });
+  await heading("Officer desk");
+  assert.equal(await page.locator('input[type="password"]').count(), 0, "A restored officer session must skip sign in");
+  await page.getByRole("button", { name: "Sign out" }).first().click();
+  await page.waitForURL(`**${PORTAL_BASE_PATH}/login/`);
+  await page.locator('input[type="password"]').waitFor();
+  assert.equal(activeRole, null, "Sign out must revoke the official session");
+  assert.equal(await page.evaluate(() => sessionStorage.getItem("pytorch-ph-demo-audience")), null, "Sign out must clear the fictional view");
   assert.deepEqual(await context.cookies(), []);
   assert.ok(demoApiRequests > 0, "Demo views must request the backend snapshot");
-  assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request) && request !== "https://api.pytorch.ph/demo/fixtures"), []);
+  assert.deepEqual(externalRequests.filter(request => !/fonts\.(googleapis|gstatic)\.com/.test(request) && !["/demo/fixtures", "/auth/me", "/auth/signout"].some(path => request === `https://api.pytorch.ph${path}`)), []);
   assert.deepEqual(missingAssets, []);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "account-binding", "logo-landing", "installable-app", "login-example-member", "login-example-officer", "no-fixed-demo-banners", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "backend-demo-snapshot", "no-unapproved-external-requests", "no-missing-assets", "no-page-errors"] }));
+  console.log(JSON.stringify({ event: "pages_demo.verify.completed", outcome: "success", checks: ["product-tour", "portal-entry-redirect", "session-restore-member", "session-restore-officer", "signout-revokes-session", "peer-scorecard", "ranking-guide", "shared-dashboard", "officer-desk", "event-workflow", "member-job-tools", "account-binding", "logo-landing", "installable-app", "login-example-member", "login-example-officer", "no-fixed-demo-banners", "officer-persists-reload", "portal-login", "base-path", "read-only-writes", "static-routes", "no-school-text", "mobile", "no-auth-cookies", "backend-demo-snapshot", "no-unapproved-external-requests", "no-missing-assets", "no-page-errors"] }));
 } finally {
   await browser?.close();
   await new Promise(resolveClosed => server.close(resolveClosed));

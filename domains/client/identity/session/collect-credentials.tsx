@@ -16,8 +16,9 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 const STATIC_DEMO = process.env.NEXT_PUBLIC_STATIC_DEMO === "1";
 
 type GoogleIdentity = { accounts: { id: { initialize: (options: { client_id: string; callback: (response: { credential: string }) => void }) => void; renderButton: (element: HTMLElement, options: { theme: string; size: string }) => void } } };
+type OfficialViewer = { role: string };
 
-function GoogleButton({ onConnected, onError }: { onConnected: () => void; onError: (message: string) => void }) {
+function GoogleButton({ onConnected, onError }: { onConnected: (viewer: OfficialViewer) => void; onError: (message: string) => void }) {
   const button = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onConnected, onError });
   callbacks.current = { onConnected, onError };
@@ -30,7 +31,7 @@ function GoogleButton({ onConnected, onError }: { onConnected: () => void; onErr
       const google = (window as unknown as { google?: GoogleIdentity }).google;
       if (!google || !button.current) return;
       google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: ({ credential }) => {
-        void officialAuth("/auth/google", { id_token: credential }).then(() => callbacks.current.onConnected()).catch((reason: Error) => callbacks.current.onError(reason.message));
+        void officialAuth<OfficialViewer>("/auth/google", { id_token: credential }).then(viewer => callbacks.current.onConnected(viewer)).catch((reason: Error) => callbacks.current.onError(reason.message));
       } });
       google.accounts.id.renderButton(button.current, { theme: "outline", size: "large" });
     };
@@ -40,11 +41,11 @@ function GoogleButton({ onConnected, onError }: { onConnected: () => void; onErr
   return <div ref={button} />;
 }
 
-async function officialAuth(path: string, body: unknown) {
+async function officialAuth<T = unknown>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`${API_ORIGIN}${path}`, { method: "POST", credentials: "include", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || "Authentication failed.");
-  return result;
+  return result as T;
 }
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -63,20 +64,47 @@ function Field({ icon: Icon, className: _className, ...props }: FieldProps) {
   );
 }
 
-export function LoginForm({ demoControls }: { demoControls?: ReactNode } = {}) {
+export function LoginForm({ demoControls, onAuthenticated }: { demoControls?: ReactNode; onAuthenticated?: (role: string) => void } = {}) {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [checkingSession, setCheckingSession] = useState(Boolean(API_ORIGIN));
+  const onAuthenticatedRef = useRef(onAuthenticated);
+  onAuthenticatedRef.current = onAuthenticated;
   const form = useForm<LoginValues>({ defaultValues: { email: "", password: "", remember: false }, mode: "onChange", resolver: zodResolver(loginSchema) });
   const email = form.watch("email");
 
-  async function enterAfterAuthentication() {
-    if (API_ORIGIN) { router.replace("/dashboard"); router.refresh(); return; }
+  useEffect(() => {
+    if (!API_ORIGIN) return;
+    const controller = new AbortController();
+    let restored = false;
+    void fetch(`${API_ORIGIN}/auth/me`, { credentials: "include", cache: "no-store", signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) return;
+        const viewer = await response.json() as OfficialViewer;
+        if (controller.signal.aborted) return;
+        restored = true;
+        if (onAuthenticatedRef.current) onAuthenticatedRef.current(viewer.role);
+        else router.replace("/dashboard");
+      })
+      .catch(() => { /* Keep sign in available if the API cannot be reached. */ })
+      .finally(() => { if (!controller.signal.aborted && !restored) setCheckingSession(false); });
+    return () => controller.abort();
+  }, [router]);
+
+  async function enterAfterAuthentication(role?: string) {
+    if (API_ORIGIN) {
+      if (onAuthenticated) onAuthenticated(role ?? "member");
+      else { router.replace("/dashboard"); router.refresh(); }
+      return;
+    }
     const response = await fetch("/api/membership/status", { cache: "no-store" });
     if (!response.ok) { router.replace("/membership"); router.refresh(); return; }
     const membership = await response.json();
     router.replace(membership.canEnterMemberPortal ? "/dashboard" : "/membership");
     router.refresh();
   }
+
+  if (checkingSession) return <AuthShell sub="Sign in" title="Welcome back, builder."><p role="status" className="text-sm text-muted">Checking your session…</p></AuthShell>;
 
   return (
     <AuthShell sub="Sign in" title="Welcome back, builder.">
@@ -86,13 +114,15 @@ export function LoginForm({ demoControls }: { demoControls?: ReactNode } = {}) {
           setError("");
           try {
             if (STATIC_DEMO && /^(demo\.member|demo\.officer)@example\.org$/i.test(submittedEmail) && password === "demo-password") {
-              await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: submittedEmail }) });
-              await enterAfterAuthentication();
+              const response = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: submittedEmail }) });
+              if (!response.ok) throw new Error("Example sign in failed.");
+              const viewer = await response.json() as OfficialViewer;
+              await enterAfterAuthentication(viewer.role);
               return;
             }
             if (API_ORIGIN) {
-              await officialAuth("/auth/password", { email: submittedEmail, password });
-              await enterAfterAuthentication();
+              const viewer = await officialAuth<OfficialViewer>("/auth/password", { email: submittedEmail, password });
+              await enterAfterAuthentication(viewer.role);
               return;
             }
             const response = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: submittedEmail, password, remember: form.getValues("remember") }) });
@@ -140,7 +170,7 @@ export function LoginForm({ demoControls }: { demoControls?: ReactNode } = {}) {
         </button>
       </form>
       <div className="my-5 flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-elevated" />or<span className="h-px flex-1 bg-elevated" /></div>
-      {API_ORIGIN ? (GOOGLE_CLIENT_ID ? <GoogleButton onConnected={() => { void enterAfterAuthentication(); }} onError={setError} /> : <p className="text-center text-sm text-muted">Google sign-in awaits configuration.</p>) : <button className="focus-ring flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-elevated py-3 text-sm font-semibold text-ink hover:border-accent/40" onClick={async () => { setError(""); try { const supabase = createSupabaseBrowserClient(); const result = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback?next=/membership` } }); if (result.error) throw result.error; } catch (reason) { setError(reason instanceof Error ? reason.message : "Google sign in failed."); } }} type="button"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-white font-bold text-[#4285f4]">G</span>Continue with Google</button>}
+      {API_ORIGIN ? (GOOGLE_CLIENT_ID ? <GoogleButton onConnected={viewer => { void enterAfterAuthentication(viewer.role); }} onError={setError} /> : <p className="text-center text-sm text-muted">Google sign-in awaits configuration.</p>) : <button className="focus-ring flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-elevated py-3 text-sm font-semibold text-ink hover:border-accent/40" onClick={async () => { setError(""); try { const supabase = createSupabaseBrowserClient(); const result = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback?next=/membership` } }); if (result.error) throw result.error; } catch (reason) { setError(reason instanceof Error ? reason.message : "Google sign in failed."); } }} type="button"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-white font-bold text-[#4285f4]">G</span>Continue with Google</button>}
       <p className="mt-2 text-center text-xs leading-5 text-muted">Your Google email is used for authentication and membership checks. It is hidden from member-facing rankings by default.</p>
       <div className="mt-8 text-center text-sm text-muted">
         New to the community? <Link className="text-accent underline underline-offset-2" href="/register">Register</Link>
