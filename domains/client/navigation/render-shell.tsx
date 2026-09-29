@@ -102,8 +102,8 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
     <aside className="flex h-full w-72 flex-col overflow-y-auto border-r border-border bg-canvas px-4 py-6 text-ink">
       <div className="mb-5 flex items-start justify-between gap-2 px-1">
         <div>
-          <p className="data-label text-sm uppercase text-accent">{officerPortal ? "Officer portal" : "Member portal"}</p>
-          <p className="mt-1 text-sm text-muted">{officerPortal ? "Community operations and your own progress" : "Your progress in the community"}</p>
+          <p className="data-label text-sm uppercase text-accent">Member portal</p>
+          <p className="mt-1 text-sm text-muted">{officerPortal ? "Your progress, plus officer tools" : "Your progress in the community"}</p>
         </div>
         <Button aria-label="Close menu" className="lg:hidden" onClick={() => setOpen(false)} size="icon" type="button" variant="ghost">
           <X size={18} />

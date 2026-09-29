@@ -85,6 +85,6 @@ main_menu:
 
   - title: "Member Portal"
     key: "portal"
-    url: "/portal/login/"
+    url: "/portal/"
     url_type: "baseurl"
     has_dropdown: false

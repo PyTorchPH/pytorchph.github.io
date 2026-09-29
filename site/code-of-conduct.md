@@ -23,6 +23,6 @@ In short, we expect everyone to:
 Harassment, discrimination, and personal attacks are not tolerated in any form.
 
 If you experience or witness behavior that violates this Code of Conduct, report it to the organizers
-through the reporting form in the [member portal]({{ site.baseurl }}/portal/login/). Reports are reviewed
+through the reporting form in the [member portal]({{ site.baseurl }}/portal/). Reports are reviewed
 confidentially, and organizers may take any action they consider appropriate, up to removal from
 community spaces.

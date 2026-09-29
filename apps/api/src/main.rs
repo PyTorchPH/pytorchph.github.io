@@ -390,6 +390,59 @@ mod tests {
         ));
     }
 
+    async fn portal_get(
+        state: &Arc<AppState>,
+        headers: &HeaderMap,
+        path: &str,
+    ) -> serde_json::Value {
+        let response = portal::gateway(
+            State(state.clone()),
+            Path(path.to_owned()),
+            OriginalUri(format!("/portal/api/{path}").parse().unwrap()),
+            Method::GET,
+            headers.clone(),
+            Bytes::new(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(response.into_body(), 1 << 22)
+            .await
+            .unwrap();
+        serde_json::from_slice(&body).unwrap()
+    }
+
+    #[tokio::test]
+    async fn officer_is_an_elevated_member_and_career_tools_are_open_to_members() {
+        let (state, officer_headers, _, member_id) = fixture().await;
+        let token = "c".repeat(64);
+        sqlx::query("INSERT INTO sessions(token_hash,member_id,expires_at) VALUES (?,?,?)")
+            .bind(hex::encode(Sha256::digest(token.as_bytes())))
+            .bind(&member_id)
+            .bind((chrono::Utc::now() + chrono::Duration::days(1)).to_rfc3339())
+            .execute(&state.db)
+            .await
+            .unwrap();
+        let mut member_headers = officer_headers.clone();
+        member_headers.insert("cookie", format!("ph_session={token}").parse().unwrap());
+        let seeds: serde_json::Value =
+            serde_json::from_str(include_str!("../seeds/demo-fixtures.json")).unwrap();
+
+        let officer_dashboard = portal_get(&state, &officer_headers, "product/dashboard").await;
+        assert_eq!(
+            officer_dashboard["heading"],
+            seeds["member"]["/api/product/dashboard"]["body"]["heading"]
+        );
+
+        let officer_caps = portal_get(&state, &officer_headers, "capabilities").await;
+        let member_caps = portal_get(&state, &member_headers, "capabilities").await;
+        assert_eq!(officer_caps["portal"]["audience"], "officer");
+        assert_eq!(member_caps["portal"]["audience"], "member");
+        assert_eq!(member_caps["capabilities"], officer_caps["capabilities"]);
+        let locks = member_caps["capabilities"].to_string();
+        assert!(!locks.contains("development owner session"), "{locks}");
+    }
+
     #[tokio::test]
     async fn portal_external_event_is_shared_but_officer_approval_is_guarded() {
         let (state, officer_headers, _, member_id) = fixture().await;
