@@ -285,13 +285,14 @@ async fn require_draft_access(
     if actor.role == "admin" {
         return Ok(());
     }
-    let creator: Option<(String,)> =
+    // created_by is NULL once the drafting officer's account is deleted.
+    let creator: Option<(Option<String>,)> =
         sqlx::query_as("SELECT created_by FROM mail_drafts WHERE id=?")
             .bind(draft_id)
             .fetch_optional(&state.db)
             .await
             .map_err(internal)?;
-    if creator.as_ref().is_some_and(|row| row.0 == actor.id) {
+    if creator.is_some_and(|row| row.0.as_deref() == Some(actor.id.as_str())) {
         return Ok(());
     }
     for role in content
