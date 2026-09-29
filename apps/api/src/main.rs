@@ -960,6 +960,93 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn approved_manual_evidence_enters_the_officer_review_queue() {
+        let (state, officer, _, member_id) = fixture().await;
+        let token = "f".repeat(64);
+        sqlx::query("INSERT INTO sessions(token_hash,member_id,expires_at) VALUES (?,?,?)")
+            .bind(hex::encode(Sha256::digest(token.as_bytes())))
+            .bind(&member_id)
+            .bind((chrono::Utc::now() + chrono::Duration::days(1)).to_rfc3339())
+            .execute(&state.db)
+            .await
+            .unwrap();
+        let mut member = officer.clone();
+        member.insert("cookie", format!("ph_session={token}").parse().unwrap());
+        let item = |title: &str| serde_json::json!({"item": {"title": title, "sourceUrl": "https://github.com/example/repo", "description": "Built a classifier"}, "approve": true});
+
+        let (status, draft) = portal_call(
+            &state,
+            &member,
+            Method::POST,
+            "/portal/api/product/evidence",
+            serde_json::json!({"item": {"title": "Draft only"}}),
+        )
+        .await;
+        assert_eq!(status, StatusCode::CREATED, "{draft}");
+        assert_eq!(
+            count(&state.db, "SELECT COUNT(*) FROM evidence_claims").await,
+            0,
+            "drafts stay private"
+        );
+
+        let (_, created) = portal_call(
+            &state,
+            &member,
+            Method::POST,
+            "/portal/api/product/evidence",
+            item("Image classifier"),
+        )
+        .await;
+        let id = created["item"]["id"].as_str().unwrap().to_owned();
+        let (_, queue) = portal_call(
+            &state,
+            &officer,
+            Method::GET,
+            "/portal/api/officer/evidence",
+            serde_json::json!(null),
+        )
+        .await;
+        assert_eq!(queue[0]["id"], id.as_str());
+        assert_eq!(queue[0]["provenance"], "manual_pending");
+
+        portal_call(
+            &state,
+            &member,
+            Method::PATCH,
+            &format!("/portal/api/product/evidence/{id}"),
+            item("Image classifier v2"),
+        )
+        .await;
+        assert_eq!(
+            count(
+                &state.db,
+                "SELECT COUNT(*) FROM evidence_claims WHERE title='Image classifier v2'"
+            )
+            .await,
+            1
+        );
+
+        let (status, _) = portal_call(
+            &state,
+            &officer,
+            Method::PATCH,
+            &format!("/portal/api/officer/evidence/{id}"),
+            serde_json::json!({"decision":"approve","level":"participation","reason":""}),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+        portal_call(
+            &state,
+            &member,
+            Method::PATCH,
+            &format!("/portal/api/product/evidence/{id}"),
+            item("Edited after review"),
+        )
+        .await;
+        assert_eq!(count(&state.db, "SELECT COUNT(*) FROM evidence_claims WHERE title='Image classifier v2' AND status='approved'").await, 1, "reviewed claims are final");
+    }
+
+    #[tokio::test]
     async fn member_can_delete_their_own_account_with_confirmation() {
         let (state, officer_headers, _, member_id) = fixture().await;
         let token = "d".repeat(64);

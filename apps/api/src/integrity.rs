@@ -4,6 +4,7 @@
 use crate::{ApiError, ApiResult, auth::Viewer, bad, internal};
 use axum::http::StatusCode;
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 use sqlx::{Row, SqlitePool, sqlite::SqliteRow};
 use uuid::Uuid;
 
@@ -80,7 +81,7 @@ fn claim_json(row: &SqliteRow) -> Value {
         "source": row.get::<String, _>(5),
         "provenance": provenance,
         "department": department(&kind),
-        "sourceUrl": row.get::<String, _>(4),
+        "sourceUrl": Some(row.get::<String, _>(4)).filter(|url| !url.is_empty()),
         "contentHash": row.get::<String, _>(7),
         "points": row.get::<Option<i64>, _>(9).unwrap_or(0).max(0),
         "origin": origin,
@@ -419,4 +420,48 @@ pub(crate) async fn resolve_appeal(
         "evidence.appeal_resolved"
     );
     Ok(json!({ "id": appeal_id, "state": state }))
+}
+
+/// A member approving their own manual evidence sends it to the officer review queue under
+/// the same id. Edits update the claim while it is still pending; reviewed claims are final.
+pub(crate) async fn queue_manual_claim(
+    db: &SqlitePool,
+    member_id: &str,
+    claim_id: &str,
+    evidence_kind: &str,
+    title: &str,
+    source_url: &str,
+    description: &str,
+) -> ApiResult<()> {
+    let kind = if evidence_kind == "experience" {
+        "external_participation"
+    } else {
+        "personal_project"
+    };
+    let hash = hex::encode(Sha256::digest(
+        format!(
+            "{kind}
+{title}
+{source_url}
+{description}"
+        )
+        .as_bytes(),
+    ));
+    let text = (!description.is_empty()).then_some(description);
+    let updated = sqlx::query("UPDATE evidence_claims SET kind=?, title=?, source_url=?, submitted_text=?, content_hash=? WHERE id=? AND member_id=? AND status='pending'")
+        .bind(kind).bind(title).bind(source_url).bind(text).bind(&hash).bind(claim_id).bind(member_id)
+        .execute(db).await.map_err(internal)?.rows_affected();
+    if updated == 0 {
+        sqlx::query("INSERT OR IGNORE INTO evidence_claims(id,member_id,kind,title,source_url,submitted_text,content_hash,status,created_at) VALUES (?,?,?,?,?,?,?,'pending',?)")
+            .bind(claim_id).bind(member_id).bind(kind).bind(title).bind(source_url).bind(text).bind(&hash)
+            .bind(chrono::Utc::now().to_rfc3339())
+            .execute(db).await.map_err(internal)?;
+    }
+    tracing::info!(
+        component = "integrity",
+        operation = "queue_manual_claim",
+        updated,
+        "evidence.manual_claim_queued"
+    );
+    Ok(())
 }
