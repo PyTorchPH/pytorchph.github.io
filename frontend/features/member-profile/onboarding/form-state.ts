@@ -29,8 +29,9 @@ export type ProfileDraft = {
 const MAX_INTERESTS = 10;
 const MAX_TEXT = 120;
 const MAX_GENDER_TEXT = 60;
-export const MIN_AGE = 13;
-export const MAX_AGE = 100;
+// Every age may join; the bounds only catch typos (the API uses the same).
+export const MIN_AGE = 1;
+export const MAX_AGE = 120;
 
 export const emptyDraft = (): ProfileDraft => ({
   gender: "", genderDescription: "", age: "", agePreferNotToSay: false, regionCode: "", status: "", channel: "", interests: [], analyticsConsent: false,

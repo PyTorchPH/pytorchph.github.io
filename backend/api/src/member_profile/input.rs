@@ -3,7 +3,7 @@
 //! Module map (caller-first):
 //!   parse_profile              whole submission → Profile (or the first problem found)
 //!   ├─ parse_gender            gender plus the self-description it may require
-//!   ├─ parse_age               exact age 13–100, or an explicit "prefer not to say"
+//!   ├─ parse_age               exact age 1–120 (every age may join), or "prefer not to say"
 //!   ├─ parse_status            student / professional / both / seeking / other
 //!   ├─ parse_interests         up to MAX_INTERESTS known interest codes
 //!   ├─ parse_education         required while studying; the level sets grade/year range and program
@@ -21,8 +21,9 @@ const MAX_TEXT: usize = 120;
 const MAX_GENDER_DESCRIPTION: usize = 60;
 const MAX_SCHOOL_NAME: usize = 160;
 const MAX_SCHOOL_CODE: usize = 40;
-const MIN_AGE: i64 = 13;
-const MAX_AGE: i64 = 100;
+// Every age may join; the bounds only catch typos.
+const MIN_AGE: i64 = 1;
+const MAX_AGE: i64 = 120;
 
 pub(crate) struct Profile {
     pub(crate) gender: String,
@@ -187,7 +188,7 @@ fn parse_age(input: &Value) -> ApiResult<Option<i64>> {
         .and_then(Value::as_i64)
         .filter(|age| is_accepted_age(*age))
         .map(Some)
-        .ok_or_else(|| bad("Enter your age (13 to 100) or choose prefer not to say"))
+        .ok_or_else(|| bad("Enter your age (1 to 120) or choose prefer not to say"))
 }
 
 fn parse_status(input: &Value) -> ApiResult<Status> {

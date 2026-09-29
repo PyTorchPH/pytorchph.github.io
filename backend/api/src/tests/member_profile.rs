@@ -232,10 +232,10 @@ async fn exact_age_reads_back_and_prefer_not_to_say_stores_no_age() {
 }
 
 #[tokio::test]
-async fn age_outside_13_to_100_or_missing_is_rejected() {
+async fn every_age_is_accepted_but_zero_typos_and_missing_ages_are_rejected() {
     let (state, officer_headers, _, member_id) = fixture().await;
     let headers = member_session(&state, &officer_headers, &member_id, &"9".repeat(64)).await;
-    for age in [json!(12), json!(101), json!("twenty"), Value::Null] {
+    for age in [json!(0), json!(121), json!("twenty"), Value::Null] {
         let mut input = student_professional_profile(true);
         input["age"] = age;
         let (status, _) = portal_call(
@@ -510,4 +510,22 @@ async fn member_added_company_becomes_searchable_at_once_and_stays_unverified() 
         .unwrap();
     assert_eq!(found.len(), 1);
     assert!(!crate::companies::display::is_verified(&found[0]));
+}
+
+#[tokio::test]
+async fn a_young_member_can_save_their_age() {
+    let (state, officer_headers, _, member_id) = fixture().await;
+    let headers = member_session(&state, &officer_headers, &member_id, &"4".repeat(64)).await;
+    let mut input = studying_at("elementary", 3, None);
+    input["age"] = json!(8);
+    let (status, saved) = portal_call(
+        &state,
+        &headers,
+        Method::PUT,
+        "/portal/api/member/profile",
+        input,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{saved}");
+    assert_eq!(saved["profile"]["age"], 8);
 }
