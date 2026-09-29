@@ -14,11 +14,24 @@ import type { LeaderboardIdentitySettings } from "@pytorch-ph/domain-protocol/le
 import type { MembershipStatus } from "@pytorch-ph/domain-protocol/privacy-feedback";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { toast } from "sonner";
+import { aiComplete, aiStatus as localAIStatus } from "@pytorch-ph/domain-client/client-automation";
 
 type VerifiedAccount = { provider: "github" | "linkedin" | "facebook"; handle: string; profileUrl: string };
 const PROVIDER_ICONS = { github: { icon: Github, label: "GitHub" }, linkedin: { icon: Linkedin, label: "LinkedIn" }, facebook: { icon: Facebook, label: "Facebook" } } as const;
 
 type UpskillPlan = { summary: string; recommendations: Array<{ focusSkill: string; rationale: string; nextStep: string; evidenceIds: string[] }>; warnings: string[] };
+
+function parseUpskillPlan(reply: string): UpskillPlan {
+  const text = reply.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
+  const value = JSON.parse(text) as Partial<UpskillPlan>;
+  if (typeof value.summary !== "string" || !Array.isArray(value.recommendations)) throw new Error("The AI reply was not a valid plan. Try again.");
+  const strings = (items: unknown) => Array.isArray(items) ? items.filter((item): item is string => typeof item === "string") : [];
+  return {
+    summary: value.summary,
+    recommendations: value.recommendations.slice(0, 6).map((item) => ({ focusSkill: String(item?.focusSkill ?? ""), rationale: String(item?.rationale ?? ""), nextStep: String(item?.nextStep ?? ""), evidenceIds: strings(item?.evidenceIds) })),
+    warnings: strings(value.warnings),
+  };
+}
 
 function ProfileContent() {
   // Only accounts verified through the extension count as connected.
@@ -26,13 +39,24 @@ function ProfileContent() {
   const identity = useQuery({ queryKey: ["leaderboard-identity"], queryFn: () => fetchJson<LeaderboardIdentitySettings>("/api/member/leaderboard-identity", { cache: "no-store" }) });
   const evidence = useQuery({ queryKey: ["product", "career-evidence"], queryFn: () => fetchJson<ProductViewData>("/api/product/career-evidence", { cache: "no-store" }) });
   const membership = useQuery({ queryKey: ["membership-status", false], queryFn: () => fetchJson<MembershipStatus>("/api/membership/status", { cache: "no-store" }) });
-  const aiStatus = useQuery({ queryKey: ["local-ai-status"], queryFn: () => fetchJson<{ configured: boolean }>("/api/backend/local-ai/status", { cache: "no-store" }) });
+  const aiStatus = useQuery({ queryKey: ["local-ai-status"], queryFn: localAIStatus });
   const [upskillPlan, setUpskillPlan] = useState<UpskillPlan | null>(null);
   const upskill = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const verified = (evidence.data?.evidence?.items || []).filter((item) => item.verificationState === "source_matched" || item.verificationState === "user_verified");
       if (!verified.length) throw new Error("No verified evidence is available for UpSkill planning.");
-      return fetchJson<UpskillPlan>("/api/backend/local-ai/upskill", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ evidence: verified.map((item) => ({ id: item.id, title: item.title, description: item.description, skills: item.skills })) }) });
+      const cited = verified.map((item) => ({ id: item.id, title: item.title, description: item.description, skills: item.skills }));
+      // The member's own AI provider, called by their extension; nothing goes through our server.
+      const reply = await aiComplete({
+        system: "You are a career coach for a PyTorch community member. Use only the evidence provided and cite evidence ids. Answer with JSON only.",
+        prompt: `Evidence:
+${JSON.stringify(cited)}
+
+Return {"summary": string, "recommendations": [{"focusSkill": string, "rationale": string, "nextStep": string, "evidenceIds": string[]}], "warnings": string[]} with 2-4 recommendations.`,
+        json: true,
+        maxTokens: 1200,
+      });
+      return parseUpskillPlan(reply);
     },
     onSuccess: setUpskillPlan,
     onError: (error) => toast.error(error instanceof Error ? error.message : "UpSkill planning failed."),
@@ -94,7 +118,7 @@ function ProfileContent() {
           <SkillRadarChart />
           <div className="mt-4 border-t border-border pt-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><p className="text-sm text-muted">Generate evidence-cited next steps through your configured local AI boundary.</p><Button disabled={!aiStatus.data?.configured || upskill.isPending || evidence.isLoading} onClick={() => upskill.mutate()} size="sm" type="button"><Sparkles size={15} />{upskill.isPending ? "Planning…" : "Generate local AI plan"}</Button></div>
-            {!aiStatus.data?.configured && <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">AI setup is required in Settings before UpSkill can run.</p>}
+            {!aiStatus.data?.configured && <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">Connect an AI provider in Settings (stored in your extension) before UpSkill can run.</p>}
             {upskillPlan && <div className="space-y-3"><p className="text-sm leading-6">{upskillPlan.summary}</p>{upskillPlan.recommendations.map((item) => <div className="rounded-lg border border-border bg-elevated p-3" key={`${item.focusSkill}-${item.evidenceIds.join("-")}`}><p className="font-semibold">{item.focusSkill}</p><p className="mt-1 text-sm text-muted">{item.rationale}</p><p className="mt-2 text-sm"><span className="font-semibold">Next:</span> {item.nextStep}</p><p className="mt-2 font-mono text-xs text-muted">Evidence: {item.evidenceIds.join(", ")}</p></div>)}</div>}
           </div>
         </Card>
