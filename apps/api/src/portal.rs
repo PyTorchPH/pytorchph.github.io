@@ -150,8 +150,9 @@ pub async fn gateway(
         return Err(ApiError(StatusCode::FORBIDDEN, "Officer access required"));
     }
     if method == Method::GET {
-        if path.starts_with("backend/local-ai/") {
-            return Ok(reply(StatusCode::OK, static_ai(&path)));
+        // AI keys and calls stay in the member's extension; the server only lists providers.
+        if path == "backend/local-ai/providers" {
+            return Ok(reply(StatusCode::OK, ai_providers()));
         }
         let query_key = uri
             .query()
@@ -297,20 +298,6 @@ pub async fn gateway(
             StatusCode::CREATED,
             note_feedback(&state.db, &actor, &path[9..path.len() - 6], input).await?,
         ),
-        ("POST", "backend/local-ai/test") => (
-            StatusCode::OK,
-            json!({"ok":true,"response":"Static AI test response. Provider is not configured."}),
-        ),
-        ("POST", "backend/local-ai/upskill") => (
-            StatusCode::OK,
-            json!({"plan":[],"source":"static","message":"Configure an AI provider to generate a plan."}),
-        ),
-        ("POST", "backend/local-ai/settings") => {
-            return Err(ApiError(
-                StatusCode::UNPROCESSABLE_ENTITY,
-                "Saving AI provider keys on the server is not enabled yet",
-            ));
-        }
         ("POST", "job-market/refresh") => {
             return Err(ApiError(
                 StatusCode::METHOD_NOT_ALLOWED,
@@ -329,19 +316,13 @@ pub async fn gateway(
     Ok(reply(status, result))
 }
 
-fn static_ai(path: &str) -> Value {
-    match path {
-        "backend/local-ai/status" | "backend/local-ai/settings" => {
-            json!({"configured":false,"provider":"static","baseUrl":"","model":"","apiKeyPresent":false,"apiVersion":"","project":"","region":"","middleware":"static","source":"demo-fixture"})
-        }
-        // The LiteLLM provider catalog (same list as the resume builder's local config).
-        "backend/local-ai/providers" => json!({
-            "middleware": "litellm",
-            "providers": serde_json::from_str::<Value>(include_str!("../seeds/ai-providers.json"))
-                .unwrap_or_else(|_| json!([])),
-        }),
-        _ => json!({"configured":false,"provider":"static","model":""}),
-    }
+// The LiteLLM provider catalog (same list as the resume builder's local config).
+fn ai_providers() -> Value {
+    json!({
+        "middleware": "extension",
+        "providers": serde_json::from_str::<Value>(include_str!("../seeds/ai-providers.json"))
+            .unwrap_or_else(|_| json!([])),
+    })
 }
 
 async fn username_available(db: &SqlitePool, member_id: &str, username: &str) -> ApiResult<bool> {
