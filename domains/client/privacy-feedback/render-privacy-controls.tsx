@@ -7,32 +7,52 @@ import { Button } from "@pytorch-ph/design-system/button";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import type { MemberPrivacySettings } from "@pytorch-ph/domain-protocol/privacy-feedback";
 
+// Anonymous ranking and hiding the real name follow the leaderboard display mode, so they are
+// not separate checkboxes.
 const toggles: Array<[keyof MemberPrivacySettings, string, string]> = [
-  ["shareAchievements", "Show my achievements on the leaderboard", "Off by default. When on, members who open your leaderboard row see your approved evidence, event placements and verified skills. Anonymous ranking still hides your name and source links."],
+  ["shareAchievements", "Show my achievements on the leaderboard", "Off by default. When on, members who open your leaderboard row see your approved evidence, event placements and verified skills. Anonymous mode still hides your name and source links."],
   ["hideGoogleIdentity", "Hide Google identity", "OAuth email and provider identity stay out of member-facing views."],
-  ["hideRealName", "Hide real name", "Use only the selected leaderboard label outside owner/officer-authorized workflows."],
-  ["anonymousRanking", "Anonymous seasonal ranking", "Use a season-scoped alias while preserving your highlighted own row."],
   ["deviceCacheEnabled", "Persistent device vault", "Allow reviewed manual data to remain encrypted in this browser profile."],
   ["automaticErrorReports", "Privacy-safe automatic errors", "Send redacted error metadata without HTML, screenshots, or form values."],
 ];
 
-// Owner-only visibility controls, shared by Settings and the privacy page.
+export const PRIVACY_QUERY_KEY = ["member-privacy"];
+
+export function usePrivacySettings() {
+  return useQuery({ queryKey: PRIVACY_QUERY_KEY, queryFn: async () => {
+    const value = await fetchJson<MemberPrivacySettings>("/api/member/privacy", { cache: "no-store" });
+    return { ...value, shareAchievements: value.shareAchievements ?? false };
+  } });
+}
+
+export function savePrivacySettings(value: MemberPrivacySettings) {
+  return fetchJson<MemberPrivacySettings>("/api/member/privacy", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(value) });
+}
+
+/** The privacy checkboxes as a controlled list, for pages that save them with other settings. */
+export function PrivacyToggles({ value, onChange }: { value: MemberPrivacySettings; onChange: (next: MemberPrivacySettings) => void }) {
+  return <div className="space-y-2">
+    {toggles.map(([key, label, detail]) => <label className="flex cursor-pointer gap-3 border border-border p-3" key={key}>
+      <input checked={Boolean(value[key])} className="mt-1 accent-accent" onChange={(event) => onChange({ ...value, [key]: event.target.checked })} type="checkbox" />
+      <span><span className="block font-semibold">{label}</span><span className="mt-1 block text-xs leading-5 text-muted">{detail}</span></span>
+    </label>)}
+  </div>;
+}
+
+// Stand-alone owner-only controls with their own save button (privacy page).
 export function PrivacyControls() {
   const client = useQueryClient();
-  const privacy = useQuery({ queryKey: ["member-privacy"], queryFn: () => fetchJson<MemberPrivacySettings>("/api/member/privacy", { cache: "no-store" }) });
+  const privacy = usePrivacySettings();
   const [draft, setDraft] = useState<MemberPrivacySettings | null>(null);
-  useEffect(() => { if (privacy.data) setDraft({ ...privacy.data, shareAchievements: privacy.data.shareAchievements ?? false }); }, [privacy.data]);
+  useEffect(() => { if (privacy.data) setDraft(privacy.data); }, [privacy.data]);
   const save = useMutation({
-    mutationFn: (value: MemberPrivacySettings) => fetchJson<MemberPrivacySettings>("/api/member/privacy", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(value) }),
-    onSuccess: (value) => { client.setQueryData(["member-privacy"], value); toast.success("Privacy controls saved."); },
+    mutationFn: savePrivacySettings,
+    onSuccess: (value) => { client.setQueryData(PRIVACY_QUERY_KEY, value); toast.success("Privacy controls saved."); },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Privacy settings failed."),
   });
   if (!draft) return <p className="text-sm text-muted">{privacy.isError ? "Privacy controls are unavailable right now." : "Loading owner-only controls…"}</p>;
-  return <div className="space-y-2">
-    {toggles.map(([key, label, detail]) => <label className="flex cursor-pointer gap-3 border border-border p-3" key={key}>
-      <input checked={draft[key]} className="mt-1 accent-accent" onChange={(event) => setDraft({ ...draft, [key]: event.target.checked })} type="checkbox" />
-      <span><span className="block font-semibold">{label}</span><span className="mt-1 block text-xs leading-5 text-muted">{detail}</span></span>
-    </label>)}
+  return <div>
+    <PrivacyToggles onChange={setDraft} value={draft} />
     <Button className="mt-3 w-full" disabled={save.isPending} onClick={() => save.mutate(draft)} type="button">{save.isPending ? "Saving…" : "Save privacy controls"}</Button>
   </div>;
 }
