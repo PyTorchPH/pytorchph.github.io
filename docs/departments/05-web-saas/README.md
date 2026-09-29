@@ -26,7 +26,7 @@ The future product surface, branded **CareerLens**. It is a thin-ish FastAPI lay
 ## Files owned
 
 ```
-legacy/python/resume_builder/web/
+backend/legacy-python/resume_builder/web/
 ├── app.py            # FastAPI routes (see endpoint map below)
 ├── auth.py           # WebAuthSettings — GitHub/Google/Microsoft OAuth
 ├── cdo_advisor.py    # resume analysis (injection / compliance)

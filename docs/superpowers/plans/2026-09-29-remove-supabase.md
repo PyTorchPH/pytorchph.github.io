@@ -7,7 +7,7 @@ Date: 2026-09-29. Scope: `website/` repo only.
 
 | # | Decision |
 |---|---|
-| D1 | Delete the Next.js server mode (`apps/portal/app/api/**`, `app/auth/callback`, `proxy.ts`, `vercel.json`). Every portal page calls the Rust API (`/auth/*`, `/portal/api/*`, `/evidence*`, `/leaderboard`), as the live static build already does. |
+| D1 | Delete the Next.js server mode (`frontend/portal/app/api/**`, `app/auth/callback`, `proxy.ts`, `vercel.json`). Every portal page calls the Rust API (`/auth/*`, `/portal/api/*`, `/evidence*`, `/leaderboard`), as the live static build already does. |
 | D2 | Build real Rust tables for: evidence appeals, leaderboard seasons, sanctions, rank policy/thresholds, point rubric, skills, competitions. |
 | D3 | Do **not** build: payments / membership payment reviews, referrals. Remove their UI and code paths. |
 | D4 | Schema is highly normalized: one fact in one place; a table per user-owned field set when it avoids duplication. |
@@ -17,8 +17,8 @@ Date: 2026-09-29. Scope: `website/` repo only.
 
 ## Current state (verified)
 
-- Live: static Next export (`apps/pages-demo`, re-exports `apps/portal` pages) → `https://api.pytorch.ph` (Rust/Axum, SQLite WAL).
-- Rust schema: 28 tables in `apps/api/migrations/0001–0004`. `foreign_keys(true)` is on.
+- Live: static Next export (`frontend/portal-static`, re-exports `frontend/portal` pages) → `https://api.pytorch.ph` (Rust/Axum, SQLite WAL).
+- Rust schema: 28 tables in `backend/api/migrations/0001–0004`. `foreign_keys(true)` is on.
 - **Gap: `0001_core.sql` has 35 `REFERENCES` and 0 `ON DELETE CASCADE`.** Deleting a member with points, entrants, claims, roles, or mail rows fails today. Violates D5.
 - Supabase: 81 tracked files; `supabase/` (config, 13 migrations, ~65 tables, seed); `@supabase/*` deps in 4 `package.json`.
 - Portal views not backed by real tables are faked as JSON blobs in `portal_state` via `/portal/api/{*path}`.
@@ -59,18 +59,18 @@ Endpoints (Axum, same auth + `check_origin` as today): `GET/POST /evidence/{id}/
 
 | Action | Files |
 |---|---|
-| Delete | `supabase/**`; `domains/server/identity/session/{create-admin-client,create-user-client}.ts`; `domains/client/identity/session/create-browser-client.ts`; `domains/server/career-evidence/read-supabase.ts`; `apps/portal/scripts/seed-demo-storage.mjs`; `development/local-access/watch-login.mjs`; `apps/portal/tests/supabase-migrations.test.ts`; `apps/portal/app/api/**`, `app/auth/callback`, `proxy.ts`, `vercel.json` (D1) |
-| Replace with Rust API calls | `read-viewer`, `select-provider` → `/auth/me`; `collect-credentials.tsx` drops the Supabase OAuth branch; `select-repository`, `run-command`, `submit-evidence`, `read-standing`, `run-operation`, `manage-report` → Rust endpoints (or deleted if only used by D1 routes); `apps/pages-demo/app/demo-identity.ts` stub removed |
+| Delete | `supabase/**`; `development/local-server/identity/session/{create-admin-client,create-user-client}.ts`; `frontend/features/identity/session/create-browser-client.ts`; `development/local-server/career-evidence/read-supabase.ts`; `frontend/portal/scripts/seed-demo-storage.mjs`; `development/local-access/watch-login.mjs`; `frontend/portal/tests/supabase-migrations.test.ts`; `frontend/portal/app/api/**`, `app/auth/callback`, `proxy.ts`, `vercel.json` (D1) |
+| Replace with Rust API calls | `read-viewer`, `select-provider` → `/auth/me`; `collect-credentials.tsx` drops the Supabase OAuth branch; `select-repository`, `run-command`, `submit-evidence`, `read-standing`, `run-operation`, `manage-report` → Rust endpoints (or deleted if only used by D1 routes); `frontend/portal-static/app/demo-identity.ts` stub removed |
 | Remove (D3) | payment review + referral UI, routes, fixtures |
-| Deps / env | drop `@supabase/ssr`, `@supabase/supabase-js`, `test:supabase`; `.env.example` + `apps/portal/.env.example`: remove `SUPABASE_*`, `PYTORCH_PH_DATA_PROVIDER`, add `NEXT_PUBLIC_API_ORIGIN` |
+| Deps / env | drop `@supabase/ssr`, `@supabase/supabase-js`, `test:supabase`; `.env.example` + `frontend/portal/.env.example`: remove `SUPABASE_*`, `PYTORCH_PH_DATA_PROVIDER`, add `NEXT_PUBLIC_API_ORIGIN` |
 | Tests to update | `product-gateway`, `nationwide-membership`, `evidence-integrity-contracts`, `trust-center`, `tests/node/workspace-boundaries`, `tests/node/logic-doc-contracts` |
-| Docs | reword `docs/**`, READMEs, `trust/page.tsx`; keep `legacy/python/**` and dated `docs/superpowers/**` as history |
+| Docs | reword `docs/**`, READMEs, `trust/page.tsx`; keep `backend/legacy-python/**` and dated `docs/superpowers/**` as history |
 
 ## Sample data (D7)
 
 - Seed via a separate migration-free seeder (`SEED_SAMPLE_DATA=true`), never inside schema migrations.
 - Every sample row hangs off sample members with emails under `@sample.pytorch.ph` and `members.is_sample = 1`.
-- Removal is one statement: `DELETE FROM members WHERE is_sample = 1;` — cascades (D5) remove all dependent rows. Org-level sample rows (seasons, competitions, skills) carry `is_sample = 1` and are removed by `DELETE … WHERE is_sample = 1` per root table (documented in `apps/api/deploy/README.md`).
+- Removal is one statement: `DELETE FROM members WHERE is_sample = 1;` — cascades (D5) remove all dependent rows. Org-level sample rows (seasons, competitions, skills) carry `is_sample = 1` and are removed by `DELETE … WHERE is_sample = 1` per root table (documented in `backend/api/deploy/README.md`).
 - UI labels sample content as sample (existing "synthetic" badges).
 
 ## Verification

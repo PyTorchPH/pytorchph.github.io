@@ -79,7 +79,7 @@ function repairMovedEnvironment(source, destination) {
   if (!destination.includes(`${runtimePath("environments")}/`)) return;
   const replacements = new Map([
     [source, destination],
-    [resolve(root, "src"), resolve(root, "legacy/python")],
+    [resolve(root, "src"), resolve(root, "backend/legacy-python")],
     [resolve(root, "tools/process_lab"), resolve(root, "development/process-lab")],
   ]);
   const candidates = [resolve(destination, "pyvenv.cfg")];

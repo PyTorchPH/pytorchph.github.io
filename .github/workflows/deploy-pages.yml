@@ -1,6 +1,6 @@
 name: Deploy site to GitHub Pages
 
-# Public site (Jekyll, site/) at / and the static member portal demo (Next.js) at /portal/.
+# Public site (Jekyll, frontend/public-site/) at / and the static member portal demo (Next.js) at /portal/.
 on:
   push:
     branches: [main]
@@ -31,7 +31,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             package-lock.json
-            site/package-lock.json
+            frontend/public-site/package-lock.json
 
       - name: Build the member portal demo
         env:
@@ -46,10 +46,10 @@ jobs:
         with:
           ruby-version: '3.4.5'
           bundler-cache: true
-          working-directory: site
+          working-directory: frontend/public-site
 
       - name: Build the public site
-        working-directory: site
+        working-directory: frontend/public-site
         env:
           JEKYLL_ENV: production
           JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,14 +63,14 @@ jobs:
 
       - name: Assemble the Pages artifact
         run: |
-          test ! -e site/_site/portal
-          cp -r apps/pages-demo/out site/_site/portal
-          touch site/_site/.nojekyll
+          test ! -e frontend/public-frontend/public-site/_site/portal
+          cp -r frontend/portal-static/out frontend/public-site/_site/portal
+          touch frontend/public-site/_site/.nojekyll
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: site/_site
+          path: frontend/public-site/_site
 
   deploy:
     needs: build

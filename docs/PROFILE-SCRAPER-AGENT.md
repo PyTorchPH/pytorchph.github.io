@@ -27,7 +27,7 @@ Wala munang per-site selectors — gawing agent muna, mag-ipon ng traces, saka m
    goal here is the résumé).
 
 2. **Social-media-AGNOSTIC.** **No hardcoded per-site selectors / JS.** The current
-   `legacy/python/resume_builder/sources/social/vendors/*.py` files are hardcoded and "only have context for
+   `backend/legacy-python/resume_builder/sources/social/vendors/*.py` files are hardcoded and "only have context for
    that one website" — *that coupling is the problem we are removing*. Instead: an **RAG/LLM-driven
    browser agent** that, given a **platform + the user's identity/handle**, **navigates to the user's
    own profile** and **extracts the user's own posts**, generalizing to **unseen platforms** by
@@ -230,7 +230,7 @@ flowchart LR
 
 ## 6. Migration — from hardcoded vendors to the agnostic agent
 
-Today: `legacy/python/resume_builder/sources/social/vendors/{facebook,linkedin,twitter,instagram}.py` —
+Today: `backend/legacy-python/resume_builder/sources/social/vendors/{facebook,linkedin,twitter,instagram}.py` —
 each hardcodes selectors/JS for **one** site (e.g. FB keys on the `__cft__` permalink anchor). They
 work, pero **brittle and non-transferable** — adding a platform means writing a new vendor by hand.
 

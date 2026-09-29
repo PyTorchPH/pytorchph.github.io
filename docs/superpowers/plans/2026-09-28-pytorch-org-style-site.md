@@ -31,7 +31,7 @@ built by reusing open-source PyTorch community websites instead of designing fro
 ## Architecture
 
 - `site/`: Jekyll 4 + Bootstrap 5 + Sass fork of pytorch.kr, English content for the Philippines.
-- `apps/portal`: the existing Next.js member/officer portal, restyled with the same tokens.
+- `frontend/portal`: the existing Next.js member/officer portal, restyled with the same tokens.
 - Deployment: GitHub Actions builds the Jekyll site to `/` and the static portal demo
   (`PAGES_BASE_PATH=/portal`) to `/portal/`, then deploys one Pages artifact. The generated static
   files committed at the repository root today are removed once the workflow deploys.
@@ -52,7 +52,7 @@ built by reusing open-source PyTorch community websites instead of designing fro
 
 ### Phase 2: portal restyle (done)
 The portal keeps its app layout and uses the site's palette, fonts (Montserrat, Open Sans), and square
-cards through semantic tokens in `apps/portal/app/globals.css`; dark mode remains available via `.dark`.
+cards through semantic tokens in `frontend/portal/app/globals.css`; dark mode remains available via `.dark`.
 Original steps:
 1. Replace hard-coded dark hex values in portal/domain components with semantic tokens.
 2. Define light pytorch.org token values; keep charts and status colors legible.
@@ -106,13 +106,13 @@ Officers have everything members have, plus officer tools. Nothing is shown twic
   the AI connection.
 - **Connected accounts** binds accounts for evidence collection. It reuses the existing client-side
   design (`docs/CLIENT-SCRAPING.md`): collection runs in the member's own browser through the evidence
-  extension (`apps/evidence-extension`), with a preview, the member's review, and officer verification.
+  extension (`frontend/extension`), with a preview, the member's review, and officer verification.
   It works on the **website in a desktop browser only**; phones and the installed app cannot run a
   browser extension, and the section says so.
 - The extension's portal bridge now also matches `https://pytorch.ph/*`; before, it matched localhost only.
 - **Still needed to ship binding to members:** a packaged extension (Chrome Web Store listing or a signed
   download). The setup page still describes the developer install (build and load unpacked). The legacy
-  Python headless scraper (`legacy/python/resume_builder/sources/social/`) remains the blueprint for
+  Python headless scraper (`backend/legacy-python/resume_builder/sources/social/`) remains the blueprint for
   vendor logic; it is not run by the website.
 - **Installable app (PWA), step 1:** web manifest and icons, so the portal installs from the browser on
   Android, iOS, and desktop. No offline cache or push notifications yet.
@@ -126,7 +126,7 @@ can move to a phone. Options, from least to most work:
    to Google Play and the App Store, with access to native features such as push notifications and a
    QR scanner.
 3. **Native app (Kotlin Multiplatform or React Native):** separate screens that call the portal API.
-   Most work; best native feel. Shared logic in `domains/protocol` (ranking, peer summary, event
+   Most work; best native feel. Shared logic in `frontend/contracts` (ranking, peer summary, event
    sources) can be reused from TypeScript only with React Native.
 Decide first whether store presence and a camera QR scanner are required; that choice separates option
 1 from options 2 and 3. Any option needs the portal API hosted (GitHub Pages serves only the demo).

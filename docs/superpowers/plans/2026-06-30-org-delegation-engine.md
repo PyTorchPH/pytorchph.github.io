@@ -4,7 +4,7 @@
 
 **Goal:** Build the Python core of the Org Delegation Pipeline — a drill-down delegation tree with per-level AI responsibility-chopping, HITL review, a separate dependency layer, e-signature on agree, drill-up requests, a change-control board, and an interim tree store.
 
-**Architecture:** A new `legacy/python/org_ops/delegation/` package. A `DelegationTree` of `DelegationNode`s (root → exec → director → JO-leaf). A `ResponsibilityChopper` (LLM, parallel per child) proposes a node's children; `LevelReview` gates approve/correct; `package_node` emits the checked JSON contract; `sign_node` stamps the e-signature on agree; `DependencyAnalyzer` adds a separate, human-checkmarked prerequisite overlay; `CascadeOrchestrator` drills down to JO leaves; `DrillUp`/`ChangeControlBoard` handle upward requests and parent-gated tree mutation; `TreeStore` persists (interim in-memory + JSON, Supabase later). Platform UI / real backend are out of scope (Backlog).
+**Architecture:** A new `backend/legacy-python/org_ops/delegation/` package. A `DelegationTree` of `DelegationNode`s (root → exec → director → JO-leaf). A `ResponsibilityChopper` (LLM, parallel per child) proposes a node's children; `LevelReview` gates approve/correct; `package_node` emits the checked JSON contract; `sign_node` stamps the e-signature on agree; `DependencyAnalyzer` adds a separate, human-checkmarked prerequisite overlay; `CascadeOrchestrator` drills down to JO leaves; `DrillUp`/`ChangeControlBoard` handle upward requests and parent-gated tree mutation; `TreeStore` persists (interim in-memory + JSON, Supabase later). Platform UI / real backend are out of scope (Backlog).
 
 **Tech Stack:** Python 3.11+, pydantic v2, `concurrent.futures.ThreadPoolExecutor` (stdlib), pytest. Reuses `resume_builder.llm.base.LLMProvider` (the LLM seam, mockable) and the P3 parallel pattern.
 
@@ -24,15 +24,15 @@
 
 | File | Responsibility |
 |---|---|
-| `legacy/python/org_ops/delegation/__init__.py` | public exports |
-| `legacy/python/org_ops/delegation/models.py` | enums + `DelegationNode`, `DelegationTree`, `Agreement`, `DependencyEdge`, `DrillUpRequest`, `ChangeRequest` |
-| `legacy/python/org_ops/delegation/store.py` | `TreeStore` (in-memory + JSON, interim) |
-| `legacy/python/org_ops/delegation/agreement.py` | `sign_node` (AgreeToSign) |
-| `legacy/python/org_ops/delegation/chopper.py` | `ResponsibilityChopper` (parallel per-child AI breakdown) |
-| `legacy/python/org_ops/delegation/review.py` | `LevelReview` (approve / correct → re-chop) |
-| `legacy/python/org_ops/delegation/dependency.py` | `DependencyAnalyzer` + independent/blocked task helpers |
-| `legacy/python/org_ops/delegation/cascade.py` | `CascadeOrchestrator` (drill-down to JO leaves) |
-| `legacy/python/org_ops/delegation/requests.py` | `DrillUp` + `ChangeControlBoard` |
+| `backend/legacy-python/org_ops/delegation/__init__.py` | public exports |
+| `backend/legacy-python/org_ops/delegation/models.py` | enums + `DelegationNode`, `DelegationTree`, `Agreement`, `DependencyEdge`, `DrillUpRequest`, `ChangeRequest` |
+| `backend/legacy-python/org_ops/delegation/store.py` | `TreeStore` (in-memory + JSON, interim) |
+| `backend/legacy-python/org_ops/delegation/agreement.py` | `sign_node` (AgreeToSign) |
+| `backend/legacy-python/org_ops/delegation/chopper.py` | `ResponsibilityChopper` (parallel per-child AI breakdown) |
+| `backend/legacy-python/org_ops/delegation/review.py` | `LevelReview` (approve / correct → re-chop) |
+| `backend/legacy-python/org_ops/delegation/dependency.py` | `DependencyAnalyzer` + independent/blocked task helpers |
+| `backend/legacy-python/org_ops/delegation/cascade.py` | `CascadeOrchestrator` (drill-down to JO leaves) |
+| `backend/legacy-python/org_ops/delegation/requests.py` | `DrillUp` + `ChangeControlBoard` |
 | `tests/unit/delegation/test_*.py` | one per module |
 | `tools/board_export.py` | board_tasks.json → CSV export |
 
@@ -41,7 +41,7 @@
 ### Task 1: Core models
 
 **Files:**
-- Create: `legacy/python/org_ops/delegation/__init__.py`, `legacy/python/org_ops/delegation/models.py`
+- Create: `backend/legacy-python/org_ops/delegation/__init__.py`, `backend/legacy-python/org_ops/delegation/models.py`
 - Test: `tests/unit/delegation/__init__.py`, `tests/unit/delegation/test_models.py`
 
 **Interfaces:**
@@ -86,7 +86,7 @@ Expected: FAIL with `ModuleNotFoundError: org_ops.delegation`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/org_ops/delegation/__init__.py
+# backend/legacy-python/org_ops/delegation/__init__.py
 """Org Delegation Pipeline — engine core."""
 from __future__ import annotations
 
@@ -102,7 +102,7 @@ __all__ = [
 ```
 
 ```python
-# legacy/python/org_ops/delegation/models.py
+# backend/legacy-python/org_ops/delegation/models.py
 from __future__ import annotations
 
 from enum import Enum
@@ -205,7 +205,7 @@ Expected: PASS (3 passed). Also create empty `tests/unit/delegation/__init__.py`
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/org_ops/delegation/__init__.py legacy/python/org_ops/delegation/models.py tests/unit/delegation/__init__.py tests/unit/delegation/test_models.py
+git add backend/legacy-python/org_ops/delegation/__init__.py backend/legacy-python/org_ops/delegation/models.py tests/unit/delegation/__init__.py tests/unit/delegation/test_models.py
 git commit -m "feat(delegation): core models (tree, node, agreement, edges, requests)"
 ```
 
@@ -214,7 +214,7 @@ git commit -m "feat(delegation): core models (tree, node, agreement, edges, requ
 ### Task 2: `TreeStore` (interim in-memory + JSON)
 
 **Files:**
-- Create: `legacy/python/org_ops/delegation/store.py`
+- Create: `backend/legacy-python/org_ops/delegation/store.py`
 - Test: `tests/unit/delegation/test_store.py`
 
 **Interfaces:**
@@ -262,7 +262,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/org_ops/delegation/store.py
+# backend/legacy-python/org_ops/delegation/store.py
 from __future__ import annotations
 
 import json
@@ -315,7 +315,7 @@ Expected: PASS (3 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/org_ops/delegation/store.py tests/unit/delegation/test_store.py
+git add backend/legacy-python/org_ops/delegation/store.py tests/unit/delegation/test_store.py
 git commit -m "feat(delegation): interim TreeStore (in-memory + JSON)"
 ```
 
@@ -324,7 +324,7 @@ git commit -m "feat(delegation): interim TreeStore (in-memory + JSON)"
 ### Task 3: `sign_node` (AgreeToSign)
 
 **Files:**
-- Create: `legacy/python/org_ops/delegation/agreement.py`
+- Create: `backend/legacy-python/org_ops/delegation/agreement.py`
 - Test: `tests/unit/delegation/test_agreement.py`
 
 **Interfaces:**
@@ -359,7 +359,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/org_ops/delegation/agreement.py
+# backend/legacy-python/org_ops/delegation/agreement.py
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -382,7 +382,7 @@ Expected: PASS (1 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/org_ops/delegation/agreement.py tests/unit/delegation/test_agreement.py
+git add backend/legacy-python/org_ops/delegation/agreement.py tests/unit/delegation/test_agreement.py
 git commit -m "feat(delegation): sign_node (Agree = e-signature + timestamp)"
 ```
 
@@ -391,7 +391,7 @@ git commit -m "feat(delegation): sign_node (Agree = e-signature + timestamp)"
 ### Task 4: `ResponsibilityChopper` (parallel per-child AI breakdown)
 
 **Files:**
-- Create: `legacy/python/org_ops/delegation/chopper.py`
+- Create: `backend/legacy-python/org_ops/delegation/chopper.py`
 - Test: `tests/unit/delegation/test_chopper.py`
 
 **Interfaces:**
@@ -438,7 +438,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/org_ops/delegation/chopper.py
+# backend/legacy-python/org_ops/delegation/chopper.py
 from __future__ import annotations
 
 import logging
@@ -505,7 +505,7 @@ Expected: PASS (2 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/org_ops/delegation/chopper.py tests/unit/delegation/test_chopper.py
+git add backend/legacy-python/org_ops/delegation/chopper.py tests/unit/delegation/test_chopper.py
 git commit -m "feat(delegation): ResponsibilityChopper (parallel per-child AI breakdown)"
 ```
 
@@ -514,7 +514,7 @@ git commit -m "feat(delegation): ResponsibilityChopper (parallel per-child AI br
 ### Task 5: `LevelReview` (approve / correct → re-chop)
 
 **Files:**
-- Create: `legacy/python/org_ops/delegation/review.py`
+- Create: `backend/legacy-python/org_ops/delegation/review.py`
 - Test: `tests/unit/delegation/test_review.py`
 
 **Interfaces:**
@@ -563,7 +563,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/org_ops/delegation/review.py
+# backend/legacy-python/org_ops/delegation/review.py
 from __future__ import annotations
 
 from .chopper import ResponsibilityChopper
@@ -603,7 +603,7 @@ Expected: PASS (2 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/org_ops/delegation/review.py tests/unit/delegation/test_review.py
+git add backend/legacy-python/org_ops/delegation/review.py tests/unit/delegation/test_review.py
 git commit -m "feat(delegation): LevelReview (approve / correct -> re-chop subtree)"
 ```
 
@@ -612,7 +612,7 @@ git commit -m "feat(delegation): LevelReview (approve / correct -> re-chop subtr
 ### Task 6: `DependencyAnalyzer` + scheduling helpers (separate layer)
 
 **Files:**
-- Create: `legacy/python/org_ops/delegation/dependency.py`
+- Create: `backend/legacy-python/org_ops/delegation/dependency.py`
 - Test: `tests/unit/delegation/test_dependency.py`
 
 **Interfaces:**
@@ -667,7 +667,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/org_ops/delegation/dependency.py
+# backend/legacy-python/org_ops/delegation/dependency.py
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -734,7 +734,7 @@ Expected: PASS (2 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/org_ops/delegation/dependency.py tests/unit/delegation/test_dependency.py
+git add backend/legacy-python/org_ops/delegation/dependency.py tests/unit/delegation/test_dependency.py
 git commit -m "feat(delegation): DependencyAnalyzer + blocked/independent helpers (separate layer)"
 ```
 
@@ -743,7 +743,7 @@ git commit -m "feat(delegation): DependencyAnalyzer + blocked/independent helper
 ### Task 7: `CascadeOrchestrator` (drill-down to JO leaves)
 
 **Files:**
-- Create: `legacy/python/org_ops/delegation/cascade.py`
+- Create: `backend/legacy-python/org_ops/delegation/cascade.py`
 - Test: `tests/unit/delegation/test_cascade.py`
 
 **Interfaces:**
@@ -786,7 +786,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/org_ops/delegation/cascade.py
+# backend/legacy-python/org_ops/delegation/cascade.py
 from __future__ import annotations
 
 from collections import deque
@@ -830,7 +830,7 @@ Expected: PASS (1 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/org_ops/delegation/cascade.py tests/unit/delegation/test_cascade.py
+git add backend/legacy-python/org_ops/delegation/cascade.py tests/unit/delegation/test_cascade.py
 git commit -m "feat(delegation): CascadeOrchestrator (drill-down to JO leaves)"
 ```
 
@@ -839,7 +839,7 @@ git commit -m "feat(delegation): CascadeOrchestrator (drill-down to JO leaves)"
 ### Task 8: `DrillUp` + `ChangeControlBoard`
 
 **Files:**
-- Create: `legacy/python/org_ops/delegation/requests.py`
+- Create: `backend/legacy-python/org_ops/delegation/requests.py`
 - Test: `tests/unit/delegation/test_requests.py`
 
 **Interfaces:**
@@ -890,7 +890,7 @@ Expected: FAIL with `ImportError`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```python
-# legacy/python/org_ops/delegation/requests.py
+# backend/legacy-python/org_ops/delegation/requests.py
 from __future__ import annotations
 
 from typing import Literal
@@ -941,7 +941,7 @@ Expected: PASS (3 passed).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/org_ops/delegation/requests.py tests/unit/delegation/test_requests.py
+git add backend/legacy-python/org_ops/delegation/requests.py tests/unit/delegation/test_requests.py
 git commit -m "feat(delegation): DrillUp requests + ChangeControlBoard (parent-gated mutation)"
 ```
 
@@ -1037,6 +1037,6 @@ git commit -m "feat(tools): board -> CSV export (filterable by event)"
 
 ## Notes for the implementer
 
-- **Platform UI / Supabase backend are out of scope (Backlog).** This plan builds the testable Python engine only; the general-board real-time UI, the Supabase-backed `TreeStore`, the DocumentInjector HTML/PDF rendering, and the e-signature audit UI come later (`domains/server/organization/workflow/` + Supabase).
+- **Platform UI / Supabase backend are out of scope (Backlog).** This plan builds the testable Python engine only; the general-board real-time UI, the Supabase-backed `TreeStore`, the DocumentInjector HTML/PDF rendering, and the e-signature audit UI come later (`development/local-server/organization/workflow/` + Supabase).
 - **Live runs use the session model:** with no API key, the chopper/analyzer run behind a `claude-session`/file-bridge `LLMProvider` (the same stand-in used elsewhere) — the engine code needs no change.
 - **Excel:** `tasks_to_csv` emits CSV (opens directly in Excel). A native `.xlsx` writer would need a new dependency (`openpyxl`); keep CSV for now per the no-new-deps rule.

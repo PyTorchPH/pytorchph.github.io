@@ -6,11 +6,11 @@ code_paths:
   - development/local-workspace/processes.mjs
   - development/local-workspace/setup.mjs
   - development/local-workspace/start.mjs
-  - domains/server/identity/session
-  - domains/client/identity/session
+  - development/local-server/identity/session
+  - frontend/features/identity/session
 tests:
   - tests/node/workspace-boundaries.test.mjs
-  - apps/portal/tests/product-gateway.test.ts
+  - frontend/portal/tests/product-gateway.test.ts
 feedback_events:
   - local_access.role_ready
   - local_access.failed
@@ -49,7 +49,7 @@ and leaves the other production boundaries unchanged.
 - Provider selection requires both a non-production runtime and an exact loopback hostname.
   Client-controlled host text alone never activates local authentication in production or CI.
 - `npm run dev` uses local SQLite for product data, credentials, and sessions. Deployed accounts
-  and sessions live in the Rust API (`apps/api`).
+  and sessions live in the Rust API (`backend/api`).
 - Local sessions use opaque random tokens. SQLite stores only token hashes; browser cookies are
   `HttpOnly`, `SameSite=Lax`, host-scoped, and expire deterministically.
 - Local account lookup, session creation, session validation, revocation, and role authorization

@@ -3,8 +3,8 @@
 ## System
 PyTorch Philippines Platform uses a restrained product UI with an obsidian-first dark mode, soft off-white light mode, and PyTorch orange as the only primary accent. Typography uses Plus Jakarta Sans with system fallbacks.
 
-`apps/portal` is the canonical product entry point. Feature UI lives in `domains/client`, server
-decisions live in `domains/server`, and shared request/response shapes live in `domains/protocol`.
+`frontend/portal` is the canonical product entry point. Feature UI lives in `frontend/features`, server
+decisions live in `development/local-server`, and shared request/response shapes live in `frontend/contracts`.
 Career, job automation, analytics,
 and chapter modules share the same shell and tokens; legacy CareerLens teal/blue templates are not
 an alternate product theme.

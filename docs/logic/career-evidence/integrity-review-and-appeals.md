@@ -1,12 +1,12 @@
 ---
 logic_id: career-evidence.integrity-review
 code_paths:
-  - domains/protocol/organization
-  - domains/server/organization
-  - apps/portal/app/events
+  - frontend/contracts/organization
+  - development/local-server/organization
+  - frontend/portal/app/events
 tests:
-  - apps/portal/tests/evidence-integrity-contracts.test.ts
-  - apps/portal/tests/operations-contracts.test.ts
+  - frontend/portal/tests/evidence-integrity-contracts.test.ts
+  - frontend/portal/tests/operations-contracts.test.ts
 feedback_events:
   - evidence.review_completed
   - evidence.sanction_applied

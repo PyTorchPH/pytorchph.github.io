@@ -18,7 +18,7 @@ const environment = {
   PYTORCH_PH_OFFICER_URL: "http://officers.ph.localhost:3100",
 };
 for (const [script, args, cwd] of [
-  [resolve(workspaceRoot, "apps/portal/scripts/demo-data.ts"), ["ensure"], resolve(workspaceRoot, "apps/portal")],
+  [resolve(workspaceRoot, "frontend/portal/scripts/demo-data.ts"), ["ensure"], resolve(workspaceRoot, "frontend/portal")],
   [resolve(workspaceRoot, "development/local-access/seed-local-auth.ts"), [], workspaceRoot],
 ]) {
   execFileSync(process.execPath, ["--import", "tsx", script, ...args], { cwd, env: environment, stdio: "inherit" });

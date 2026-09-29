@@ -26,18 +26,18 @@ function importsFrom(directory, forbidden) {
 }
 
 test("client and protocol packages never import server implementation", () => {
-  assert.deepEqual(importsFrom(join(root, "domains/client"), ["@pytorch-ph/domain-server"]), []);
-  assert.deepEqual(importsFrom(join(root, "domains/protocol"), ["@pytorch-ph/domain-server", "@pytorch-ph/domain-client"]), []);
+  assert.deepEqual(importsFrom(join(root, "frontend/features"), ["@pytorch-ph/domain-server"]), []);
+  assert.deepEqual(importsFrom(join(root, "frontend/contracts"), ["@pytorch-ph/domain-server", "@pytorch-ph/domain-client"]), []);
 });
 
 test("no workspace code imports Supabase; the Rust API is the only backend", () => {
-  const offenders = ["domains", "apps/portal", "apps/pages-demo", "development"]
+  const offenders = ["frontend/features", "frontend/contracts", "frontend/portal", "frontend/portal-static", "frontend/extension", "development"]
     .flatMap((path) => importsFrom(join(root, path), ["@supabase/"]));
   assert.deepEqual(offenders, []);
 });
 
 test("production packages never import development tooling or dummy identities", () => {
-  const production = ["apps/portal", "domains", "design-system"].flatMap((path) => sourceFiles(join(root, path)));
+  const production = ["frontend/portal", "frontend/features", "frontend/contracts", "frontend/design-system"].flatMap((path) => sourceFiles(join(root, path)));
   const offenders = production.filter((path) => {
     const content = readFileSync(path, "utf8");
     return content.includes("development/") || content.includes("demo.owner@fit.edu.ph") || content.includes("demo-password");
@@ -46,7 +46,7 @@ test("production packages never import development tooling or dummy identities",
 });
 
 test("workspace packages expose concepts, not implementation filenames", () => {
-  for (const directory of ["domains/client", "domains/server", "domains/protocol"]) {
+  for (const directory of ["frontend/features", "development/local-server", "frontend/contracts"]) {
     const manifest = JSON.parse(readFileSync(join(root, directory, "package.json"), "utf8"));
     assert.ok(Object.keys(manifest.exports).every((name) => name.split("/").length <= 3 && !/\.(?:ts|tsx|js|mjs)$/.test(name)));
   }

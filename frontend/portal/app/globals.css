@@ -1,0 +1,346 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Light theme follows the pytorch.org palette used by the public site (site/_sass/_variables.scss):
+  a white page, light grey cards, a dark header and hero, and orange accents.
+  Colors are RGB channels so Tailwind opacity modifiers such as bg-warning/10 work.
+  Text colors keep WCAG AA contrast (4.5:1) on --canvas, --surface, and --elevated.
+*/
+:root {
+  /* --font-sans, --font-heading, and --font-mono come from app/fonts.ts (next/font). */
+  --canvas-rgb: 255 255 255;
+  --surface-rgb: 243 244 247;
+  --elevated-rgb: 255 255 255;
+  --chrome-rgb: 38 38 38;
+  --on-accent-rgb: 255 255 255;
+  --ink-rgb: 38 38 38;
+  --muted-rgb: 95 95 96;
+  --accent-rgb: 190 44 16;
+  --accent-soft-rgb: 248 234 231;
+  --success-rgb: 19 117 56;
+  --warning-rgb: 146 88 6;
+  --danger-rgb: 185 28 28;
+  --info-rgb: 29 78 216;
+  --border: rgb(0 0 0 / 0.14);
+  --chart-grid: rgb(0 0 0 / 0.08);
+}
+
+.dark {
+  --canvas-rgb: 11 11 12;
+  --surface-rgb: 20 20 22;
+  --elevated-rgb: 28 28 32;
+  --chrome-rgb: 20 20 22;
+  --on-accent-rgb: 11 11 12;
+  --ink-rgb: 255 255 255;
+  --muted-rgb: 148 163 184;
+  --accent-rgb: 255 122 61;
+  --accent-soft-rgb: 60 28 12;
+  --success-rgb: 74 222 128;
+  --warning-rgb: 250 204 21;
+  --danger-rgb: 251 113 133;
+  --info-rgb: 96 165 250;
+  --border: rgb(255 255 255 / 0.1);
+  --chart-grid: rgb(255 255 255 / 0.08);
+}
+
+:root,
+.dark {
+  --canvas: rgb(var(--canvas-rgb));
+  --surface: rgb(var(--surface-rgb));
+  --elevated: rgb(var(--elevated-rgb));
+  --ink: rgb(var(--ink-rgb));
+  --muted: rgb(var(--muted-rgb));
+  --accent: rgb(var(--accent-rgb));
+  --accent-soft: rgb(var(--accent-soft-rgb));
+  --success: rgb(var(--success-rgb));
+  --warning: rgb(var(--warning-rgb));
+  --danger: rgb(var(--danger-rgb));
+  --info: rgb(var(--info-rgb));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  text-rendering: geometricPrecision;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+/* Eyebrow labels read like the public site's orange section labels ("EVENTS"). */
+.data-label {
+  font-family: var(--font-heading), var(--font-sans), sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.45);
+}
+
+.under-glow {
+  position: relative;
+}
+
+.under-glow::after {
+  background: radial-gradient(circle, rgb(var(--accent-rgb) / 0.22), transparent 64%);
+  bottom: -38px;
+  content: "";
+  height: 92px;
+  left: 12%;
+  pointer-events: none;
+  position: absolute;
+  right: 12%;
+  z-index: -1;
+}
+
+/*
+  Dark areas shared with the public site: the header, and the hero at the top of each page.
+  Tokens are redefined inside them, so the badges, buttons, and text in a hero stay readable.
+*/
+.on-dark,
+.page-hero,
+.hero-panel {
+  --canvas-rgb: 38 38 38;
+  --surface-rgb: 52 52 54;
+  --elevated-rgb: 62 62 64;
+  --ink-rgb: 255 255 255;
+  --muted-rgb: 214 214 214;
+  --accent-rgb: 255 138 102;
+  --accent-soft-rgb: 74 40 32;
+  --on-accent-rgb: 38 38 38;
+  --success-rgb: 134 239 172;
+  --warning-rgb: 252 211 77;
+  --danger-rgb: 252 165 165;
+  --info-rgb: 147 197 253;
+  --border: rgb(255 255 255 / 0.24);
+  color: rgb(var(--ink-rgb));
+}
+
+/* The public site's hero: charcoal, the archipelago network art, and a wave at the bottom. */
+.page-hero,
+.hero-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 85% 15%, rgb(255 255 255 / 0.07), transparent 45%),
+    linear-gradient(160deg, #303030, #262626 60%);
+}
+
+.page-hero::before,
+.hero-panel::before {
+  content: "";
+  position: absolute;
+  inset: -20% 2% -20% auto;
+  z-index: -1;
+  width: 55%;
+  background: var(--hero-art) no-repeat right center / contain;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+/* The hero reaches the edges of the content area, like the full-width hero on the public site. */
+.page-hero {
+  margin: 0 -1rem 1.5rem;
+  padding: 2rem 1rem 4rem;
+}
+
+.page-hero:first-child,
+[data-page-tour] + .page-hero {
+  margin-top: -1.5rem;
+}
+
+/* Room for the page tour button in the hero's top-right corner. */
+main:has([data-page-tour]) .page-hero {
+  padding-top: 3.5rem;
+}
+
+.page-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  z-index: -1;
+  height: 2.5rem;
+  background: rgb(255 255 255);
+  -webkit-mask: var(--hero-wave) no-repeat center bottom / 100% 100%;
+  mask: var(--hero-wave) no-repeat center bottom / 100% 100%;
+}
+
+/* The wave is drawn in the page color; the hero's own tokens are dark, so it is set here. */
+.dark .page-hero::after {
+  background: rgb(11 11 12);
+}
+
+:root {
+  --hero-wave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,50L60,45C120,40 240,30 360,35C480,40 600,60 720,70C840,80 960,80 1080,75C1140,72.5 1170,67.5 1185,65L1200,62.5L1200,200L0,200Z' fill-opacity='0.3'/%3E%3Cpath d='M0,20L80,25C160,30 320,40 480,50C640,60 800,70 960,65C1040,62.5 1120,52.5 1160,47.5L1200,42.5L1200,200L0,200Z' fill-opacity='0.5'/%3E%3Cpath d='M0,90L50,88C100,86 200,82 300,85C400,88 500,95 600,92C700,89 800,77 900,82C1000,87 1100,93 1150,96L1200,100L1200,200L0,200Z'/%3E%3C/svg%3E");
+}
+
+@media (min-width: 640px) {
+  .page-hero {
+    margin-inline: -1.5rem;
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-hero {
+    margin-inline: -2rem;
+    padding: 2.75rem 2rem 5rem;
+  }
+
+  main:has([data-page-tour]) .page-hero {
+    padding-top: 4rem;
+  }
+
+  .page-hero::after {
+    height: 3.5rem;
+  }
+
+  .page-hero::before,
+  .hero-panel::before {
+    width: 38%;
+    opacity: 0.4;
+  }
+}
+
+/* Page titles follow the public site's hero: Montserrat, light, uppercase. */
+.page-hero h1,
+.hero-title {
+  font-family: var(--font-heading), var(--font-sans), sans-serif;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.page-hero h1 {
+  font-size: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .page-hero h1 {
+    font-size: 2.75rem;
+  }
+}
+
+/*
+  Product tour: its overlay and spotlight sit below the sticky site header (see run-tour.tsx), and
+  the tooltip above it, so a tall section that pushes the tooltip to the top keeps it readable.
+*/
+.react-joyride__floater {
+  z-index: 60 !important;
+}
+
+/* Panels whose data is loading or unavailable keep their layout: every outermost card dims and
+   carries its own small stamp (label from --unavailable-label). ::after is taken by .card-hover. */
+[data-panels-unavailable] [data-card]:not([data-card] [data-card]) > * {
+  opacity: 0.35;
+  pointer-events: none;
+  user-select: none;
+}
+
+[data-panels-unavailable] [data-card]:not([data-card] [data-card])::before {
+  content: var(--unavailable-label, "Data unavailable");
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: calc(100% - 1.5rem);
+  text-align: center;
+  border: 1px solid var(--border);
+  background: rgb(var(--canvas-rgb) / 0.85);
+  padding: 0.5rem 1.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(var(--muted-rgb));
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  pointer-events: none;
+}
+
+/* Cards: an orange line grows along the bottom edge on hover, as on the public site. */
+.card-hover {
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .card-hover::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: rgb(var(--accent-rgb));
+    transition: width 250ms ease-in-out;
+    pointer-events: none;
+  }
+
+  .card-hover:hover::after {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

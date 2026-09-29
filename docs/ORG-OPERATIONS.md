@@ -321,7 +321,7 @@ flowchart LR
 A member submits a **LINK**; an **ingestion step (RAG/scrape)** turns it into a structured JSON
 **"package"** that flows through the pipeline (same shape as the activity pipeline in §8b). The
 scraper can be **deterministic** (regex/rules) or **non-deterministic** (AI/LLM) — this mirrors the
-legacy engine's `static` vs `ai` modes (`legacy/python/resume_builder/models.py` `Mode.STATIC` / `Mode.AI`).
+legacy engine's `static` vs `ai` modes (`backend/legacy-python/resume_builder/models.py` `Mode.STATIC` / `Mode.AI`).
 
 ```mermaid
 flowchart LR

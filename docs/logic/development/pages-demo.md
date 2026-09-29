@@ -1,11 +1,11 @@
 ---
 logic_id: development.pages-demo
 code_paths:
-  - apps/pages-demo/app/demo-api.ts
-  - apps/pages-demo/app/demo-accounts.tsx
-  - apps/pages-demo/app/layout.tsx
-  - apps/pages-demo/next.config.mjs
-  - apps/api/seeds/demo-fixtures.json
+  - frontend/portal-static/app/demo-api.ts
+  - frontend/portal-static/app/demo-accounts.tsx
+  - frontend/portal-static/app/layout.tsx
+  - frontend/portal-static/next.config.mjs
+  - backend/api/seeds/demo-fixtures.json
   - development/pages-demo/build-portal-demo.mjs
   - development/pages-demo/portal-base-path.mjs
   - development/pages-demo/finalize-out.mjs
@@ -38,7 +38,7 @@ app shell, member dashboard, officer command center, and workspaces—without sc
   the API session and clears the fictional selection; a saved demo choice alone never restores login.
 - All numbers, names, events, and roles are fictional. The login page labels the example accounts
   and offers member and officer view controls without fixed banners.
-- The build finishes `apps/pages-demo/out` with the portal's public files (synthetic media, setup
+- The build finishes `frontend/portal-static/out` with the portal's public files (synthetic media, setup
   illustrations, the web manifest, and app icons), flat aliases
   for segment-prefetch payloads, and `.nojekyll`, so any static host can serve it unchanged.
 - The demo is built with `PAGES_BASE_PATH=/portal` (`npm run build:pages`) and prefixes its

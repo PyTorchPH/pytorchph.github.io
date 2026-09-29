@@ -1,8 +1,8 @@
 # PyTorch PH System — Org-Ops Data Model
 
 > Layer: Org-Operations (Layer 1 foundation + Layer 5 analytics extension).
-> Stack: SQLite behind the Rust API (`apps/api`). Every user-owned row is owner-scoped and cascades on member deletion.
-> Migrations: `apps/api/migrations/` (this document is the target model; the migrations are authoritative),
+> Stack: SQLite behind the Rust API (`backend/api`). Every user-owned row is owner-scoped and cascades on member deletion.
+> Migrations: `backend/api/migrations/` (this document is the target model; the migrations are authoritative),
 >   `0002_points_leaderboard.sql`, `0003_referrals_growth.sql`.
 
 ---
@@ -205,7 +205,7 @@ Constraint: at least one of `url` or `details` must be non-null.
 
 #### `activity_contexts`
 Structured JSON output from the LinkIngestor / RAG step.
-Maps 1:1 to `ActivityContext` in `domains/protocol/organization/workflow-shape.ts`.
+Maps 1:1 to `ActivityContext` in `frontend/contracts/organization/workflow-shape.ts`.
 `facts` column is JSONB; has a GIN index for key/value queries.
 Populated by service_role (AI pipeline) — no client INSERT policy.
 
@@ -217,13 +217,13 @@ No code deployment required to change routing.
 #### `department_briefs`
 Per-department compacted context + AI-generated draft.
 One brief per `(activity_id, department)`.
-Maps to `DepartmentBrief` in `domains/protocol/organization/workflow-shape.ts`.
+Maps to `DepartmentBrief` in `frontend/contracts/organization/workflow-shape.ts`.
 Officers edit the draft in-place before approval.
 
 #### `approvals`
 One verdict row per `(activity_id, department)`.
 Unanimous approval across all required departments (from `routing_rules`) is needed before the pipeline advances.
-Maps to `ApprovalVerdict` in `domains/protocol/organization/workflow-shape.ts`.
+Maps to `ApprovalVerdict` in `frontend/contracts/organization/workflow-shape.ts`.
 Effectively immutable: re-approvals require DELETE + INSERT at service_role level.
 
 #### `dispatch_records`
@@ -354,7 +354,7 @@ Not exposed to end users.
 
 ## TypeScript ↔ SQL Enum Mapping
 
-Some TypeScript enum values in `domains/protocol/organization/workflow-shape.ts` use kebab-case (JavaScript convention). SQL uses snake_case.
+Some TypeScript enum values in `frontend/contracts/organization/workflow-shape.ts` use kebab-case (JavaScript convention). SQL uses snake_case.
 
 | TypeScript value | SQL value |
 |---|---|
@@ -406,7 +406,7 @@ The application layer must translate between these when reading from or writing 
 
 > Layer: Org-Operations extension — Layer 3 (Normalized, skills taxonomy) +
 > Layer 5 (Analytics, per-skill leaderboard + competition matching).
-> Migrations: `apps/api/migrations/` (skills and competitions).
+> Migrations: `backend/api/migrations/` (skills and competitions).
 
 ---
 

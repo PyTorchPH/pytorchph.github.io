@@ -81,7 +81,7 @@ git commit -m "feat: add systems-compilers role"
 ## Task 2: Project verdict models + keyword fallback filter
 
 **Files:**
-- Modify: `legacy/python/resume_builder/pipeline.py`
+- Modify: `backend/legacy-python/resume_builder/pipeline.py`
 - Test: `tests/unit/test_project_filter.py` (create)
 
 - [ ] **Step 1: Write the failing test**
@@ -210,7 +210,7 @@ Expected: PASS (both tests use `llm=None`, so the AI branch is never taken).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/pipeline.py tests/unit/test_project_filter.py
+git add backend/legacy-python/resume_builder/pipeline.py tests/unit/test_project_filter.py
 git commit -m "feat: project role-relevance keyword filter"
 ```
 
@@ -219,7 +219,7 @@ git commit -m "feat: project role-relevance keyword filter"
 ## Task 3: AI project filter implementation
 
 **Files:**
-- Modify: `legacy/python/resume_builder/pipeline.py` (replace the Task 2 stub)
+- Modify: `backend/legacy-python/resume_builder/pipeline.py` (replace the Task 2 stub)
 - Test: `tests/unit/test_project_filter.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -309,7 +309,7 @@ Expected: PASS (all three tests).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add legacy/python/resume_builder/pipeline.py tests/unit/test_project_filter.py
+git add backend/legacy-python/resume_builder/pipeline.py tests/unit/test_project_filter.py
 git commit -m "feat: AI-verified project role filter"
 ```
 
@@ -318,8 +318,8 @@ git commit -m "feat: AI-verified project role filter"
 ## Task 4: Wire filter into the pipeline + tighten static fallback
 
 **Files:**
-- Modify: `legacy/python/resume_builder/pipeline.py` (`Pipeline.run`)
-- Modify: `legacy/python/resume_builder/extractors/static_extractor.py:23` (raise `min_score`)
+- Modify: `backend/legacy-python/resume_builder/pipeline.py` (`Pipeline.run`)
+- Modify: `backend/legacy-python/resume_builder/extractors/static_extractor.py:23` (raise `min_score`)
 - Test: `tests/integration/test_pipeline_static.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -350,7 +350,7 @@ Expected: PASS at filter level (filter already works). Now ensure the pipeline c
 
 - [ ] **Step 3: Wire into `Pipeline.run()`**
 
-In `legacy/python/resume_builder/pipeline.py`, in `run()`, immediately after
+In `backend/legacy-python/resume_builder/pipeline.py`, in `run()`, immediately after
 `resume = self.synthesizer.build(role, repos, evidence, documents)` add:
 
 ```python
@@ -359,7 +359,7 @@ In `legacy/python/resume_builder/pipeline.py`, in `run()`, immediately after
 
 - [ ] **Step 4: Tighten the static fallback discrimination**
 
-In `legacy/python/resume_builder/extractors/static_extractor.py`, change the constructor default
+In `backend/legacy-python/resume_builder/extractors/static_extractor.py`, change the constructor default
 on line 23 from `min_score: float = 1.0` to:
 
 ```python
@@ -375,7 +375,7 @@ expectation to match the stricter `min_score` (document the new count inline).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add legacy/python/resume_builder/pipeline.py legacy/python/resume_builder/extractors/static_extractor.py tests/integration/test_pipeline_static.py
+git add backend/legacy-python/resume_builder/pipeline.py backend/legacy-python/resume_builder/extractors/static_extractor.py tests/integration/test_pipeline_static.py
 git commit -m "feat: apply project role filter in pipeline; tighten static min_score"
 ```
 
@@ -384,7 +384,7 @@ git commit -m "feat: apply project role filter in pipeline; tighten static min_s
 ## Task 5: AI synth prompt — projects per role
 
 **Files:**
-- Modify: `legacy/python/resume_builder/synthesizers/ai_synth.py` (the prompt tail, near the
+- Modify: `backend/legacy-python/resume_builder/synthesizers/ai_synth.py` (the prompt tail, near the
   `"Compose the final Resume..."` instruction)
 
 - [ ] **Step 1: Update the instruction**
@@ -409,7 +409,7 @@ Expected: no error.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add legacy/python/resume_builder/synthesizers/ai_synth.py
+git add backend/legacy-python/resume_builder/synthesizers/ai_synth.py
 git commit -m "feat: instruct AI synth to keep only role-relevant projects"
 ```
 
@@ -498,7 +498,7 @@ git commit -m "feat: two-column HTML resume layout"
 ## Task 7: Two-column reportlab PDF
 
 **Files:**
-- Modify: `legacy/python/resume_builder/renderers/pdf_renderer.py` (`_render_reportlab`)
+- Modify: `backend/legacy-python/resume_builder/renderers/pdf_renderer.py` (`_render_reportlab`)
 - Test: `tests/unit/test_renderers.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -589,7 +589,7 @@ Expected: prints `ok` (no exceptions).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add legacy/python/resume_builder/renderers/pdf_renderer.py tests/unit/test_renderers.py
+git add backend/legacy-python/resume_builder/renderers/pdf_renderer.py tests/unit/test_renderers.py
 git commit -m "feat: two-column reportlab PDF layout"
 ```
 

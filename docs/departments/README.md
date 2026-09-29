@@ -33,7 +33,7 @@ ROLE  →  COLLECT  →  EXTRACT  →  SYNTHESIZE  →  RENDER
 
 ## The Golden Contract (every department obeys this)
 
-The file `legacy/python/resume_builder/core/models.py` is the **constitution**. Every stage produces and
+The file `backend/legacy-python/resume_builder/core/models.py` is the **constitution**. Every stage produces and
 consumes the same pydantic models (`RoleSpec`, `Repo`, `Evidence`, `Resume`, ...).
 
 **This is what lets us delegate by department.** You can rewrite the entire `static` extractor

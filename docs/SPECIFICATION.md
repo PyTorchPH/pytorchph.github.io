@@ -304,7 +304,7 @@ re-implement on the new stack:
 Multi-user auth · normalized relational DB with RLS · public profiles · platform analytics &
 leaderboards · trained PyTorch models · web-first UX.
 
-> The legacy engine and its module docs live under `legacy/python/resume_builder/` and
+> The legacy engine and its module docs live under `backend/legacy-python/resume_builder/` and
 > `docs/departments/`. Treat them as **historical reference** while the new platform is built.
 
 ---

@@ -1,0 +1,255 @@
+//! Saving and reading a member profile across its normalized tables.
+//!
+//! Module map (caller-first):
+//!   save_profile                 PUT /api/member/profile
+//!   ├─ write_core                member_profiles (keeps the first completion time)
+//!   ├─ replace_optional_rows     clears the answer rows that may no longer apply
+//!   ├─ write_gender_description / write_consent / write_interests
+//!   ├─ write_education
+//!   └─ write_employment
+//!       └─ resolve_company       an existing company, or a new one added to the shared list
+//!   read_profile                 GET /api/member/profile
+//!   └─ profile_view              rows → the same shape the form submits
+use super::input::{CompanyChoice, Education, Employment, Profile, SchoolChoice, parse_profile};
+use crate::{ApiError, ApiResult, identity::session::Viewer, internal};
+use axum::http::StatusCode;
+use serde_json::{Value, json};
+use sqlx::{Sqlite, SqlitePool, Transaction};
+use uuid::Uuid;
+
+type Tx<'a> = Transaction<'a, Sqlite>;
+
+// Mental model: validate everything first, then rewrite the member's answer rows in one
+// transaction so a profile is never half saved.
+pub(crate) async fn save_profile(
+    db: &SqlitePool,
+    actor: &Viewer,
+    input: &Value,
+) -> ApiResult<Value> {
+    let profile = parse_profile(input)?;
+    let mut tx = db.begin().await.map_err(internal)?;
+    write_core(&mut tx, &actor.id, &profile).await?;
+    replace_optional_rows(&mut tx, &actor.id).await?;
+    write_gender_description(&mut tx, &actor.id, &profile).await?;
+    write_consent(&mut tx, &actor.id, profile.analytics_consent).await?;
+    write_interests(&mut tx, &actor.id, &profile.interests).await?;
+    if let Some(education) = &profile.education {
+        write_education(&mut tx, &actor.id, education).await?;
+    }
+    if let Some(employment) = &profile.employment {
+        write_employment(&mut tx, &actor.id, employment).await?;
+    }
+    tx.commit().await.map_err(internal)?;
+    tracing::info!(
+        component = "member_profile",
+        operation = "save_profile",
+        status = profile.status.code(),
+        "member.profile_saved"
+    );
+    read_profile(db, actor).await
+}
+
+async fn write_core(tx: &mut Tx<'_>, member_id: &str, profile: &Profile) -> ApiResult<()> {
+    let now = now();
+    sqlx::query("INSERT INTO member_profiles(member_id,gender,age_range,region_code,status,channel,completed_at,updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(member_id) DO UPDATE SET gender=excluded.gender, age_range=excluded.age_range, region_code=excluded.region_code, status=excluded.status, channel=excluded.channel, updated_at=excluded.updated_at")
+        .bind(member_id).bind(&profile.gender).bind(&profile.age_range).bind(&profile.region_code)
+        .bind(profile.status.code()).bind(&profile.channel).bind(&now).bind(&now)
+        .execute(&mut **tx).await.map_err(internal)?;
+    Ok(())
+}
+
+async fn replace_optional_rows(tx: &mut Tx<'_>, member_id: &str) -> ApiResult<()> {
+    for table in [
+        "member_gender_descriptions",
+        "member_analytics_consents",
+        "member_interests",
+        "member_education",
+        "member_employment",
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "DELETE FROM {table} WHERE member_id = ?"
+        )))
+        .bind(member_id)
+        .execute(&mut **tx)
+        .await
+        .map_err(internal)?;
+    }
+    Ok(())
+}
+
+async fn write_gender_description(
+    tx: &mut Tx<'_>,
+    member_id: &str,
+    profile: &Profile,
+) -> ApiResult<()> {
+    let Some(description) = &profile.gender_description else {
+        return Ok(());
+    };
+    sqlx::query("INSERT INTO member_gender_descriptions(member_id, description) VALUES (?, ?)")
+        .bind(member_id)
+        .bind(description)
+        .execute(&mut **tx)
+        .await
+        .map_err(internal)?;
+    Ok(())
+}
+
+async fn write_consent(tx: &mut Tx<'_>, member_id: &str, consented: bool) -> ApiResult<()> {
+    if !consented {
+        return Ok(());
+    }
+    sqlx::query("INSERT INTO member_analytics_consents(member_id, consented_at) VALUES (?, ?)")
+        .bind(member_id)
+        .bind(now())
+        .execute(&mut **tx)
+        .await
+        .map_err(internal)?;
+    Ok(())
+}
+
+async fn write_interests(tx: &mut Tx<'_>, member_id: &str, interests: &[String]) -> ApiResult<()> {
+    for interest in interests {
+        sqlx::query("INSERT INTO member_interests(member_id, interest_code) VALUES (?, ?)")
+            .bind(member_id)
+            .bind(interest)
+            .execute(&mut **tx)
+            .await
+            .map_err(internal)?;
+    }
+    Ok(())
+}
+
+async fn write_education(tx: &mut Tx<'_>, member_id: &str, education: &Education) -> ApiResult<()> {
+    let school_code = match &education.school {
+        SchoolChoice::Listed(code) => code.as_str(),
+        SchoolChoice::Unlisted(_) => super::catalog::UNLISTED_SCHOOL,
+    };
+    sqlx::query("INSERT INTO member_education(member_id, school_code, level, program, year_level) VALUES (?, ?, ?, ?, ?)")
+        .bind(member_id).bind(school_code).bind(&education.level).bind(&education.program).bind(education.year_level)
+        .execute(&mut **tx).await.map_err(internal)?;
+    if let SchoolChoice::Unlisted(name) = &education.school {
+        sqlx::query("INSERT INTO member_unlisted_schools(member_id, school_name) VALUES (?, ?)")
+            .bind(member_id)
+            .bind(name)
+            .execute(&mut **tx)
+            .await
+            .map_err(internal)?;
+    }
+    Ok(())
+}
+
+async fn write_employment(
+    tx: &mut Tx<'_>,
+    member_id: &str,
+    employment: &Employment,
+) -> ApiResult<()> {
+    let company_id = resolve_company(tx, &employment.company).await?;
+    sqlx::query("INSERT INTO member_employment(member_id, company_id, industry_code, job_role, experience_range) VALUES (?, ?, ?, ?, ?)")
+        .bind(member_id).bind(&company_id).bind(&employment.industry).bind(&employment.job_role).bind(&employment.experience_range)
+        .execute(&mut **tx).await.map_err(internal)?;
+    Ok(())
+}
+
+// A new company name joins the shared list (case-insensitively unique) for the next member.
+async fn resolve_company(tx: &mut Tx<'_>, company: &CompanyChoice) -> ApiResult<String> {
+    match company {
+        CompanyChoice::Existing(id) => {
+            let found: Option<(String,)> = sqlx::query_as("SELECT id FROM companies WHERE id = ?")
+                .bind(id)
+                .fetch_optional(&mut **tx)
+                .await
+                .map_err(internal)?;
+            found.map(|(id,)| id).ok_or(ApiError(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "Choose your company from the list",
+            ))
+        }
+        CompanyChoice::New(name) => {
+            sqlx::query("INSERT OR IGNORE INTO companies(id, name, created_at) VALUES (?, ?, ?)")
+                .bind(format!("co-{}", Uuid::new_v4()))
+                .bind(name)
+                .bind(now())
+                .execute(&mut **tx)
+                .await
+                .map_err(internal)?;
+            let (id,): (String,) =
+                sqlx::query_as("SELECT id FROM companies WHERE name = ? COLLATE NOCASE")
+                    .bind(name)
+                    .fetch_one(&mut **tx)
+                    .await
+                    .map_err(internal)?;
+            Ok(id)
+        }
+    }
+}
+
+// Mental model: `complete` is simply whether the core row exists; the rest is read back into
+// the same shape the form submits so it can be edited in place.
+pub(crate) async fn read_profile(db: &SqlitePool, actor: &Viewer) -> ApiResult<Value> {
+    let core: Option<(String, String, String, String, String)> = sqlx::query_as(
+        "SELECT gender, age_range, region_code, status, channel FROM member_profiles WHERE member_id = ?",
+    )
+    .bind(&actor.id).fetch_optional(db).await.map_err(internal)?;
+    let Some(core) = core else {
+        return Ok(json!({"complete": false, "profile": null}));
+    };
+    Ok(json!({"complete": true, "profile": profile_view(db, &actor.id, core).await?}))
+}
+
+async fn profile_view(
+    db: &SqlitePool,
+    member_id: &str,
+    core: (String, String, String, String, String),
+) -> ApiResult<Value> {
+    let (gender, age_range, region_code, status, channel) = core;
+    let description: Option<(String,)> =
+        sqlx::query_as("SELECT description FROM member_gender_descriptions WHERE member_id = ?")
+            .bind(member_id)
+            .fetch_optional(db)
+            .await
+            .map_err(internal)?;
+    let consent: Option<(String,)> =
+        sqlx::query_as("SELECT consented_at FROM member_analytics_consents WHERE member_id = ?")
+            .bind(member_id)
+            .fetch_optional(db)
+            .await
+            .map_err(internal)?;
+    let interests: Vec<(String,)> = sqlx::query_as(
+        "SELECT interest_code FROM member_interests WHERE member_id = ? ORDER BY interest_code",
+    )
+    .bind(member_id)
+    .fetch_all(db)
+    .await
+    .map_err(internal)?;
+    let education: Option<(String, String, String, i64, Option<String>)> = sqlx::query_as(
+        "SELECT e.school_code, e.level, e.program, e.year_level, u.school_name FROM member_education e LEFT JOIN member_unlisted_schools u ON u.member_id = e.member_id WHERE e.member_id = ?",
+    ).bind(member_id).fetch_optional(db).await.map_err(internal)?;
+    let employment: Option<(String, String, String, String, String)> = sqlx::query_as(
+        "SELECT e.company_id, c.name, e.industry_code, e.job_role, e.experience_range FROM member_employment e JOIN companies c ON c.id = e.company_id WHERE e.member_id = ?",
+    ).bind(member_id).fetch_optional(db).await.map_err(internal)?;
+    let mut view = json!({
+        "gender": gender, "ageRange": age_range, "regionCode": region_code, "status": status, "channel": channel,
+        "interests": interests.into_iter().map(|(code,)| code).collect::<Vec<_>>(),
+        "analyticsConsent": consent.is_some(),
+    });
+    if let Some((description,)) = description {
+        view["genderDescription"] = json!(description);
+    }
+    if let Some((code, level, program, year_level, unlisted)) = education {
+        let label = super::catalog::school(&code)
+            .map(|school| school.name.clone())
+            .or(unlisted.clone());
+        view["schoolLabel"] = json!(label);
+        view["school"] = json!({"code": code, "unlistedName": unlisted, "level": level, "program": program, "yearLevel": year_level});
+    }
+    if let Some((company_id, company_name, industry, job_role, experience)) = employment {
+        view["companyLabel"] = json!(company_name);
+        view["employment"] = json!({"companyId": company_id, "industry": industry, "jobRole": job_role, "experienceRange": experience});
+    }
+    Ok(view)
+}
+
+#[inline]
+fn now() -> String {
+    chrono::Utc::now().to_rfc3339()
+}

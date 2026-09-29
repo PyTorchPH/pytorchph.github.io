@@ -1,12 +1,12 @@
 ---
 logic_id: identity.manual-first-workspaces
 code_paths:
-  - domains/protocol/identity
-  - domains/client/navigation
-  - domains/client/career-evidence
+  - frontend/contracts/identity
+  - frontend/features/navigation
+  - frontend/features/career-evidence
 tests:
-  - apps/portal/tests/capabilities.test.ts
-  - apps/portal/tests/product-gateway.test.ts
+  - frontend/portal/tests/capabilities.test.ts
+  - frontend/portal/tests/product-gateway.test.ts
 feedback_events:
   - workspace.manual_available
   - workspace.automation_locked

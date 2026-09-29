@@ -1,13 +1,13 @@
 ---
 logic_id: career-evidence.resume-injection
 code_paths:
-  - domains/protocol/career-evidence
-  - domains/server/career-evidence
-  - domains/server/resumes
-  - domains/client/career-evidence
-  - apps/api/migrations
+  - frontend/contracts/career-evidence
+  - development/local-server/career-evidence
+  - development/local-server/resumes
+  - frontend/features/career-evidence
+  - backend/api/migrations
 tests:
-  - apps/portal/tests/resume-injection-contract.test.ts
+  - frontend/portal/tests/resume-injection-contract.test.ts
 feedback_events:
   - resume.injection_completed
   - resume.injection_stopped

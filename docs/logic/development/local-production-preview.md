@@ -2,7 +2,7 @@
 logic_id: development.local-production-preview
 code_paths:
   - package.json
-  - apps/portal/package.json
+  - frontend/portal/package.json
 tests:
   - tests/node/production-preview.test.mjs
 feedback_events:

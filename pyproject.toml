@@ -1,6 +1,6 @@
 [project]
 # Legacy engine package for the PyTorch PH System (AI Career Intelligence Platform).
-# The platform itself is built on Next.js + the Rust API in apps/api (see docs/SPECIFICATION.md);
+# The platform itself is built on Next.js + the Rust API in backend/api (see docs/SPECIFICATION.md);
 # this Python package is retained as the reference AI-pipeline prototype.
 name = "pytorch-ph-system"
 version = "0.1.0"
@@ -46,11 +46,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["legacy/python/resume_builder"]
+packages = ["backend/legacy-python/resume_builder"]
 
 [tool.pytest.ini_options]
-pythonpath = ["legacy/python"]
-testpaths = ["tests"]
+pythonpath = ["backend/legacy-python"]
+testpaths = ["backend/legacy-python/tests"]
 cache_dir = "var/cache/test-tools/pytest"
 addopts = "-ra --strict-markers"
 markers = [

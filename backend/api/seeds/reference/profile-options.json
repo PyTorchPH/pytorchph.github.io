@@ -1,0 +1,97 @@
+{
+  "genders": [
+    { "code": "female", "label": "Female" },
+    { "code": "male", "label": "Male" },
+    { "code": "non_binary", "label": "Non-binary" },
+    { "code": "self_describe", "label": "Prefer to self-describe" },
+    { "code": "prefer_not_to_say", "label": "Prefer not to say" }
+  ],
+  "ageRanges": [
+    { "code": "under_18", "label": "Under 18" },
+    { "code": "18_24", "label": "18–24" },
+    { "code": "25_34", "label": "25–34" },
+    { "code": "35_44", "label": "35–44" },
+    { "code": "45_plus", "label": "45 and above" },
+    { "code": "prefer_not_to_say", "label": "Prefer not to say" }
+  ],
+  "statuses": [
+    { "code": "student", "label": "Student" },
+    { "code": "professional", "label": "Working professional" },
+    { "code": "student_professional", "label": "Studying and working" },
+    { "code": "seeking", "label": "Looking for work" },
+    { "code": "other", "label": "Other" }
+  ],
+  "schoolLevels": [
+    { "code": "senior_high", "label": "Senior high school" },
+    { "code": "undergraduate", "label": "College / undergraduate" },
+    { "code": "graduate", "label": "Graduate school" },
+    { "code": "technical_vocational", "label": "Technical-vocational" }
+  ],
+  "experienceRanges": [
+    { "code": "under_1", "label": "Less than 1 year" },
+    { "code": "1_3", "label": "1–3 years" },
+    { "code": "3_5", "label": "3–5 years" },
+    { "code": "5_10", "label": "5–10 years" },
+    { "code": "10_plus", "label": "10+ years" }
+  ],
+  "industries": [
+    { "code": "software_it", "label": "Software and IT services" },
+    { "code": "bpo", "label": "BPO / IT-BPM" },
+    { "code": "banking_finance", "label": "Banking, finance and insurance" },
+    { "code": "telecom", "label": "Telecommunications" },
+    { "code": "education", "label": "Education and research" },
+    { "code": "government", "label": "Government and public sector" },
+    { "code": "healthcare", "label": "Healthcare and life sciences" },
+    { "code": "retail_ecommerce", "label": "Retail and e-commerce" },
+    { "code": "manufacturing", "label": "Manufacturing and engineering" },
+    { "code": "energy_utilities", "label": "Energy and utilities" },
+    { "code": "media_creative", "label": "Media and creative" },
+    { "code": "consulting", "label": "Consulting and professional services" },
+    { "code": "startup", "label": "Startup" },
+    { "code": "nonprofit", "label": "Nonprofit / NGO" },
+    { "code": "other", "label": "Other" }
+  ],
+  "interests": [
+    { "code": "pytorch_core", "label": "PyTorch and deep learning" },
+    { "code": "computer_vision", "label": "Computer vision" },
+    { "code": "nlp_llm", "label": "NLP and LLMs" },
+    { "code": "generative_ai", "label": "Generative AI" },
+    { "code": "data_engineering", "label": "Data engineering" },
+    { "code": "data_science", "label": "Data science and analytics" },
+    { "code": "mlops", "label": "MLOps and deployment" },
+    { "code": "research", "label": "Research" },
+    { "code": "robotics_edge", "label": "Robotics and edge AI" },
+    { "code": "ai_ethics", "label": "AI ethics and policy" },
+    { "code": "teaching", "label": "Teaching and mentoring" }
+  ],
+  "channels": [
+    { "code": "facebook", "label": "Facebook" },
+    { "code": "linkedin", "label": "LinkedIn" },
+    { "code": "event", "label": "A PyTorch PH event" },
+    { "code": "school_org", "label": "School organization" },
+    { "code": "friend", "label": "Friend or colleague" },
+    { "code": "search", "label": "Search engine" },
+    { "code": "other", "label": "Other" }
+  ],
+  "regions": [
+    { "code": "13", "label": "National Capital Region (NCR)" },
+    { "code": "14", "label": "Cordillera Administrative Region (CAR)" },
+    { "code": "01", "label": "Ilocos Region (Region I)" },
+    { "code": "02", "label": "Cagayan Valley (Region II)" },
+    { "code": "03", "label": "Central Luzon (Region III)" },
+    { "code": "04", "label": "CALABARZON (Region IV-A)" },
+    { "code": "17", "label": "MIMAROPA (Region IV-B)" },
+    { "code": "05", "label": "Bicol Region (Region V)" },
+    { "code": "06", "label": "Western Visayas (Region VI)" },
+    { "code": "18", "label": "Negros Island Region (NIR)" },
+    { "code": "07", "label": "Central Visayas (Region VII)" },
+    { "code": "08", "label": "Eastern Visayas (Region VIII)" },
+    { "code": "09", "label": "Zamboanga Peninsula (Region IX)" },
+    { "code": "10", "label": "Northern Mindanao (Region X)" },
+    { "code": "11", "label": "Davao Region (Region XI)" },
+    { "code": "12", "label": "SOCCSKSARGEN (Region XII)" },
+    { "code": "16", "label": "Caraga (Region XIII)" },
+    { "code": "19", "label": "Bangsamoro (BARMM)" },
+    { "code": "outside_ph", "label": "Outside the Philippines" }
+  ]
+}

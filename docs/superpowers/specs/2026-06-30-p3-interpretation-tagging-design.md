@@ -159,10 +159,10 @@ ABC so they are mockable in tests.
 ## 10. Reuses (do not reinvent)
 
 - `TaggedProject`, `TaggedAchievement`, `IndustryClassification`, `_normalize_classification` —
-  `legacy/python/resume_builder/industry.py`.
-- `DocumentSource` (pypdf / python-docx, no OCR) — `legacy/python/resume_builder/sources/document.py`.
-- `gather_repo_sources` / `CleanedSource` — `legacy/python/resume_builder/extraction/` (P2).
-- `LLMProvider` ABC — `legacy/python/resume_builder/llm/base.py`.
+  `backend/legacy-python/resume_builder/industry.py`.
+- `DocumentSource` (pypdf / python-docx, no OCR) — `backend/legacy-python/resume_builder/sources/document.py`.
+- `gather_repo_sources` / `CleanedSource` — `backend/legacy-python/resume_builder/extraction/` (P2).
+- `LLMProvider` ABC — `backend/legacy-python/resume_builder/llm/base.py`.
 
 ## 11. Open / deferred
 

@@ -4,12 +4,12 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
-import { memberSafeProductData } from "../../domains/server/career-evidence/read-diagnostics";
+import { memberSafeProductData } from "../../development/local-server/career-evidence/read-diagnostics";
 
 type Fixture = { status: number; body: unknown };
 type Fixtures = Record<"member" | "officer", Record<string, Fixture>>;
 
-const path = resolve(import.meta.dirname, "../../apps/api/seeds/demo-fixtures.json");
+const path = resolve(import.meta.dirname, "../../backend/api/seeds/demo-fixtures.json");
 const fixtures = JSON.parse(readFileSync(path, "utf8")) as Fixtures;
 const jobMarket = Object.keys(fixtures.officer).find((key) => key.startsWith("/api/job-market/summary"));
 if (!jobMarket) throw new Error("The officer job-market fixture is missing.");

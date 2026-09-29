@@ -19,7 +19,7 @@ test("logic catalog has unique ids and valid paths", () => {
     for (const heading of ["code_paths:", "tests:", "feedback_events:", "related_logic:"]) assert.ok(source.includes(heading));
     const frontMatter = source.split("---")[1];
     const paths = [...frontMatter.matchAll(/^  - (.+)$/gm)].map((match) => match[1]);
-    for (const path of paths.filter((value) => /^(apps|domains|development|tests)\//.test(value))) {
+    for (const path of paths.filter((value) => /^(backend|frontend|development|tests)\//.test(value))) {
       assert.ok(existsSync(join(root, path)), `${path} referenced by ${item.id} must exist`);
     }
   }
