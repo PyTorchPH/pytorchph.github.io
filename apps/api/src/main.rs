@@ -1,4 +1,5 @@
 mod accounts;
+mod admission;
 mod analytics;
 mod attendance;
 mod auth;
@@ -76,13 +77,10 @@ fn check_origin(state: &AppState, headers: &HeaderMap) -> ApiResult<()> {
     }
 }
 
-#[derive(Serialize)]
-struct Health {
-    status: &'static str,
-}
-
-async fn health() -> Json<Health> {
-    Json(Health { status: "ok" })
+async fn health(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    let mut body = admission::health_figures(&state.db).await;
+    body["status"] = serde_json::json!("ok");
+    Json(body)
 }
 
 #[derive(Serialize)]
@@ -198,11 +196,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .foreign_keys(true)
         .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
         .busy_timeout(Duration::from_secs(5));
+    let admission_config = admission::Config::from_env();
+    // Every running request and spool worker can hold a connection, plus one for the job worker.
+    let connections = (admission_config.max_inflight + admission_config.spool_workers + 1).max(3);
     let db = SqlitePoolOptions::new()
-        .max_connections(3)
+        .max_connections(connections as u32)
         .connect_with(options)
         .await?;
     sqlx::migrate!().run(&db).await?;
+    let recovered = admission::recover(&db).await.map_err(|error| error.1)?;
+    info!(recovered, config = ?admission_config, "admission.configured");
     demo::seed(&db).await?;
     if env::var("SEED_TEMP_TEST_ACCOUNTS").ok().as_deref() == Some("true") {
         let password = env::var("TEMP_TEST_PASSWORD")?;
@@ -237,6 +240,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         password_slots: tokio::sync::Semaphore::new(2),
     });
     tokio::spawn(worker(db));
+    let gate = admission::Admission::new(admission_config, state.clone());
     let cors = CorsLayer::new()
         .allow_origin(allowed_origin.parse::<HeaderValue>()?)
         .allow_credentials(true)
@@ -244,6 +248,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             axum::http::header::CONTENT_TYPE,
             axum::http::header::IF_MATCH,
         ])
+        // The browser must see x-queued to follow a spooled request.
+        .expose_headers([axum::http::HeaderName::from_static("x-queued")])
         .allow_methods([
             Method::GET,
             Method::POST,
@@ -253,6 +259,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ]);
     let app = Router::new()
         .route("/health", get(health))
+        .route("/queue/{id}", get(admission::queue_status))
         .route("/demo/fixtures", get(demo::fixtures))
         .route("/portal/api/{*path}", any(portal::gateway))
         .route("/portal/media/{id}", get(portal::media))
@@ -311,6 +318,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             state.clone(),
             auth::refresh_session,
         ))
+        .layer(axum::middleware::from_fn_with_state(
+            gate.clone(),
+            admission::admit,
+        ))
         .layer(RequestBodyLimitLayer::new(384 * 1024))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
@@ -318,6 +329,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bind = env::var("APP_BIND").unwrap_or_else(|_| "127.0.0.1:8787".to_owned());
     let address: SocketAddr = bind.parse()?;
     let listener = tokio::net::TcpListener::bind(address).await?;
+    for _ in 0..gate.config.spool_workers {
+        tokio::spawn(admission::spool_worker(gate.clone(), app.clone()));
+    }
     info!(address = %address, "api.started");
     axum::serve(listener, app).await?;
     Ok(())
@@ -1395,6 +1409,207 @@ mod tests {
             own["analytics"]["metrics"]["state"], "live",
             "members do not get organization analytics"
         );
+    }
+
+    #[tokio::test]
+    async fn gate_serves_waiters_by_priority_then_arrival() {
+        let gate = admission::Gate::new(1, 10);
+        let admission::Admit::Now(first) = gate.enter(3, true) else {
+            panic!("slot free")
+        };
+        let admission::Admit::Wait(mut heavy) = gate.enter(4, true) else {
+            panic!("queued")
+        };
+        let admission::Admit::Wait(mut read) = gate.enter(2, true) else {
+            panic!("queued")
+        };
+        let admission::Admit::Wait(mut login) = gate.enter(1, false) else {
+            panic!("queued")
+        };
+        drop(first);
+        let second = login.try_recv().expect("auth goes first");
+        assert!(read.try_recv().is_err() && heavy.try_recv().is_err());
+        drop(second);
+        let third = read.try_recv().expect("then reads");
+        drop(third);
+        let fourth = heavy.try_recv().expect("heavy work last");
+        drop(fourth);
+        assert_eq!(gate.load(), (0, 0));
+    }
+
+    async fn echo(State(state): State<Arc<AppState>>, headers: HeaderMap, body: Bytes) -> String {
+        let who = auth::viewer(&state, &headers)
+            .await
+            .map(|viewer| viewer.id)
+            .unwrap_or_else(|_| "anon".into());
+        format!("{who}:{}", String::from_utf8_lossy(&body))
+    }
+
+    fn admission_app(
+        state: &Arc<AppState>,
+        config: admission::Config,
+    ) -> (Arc<admission::Admission>, Router) {
+        let gate = admission::Admission::new(config, state.clone());
+        let app = Router::new()
+            .route("/echo", post(echo))
+            .route("/auth/echo", post(echo))
+            .route("/queue/{id}", get(admission::queue_status))
+            .layer(axum::middleware::from_fn_with_state(
+                gate.clone(),
+                admission::admit,
+            ))
+            .with_state(state.clone());
+        (gate, app)
+    }
+
+    fn tight(spool_max_bytes: i64) -> admission::Config {
+        admission::Config {
+            max_inflight: 1,
+            ram_queue_depth: 0,
+            spool_max_bytes,
+            result_ttl_hours: 24,
+            spool_workers: 1,
+        }
+    }
+
+    async fn send(
+        app: &Router,
+        method: Method,
+        uri: &str,
+        headers: &HeaderMap,
+        body: &str,
+    ) -> (StatusCode, HeaderMap, serde_json::Value, String) {
+        use tower::ServiceExt;
+        let mut request = axum::http::Request::builder().method(method).uri(uri);
+        for (name, value) in headers {
+            request = request.header(name, value);
+        }
+        let response = app
+            .clone()
+            .oneshot(
+                request
+                    .body(axum::body::Body::from(body.to_owned()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let (status, headers) = (response.status(), response.headers().clone());
+        let bytes = axum::body::to_bytes(response.into_body(), 1 << 20)
+            .await
+            .unwrap();
+        let text = String::from_utf8_lossy(&bytes).to_string();
+        (
+            status,
+            headers,
+            serde_json::from_str(&text).unwrap_or(serde_json::Value::Null),
+            text,
+        )
+    }
+
+    #[tokio::test]
+    async fn full_ram_queue_spills_to_disk_and_replays_as_the_same_member() {
+        let (state, officer, officer_id, member_id) = fixture().await;
+        let (gate, app) = admission_app(&state, tight(1 << 20));
+        let admission::Admit::Now(busy) = gate.gate.enter(2, false) else {
+            panic!("slot free")
+        };
+
+        let (status, headers, body, _) = send(&app, Method::POST, "/echo", &officer, "hello").await;
+        assert_eq!(status, StatusCode::ACCEPTED);
+        assert_eq!(headers["x-queued"], "1");
+        let job = body["jobId"].as_str().unwrap().to_owned();
+        let (status, _, waiting, _) =
+            send(&app, Method::GET, &format!("/queue/{job}"), &officer, "").await;
+        assert_eq!(
+            (status, waiting["status"].as_str()),
+            (StatusCode::ACCEPTED, Some("queued"))
+        );
+
+        drop(busy);
+        assert!(admission::run_next(&gate, &app).await.unwrap());
+        let (status, _, done, _) =
+            send(&app, Method::GET, &format!("/queue/{job}"), &officer, "").await;
+        assert_eq!(
+            (status, done["status"].as_str()),
+            (StatusCode::OK, Some("done"))
+        );
+        let stored = base64::Engine::decode(
+            &base64::engine::general_purpose::STANDARD,
+            done["response"]["body"].as_str().unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            String::from_utf8(stored).unwrap(),
+            format!("{officer_id}:hello")
+        );
+        assert_eq!(
+            count(
+                &state.db,
+                "SELECT COUNT(*) FROM request_spool WHERE body IS NOT NULL"
+            )
+            .await,
+            0,
+            "request bodies are dropped after replay"
+        );
+
+        let other = member_session(&state, &officer, &member_id, &"5".repeat(64)).await;
+        let (status, _, _, _) = send(&app, Method::GET, &format!("/queue/{job}"), &other, "").await;
+        assert_eq!(
+            status,
+            StatusCode::NOT_FOUND,
+            "only the owner reads a spooled result"
+        );
+    }
+
+    #[tokio::test]
+    async fn auth_never_spills_and_a_full_disk_budget_is_the_only_rejection() {
+        let (state, officer, _, _) = fixture().await;
+        let (gate, app) = admission_app(&state, tight(0));
+        let admission::Admit::Now(busy) = gate.gate.enter(2, false) else {
+            panic!("slot free")
+        };
+        let (status, headers, _, _) = send(&app, Method::POST, "/echo", &officer, "x").await;
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(headers[axum::http::header::RETRY_AFTER], "30");
+
+        let login = tokio::spawn({
+            let app = app.clone();
+            let officer = officer.clone();
+            async move {
+                send(&app, Method::POST, "/auth/echo", &officer, "x")
+                    .await
+                    .0
+            }
+        });
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert_eq!(
+            gate.gate.load().1,
+            1,
+            "auth waits in RAM instead of spilling"
+        );
+        drop(busy);
+        assert_eq!(login.await.unwrap(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn interrupted_spool_work_is_recovered_after_restart() {
+        let (state, _, _, _) = fixture().await;
+        sqlx::query("INSERT INTO request_spool(id,priority,method,path,status,created_at,expires_at) VALUES ('r1',2,'GET','/health','running','2026-01-01T00:00:00Z','2099-01-01T00:00:00Z')")
+            .execute(&state.db).await.unwrap();
+        assert_eq!(admission::recover(&state.db).await.unwrap(), 1);
+        assert_eq!(
+            count(
+                &state.db,
+                "SELECT COUNT(*) FROM request_spool WHERE status='queued'"
+            )
+            .await,
+            1
+        );
+        sqlx::query("UPDATE request_spool SET status='done', expires_at='2000-01-01T00:00:00Z'")
+            .execute(&state.db)
+            .await
+            .unwrap();
+        assert_eq!(admission::cleanup(&state.db).await.unwrap(), 1);
     }
 
     #[tokio::test]

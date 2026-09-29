@@ -255,6 +255,24 @@ pub async fn refresh_session(
 }
 
 pub async fn viewer(state: &AppState, headers: &HeaderMap) -> ApiResult<Viewer> {
+    // A spooled request replays as the member it was accepted for; no token is stored.
+    if let Some(member) = crate::admission::replay_member() {
+        let id = member.ok_or(ApiError(
+            StatusCode::UNAUTHORIZED,
+            "Authentication required",
+        ))?;
+        let row = sqlx::query("SELECT id, display_name, role FROM members WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(internal)?
+            .ok_or(ApiError(StatusCode::UNAUTHORIZED, "Session expired"))?;
+        return Ok(Viewer {
+            id: row.get(0),
+            display_name: row.get(1),
+            role: row.get(2),
+        });
+    }
     let token = session_token(headers).ok_or(ApiError(
         StatusCode::UNAUTHORIZED,
         "Authentication required",
