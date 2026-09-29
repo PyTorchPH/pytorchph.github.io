@@ -154,3 +154,20 @@ export const lockedCapabilityManifest = () => buildCapabilityManifest({
   aiConfigured: false,
   localDemo: false,
 });
+
+// Portal pages are reached only with a session, so while the manifest loads the shell assumes
+// a signed-in member; career tools never flash as locked on refresh.
+export const signedInCapabilityManifest = () => buildCapabilityManifest({
+  developmentOwner: false,
+  authenticatedUser: true,
+  identityConnected: false,
+  socialConnected: false,
+  jobSiteConnected: false,
+  evidenceReady: true,
+  normalizedProfileReady: false,
+  resumeArtifactsReady: true,
+  aiConfigured: false,
+  localDemo: false,
+  audience: "member",
+  role: "member",
+});
