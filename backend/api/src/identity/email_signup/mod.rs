@@ -4,10 +4,12 @@
 //!   signup         start_signup (send a code) → verify_signup (create the member, sign in)
 //!   login          password_login
 //!   credentials    email normalization, password and code hashing, rate limits, hashing slots
+//!   password_policy  8+ characters with lowercase, uppercase, digit, and symbol (new passwords only)
 //!   relay          the HTTPS mail relay that delivers verification codes
 //!   test_accounts  temporary member/officer accounts for an approved production test
 mod credentials;
 mod login;
+mod password_policy;
 mod relay;
 mod signup;
 mod test_accounts;

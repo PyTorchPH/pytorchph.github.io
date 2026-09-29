@@ -12,6 +12,8 @@ code_paths:
   - .github/workflows/deploy-pages.yml
 tests:
   - development/pages-demo/verify.mjs
+  - development/pages-demo/verify/mock-api.mjs
+  - development/pages-demo/verify/serve-pages.mjs
 feedback_events:
   - pages_demo.out.finalized
   - pages_demo.verify.completed
@@ -44,12 +46,19 @@ app shell, member dashboard, officer command center, and workspaces—without sc
 - The demo is built with `PAGES_BASE_PATH=/portal` (`npm run build:pages`) and prefixes its
   navigation and media with that base path. Set `NEXT_PUBLIC_AUTH_API_ORIGIN` to the Rust API origin
   at build time; `/portal/` itself forwards to the portal login.
-- `.github/workflows/deploy-pages.yml` builds the public Jekyll site (`site/`) at `/`, copies the demo
+- `.github/workflows/deploy-pages.yml` builds the public Jekyll site (`frontend/public-site/`) at `/`, copies the demo
   to `/portal/`, and deploys one Pages artifact. No generated files are committed to the repository.
 - Refresh fixtures after portal data changes by capturing `/api/*` from `npm run dev` while signed in
   as each example account, then scan them for school-specific text and sensitive values.
-- Browser checks cover both example accounts, portal login, read-only writes, static routes,
-  school-text absence, mobile layout, cookies, external requests, and missing assets.
+- `npm run test:pages` checks the deployed configuration: build with
+  `npm run build:pages -- --production-api` (official API origin, as CI; overrides a local
+  `.env.local`), then Playwright drives it against a mocked `api.pytorch.ph`
+  (`verify/mock-api.mjs`: password sign-in, sessions, the portal gateway answered from the demo
+  fixtures, the profile gate, and reference lists). It covers the entry redirect, first-visit tour,
+  Terms/Privacy modals, password rules, the failed-sign-in create-account hint, first-timer
+  onboarding, member and officer views, career tabs under the hero, stamped panels when data is
+  unavailable, settings, static routes, school-text absence, mobile layout, session restore and
+  sign-out, cookies, known API routes, external requests, missing assets, and page errors.
 
 Reuse: existing Next.js static export, React, Tailwind, portal pages, and synthetic demo data; no new
 technology selection. The installed hub lacks `tech`/`reuse`, so references are recorded here.

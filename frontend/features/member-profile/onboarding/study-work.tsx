@@ -10,9 +10,13 @@
 import { useState } from "react";
 import { Combobox, type ComboboxOption } from "@pytorch-ph/design-system/combobox";
 import { UNLISTED_SCHOOL, needsEmployment, needsSchool, type ProfileOptions } from "@pytorch-ph/domain-protocol/identity";
-import { searchCompanies, searchSchools } from "../api";
+import { SEARCH_LIMIT, searchCompanies, searchSchools } from "../api";
 import { FormSection, OptionSelect, TextField, useReferenceSearch } from "./form-fields";
 import type { EmploymentDraft, ProfileDraft, SchoolDraft } from "./form-state";
+import type { SchoolOption } from "@pytorch-ph/domain-protocol/identity";
+
+// The words the server searches for a school: its name (with campus), acronym, city, and province.
+const schoolWords = (school: SchoolOption) => [school.label, school.acronym, school.city, school.province].join(" ");
 
 type StudyWorkProps = { draft: ProfileDraft; options: ProfileOptions; update: (changes: Partial<ProfileDraft>) => void };
 
@@ -30,9 +34,9 @@ type SchoolBlockProps = { school: SchoolDraft; levels: ProfileOptions["schoolLev
 
 function SchoolBlock({ school, levels, onChange }: SchoolBlockProps) {
   const [query, setQuery] = useState(school.label);
-  const { items, loading } = useReferenceSearch("schools", query, searchSchools);
+  const { items, loading } = useReferenceSearch("schools", query, { search: searchSchools, limit: SEARCH_LIMIT, wordsOf: schoolWords });
   const unlisted = school.code === UNLISTED_SCHOOL;
-  const options: ComboboxOption[] = items.map((item) => ({ value: item.code, label: item.label, detail: item.region }));
+  const options: ComboboxOption[] = items.map((item) => ({ value: item.code, label: item.label, detail: item.detail }));
   return <div className="space-y-4">
     {unlisted
       ? <TextField id="profile-school-name" label="School name" maxLength={120} onChange={(unlistedName) => onChange({ unlistedName })} value={school.unlistedName} />
@@ -53,7 +57,7 @@ type EmploymentBlockProps = { employment: EmploymentDraft; options: ProfileOptio
 
 function EmploymentBlock({ employment, options, onChange }: EmploymentBlockProps) {
   const [query, setQuery] = useState(employment.companyLabel);
-  const { items, loading } = useReferenceSearch("companies", query, searchCompanies);
+  const { items, loading } = useReferenceSearch("companies", query, { search: searchCompanies, limit: SEARCH_LIMIT, wordsOf: (company) => company.label });
   const companies: ComboboxOption[] = items.map((item) => ({ value: item.id, label: item.label }));
   return <div className="space-y-4">
     {employment.isNewCompany

@@ -58,6 +58,11 @@ async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
         .await
         .unwrap();
     sqlx::migrate!().run(&db).await.unwrap();
+    // One directory row so profile tests need not load the whole school seed.
+    sqlx::query("INSERT INTO schools(code,name,acronym,level,sector,city,province,region_code) VALUES ('test-school','Test Institute of Technology','TIT','higher','private','Lucena City','Quezon','04')")
+        .execute(&db)
+        .await
+        .unwrap();
     let officer = Uuid::new_v4().to_string();
     let member = Uuid::new_v4().to_string();
     for (id, role) in [(&officer, "officer"), (&member, "member")] {

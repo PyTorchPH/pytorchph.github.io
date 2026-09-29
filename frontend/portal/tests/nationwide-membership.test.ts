@@ -8,7 +8,7 @@ import { authenticationProvider, audienceForHost, isOfficerOnlyPath, memberDesti
 const moduleFiles = (directory: string) =>
   readdirSync(directory).filter((name) => /\.tsx?$/.test(name)).map((name) => join(directory, name));
 
-const validRegistration ={ name: "Community Contributor", username: "community_builder", email: "builder@gmail.com", password: "valid-passphrase", confirm: "valid-passphrase", terms: true };
+const validRegistration ={ name: "Community Contributor", username: "community_builder", email: "builder@gmail.com", password: "Valid#Passphrase9", confirm: "Valid#Passphrase9", terms: true };
 
 test("nationwide login and registration accept school and non-school email domains", () => {
   for (const email of ["builder@gmail.com", "researcher@example.org", "mentor@outlook.com", "student@fit.edu.ph", "student@feutech.edu.ph"]) {
@@ -23,7 +23,7 @@ test("nationwide eligibility retains email, password, confirmation, consent, and
     assert.equal(registerSchema.safeParse({ ...validRegistration, email }).success, false);
     assert.equal(loginSchema.safeParse({ email, password: validRegistration.password, remember: false }).success, false);
   }
-  for (const invalid of [{ password: "short" }, { confirm: "different-passphrase" }, { terms: false }, { username: "" }]) {
+  for (const invalid of [{ password: "short" }, { password: "alllowercase#9", confirm: "alllowercase#9" }, { password: "NoSymbolHere9", confirm: "NoSymbolHere9" }, { password: "NoDigits#Here", confirm: "NoDigits#Here" }, { confirm: "different-passphrase" }, { terms: false }, { username: "" }]) {
     assert.equal(registerSchema.safeParse({ ...validRegistration, ...invalid }).success, false);
   }
   assert.equal(loginSchema.safeParse({ email: "builder@gmail.com", password: "short", remember: false }).success, false);

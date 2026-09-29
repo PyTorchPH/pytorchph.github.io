@@ -5,12 +5,13 @@
 //   FormSection       titled block with an optional hint
 //   OptionSelect      <select> fed by reference options ({code, label})
 //   TextField         labelled text/number input
-//   useReferenceSearch  debounced search against a reference list (schools, companies)
+//   useReferenceSearch  multi-keyword search (schools, companies): local narrowing, else debounced request
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input, Label } from "@pytorch-ph/design-system/input";
 import type { ProfileOption } from "@pytorch-ph/domain-protocol/identity";
+import { narrowFromSnapshot, type SearchSnapshot } from "../search-refinement";
 
 const SEARCH_DEBOUNCE_MS = 250;
 
@@ -45,11 +46,26 @@ export function TextField({ id, label, value, onChange, type = "text", ...rest }
   </div>;
 }
 
-// Mental model: the query text updates on every keystroke; the request only fires once typing pauses.
-export function useReferenceSearch<T>(key: string, query: string, search: (query: string) => Promise<T[]>) {
-  const debounced = useDebouncedValue(query.trim(), SEARCH_DEBOUNCE_MS);
-  const result = useQuery({ queryKey: ["reference", key, debounced], queryFn: () => search(debounced), enabled: debounced.length > 0 });
-  return { items: result.data ?? [], loading: result.isFetching || debounced !== query.trim(), failed: result.isError };
+type ReferenceSearch<T> = { search: (query: string) => Promise<T[]>; limit: number; wordsOf: (item: T) => string };
+
+// Mental model: while the member only adds or extends words, a complete earlier answer is narrowed
+// locally at once; otherwise the request fires once typing pauses (see search-refinement.ts).
+export function useReferenceSearch<T>(key: string, query: string, { search, limit, wordsOf }: ReferenceSearch<T>) {
+  const text = query.trim();
+  const snapshot = useRef<SearchSnapshot<T> | null>(null);
+  const narrowed = narrowFromSnapshot(snapshot.current, text, wordsOf);
+  const debounced = useDebouncedValue(text, SEARCH_DEBOUNCE_MS);
+  const result = useQuery({
+    queryKey: ["reference", key, debounced],
+    queryFn: async () => {
+      const items = await search(debounced);
+      snapshot.current = { query: debounced, items, complete: items.length < limit };
+      return items;
+    },
+    enabled: debounced.length > 0 && narrowed === null,
+  });
+  if (narrowed) return { items: narrowed, loading: false, failed: false };
+  return { items: result.data ?? [], loading: result.isFetching || debounced !== text, failed: result.isError };
 }
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
