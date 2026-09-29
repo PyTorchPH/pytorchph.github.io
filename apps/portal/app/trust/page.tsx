@@ -13,7 +13,7 @@ import type { FeedbackReport } from "@pytorch-ph/domain-protocol/privacy-feedbac
 
 const nodeDemo = [
   { name: "Vercel orchestrator", detail: "Health checks + signed dispatch", status: "online" },
-  { name: "Supabase authority", detail: "Verified day-to-day records", status: "online" },
+  { name: "Rust API authority", detail: "Verified day-to-day records", status: "online" },
   { name: "Officer node Manila-01", detail: "Replica witness · 18s behind", status: "proposed" },
   { name: "Officer node Manila-02", detail: "Replica witness · offline", status: "proposed" },
 ];
@@ -28,13 +28,13 @@ function TrustContent() {
     </section>
 
     <section className="grid gap-4 lg:grid-cols-3">
-      <Card className="bg-surface"><Database className="text-success" /><h2 className="mt-4 font-bold">Supabase is authoritative</h2><p className="mt-2 text-sm leading-6 text-muted">Scraper-sourced, server-validated events receive provenance and append-only audit records.</p></Card>
+      <Card className="bg-surface"><Database className="text-success" /><h2 className="mt-4 font-bold">The Rust API is authoritative</h2><p className="mt-2 text-sm leading-6 text-muted">Scraper-sourced, server-validated events receive provenance and append-only audit records.</p></Card>
       <Card className="bg-surface"><HardDrive className="text-accent" /><h2 className="mt-4 font-bold">Device data is untrusted input</h2><p className="mt-2 text-sm leading-6 text-muted">Manual browser data may persist, but never becomes verified merely because it was synchronized.</p></Card>
-      <Card className="bg-surface"><Network className="text-warning" /><h2 className="mt-4 font-bold">Officer replicas are witnesses</h2><p className="mt-2 text-sm leading-6 text-muted">Proposed nodes compare signed manifests and freshness; they do not silently read member caches or outvote Supabase.</p></Card>
+      <Card className="bg-surface"><Network className="text-warning" /><h2 className="mt-4 font-bold">Officer replicas are witnesses</h2><p className="mt-2 text-sm leading-6 text-muted">Proposed nodes compare signed manifests and freshness; they do not silently read member caches or outvote the Rust API.</p></Card>
     </section>
 
     <section className="grid gap-4 xl:grid-cols-[1.05fr_.95fr]">
-      <Card className="bg-surface"><CardHeader><div><CardTitle>{officer ? "Replica quorum preview" : "Personal visibility controls"}</CardTitle><CardDescription>{officer ? "Architecture preview only—officer peer replication is not enabled." : "These settings persist in the local demo and map to owner-only Supabase fields in production."}</CardDescription></div>{officer ? <Radio className="text-accent" /> : <LockKeyhole className="text-accent" />}</CardHeader>
+      <Card className="bg-surface"><CardHeader><div><CardTitle>{officer ? "Replica quorum preview" : "Personal visibility controls"}</CardTitle><CardDescription>{officer ? "Architecture preview only—officer peer replication is not enabled." : "These settings persist in the local demo and map to owner-only Rust API fields in production."}</CardDescription></div>{officer ? <Radio className="text-accent" /> : <LockKeyhole className="text-accent" />}</CardHeader>
         {officer ? <div className="space-y-2">{nodeDemo.map((node) => <div className="flex items-center justify-between rounded-lg border border-border p-3" key={node.name}><div><p className="font-semibold">{node.name}</p><p className="mt-1 text-xs text-muted">{node.detail}</p></div><Badge variant={node.status === "online" ? "success" : "warning"}>{node.status}</Badge></div>)}</div> : <PrivacyControls />}
       </Card>
       <Card className="bg-surface"><CardHeader><div><CardTitle>{officer ? "Incoming feedback" : "Your feedback receipts"}</CardTitle><CardDescription>Structured diagnostics exclude raw HTML, screenshots, credentials, and local cache content.</CardDescription></div><Activity className="text-accent" /></CardHeader><div className="space-y-2">{reports.data?.slice(0,6).map((report) => <div className="rounded-lg border border-border p-3" key={report.id}><div className="flex items-center justify-between"><span className="font-semibold capitalize">{report.category.replaceAll("_", " ")}</span><Badge>{report.status}</Badge></div><p className="mt-1 text-xs text-muted">{report.route} · {report.id.slice(0,8).toUpperCase()}</p></div>)}{!reports.data?.length && <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted">No reports yet. Use the Report button to test the feedback loop.</p>}</div></Card>

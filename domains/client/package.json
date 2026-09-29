@@ -20,7 +20,6 @@
   "dependencies": {
     "@pytorch-ph/design-system": "0.1.0",
     "@pytorch-ph/domain-protocol": "0.1.0",
-    "@supabase/supabase-js": "^2.112.3",
     "docx": "^9.7.1",
     "jspdf": "^4.2.1",
     "qrcode.react": "^4.2.0",

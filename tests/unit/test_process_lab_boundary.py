@@ -106,7 +106,8 @@ def test_artifact_guard_requires_real_artifact_directory(tmp_path):
 
 
 def test_release_ignore_files_exclude_process_lab():
-    for name in (".dockerignore", ".vercelignore"):
+    # The portal ships as a static Pages build; Docker is the only remaining release context.
+    for name in (".dockerignore",):
         value = (ROOT / name).read_text(encoding="utf-8")
         assert "development/" in value
         assert "tests/" in value

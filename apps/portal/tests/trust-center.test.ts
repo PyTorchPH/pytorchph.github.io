@@ -30,7 +30,7 @@ test("feedback diagnostics accept allowlisted UI state only", () => {
 
 test("hybrid architecture documents local tampering and authority boundaries", () => {
   const document = readFileSync("../../docs/HYBRID-TRUST-ARCHITECTURE.md", "utf8");
-  assert.match(document, /Supabase is authoritative/);
+  assert.match(document, /The Rust API is authoritative/);
   assert.match(document, /device ownership is not evidence of\s+truth/);
   assert.match(document, /silently inspect a member device/);
   assert.match(document, /Known vulnerabilities and mitigations/);

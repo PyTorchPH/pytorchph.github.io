@@ -7,7 +7,7 @@ const quiet = process.argv.includes("--quiet");
 const userId = process.env.PYTORCH_PH_DEV_USER_ID || "00000000-0000-4000-8000-000000000001";
 
 if ((process.env.PYTORCH_PH_DATA_PROVIDER || "local") !== "local" || process.env.NODE_ENV === "production") {
-  throw new Error("Local demo commands refuse Supabase and production environments.");
+  throw new Error("Local demo commands refuse non-local providers and production environments.");
 }
 
 if (command === "ensure" || command === "seed") {

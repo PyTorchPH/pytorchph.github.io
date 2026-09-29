@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import shlex
 import shutil
 import signal
 import subprocess
@@ -32,19 +31,15 @@ def prerequisites() -> dict[str, str | None]:
         except (OSError, subprocess.TimeoutExpired):
             pass
     npm = shutil.which("npm")
-    supabase = shutil.which("supabase")
     prefect = shutil.which("prefect")
     venv_prefect = os.path.join(os.path.dirname(sys.executable), "prefect")
     if prefect is None and os.path.isfile(venv_prefect):
         prefect = venv_prefect
-    if supabase is None and npm is not None:
-        supabase = f"{shutil.which('npx') or 'npx'} --yes supabase@latest"
     return {
         "docker": docker,
         "docker_daemon": docker_daemon,
         "npm": npm,
         "prefect": prefect,
-        "supabase": supabase,
     }
 
 
@@ -67,39 +62,6 @@ def require_demo_prerequisites() -> None:
             + ", ".join(missing)
             + ". Install them before starting the local lab."
         )
-
-
-def _supabase_command() -> list[str]:
-    installed = shutil.which("supabase")
-    if installed:
-        return [installed]
-    npx = shutil.which("npx")
-    if npx:
-        return [npx, "--yes", "supabase@latest"]
-    raise RuntimeError("Supabase CLI requires either supabase or npx.")
-
-
-def _supabase_environment() -> dict[str, str]:
-    command = _supabase_command()
-    subprocess.run([*command, "start"], cwd=REPO_ROOT, check=True)
-    completed = subprocess.run(
-        [*command, "status", "-o", "env"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    values: dict[str, str] = {}
-    for line in completed.stdout.splitlines():
-        if "=" not in line:
-            continue
-        key, raw = line.split("=", 1)
-        parsed = shlex.split(raw.strip())
-        if parsed:
-            values[key.strip()] = parsed[0]
-    if not values.get("API_URL") or not values.get("ANON_KEY"):
-        raise RuntimeError("Supabase did not report API_URL and ANON_KEY.")
-    return values
 
 
 def _base_environment() -> dict[str, str]:
@@ -214,14 +176,11 @@ def _run_managed_stack(environment: dict[str, str], *, start_worker: bool) -> in
 
 def run_local_stack() -> int:
     require_prerequisites()
-    supabase = _supabase_environment()
     environment = _base_environment()
     environment.update(
         {
-            "NEXT_PUBLIC_SUPABASE_URL": supabase["API_URL"],
-            "NEXT_PUBLIC_SUPABASE_ANON_KEY": supabase["ANON_KEY"],
-            "SUPABASE_SERVICE_ROLE_KEY": supabase.get("SERVICE_ROLE_KEY", ""),
-            "PYTORCH_PH_DATA_PROVIDER": "supabase",
+            # Product data is the local store; accounts and reviewed records live in the Rust API.
+            "PYTORCH_PH_DATA_PROVIDER": "local",
             "PYTORCH_PH_DEV_ACCESS": "0",
             "PYTORCH_PH_MEMBER_URL": "http://members.ph.localhost:3100",
             "PYTORCH_PH_OFFICER_URL": "http://officers.ph.localhost:3100",

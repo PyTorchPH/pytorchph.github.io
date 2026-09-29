@@ -52,10 +52,9 @@ export const feedbackUpdateSchema = z.object({
 export type FeedbackUpdate = z.infer<typeof feedbackUpdateSchema>;
 
 export type MembershipStatus = {
+  // Membership is free; "payment_pending" is the legacy name of the awaiting-approval state.
   state: "prospective" | "payment_pending" | "active" | "rejected";
-  paid: boolean;
   canEnterMemberPortal: boolean;
-  paymentReference: string;
   updatedAt: string;
   demo: boolean;
 };

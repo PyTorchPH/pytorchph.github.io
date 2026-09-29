@@ -1,16 +1,15 @@
 import { LocalProductRepository } from "./read-local";
-import { SupabaseProductRepository } from "./read-supabase";
 import type { ProductProvider, ProductRepository } from "@pytorch-ph/domain-protocol/career-evidence";
 
+// Deployed portals read product data from the Rust API gateway; this module serves only the local demo store.
 export function configuredProductProvider(): ProductProvider {
-  if (process.env.NODE_ENV === "production" && process.env.PYTORCH_PH_DATA_PROVIDER !== "supabase") {
-    throw new Error("Production requires PYTORCH_PH_DATA_PROVIDER=supabase; local demo data is disabled.");
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("The local product store is disabled in production; deployed portals use the Rust API.");
   }
-  return process.env.PYTORCH_PH_DATA_PROVIDER === "supabase" ? "supabase" : "local";
+  return "local";
 }
 
 export function productRepository(): ProductRepository {
-  return configuredProductProvider() === "supabase"
-    ? new SupabaseProductRepository()
-    : new LocalProductRepository();
+  configuredProductProvider();
+  return new LocalProductRepository();
 }

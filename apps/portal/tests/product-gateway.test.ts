@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -22,18 +22,16 @@ import { developerDiagnostics, isOfficerOnlyProductView, memberSafeProductData }
 import { isOfficerOnlyPath, memberDestination } from "@pytorch-ph/domain-server/identity";
 import { authenticateLocalAccount, authenticationProvider, createLocalSession, readLocalSession, revokeLocalSession, upsertLocalAccount } from "@pytorch-ph/domain-server/identity";
 
-test("loopback development uses hashed SQLite sessions while deployed hosts use Supabase", () => {
+test("loopback development uses hashed SQLite sessions while deployed hosts use the Rust API", () => {
   const directory = mkdtempSync(path.join(tmpdir(), "pytorch-ph-local-auth-"));
   const previousDatabase = process.env.PYTORCH_PH_LOCAL_DATABASE_PATH;
-  const previousVercel = process.env.VERCEL;
   const previousCi = process.env.CI;
   process.env.PYTORCH_PH_LOCAL_DATABASE_PATH = path.join(directory, "product.sqlite3");
-  delete process.env.VERCEL;
   delete process.env.CI;
   try {
     assert.equal(authenticationProvider("members.ph.localhost:3100"), "local");
     assert.equal(authenticationProvider("127.0.0.1:3100"), "local");
-    assert.equal(authenticationProvider("portal.example.com"), "supabase");
+    assert.equal(authenticationProvider("portal.example.com"), "rust-api");
     upsertLocalAccount({ userId: "member-1", email: "member@local.test", password: "test-passphrase", role: "member", isOfficer: false, membershipStatus: "active", membershipPaid: true });
     upsertLocalAccount({ userId: "officer-1", email: "officer@local.test", password: "test-passphrase", role: "admin", isOfficer: true, membershipStatus: "active", membershipPaid: true });
     const member = authenticateLocalAccount("member@local.test", "test-passphrase");
@@ -49,11 +47,10 @@ test("loopback development uses hashed SQLite sessions while deployed hosts use 
     assert.notEqual(stored?.token_hash, session.token);
     revokeLocalSession(session.token);
     assert.equal(readLocalSession(session.token), null);
-    process.env.VERCEL = "1";
-    assert.equal(authenticationProvider("localhost:3100"), "supabase");
+    process.env.CI = "1";
+    assert.equal(authenticationProvider("localhost:3100"), "rust-api");
   } finally {
     if (previousDatabase === undefined) delete process.env.PYTORCH_PH_LOCAL_DATABASE_PATH; else process.env.PYTORCH_PH_LOCAL_DATABASE_PATH = previousDatabase;
-    if (previousVercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = previousVercel;
     if (previousCi === undefined) delete process.env.CI; else process.env.CI = previousCi;
     rmSync(directory, { recursive: true, force: true });
   }
@@ -173,15 +170,6 @@ test("visual demo keeps manual workspaces open but never unlocks automation", ()
   assert.equal(manifest.capabilities.analytics_write.state, "locked");
 });
 
-test("Supabase career product policies are owner-scoped and browser read-only", () => {
-  const migration = readFileSync("../../supabase/migrations/0006_career_product_gateway.sql", "utf8");
-  assert.match(migration, /ENABLE ROW LEVEL SECURITY/g);
-  assert.match(migration, /owner_select/g);
-  assert.doesNotMatch(migration, /owner_all/);
-  assert.doesNotMatch(migration, /FOR (INSERT|UPDATE|DELETE) TO authenticated/);
-  assert.match(migration, /requested_user_id IS DISTINCT FROM \(SELECT auth\.uid\(\)\)/);
-});
-
 test("career demo exposes clickable source metadata and photo-backed evidence", () => {
   const data = demoProductView("career-evidence");
   assert.ok(data.evidence?.sources.some((source) => source.id === "website" && source.maturity === "experimental"));
@@ -189,12 +177,6 @@ test("career demo exposes clickable source metadata and photo-backed evidence", 
   assert.equal(data.evidence?.items?.length, 6);
   assert.ok(data.evidence?.items?.every((item) => item.mediaUrl.startsWith("/demo/evidence/")));
   assert.ok(data.evidence?.items?.some((item) => item.verificationState === "ai_proposed"));
-});
-
-test("manual evidence API derives manual source instead of trusting browser provenance", () => {
-  const route = readFileSync(new URL("../app/api/product/evidence/route.ts", import.meta.url), "utf8");
-  assert.match(route, /sourceId: "manual"/);
-  assert.doesNotMatch(route, /collectionOrigin:\s*submitted/);
 });
 
 test("local demo has one primary and four supporting lifecycle personas", () => {
@@ -210,18 +192,14 @@ test("local demo has one primary and four supporting lifecycle personas", () => 
 
 test("production rejects the local provider instead of falling back to synthetic data", () => {
   const previousNodeEnv = process.env.NODE_ENV;
-  const previousProvider = process.env.PYTORCH_PH_DATA_PROVIDER;
   try {
+    Object.defineProperty(process.env, "NODE_ENV", { configurable: true, enumerable: true, value: "development", writable: true });
+    assert.equal(configuredProductProvider(), "local");
     Object.defineProperty(process.env, "NODE_ENV", { configurable: true, enumerable: true, value: "production", writable: true });
-    process.env.PYTORCH_PH_DATA_PROVIDER = "local";
-    assert.throws(() => configuredProductProvider(), /requires PYTORCH_PH_DATA_PROVIDER=supabase/);
-    process.env.PYTORCH_PH_DATA_PROVIDER = "supabase";
-    assert.equal(configuredProductProvider(), "supabase");
+    assert.throws(() => configuredProductProvider(), /deployed portals use the Rust API/);
   } finally {
     if (previousNodeEnv === undefined) Reflect.deleteProperty(process.env, "NODE_ENV");
     else Object.defineProperty(process.env, "NODE_ENV", { configurable: true, enumerable: true, value: previousNodeEnv, writable: true });
-    if (previousProvider === undefined) delete process.env.PYTORCH_PH_DATA_PROVIDER;
-    else process.env.PYTORCH_PH_DATA_PROVIDER = previousProvider;
   }
 });
 
@@ -345,18 +323,3 @@ test("provider-neutral AI parser accepts Responses HTTP output and rejects loose
   assert.throws(() => parseEvidenceProposalResponse({ output_text: JSON.stringify({ summary: "bad", changes: [{ field: 4 }], warnings: [] }) }), /invalid field changes/);
 });
 
-test("SQL demo seed is deterministic, synthetic, and production-guarded", () => {
-  const seed = readFileSync("../../supabase/seed.sql", "utf8");
-  const migration = readFileSync("../../supabase/migrations/0007_career_evidence_studio.sql", "utf8");
-  const storageScript = readFileSync("scripts/seed-demo-storage.mjs", "utf8");
-  assert.match(seed, /synthetic showcase data/i);
-  assert.match(seed, /ON CONFLICT/g);
-  assert.match(seed, /REFRESH MATERIALIZED VIEW leaderboard/);
-  assert.match(storageScript, /PYTORCH_PH_ENV !== "showcase"/);
-  assert.match(storageScript, /NODE_ENV === "production"/);
-  assert.match(migration, /connection_state connection_state/);
-  assert.match(migration, /career_evidence_revisions_owner_select/);
-  assert.match(migration, /career_evidence_storage_owner_select/);
-  assert.match(migration, /requested_user_id IS DISTINCT FROM \(SELECT auth\.uid\(\)\)/);
-  assert.doesNotMatch(migration, /FOR (INSERT|UPDATE|DELETE) TO authenticated/);
-});

@@ -30,9 +30,9 @@ test("client and protocol packages never import server implementation", () => {
   assert.deepEqual(importsFrom(join(root, "domains/protocol"), ["@pytorch-ph/domain-server", "@pytorch-ph/domain-client"]), []);
 });
 
-test("browser domain code uses Supabase only for authentication", () => {
-  const offenders = importsFrom(join(root, "domains/client"), ["@supabase/"])
-    .filter((path) => path !== "domains/client/identity/session/create-browser-client.ts");
+test("no workspace code imports Supabase; the Rust API is the only backend", () => {
+  const offenders = ["domains", "apps/portal", "apps/pages-demo", "development"]
+    .flatMap((path) => importsFrom(join(root, path), ["@supabase/"]));
   assert.deepEqual(offenders, []);
 });
 
@@ -54,7 +54,7 @@ test("workspace packages expose concepts, not implementation filenames", () => {
 
 test("local automatic access accepts only loopback HTTP origins", () => {
   assert.equal(assertLocalUrl("http://members.ph.localhost:3100", "portal", ["localhost"]).hostname, "members.ph.localhost");
-  assert.equal(assertLocalUrl("http://127.0.0.1:54321", "Supabase", ["localhost", "127.0.0.1"]).hostname, "127.0.0.1");
+  assert.equal(assertLocalUrl("http://127.0.0.1:8080", "API", ["localhost", "127.0.0.1"]).hostname, "127.0.0.1");
   assert.throws(() => assertLocalUrl("https://members.ph.localhost:3100", "portal", ["localhost"]), /loopback/);
   assert.throws(() => assertLocalUrl("http://example.com", "portal", ["localhost"]), /loopback/);
   assert.throws(() => assertLocalUrl("http://preview.127.0.0.1:3100", "portal", ["127.0.0.1"]), /loopback/);
@@ -77,15 +77,8 @@ test("local automatic access uses the native maximized browser viewport", () => 
 
 test("integrated development always uses local synthetic product data", () => {
   const launcher = readFileSync(join(root, "development/local-workspace/start.mjs"), "utf8");
-  assert.match(launcher, /const supabaseProvider = process\.argv\.includes\(["']--supabase["']\)/);
-  assert.match(launcher, /PYTORCH_PH_DATA_PROVIDER:\s*supabaseProvider \? ["']supabase["'] : ["']local["']/);
-});
-
-test("local auto-login retains a real event-loop handle", () => {
-  const watcher = readFileSync(join(root, "development/local-access/watch-login.mjs"), "utf8");
-  assert.match(watcher, /const keepAlive = setInterval\(/);
-  assert.match(watcher, /clearInterval\(keepAlive\)/);
-  assert.doesNotMatch(watcher, /await new Promise\(\(\) => \{\}\)/);
+  assert.match(launcher, /PYTORCH_PH_DATA_PROVIDER:\s*["']local["']/);
+  assert.doesNotMatch(launcher, /supabase/i);
 });
 
 test("local workspace resolves package-manager launchers for each platform", () => {

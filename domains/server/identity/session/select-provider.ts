@@ -1,4 +1,5 @@
-export type AuthenticationProvider = "local" | "supabase";
+// Loopback development uses hashed local SQLite sessions; every deployed host authenticates through the Rust API.
+export type AuthenticationProvider = "local" | "rust-api";
 
 function hostname(value: string | null | undefined) {
   const raw = (value || "").trim().toLowerCase();
@@ -12,6 +13,6 @@ export function isLoopbackHost(value: string | null | undefined) {
 }
 
 export function authenticationProvider(value: string | null | undefined): AuthenticationProvider {
-  if (process.env.NODE_ENV === "production" || process.env.VERCEL || process.env.CI) return "supabase";
-  return isLoopbackHost(value) ? "local" : "supabase";
+  if (process.env.NODE_ENV === "production" || process.env.CI) return "rust-api";
+  return isLoopbackHost(value) ? "local" : "rust-api";
 }

@@ -1,5 +1,5 @@
 // How verified evidence turns into points. The multipliers mirror the officer review rubric
-// (point_rubric_levels in supabase/migrations and the review units in domains/server/organization).
+// (the point rubric in apps/api/migrations and the review units in domains/server/organization).
 export const rankingLevels = [
   { level: "participation", label: "Participation", multiplier: 1, example: "You joined a workshop, study group, or competition." },
   { level: "contributor", label: "Contributor", multiplier: 2, example: "You contributed work: a talk, a project, or a pull request." },

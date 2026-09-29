@@ -5,7 +5,6 @@ export * from "./read-demo-state";
 export * from "./read-diagnostics";
 export * from "./read-local";
 export * from "./read-source";
-export * from "./read-supabase";
 export * from "./run-command";
 export * from "./select-repository";
 export * from "./store-local";
