@@ -286,6 +286,20 @@
     transition: all 0.4s;
   }
 
+  // Members without a photo show their initials in a square of the same size.
+  .ph-member-initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #262626;
+    color: #ffffff;
+    font-size: rem(56px);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
   a.active:hover img {
     -webkit-filter: grayscale(0%);
     filter: grayscale(0%);
