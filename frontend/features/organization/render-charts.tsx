@@ -20,7 +20,7 @@ import {
   XAxis,
   YAxis
 } from "recharts";
-import { activityTrend, barSkills, departmentLoad, skillRadar } from "@pytorch-ph/domain-client/organization";
+import { activityTrend, departmentLoad } from "@pytorch-ph/domain-client/organization";
 import type { AnalyticsState } from "@pytorch-ph/domain-protocol/career-evidence";
 import { ChartContainer } from "@pytorch-ph/design-system/chart";
 
@@ -42,7 +42,8 @@ const emptySkills = ["Computer Vision", "NLP", "Optimization", "MLOps", "Data Et
 const emptyActivity = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => ({ day, events: null, contributions: null }));
 const emptyDepartments = ["Learning Programs", "Engineering", "External", "Research", "Creatives"].map((department) => ({ department, open: null, approved: null }));
 
-export function SkillRadarChart({ data = skillRadar, state }: { data?: Array<{ skill: string; score: number | null }>; state?: AnalyticsState } = {}) {
+// Callers pass real data; an empty array draws neutral axes (never sample values).
+export function SkillRadarChart({ data, state }: { data: Array<{ skill: string; score: number | null }>; state?: AnalyticsState }) {
   const chartData = data.length ? data : emptySkills;
   return (
     <ChartContainer aria-label="Skill readiness radar chart" className="h-72" config={chartConfig}>
@@ -59,11 +60,11 @@ export function SkillRadarChart({ data = skillRadar, state }: { data?: Array<{ s
   );
 }
 
-export function SkillBarChart() {
+export function SkillBarChart({ data }: { data: Array<{ name: string; value: number }> }) {
   return (
     <ChartContainer aria-label="Skill score bar chart" className="h-64" config={chartConfig}>
       <ResponsiveContainer>
-        <BarChart accessibilityLayer data={barSkills}>
+        <BarChart accessibilityLayer data={data}>
           <XAxis dataKey="name" tick={{ fill: "var(--muted)", fontSize: 12 }} />
           <YAxis tick={{ fill: "var(--muted)", fontSize: 12 }} />
           <Tooltip contentStyle={tooltipStyle} />

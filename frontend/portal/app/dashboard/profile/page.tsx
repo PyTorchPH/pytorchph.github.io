@@ -10,7 +10,9 @@ import { IdentityCodes } from "@pytorch-ph/domain-client/identity";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import { Button } from "@pytorch-ph/design-system/button";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
-import type { LeaderboardIdentitySettings } from "@pytorch-ph/domain-protocol/leaderboards";
+import type { LeaderboardIdentitySettings, MemberOverview } from "@pytorch-ph/domain-protocol/leaderboards";
+import { DataUnavailable } from "@pytorch-ph/design-system/data-unavailable";
+import { meritBlocks, upskillRadar } from "./evidence-charts";
 import type { MembershipStatus } from "@pytorch-ph/domain-protocol/privacy-feedback";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { toast } from "sonner";
@@ -39,6 +41,8 @@ function ProfileContent() {
   const identity = useQuery({ queryKey: ["leaderboard-identity"], queryFn: () => fetchJson<LeaderboardIdentitySettings>("/api/member/leaderboard-identity", { cache: "no-store" }) });
   const evidence = useQuery({ queryKey: ["product", "career-evidence"], queryFn: () => fetchJson<ProductViewData>("/api/product/career-evidence", { cache: "no-store" }) });
   const membership = useQuery({ queryKey: ["membership-status", false], queryFn: () => fetchJson<MembershipStatus>("/api/membership/status", { cache: "no-store" }) });
+  // The same verified overview My performance uses: skill points come from approved point events.
+  const overview = useQuery({ queryKey: ["member-overview"], queryFn: () => fetchJson<MemberOverview>("/api/member/overview", { cache: "no-store" }) });
   const aiStatus = useQuery({ queryKey: ["local-ai-status"], queryFn: localAIStatus });
   const [upskillPlan, setUpskillPlan] = useState<UpskillPlan | null>(null);
   const upskill = useMutation({
@@ -63,6 +67,10 @@ Return {"summary": string, "recommendations": [{"focusSkill": string, "rationale
   });
   const identityLinks = (accounts.data || []).map((account) => ({ id: account.provider, label: PROVIDER_ICONS[account.provider].label, url: account.profileUrl }));
   const memberLabel = identity.data?.preview || identity.data?.username || "Member";
+  const radar = overview.data ? upskillRadar(overview.data.skillPoints) : null;
+  const blocks = overview.data ? meritBlocks(overview.data.summary, evidence.data?.evidence?.items ?? []) : [];
+  const hasMerit = blocks.some((block) => block.value > 0);
+  const stampFor = (hasData: boolean) => overview.isError ? "Data unavailable" : overview.isLoading ? "Loading data" : hasData ? "" : "No verified evidence yet";
 
   return (
     <>
@@ -111,11 +119,11 @@ Return {"summary": string, "recommendations": [{"focusSkill": string, "rationale
           <CardHeader>
             <div>
               <CardTitle>UpSkill radar</CardTitle>
-              <CardDescription>Sub-field profile generated from verified community activity.</CardDescription>
+              <CardDescription>Your strongest skills from verified point events (100 = your top skill).</CardDescription>
             </div>
             <Medal className="text-accent" size={20} />
           </CardHeader>
-          <SkillRadarChart />
+          <DataUnavailable label={stampFor(Boolean(radar))} unavailable={!radar}><SkillRadarChart data={radar ?? []} /></DataUnavailable>
           <div className="mt-4 border-t border-border pt-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><p className="text-sm text-muted">Generate evidence-cited next steps through your configured local AI boundary.</p><Button disabled={!aiStatus.data?.configured || upskill.isPending || evidence.isLoading} onClick={() => upskill.mutate()} size="sm" type="button"><Sparkles size={15} />{upskill.isPending ? "Planning…" : "Generate local AI plan"}</Button></div>
             {!aiStatus.data?.configured && <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">Connect an AI provider in Settings (stored in your extension) before UpSkill can run.</p>}
@@ -126,10 +134,10 @@ Return {"summary": string, "recommendations": [{"focusSkill": string, "rationale
           <CardHeader>
             <div>
               <CardTitle>Merit activity blocks</CardTitle>
-              <CardDescription>Evidence categories behind personal recommendations.</CardDescription>
+              <CardDescription>Your verified experience and projects, events, and ready resumes.</CardDescription>
             </div>
           </CardHeader>
-          <SkillBarChart />
+          <DataUnavailable label={stampFor(hasMerit)} unavailable={!hasMerit}><SkillBarChart data={blocks} /></DataUnavailable>
         </Card>
       </section>
     </>
