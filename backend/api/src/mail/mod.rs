@@ -10,9 +10,11 @@
 //!   approvals   routed roles approve one exact revision
 //!   release     the sender role releases a fully approved revision for delivery
 //!   dispatch    the delivery workflow claims jobs and reports receipts; admins reconcile
+//!   assembled   collaborative emails enter delivery already approved (crate::collab_mail)
 //!   attachment  the rendered PDF attachment, checked against its stored hash
 //!   pdf         text → PDF rendering
 mod approvals;
+mod assembled;
 mod attachment;
 mod content;
 mod dispatch;
@@ -24,6 +26,7 @@ mod roles;
 mod routes;
 
 pub(crate) use approvals::approve_draft;
+pub(crate) use assembled::queue_assembled_mail;
 pub(crate) use attachment::{dispatch_pdf, preview_pdf};
 pub(crate) use dispatch::{claim_dispatch, reconcile_dispatch, record_receipt};
 pub(crate) use drafts::{create_draft, edit_draft, read_draft};

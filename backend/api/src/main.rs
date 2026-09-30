@@ -8,6 +8,7 @@
 //!   leaderboard  season standings, member overview, achievements
 //!   events       organization events, entrants, results, attendance
 //!   mail         approval-routed mail drafts and their PDF attachments
+//!   collab_mail  sectioned event emails reviewed part by part, then Secretariat → President → send
 //!   portal       the /portal/api gateway behind the member portal
 //!   feedback     bug-report attachments
 //!   officer      Command Center analytics
@@ -20,6 +21,7 @@
 //!   seed         demo fixtures and sample members
 //!   skill_taxonomy  client-compiled normalized skills (Technology dept) and the community tally
 mod app;
+mod collab_mail;
 mod companies;
 mod events;
 mod evidence;
