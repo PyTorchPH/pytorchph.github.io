@@ -6,6 +6,8 @@ import { Clock3, Medal, ShieldCheck, Trophy } from "lucide-react";
 import { AppShell } from "@pytorch-ph/domain-client/navigation";
 import { RankingGuide } from "@pytorch-ph/domain-client/leaderboards";
 import { SkillRadarChart } from "@pytorch-ph/domain-client/organization";
+import { SkillTallySlides } from "@pytorch-ph/domain-client/leaderboards";
+import { DataUnavailable } from "@pytorch-ph/design-system/data-unavailable";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Card } from "@pytorch-ph/design-system/card";
@@ -55,7 +57,10 @@ export default function LeaderboardsPage() {
 
       {highlighted && data && <p className="border border-info/30 bg-info/10 p-3 text-sm" role="status">{highlightedEntry ? `${highlighted} is ranked #${highlightedEntry.rank} with ${highlightedEntry.points.toLocaleString()} points (${highlightedEntry.tier} ${highlightedEntry.division}).` : `${highlighted} is not on this page of the leaderboard.`}</p>}
 
-      {data?.skillMix && data.skillMix.length > 0 && <Card className="bg-surface"><div className="mb-2"><h2 className="font-bold">Community skill mix</h2><p className="mt-1 text-xs text-muted">Share of ranked members with each officer-verified skill.</p></div><SkillRadarChart data={data.skillMix} state="live" /></Card>}
+      {data && <Card className="bg-surface"><div className="grid gap-6 lg:grid-cols-2">
+        <div><div className="mb-2"><h2 className="font-bold">Community skill mix</h2><p className="mt-1 text-xs text-muted">Share of ranked members with each officer-verified skill.</p></div><DataUnavailable label="No verified skills yet" unavailable={!data.skillMix?.length}><SkillRadarChart data={data.skillMix ?? []} state="live" /></DataUnavailable></div>
+        <div><div className="mb-2"><h2 className="font-bold">Community skill tally</h2><p className="mt-1 text-xs text-muted">Members per normalized skill from verified achievements, most common to most unique.</p></div><SkillTallySlides /></div>
+      </div></Card>}
 
       <Card className="overflow-hidden bg-surface p-0" data-tour="leaderboards-table">
         <div className="flex items-center justify-between border-b border-border p-4"><div><h2 className="font-bold">{skill ? "Skill point view" : "Global point view"}</h2><p className="mt-1 text-xs text-muted">Points descending · ties are peers · stable pagination does not imply a higher rank</p></div><ShieldCheck className="text-success" /></div>

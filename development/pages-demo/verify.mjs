@@ -183,7 +183,7 @@ try {
   assert.equal(manifest.display, "standalone");
   checks.push("account-binding", "logo-landing", "installable-app");
 
-  const routes = ["/login/", "/register/", "/onboarding/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/jobs/analytics/", "/jobs/automation/", "/events/", "/leaderboards/", "/membership/", "/trust/", "/settings/", "/setup/evidence-extension/"];
+  const routes = ["/login/", "/register/", "/onboarding/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/jobs/analytics/", "/jobs/automation/", "/events/", "/leaderboards/", "/admin/organization/", "/admin/events/", "/membership/", "/trust/", "/settings/", "/setup/evidence-extension/"];
   for (const path of routes) {
     await page.goto(`${url}${path}`, { waitUntil: "networkidle" });
     assert.equal(await page.locator('aside[aria-label="Demo notice"], .on-dark.fixed.inset-x-0.top-0').count(), 0, `Fixed demo banner on ${path}`);

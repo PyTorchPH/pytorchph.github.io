@@ -3,6 +3,7 @@
 //! Module map (caller-first):
 //!   dispatch_write
 //!   ├─ member settings      privacy · profile · leaderboard identity · verified accounts
+//!   ├─ organization         assign · remove · resign positions (organization::assignments)
 //!   ├─ evidence integrity   officer review · appeals
 //!   ├─ feedback             create · update · notes · attachments
 //!   ├─ product views        demo actions · opportunities · evidence · photos · sources · analysis
@@ -11,11 +12,11 @@
 //!   └─ between              path middle between a prefix and a suffix
 use super::{feedback, member, operations, product};
 use crate::{
-    ApiError, ApiResult, AppState,
+    ApiError, ApiResult, AppState, events,
     evidence::integrity,
     feedback::attachments,
     identity::{accounts, session::Viewer},
-    member_profile,
+    member_profile, organization, skill_taxonomy,
 };
 use axum::http::StatusCode;
 use serde_json::Value;
@@ -34,6 +35,38 @@ pub(crate) async fn dispatch_write(
         ("PUT", "member/privacy") => (
             StatusCode::OK,
             member::save_privacy(db, &actor.id, input).await?,
+        ),
+        ("POST", "officer/organization/assignments") => (
+            StatusCode::CREATED,
+            organization::assignments::assign_position(
+                db,
+                actor,
+                text_field(&input, "memberId"),
+                text_field(&input, "position"),
+            )
+            .await?,
+        ),
+        ("DELETE", _) if path.starts_with("officer/organization/assignments/") => {
+            let (position, member_id) = after(path, "officer/organization/assignments/")
+                .split_once('/')
+                .unwrap_or_default();
+            (
+                StatusCode::OK,
+                organization::assignments::remove_holder(db, actor, member_id, position).await?,
+            )
+        }
+        ("DELETE", _) if path.starts_with("officer/events/") => (
+            StatusCode::OK,
+            events::delete::delete_event(db, actor, after(path, "officer/events/")).await?,
+        ),
+        ("POST", "officer/skills/taxonomy") => (
+            StatusCode::CREATED,
+            skill_taxonomy::publish_taxonomy(db, actor, &input).await?,
+        ),
+        ("POST", "officer/organization/resign") => (
+            StatusCode::OK,
+            organization::assignments::resign_position(db, actor, text_field(&input, "position"))
+                .await?,
         ),
         ("PUT", "member/profile") => (
             StatusCode::OK,
@@ -102,6 +135,15 @@ pub(crate) async fn dispatch_write(
             StatusCode::CREATED,
             product::evidence::save_manual_evidence(db, &actor.id, &actor.role, None, input)
                 .await?,
+        ),
+        ("DELETE", _) if path.starts_with("product/evidence/") => (
+            StatusCode::OK,
+            product::remove_evidence::delete_own_evidence(
+                db,
+                actor,
+                after(path, "product/evidence/"),
+            )
+            .await?,
         ),
         ("PATCH", _) if path.starts_with("product/evidence/") => (
             StatusCode::OK,
@@ -185,4 +227,10 @@ fn after<'a>(path: &'a str, prefix: &str) -> &'a str {
 #[inline]
 fn between<'a>(path: &'a str, prefix: &str, suffix: &str) -> &'a str {
     &path[prefix.len()..path.len() - suffix.len()]
+}
+
+/// A string field of a JSON body, or "" (the action then rejects it as unknown).
+#[inline]
+fn text_field<'a>(input: &'a Value, field: &str) -> &'a str {
+    input.get(field).and_then(Value::as_str).unwrap_or_default()
 }

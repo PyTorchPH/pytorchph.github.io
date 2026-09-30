@@ -19,11 +19,11 @@ use super::{
     store::{scope, stored, view_not_found},
 };
 use crate::{
-    ApiResult,
+    ApiResult, events,
     evidence::integrity,
     feedback::attachments,
     identity::{accounts, session::Viewer},
-    leaderboard, member_profile,
+    leaderboard, member_profile, organization, skill_taxonomy,
 };
 use axum::{http::StatusCode, response::Response};
 use serde_json::{Value, json};
@@ -62,6 +62,9 @@ async fn special_read(
             Some(json!({"available": member::username_available(db, &actor.id, &username).await?}))
         }
         "feedback" => Some(feedback::read_feedback(db, actor, query).await?),
+        "officer/organization/members" => {
+            Some(organization::chart::assignable_members(db, &query_param(query, "q")).await?)
+        }
         _ => None,
     })
 }
@@ -93,6 +96,10 @@ async fn computed_view(
         "member/accounts" => accounts::list(db, actor).await?,
         "member/profile" => member_profile::read_profile(db, actor).await?,
         "officer/demographics" => member_profile::demographics(db).await?,
+        "officer/organization" => organization::chart::org_chart(db, actor).await?,
+        "officer/events" => events::delete::officer_event_list(db, actor).await?,
+        "member/skill-tally" => skill_taxonomy::skill_tally(db).await?,
+        "officer/skills/raw" => raw_skills_for(db, actor).await?,
         _ => return Ok(None),
     };
     Ok(Some(value))
@@ -143,4 +150,16 @@ fn key_with_query(key: &str, query: Option<&str>) -> String {
     query
         .map(|query| format!("{key}?{query}"))
         .unwrap_or_else(|| key.to_owned())
+}
+
+/// Raw skill words (no member identities) for the client-side compiler; only Technology
+/// department officers receive the list.
+async fn raw_skills_for(db: &SqlitePool, actor: &Viewer) -> ApiResult<Value> {
+    if !skill_taxonomy::can_compile(db, actor).await? {
+        return Ok(json!({"canCompile": false, "raw": []}));
+    }
+    let raw = skill_taxonomy::raw_skill_counts(db).await?;
+    Ok(
+        json!({"canCompile": true, "raw": raw.into_iter().map(|(raw, members)| json!({"raw": raw, "members": members})).collect::<Vec<_>>()}),
+    )
 }

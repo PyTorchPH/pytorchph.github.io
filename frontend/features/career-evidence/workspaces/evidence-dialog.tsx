@@ -13,7 +13,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn } from "react-hook-form";
-import { AlertTriangle, Bot, Check, Sparkles, UserCheck } from "lucide-react";
+import { Trash2, AlertTriangle, Bot, Check, Sparkles, UserCheck } from "lucide-react";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Input, Label } from "@pytorch-ph/design-system/input";
@@ -28,10 +28,12 @@ type EvidenceDialogProps = {
   canWrite: boolean;
   onClose: () => void;
   onSave: (item: EvidenceItem) => Promise<void>;
+  /** Deletes a saved achievement (and any points it earned); absent for unsaved drafts. */
+  onDelete?: (item: EvidenceItem) => Promise<void>;
 };
 
 // Mental model: the form holds the member's facts; AI may propose edits, but only "Save & approve" commits them.
-export function EvidenceDialog({ item, canWrite, onClose, onSave }: EvidenceDialogProps) {
+export function EvidenceDialog({ item, canWrite, onClose, onSave, onDelete }: EvidenceDialogProps) {
   const editor = useEvidenceDraft(item, onSave, onClose);
   return (
     <AppDialog
@@ -53,7 +55,7 @@ export function EvidenceDialog({ item, canWrite, onClose, onSave }: EvidenceDial
               {editor.saveError}
             </p>
           )}
-          <SaveBar canWrite={canWrite} editor={editor} onClose={onClose} />
+          <SaveBar canWrite={canWrite} editor={editor} onClose={onClose} onDelete={onDelete && (() => onDelete(item))} />
         </div>
       </div>
     </AppDialog>
@@ -343,9 +345,21 @@ function AiProposalPanel({ editor }: { editor: EvidenceEditor }) {
   );
 }
 
-function SaveBar({ editor, canWrite, onClose }: { editor: EvidenceEditor; canWrite: boolean; onClose: () => void }) {
+type SaveBarProps = { editor: EvidenceEditor; canWrite: boolean; onClose: () => void; onDelete?: () => Promise<void> };
+
+function SaveBar({ editor, canWrite, onClose, onDelete }: SaveBarProps) {
+  const [deleting, setDeleting] = useState(false);
+  // Deleting is final: the achievement leaves the gallery and any points it earned are taken back.
+  const remove = async () => {
+    if (!onDelete || !confirm("Delete this achievement? Any points it earned are taken back. This cannot be undone.")) return;
+    setDeleting(true);
+    try { await onDelete(); } finally { setDeleting(false); }
+  };
   return (
     <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
+      {onDelete && <Button className="mr-auto" disabled={!canWrite || deleting || editor.saving} onClick={() => void remove()} variant="ghost">
+        <Trash2 size={16} />{deleting ? "Deleting…" : "Delete"}
+      </Button>}
       <Button onClick={onClose} variant="ghost">
         Cancel
       </Button>

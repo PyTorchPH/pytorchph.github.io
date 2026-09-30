@@ -311,3 +311,68 @@ async fn approved_manual_evidence_enters_the_officer_review_queue() {
     .await;
     assert_eq!(count(&state.db, "SELECT COUNT(*) FROM evidence_claims WHERE title='Image classifier v2' AND status='approved'").await, 1, "reviewed claims are final");
 }
+
+#[tokio::test]
+async fn a_member_deletes_their_own_achievement_and_its_points_are_revoked() {
+    let (state, officer_headers, _, member_id) = fixture().await;
+    let headers = member_session(&state, &officer_headers, &member_id, &"3".repeat(64)).await;
+    let item = serde_json::json!({"item": {"title": "Built a PyTorch demo", "sourceUrl": "https://github.com/example/demo", "description": "A demo"}, "approve": true});
+    let (status, created) = portal_call(
+        &state,
+        &headers,
+        Method::POST,
+        "/portal/api/product/evidence",
+        item,
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    let id: String = sqlx::query_scalar("SELECT id FROM evidence_claims WHERE member_id = ?")
+        .bind(&member_id)
+        .fetch_one(&state.db)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO point_ledger(id,member_id,source_type,source_id,delta,reason,created_at) VALUES ('p1',?,'verified_evidence',?,30,'officer_verified','2026-09-30')")
+        .bind(&member_id).bind(&id).execute(&state.db).await.unwrap();
+
+    // Another member cannot delete it: it is not in their own list.
+    let (other_status, _) = portal_call(
+        &state,
+        &officer_headers,
+        Method::DELETE,
+        &format!("/portal/api/product/evidence/{id}"),
+        serde_json::Value::Null,
+    )
+    .await;
+    assert_eq!(other_status, StatusCode::NOT_FOUND);
+
+    let (status, reply) = portal_call(
+        &state,
+        &headers,
+        Method::DELETE,
+        &format!("/portal/api/product/evidence/{id}"),
+        serde_json::Value::Null,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{reply}");
+    assert_eq!(reply["pointsRevoked"], 30);
+    assert_eq!(
+        count(&state.db, "SELECT COUNT(*) FROM evidence_claims").await,
+        0
+    );
+    assert_eq!(
+        count(
+            &state.db,
+            "SELECT COUNT(*) FROM point_ledger WHERE source_type = 'verified_evidence'"
+        )
+        .await,
+        0
+    );
+    assert_eq!(
+        count(
+            &state.db,
+            "SELECT COUNT(*) FROM audit_events WHERE operation = 'evidence.member_deleted'"
+        )
+        .await,
+        1
+    );
+}

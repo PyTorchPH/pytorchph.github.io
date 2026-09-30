@@ -15,6 +15,7 @@ import {
   LockKeyhole,
   Menu,
   MessageCircle,
+  Network,
   Search,
   Settings,
   Shield,
@@ -55,6 +56,7 @@ const sharedNavItems: NavItem[] = [
 const officerNavItems: NavItem[] = [
   { href: "/admin/dashboard", label: "Command Center", icon: LayoutDashboard },
   { href: "/admin/events", label: "Event Workflow", icon: ClipboardList },
+  { href: "/admin/organization", label: "Organization", icon: Network },
   { href: "/admin/evidence", label: "Evidence Review", icon: Search },
   { href: "/reports", label: "Reports & Feedback", icon: Bot },
 ];

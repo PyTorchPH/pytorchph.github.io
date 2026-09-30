@@ -9,11 +9,14 @@
 //!   feedback      bug-report attachments
 //!   evidence      review, sanctions, appeals, manual evidence queue
 //!   leaderboard_visibility achievements visibility
+//!   event_deletion who may delete events, the cascade, and the audit snapshot
 //!   event_results official results and entrant rules
 //!   admission_queue RAM priority queue, disk spool, replay, recovery
 //!   member_profile reserved officer seats, onboarding profile, demographics
 //!   migrations    cascading deletes
+//!   organization  position delegation down the org chart
 //!   seed          sample members and demo fixtures
+//!   skill_taxonomy who may publish a compiled skill list, and the tally
 #![allow(clippy::too_many_lines)]
 use crate::{
     ApiError, AppState,
@@ -40,6 +43,7 @@ use std::{sync::Arc, time::Duration};
 use uuid::Uuid;
 
 mod admission_queue;
+mod event_deletion;
 mod event_results;
 mod evidence;
 mod feedback;
@@ -48,8 +52,10 @@ mod leaderboard_visibility;
 mod member_profile;
 mod migrations;
 mod officer;
+mod organization;
 mod portal_gateway;
 mod seed;
+mod skill_taxonomy;
 
 async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
     let db = SqlitePoolOptions::new()

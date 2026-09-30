@@ -23,6 +23,7 @@ import { AppShell } from "@pytorch-ph/domain-client/navigation";
 import { DeveloperDiagnostics } from "@pytorch-ph/domain-client/organization";
 import { useCapabilities } from "@pytorch-ph/domain-client/onboarding";
 import { MemberDemographics } from "@pytorch-ph/domain-client/member-profile";
+import { SkillCompiler } from "./skill-compiler/render-skill-compiler";
 import { ActivityTrendChart, DepartmentLoadChart } from "@pytorch-ph/domain-client/organization";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Card } from "@pytorch-ph/design-system/card";
@@ -104,6 +105,7 @@ function DashboardContent() {
   return <div className="space-y-4"><OperationsHero data={resolved} error={error} loading={!data && !error} /><MetricRibbon module={analytics.metrics} />
     <section className="grid gap-4 xl:grid-cols-2"><Card className="border-border bg-surface" data-tour="dashboard-activity"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-bold tracking-[-0.02em] text-ink">Weekly activity pulse</h2><p className="mt-1 text-sm text-muted">Events and member contributions tracked by day.</p></div><div className="flex flex-wrap gap-2"><ModuleBadge state={analytics.activity.state} />{analytics.activity.state !== "unavailable" && <Badge variant="orange"><Zap size={14} />Engagement</Badge>}</div></div><ActivityTrendChart data={analytics.activity.data} state={analytics.activity.state} /></Card><Card className="border-border bg-surface"><div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="font-bold tracking-[-0.02em] text-ink">Department load</h2><p className="mt-1 text-sm text-muted">Open work versus approved capacity.</p></div><div className="flex items-center gap-2"><ModuleBadge state={analytics.departments.state} /><ArrowUpRight className="text-accent" size={20} /></div></div><DepartmentLoadChart data={analytics.departments.data} state={analytics.departments.state} /></Card></section>
     <MemberDemographics />
+    <SkillCompiler />
     <DeveloperDiagnostics data={resolved.diagnostics} />
   </div>;
 }
