@@ -7,8 +7,10 @@
 //!   reads       read_event, list_events, list_entrants
 //!   attendance  import_google_form, read_attendance: points for verified form responses
 //!   records     shared Created reply, audit rows and point-ledger entries
+//!   delete      delete_event (President, admin, or creator) with a surviving audit snapshot
 pub(crate) mod attendance;
 mod create;
+pub(crate) mod delete;
 mod entrants;
 mod reads;
 mod records;

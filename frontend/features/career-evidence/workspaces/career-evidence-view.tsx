@@ -67,6 +67,7 @@ export function CareerEvidenceView({ data, canWrite, canAutomate }: { data: Prod
           canWrite={canWrite}
           item={gallery.selected}
           onClose={() => gallery.setSelected(null)}
+          onDelete={isNewItem(gallery.selected) ? undefined : gallery.remove}
           onSave={gallery.persist}
         />
       )}
@@ -109,7 +110,18 @@ function useEvidenceGallery(initialItems: EvidenceItem[]) {
 
   const startManual = () => setSelected(newManualItem());
 
-  return { items, selected, setSelected, actionError, uploading, uploadRef, persist, upload, startManual };
+  const remove = async (item: EvidenceItem) => {
+    setActionError("");
+    try {
+      await deleteEvidenceItem(item.id);
+      setItems((current) => current.filter((entry) => entry.id !== item.id));
+      setSelected(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not delete the achievement.");
+    }
+  };
+
+  return { items, selected, setSelected, actionError, uploading, uploadRef, persist, upload, startManual, remove };
 }
 
 type Gallery = ReturnType<typeof useEvidenceGallery>;
@@ -129,6 +141,15 @@ async function saveEvidenceItem(item: EvidenceItem, creating: boolean): Promise<
   if (!response.ok)
     throw new Error(payload.error || "Could not save evidence.");
   return payload.item as EvidenceItem;
+}
+
+// The API removes the item from the member's own gallery, its review claim, and its points.
+async function deleteEvidenceItem(id: string): Promise<void> {
+  const response = await fetch(`/api/product/evidence/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || "Could not delete the achievement.");
+  }
 }
 
 // Mental model: validate the file, turn it into the body this deployment accepts, then upload it.

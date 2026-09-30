@@ -6,6 +6,7 @@
 //!   opportunities   manually tracked job opportunities
 //!   evidence        manual career evidence items (approved ones go to officer review)
 //!   photo           evidence photos stored as owner-only media
+//!   remove_evidence a member deletes their own achievement; its claim and points go with it
 //!   sources         connect, sync or disconnect an evidence source
 //!   analysis        the static, consent-gated evidence review
 pub(crate) mod analysis;
@@ -13,4 +14,5 @@ pub(crate) mod demo_actions;
 pub(crate) mod evidence;
 pub(crate) mod opportunities;
 pub(crate) mod photo;
+pub(crate) mod remove_evidence;
 pub(crate) mod sources;

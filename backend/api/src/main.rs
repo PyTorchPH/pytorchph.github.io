@@ -18,6 +18,7 @@
 //!   companies    company directory (Wikidata, GLEIF, PSE, curated) plus member-added companies
 //!   reference_data  shared seed versioning and keyword search for the directories above
 //!   seed         demo fixtures and sample members
+//!   skill_taxonomy  client-compiled normalized skills (Technology dept) and the community tally
 mod app;
 mod companies;
 mod events;
@@ -35,6 +36,7 @@ mod programs;
 mod reference_data;
 mod schools;
 mod seed;
+mod skill_taxonomy;
 #[cfg(test)]
 mod tests;
 
