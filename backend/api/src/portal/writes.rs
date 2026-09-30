@@ -12,7 +12,7 @@
 //!   └─ between              path middle between a prefix and a suffix
 use super::{feedback, member, operations, product};
 use crate::{
-    ApiError, ApiResult, AppState, events,
+    ApiError, ApiResult, AppState, collab_mail, events,
     evidence::integrity,
     feedback::attachments,
     identity::{accounts, session::Viewer},
@@ -58,6 +58,21 @@ pub(crate) async fn dispatch_write(
         ("DELETE", _) if path.starts_with("officer/events/") => (
             StatusCode::OK,
             events::delete::delete_event(db, actor, after(path, "officer/events/")).await?,
+        ),
+        ("POST", "officer/mail-collab") => (
+            StatusCode::CREATED,
+            collab_mail::create::create_draft(db, actor, &input).await?,
+        ),
+        (_, _) if path.starts_with("officer/mail-collab/") => (
+            StatusCode::OK,
+            collab_mail_action(
+                db,
+                actor,
+                method,
+                after(path, "officer/mail-collab/"),
+                &input,
+            )
+            .await?,
         ),
         ("POST", "officer/skills/taxonomy") => (
             StatusCode::CREATED,
@@ -233,4 +248,31 @@ fn between<'a>(path: &'a str, prefix: &str, suffix: &str) -> &'a str {
 #[inline]
 fn text_field<'a>(input: &'a Value, field: &str) -> &'a str {
     input.get(field).and_then(Value::as_str).unwrap_or_default()
+}
+
+// officer/mail-collab/{draft}/{action}[/{target}] → the collaborative mail action that owns it.
+async fn collab_mail_action(
+    db: &sqlx::SqlitePool,
+    actor: &Viewer,
+    method: &str,
+    rest: &str,
+    input: &Value,
+) -> ApiResult<Value> {
+    use collab_mail::{chain, review};
+    let parts: Vec<&str> = rest.split('/').collect();
+    match (method, parts.as_slice()) {
+        ("PUT", [draft, "sections", section]) => {
+            review::edit_section(db, actor, draft, section, input).await
+        }
+        ("POST", [draft, "sections", section, "confirm"]) => {
+            review::confirm_section(db, actor, draft, section, input).await
+        }
+        ("PUT", [draft, "tags", tag]) => review::edit_tag(db, actor, draft, tag, input).await,
+        ("POST", [draft, "questions", question]) => {
+            review::answer_question(db, actor, draft, question, input).await
+        }
+        ("POST", [draft, "approve"]) => chain::approve_step(db, actor, draft, input).await,
+        ("POST", [draft, "send"]) => chain::send_draft(db, actor, draft, input).await,
+        _ => Err(ApiError(StatusCode::NOT_FOUND, "Unknown email action")),
+    }
 }

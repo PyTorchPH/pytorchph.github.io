@@ -19,7 +19,7 @@ use super::{
     store::{scope, stored, view_not_found},
 };
 use crate::{
-    ApiResult, events,
+    ApiResult, collab_mail, events,
     evidence::integrity,
     feedback::attachments,
     identity::{accounts, session::Viewer},
@@ -98,6 +98,10 @@ async fn computed_view(
         "officer/demographics" => member_profile::demographics(db).await?,
         "officer/organization" => organization::chart::org_chart(db, actor).await?,
         "officer/events" => events::delete::officer_event_list(db, actor).await?,
+        "officer/mail-collab" => collab_mail::view::list_drafts(db, actor).await?,
+        _ if path.starts_with("officer/mail-collab/") => {
+            collab_mail::view::draft_view(db, actor, &path["officer/mail-collab/".len()..]).await?
+        }
         "member/skill-tally" => skill_taxonomy::skill_tally(db).await?,
         "officer/skills/raw" => raw_skills_for(db, actor).await?,
         _ => return Ok(None),

@@ -3,6 +3,7 @@
 //! Module map:
 //!   mod.rs        shared fixtures: fixture, member_session, portal_call, portal_get, send,
 //!                 count, table_counts, claim, echo, admission_app, tight
+//!   collab_mail   sectioned event emails: scoping, cache hits/misses, chain, send
 //!   identity      sessions, email sign-up, account deletion, verified accounts
 //!   portal_gateway gateway settings, officer elevation, owner-only media
 //!   officer       Command Center analytics
@@ -43,6 +44,7 @@ use std::{sync::Arc, time::Duration};
 use uuid::Uuid;
 
 mod admission_queue;
+mod collab_mail;
 mod event_deletion;
 mod event_results;
 mod evidence;

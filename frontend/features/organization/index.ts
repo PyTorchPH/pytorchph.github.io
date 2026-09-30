@@ -6,3 +6,4 @@ export * from "./render-kanban";
 export * from "./render-officer-desk";
 export * from "./delegation/render-org-chart";
 export * from "./skill-compiler/render-skill-compiler";
+export * from "./collab-mail/render-draft";
