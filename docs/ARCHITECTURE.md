@@ -11,7 +11,7 @@ backend/legacy-python/          retained Python reference engine, operator tools
 frontend/public-site/           public Jekyll website served at https://pytorch.ph
 frontend/portal/                Next.js member/officer portal entry points
 frontend/portal-static/         static export of the portal served under /portal/ on GitHub Pages
-frontend/extension/             Chrome MV3 evidence extension (local AI keys stay here)
+extension/                      Chrome MV3 evidence extension (local AI keys stay here)
 frontend/features/              browser-visible feature components and interactions
 frontend/contracts/             shared request, response, event, and validation shapes
 frontend/design-system/         reusable visual primitives

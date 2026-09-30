@@ -31,7 +31,7 @@ test("client and protocol packages never import server implementation", () => {
 });
 
 test("no workspace code imports Supabase; the Rust API is the only backend", () => {
-  const offenders = ["frontend/features", "frontend/contracts", "frontend/portal", "frontend/portal-static", "frontend/extension", "development"]
+  const offenders = ["frontend/features", "frontend/contracts", "frontend/portal", "frontend/portal-static", "extension", "development"]
     .flatMap((path) => importsFrom(join(root, path), ["@supabase/"]));
   assert.deepEqual(offenders, []);
 });

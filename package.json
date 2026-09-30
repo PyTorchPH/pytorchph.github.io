@@ -6,7 +6,7 @@
   },
   "workspaces": [
     "development/academic-records",
-    "frontend/extension",
+    "extension",
     "frontend/portal",
     "frontend/features",
     "development/local-server",

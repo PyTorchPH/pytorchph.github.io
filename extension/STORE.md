@@ -22,7 +22,7 @@ Lets a PyTorch PH member send evidence of their own work (their GitHub, LinkedIn
 - Stops and hands control back to the member at login walls, CAPTCHAs, checkpoints and rate limits.
 
 ## Upload steps
-1. `npm run package --workspace @pytorch-ph/evidence-extension` → `frontend/extension/dist/pytorch-ph-evidence-collector-<version>.zip`.
+1. `npm run package --workspace @pytorch-ph/evidence-extension` → `extension/dist/pytorch-ph-evidence-collector-<version>.zip`.
 2. Chrome Web Store Developer Dashboard → Items → Upload new item (or Package → Upload new package for an update) → choose the zip.
 3. Store listing: use this file's single purpose and data-use text; 128px icon is `icons/icon-128.png`; add at least one 1280×800 screenshot of the portal's Settings → connected accounts.
 4. Privacy practices: declare "Website content" and "Authentication information" (the member's own AI API key, stored locally and sent only to their chosen AI provider); certify data is used only for the single purpose and not sold or transferred.

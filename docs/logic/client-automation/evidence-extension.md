@@ -1,7 +1,7 @@
 ---
 logic_id: client-automation.evidence-extension
 code_paths:
-  - frontend/extension
+  - extension
   - frontend/features/client-automation
 tests:
   - frontend/portal/tests/extension-contracts.test.ts

@@ -33,7 +33,7 @@ test("extension envelopes are strict, bounded, and domain scoped", () => {
 });
 
 test("collector classifies access before inventory and emits a server-verifiable hash", () => {
-  const source = readFileSync(new URL("../../evidence-extension/src/source-collector.ts", import.meta.url), "utf8");
+  const source = readFileSync(new URL("../../../extension/src/source-collector.ts", import.meta.url), "utf8");
   const gate = source.indexOf("const access = accessState()");
   const inventory = source.indexOf("const items = candidates()");
   assert.ok(gate >= 0 && inventory > gate);

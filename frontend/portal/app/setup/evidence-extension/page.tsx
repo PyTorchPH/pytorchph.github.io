@@ -9,7 +9,7 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const steps = [
   ["Build the extension", "Run npm run build --workspace @pytorch-ph/evidence-extension from the repository root.", "/setup/evidence-extension/build.svg"],
   ["Open Chrome extensions", "Enter chrome://extensions in Chrome and switch Developer mode on.", "/setup/evidence-extension/developer-mode.svg"],
-  ["Load the unpacked build", "Choose Load unpacked, then select frontend/extension/dist.", "/setup/evidence-extension/load-unpacked.svg"],
+  ["Load the unpacked build", "Choose Load unpacked, then select extension/dist.", "/setup/evidence-extension/load-unpacked.svg"],
   ["Return and verify", "Allow the listed Facebook, LinkedIn, and GitHub sites, then refresh the portal. Detection is automatic.", "/setup/evidence-extension/verify.svg"],
 ] as const;
 

@@ -51,7 +51,7 @@ No live deployment or data migration is included in this adaptation.
 | `frontend/public-site` | Public website (Jekyll fork of the PyTorch Korea and pytorch.org sites) |
 | `frontend/portal` | Member/officer portals |
 | `frontend/portal-static` | Static portal demo served under `/portal/` on GitHub Pages |
-| `frontend/extension` | Chrome evidence extension |
+| `extension` | Chrome evidence extension |
 | `frontend/features`, `frontend/contracts` | Client features and shared request/response shapes |
 | `frontend/design-system` | Shared visual components |
 | `development` | Local launchers, local server, and optional automation tools |
