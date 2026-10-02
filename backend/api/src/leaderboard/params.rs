@@ -3,11 +3,11 @@
 //! Module map:
 //!   query_param   one decoded value from an optional query string
 //!   page          1-based page number (default 1)
-//!   page_size     rows per page (default 25, at most MAX_PAGE_SIZE)
+//!   page_size     rows per page (default 10, at most MAX_PAGE_SIZE)
 //!   view          both / verified / pending (default both)
 
 const MAX_PAGE_SIZE: usize = 100;
-const DEFAULT_PAGE_SIZE: usize = 25;
+const DEFAULT_PAGE_SIZE: usize = 10;
 
 pub(super) fn query_param(query: Option<&str>, name: &str) -> Option<String> {
     url::form_urlencoded::parse(query.unwrap_or_default().as_bytes())

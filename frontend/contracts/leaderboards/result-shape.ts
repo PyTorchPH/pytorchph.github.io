@@ -19,7 +19,7 @@ export type LeaderboardProfile = {
 export type LeaderboardPayload = {
   season: { slug: string; label: string; state: "active" | "completed"; startsAt: string; endsAt: string };
   entries: LeaderboardEntry[];
-  page: number; pageSize: number; total: number;
+  page: number; pageSize: number; total: number; totalPages: number; revision: string;
   skills: Array<{ slug: string; label: string }>;
   seasons: Array<{ slug: string; label: string; state: "active" | "completed" }>;
   // Share (0-100) of ranked members holding each verified skill.

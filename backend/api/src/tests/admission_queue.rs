@@ -2,6 +2,34 @@
 use super::*;
 
 #[tokio::test]
+async fn repeated_writes_bound_how_long_a_later_read_is_deferred() {
+    let fence = admission::ConsistencyFence::new();
+    let first_read = fence.read().await.expect("first read starts");
+    let writers: Vec<_> = (0..admission::MAX_READ_DEFERRALS)
+        .map(|_| {
+            let fence = fence.clone();
+            tokio::spawn(async move { fence.write().await })
+        })
+        .collect();
+    tokio::time::sleep(Duration::from_millis(50)).await;
+
+    let deferrals = match fence.read().await {
+        Ok(_) => panic!("a later read must not pass queued writes"),
+        Err(deferrals) => deferrals,
+    };
+    assert_eq!(deferrals, admission::MAX_READ_DEFERRALS);
+
+    drop(first_read);
+    for writer in writers {
+        drop(writer.await.unwrap());
+    }
+    assert!(
+        fence.read().await.is_ok(),
+        "fresh reads resume after writes"
+    );
+}
+
+#[tokio::test]
 async fn gate_serves_waiters_by_priority_then_arrival() {
     let gate = admission::Gate::new(1, 10);
     let admission::Admit::Now(first) = gate.enter(3, true) else {

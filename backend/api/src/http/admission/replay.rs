@@ -89,6 +89,12 @@ pub async fn run_next(admission: &Arc<Admission>, app: &axum::Router) -> ApiResu
     let Some(job) = next_job(db).await? else {
         return Ok(false);
     };
+    let is_write = job.method != "GET";
+    let consistency = if is_write {
+        admission.consistency.write().await
+    } else {
+        admission.consistency.replay_read().await
+    };
     let Some(permit) = admission.gate.acquire(slot_priority(job.class)).await else {
         return Ok(true);
     };
@@ -103,11 +109,15 @@ pub async fn run_next(admission: &Arc<Admission>, app: &axum::Router) -> ApiResu
         Some(response) => store_response(db, &id, &finished, response).await?,
         None => mark_failed(db, &id, &finished).await?,
     }
+    if is_write {
+        admission.consistency.complete_spooled_write();
+    }
+    drop(consistency);
     Ok(true)
 }
 
 async fn next_job(db: &SqlitePool) -> ApiResult<Option<SpooledRequest>> {
-    let row: Option<SpoolRow> = sqlx::query_as("SELECT id, priority, member_id, method, path, content_type, origin, body FROM request_spool WHERE status = 'queued' ORDER BY priority, created_at LIMIT 1")
+    let row: Option<SpoolRow> = sqlx::query_as("SELECT id, priority, member_id, method, path, content_type, origin, body FROM request_spool WHERE status = 'queued' ORDER BY CASE WHEN priority IN (2,3) THEN 2 ELSE priority END, created_at LIMIT 1")
         .fetch_optional(db)
         .await
         .map_err(internal)?;

@@ -25,6 +25,7 @@ pub(crate) async fn run() -> StartupResult<()> {
     let state = build_state(db.clone())?;
     tokio::spawn(jobs::run_job_worker(db));
     let gate = Admission::new(admission_config, state.clone());
+    gate.restore_consistency().await?;
     let app = routes::router(state, gate.clone())?;
     for _ in 0..gate.config.spool_workers {
         tokio::spawn(admission::spool_worker(gate.clone(), app.clone()));

@@ -19,6 +19,7 @@ use super::{
 use crate::{ApiResult, identity::session::Viewer, internal};
 use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
 
 // Mental model: rank everyone in the chosen season first, so rank numbers never change when
@@ -39,6 +40,8 @@ pub(crate) async fn member_leaderboard(
     let all = standings(db, season, now).await?;
     let skill_mix = skill_mix(&skills, &all);
     let ranked = rank_and_filter(all, skill_label.as_deref());
+    let revision = leaderboard_revision(&ranked);
+    let total_pages = ranked.len().div_ceil(page_size);
     let entries: Vec<Value> = page_of(&ranked, page, page_size)
         .map(|(rank, entry)| entry_json(entry, *rank, &viewer.id, &tiers))
         .collect();
@@ -49,6 +52,8 @@ pub(crate) async fn member_leaderboard(
         "page": page,
         "pageSize": page_size,
         "total": ranked.len(),
+        "totalPages": total_pages,
+        "revision": revision,
         "skills": skills.iter().map(skill_json).collect::<Vec<_>>(),
         "seasons": all_seasons.iter().map(|season| season_summary_json(season, now)).collect::<Vec<_>>(),
         "skillMix": skill_mix,
@@ -100,6 +105,26 @@ fn rank_and_filter(all: Vec<Entry>, skill_label: Option<&str>) -> Vec<(usize, En
         .collect()
 }
 
+fn leaderboard_revision(ranked: &[(usize, Entry)]) -> String {
+    let mut digest = Sha256::new();
+    for (rank, entry) in ranked {
+        digest.update(rank.to_le_bytes());
+        digest.update(entry.member_id.as_bytes());
+        digest.update([0]);
+        digest.update(entry.label.as_bytes());
+        digest.update([0]);
+        digest.update(entry.verified.to_le_bytes());
+        digest.update(entry.pending.to_le_bytes());
+        digest.update(entry.streak.to_le_bytes());
+        for skill in &entry.skills {
+            digest.update(skill.as_bytes());
+            digest.update([0]);
+        }
+        digest.update([entry.anonymous as u8, entry.shares_achievements as u8]);
+    }
+    hex::encode(digest.finalize())
+}
+
 #[inline]
 fn page_of(
     ranked: &[(usize, Entry)],
@@ -120,4 +145,29 @@ fn season_summary_json(season: &Season, now: DateTime<Utc>) -> Value {
 #[inline]
 fn skill_json((slug, label): &(String, String)) -> Value {
     json!({"slug": slug, "label": label})
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn entry(points: i64) -> Entry {
+        Entry {
+            member_id: "member-1".into(),
+            label: "Member".into(),
+            verified: points,
+            pending: 0,
+            streak: 1,
+            skills: vec!["Rust".into()],
+            anonymous: false,
+            shares_achievements: true,
+        }
+    }
+
+    #[test]
+    fn revision_changes_when_a_ranked_value_changes() {
+        let first = leaderboard_revision(&[(1, entry(10))]);
+        let second = leaderboard_revision(&[(1, entry(11))]);
+        assert_ne!(first, second);
+    }
 }

@@ -15,6 +15,7 @@
 //!   status                 GET /queue/{id} and the /health figures
 //!   Config::from_env       API_* limits
 //!   Admission::new         wires the gate, config and state together
+mod consistency;
 mod gate;
 mod replay;
 mod spool;
@@ -29,6 +30,8 @@ use axum::{
 };
 use std::sync::{Arc, OnceLock};
 
+#[cfg(test)]
+pub(crate) use consistency::{ConsistencyFence, MAX_READ_DEFERRALS};
 pub(crate) use gate::{Admit, Gate};
 pub(crate) use replay::{recover, replay_member, spool_worker};
 // Driven step by step by the tests.
@@ -54,6 +57,7 @@ pub struct Config {
 
 pub struct Admission {
     pub gate: Arc<Gate>,
+    consistency: Arc<consistency::ConsistencyFence>,
     pub config: Config,
     pub state: Arc<AppState>,
 }
@@ -61,18 +65,28 @@ pub struct Admission {
 // The running admission, so /health can report the gate without routing state.
 static CURRENT: OnceLock<Arc<Admission>> = OnceLock::new();
 
-/// Mental model: bypass traffic and replays pass straight through; everything else takes a
-/// slot now, waits in the RAM heap, or — when the heap is full and the class may spill — is
-/// written to disk and answered 202.
+/// Mental model: auth and bypass traffic preserve their priority. Data reads and writes first
+/// cross a write-preferring consistency fence, then take a slot, wait, or spill to disk.
 pub async fn admit(
     State(admission): State<Arc<Admission>>,
     request: Request,
     next: Next,
 ) -> Response {
     let class = priority(request.method(), request.uri().path());
+    let is_read = request.method() == Method::GET;
     if class == BYPASS || is_replay() {
         return next.run(request).await;
     }
+    let consistency = if class >= READ && is_read {
+        match admission.consistency.read().await {
+            Ok(guard) => Some(guard),
+            Err(deferrals) => return consistency::deferred_read_response(deferrals),
+        }
+    } else if class >= READ {
+        Some(admission.consistency.write().await)
+    } else {
+        None
+    };
     let permit = match admission.gate.enter(class, may_spill(class)) {
         Admit::Now(permit) => permit,
         Admit::Wait(rx) => match rx.await {
@@ -90,6 +104,7 @@ pub async fn admit(
     };
     let response = next.run(request).await;
     drop(permit);
+    drop(consistency);
     response
 }
 
@@ -163,10 +178,15 @@ impl Admission {
     pub fn new(config: Config, state: Arc<AppState>) -> Arc<Self> {
         let admission = Arc::new(Self {
             gate: Gate::new(config.max_inflight, config.ram_queue_depth),
+            consistency: consistency::ConsistencyFence::new(),
             config,
             state,
         });
         let _ = CURRENT.set(admission.clone());
         admission
+    }
+
+    pub async fn restore_consistency(&self) -> Result<(), sqlx::Error> {
+        self.consistency.restore(&self.state.db).await
     }
 }

@@ -45,6 +45,9 @@ pub(super) async fn spool(
     }
     let member = owner_of(admission, &parts.headers).await;
     let id = store_request(admission, class, &parts, member, &body).await?;
+    if parts.method != axum::http::Method::GET {
+        admission.consistency.register_spooled_write();
+    }
     tracing::info!(component = "admission", operation = "spool", priority = class, method = %parts.method, outcome = "queued", "admission.request_spooled");
     Ok(accepted(&id))
 }
