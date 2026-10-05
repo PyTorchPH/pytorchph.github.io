@@ -1,6 +1,6 @@
 //! Position delegation: only the holder of the position directly above may assign or remove.
 use super::*;
-use crate::organization::{assignments, chart};
+use crate::organization::{assignments, authorization, chart};
 
 async fn person(db: &sqlx::SqlitePool, name: &str, role: &str) -> session::Viewer {
     let id = Uuid::new_v4().to_string();
@@ -33,6 +33,76 @@ fn status_of(result: crate::ApiResult<serde_json::Value>) -> StatusCode {
         Ok(_) => StatusCode::OK,
         Err(ApiError(status, _)) => status,
     }
+}
+
+async fn authority(
+    db: &sqlx::SqlitePool,
+    actor: &session::Viewer,
+    acting_position: &str,
+    resource_scope: &str,
+) -> authorization::AuthorityDecision {
+    let mut tx = db.begin().await.unwrap();
+    let decision =
+        authorization::resolve_position_authority(&mut tx, actor, acting_position, resource_scope)
+            .await
+            .unwrap();
+    tx.commit().await.unwrap();
+    decision
+}
+
+#[tokio::test]
+async fn authority_uses_one_continuous_path_from_a_held_position() {
+    let (state, ..) = fixture().await;
+    let president = person(&state.db, "President Authority", "officer").await;
+    seat(&state.db, &president, "president").await;
+
+    let decision = authority(&state.db, &president, "president", "engineering_lead").await;
+
+    assert!(decision.allowed);
+    assert_eq!(decision.reason, "continuous_authority_path");
+    assert_eq!(
+        decision.hierarchy_path,
+        ["president", "cto", "engineering_lead"]
+    );
+    assert!(!decision.decision_id.is_empty());
+}
+
+#[tokio::test]
+async fn authority_denies_a_position_the_actor_does_not_hold() {
+    let (state, ..) = fixture().await;
+    let officer = person(&state.db, "Unseated Officer", "officer").await;
+
+    let decision = authority(&state.db, &officer, "president", "engineering_lead").await;
+
+    assert!(!decision.allowed);
+    assert_eq!(decision.reason, "actor_does_not_hold_acting_position");
+    assert!(decision.hierarchy_path.is_empty());
+}
+
+#[tokio::test]
+async fn authority_does_not_union_unrelated_assignments() {
+    let (state, ..) = fixture().await;
+    let executive = person(&state.db, "Two Seat Executive", "officer").await;
+    seat(&state.db, &executive, "cto").await;
+    seat(&state.db, &executive, "coo").await;
+
+    let decision = authority(&state.db, &executive, "cto", "operations_officer").await;
+
+    assert!(!decision.allowed);
+    assert_eq!(decision.reason, "no_single_authority_path");
+    assert!(decision.hierarchy_path.is_empty());
+}
+
+#[tokio::test]
+async fn authority_allows_the_position_owning_the_resource_scope() {
+    let (state, ..) = fixture().await;
+    let lead = person(&state.db, "Engineering Lead", "officer").await;
+    seat(&state.db, &lead, "engineering_lead").await;
+
+    let decision = authority(&state.db, &lead, "engineering_lead", "engineering_lead").await;
+
+    assert!(decision.allowed);
+    assert_eq!(decision.hierarchy_path, ["engineering_lead"]);
 }
 
 #[tokio::test]

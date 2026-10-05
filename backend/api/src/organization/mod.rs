@@ -7,6 +7,7 @@
 //!   role_sync      account role and mail approval roles follow the positions held
 //!   chart          the Organization page view and member search for assigning
 pub(crate) mod assignments;
+pub(crate) mod authorization;
 pub(crate) mod chart;
 pub(crate) mod reservations;
 pub(crate) mod role_sync;

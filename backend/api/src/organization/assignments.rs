@@ -5,11 +5,11 @@
 //!   remove_holder     the actor manages the position → the member leaves it
 //!   resign_position   a member leaves their own position
 //!   └─ each one: authorize → change member_positions → sync_member_role → log, in one transaction
-//!       ├─ ensure_manages      the delegation rule (tree::manages); no admin bypass
+//!       ├─ ensure_manages      direct-parent rule plus a recorded authority decision
 //!       ├─ ensure_seat_free    a 'one' seat must be empty
 //!       ├─ member_name         for the audit log (kept after the member is gone)
 //!       └─ log_change          position_assignment_log row
-use super::{role_sync::sync_member_role, tree};
+use super::{authorization, role_sync::sync_member_role, tree};
 use crate::{ApiError, ApiResult, identity::session::Viewer, internal};
 use axum::http::StatusCode;
 use serde_json::{Value, json};
@@ -129,7 +129,16 @@ async fn ensure_manages(tx: &mut Tx<'_>, actor: &Viewer, position: &str) -> ApiR
     if tree::seats_of(tx, position).await?.is_none() {
         return Err(ApiError(StatusCode::NOT_FOUND, "Unknown position"));
     }
-    if tree::manages(tx, &actor.id, position).await? {
+    let directly_manages = tree::manages(tx, &actor.id, position).await?;
+    let Some(parent_position) = tree::parent_of(tx, position).await? else {
+        return Err(ApiError(
+            StatusCode::FORBIDDEN,
+            "The root position cannot be assigned through delegation",
+        ));
+    };
+    let decision =
+        authorization::resolve_position_authority(tx, actor, &parent_position, position).await?;
+    if directly_manages && decision.allowed {
         return Ok(());
     }
     tracing::warn!(
