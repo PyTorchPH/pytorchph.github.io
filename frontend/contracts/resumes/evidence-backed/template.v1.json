@@ -1,0 +1,54 @@
+{
+  "$schema": "./schema.v1.json",
+  "contract": "evidence-backed-resume/v1",
+  "documentId": "resume-jab-v1",
+  "subject": { "name": "John Andrew Balbarosa", "label": "Software Engineer", "email": "member@example.com", "location": "Philippines" },
+  "targets": [{ "id": "backend-engineer", "role": "Backend Engineer", "keywords": ["Rust", "Axum", "load testing"] }],
+  "sectionOrder": ["summary", "skills", "projects", "experience", "education"],
+  "entries": [{
+    "id": "project-gabaybigkas",
+    "section": "projects",
+    "title": "GabayBigkas",
+    "organization": "",
+    "dateLabel": "2026",
+    "summary": "Filipino pronunciation coaching platform.",
+    "skills": ["Rust", "Axum", "SQLite", "load testing"],
+    "claims": [{
+      "id": "claim-gabaybigkas-authenticated-read-load",
+      "claimType": "quantitative",
+      "canonicalText": "A staged authenticated-read load test completed 8,628 requests across 1 to 100 virtual users.",
+      "qualityClassifications": [{ "framework": "ISO/IEC 25010:2023", "characteristic": "performance efficiency" }],
+      "evidence": {
+        "maturity": "controlled_measured",
+        "status": "user_verified",
+        "resumeEligible": true,
+        "method": "Five approximately 15-second authenticated GET stages at 1, 10, 25, 50, and 100 virtual users under a 150 requests/s client cap.",
+        "metrics": [
+          { "name": "completed requests", "value": 8628, "unit": "requests", "scope": "all stages" },
+          { "name": "throughput", "value": 144.28, "unit": "requests/second", "scope": "100-VU stage" },
+          { "name": "p95 latency", "value": 86, "unit": "milliseconds", "scope": "100-VU stage" },
+          { "name": "HTTP errors", "value": 0, "unit": "errors", "scope": "all stages" }
+        ],
+        "artifacts": [
+          { "kind": "raw_result", "locator": "Agora-artifacts/.artifacts/benchmarks/learner-read-latest.json" },
+          { "kind": "presentation", "locator": "Agora-artifacts/docs/pitch/gabaybigkas-semi-finals.html" }
+        ],
+        "verification": { "verifier": "member" },
+        "limitations": ["Shared learner account and session.", "Read-only GET workload.", "The client cap does not establish maximum server capacity."]
+      },
+      "output": {
+        "include": true,
+        "renderedText": "Designed staged load tests for a Rust/Axum API, completing 8,628 authenticated reads across 1–100 virtual users; the 100-VU stage recorded 144.3 requests/s and 86 ms p95 latency with zero observed HTTP errors.",
+        "destinations": ["projects.highlights", "interview.answer"],
+        "targetIds": ["backend-engineer"],
+        "atsKeywords": ["Rust", "Axum", "load testing", "performance testing"]
+      }
+    }]
+  }],
+  "generationPolicy": { "quantitativeClaimsRequireEligibleEvidence": true, "preserveLimitations": true, "requireHumanReviewBeforeExport": true },
+  "metadata": {
+    "createdAt": "2026-10-09T00:00:00Z", "updatedAt": "2026-10-09T00:00:00Z",
+    "sources": ["https://www.iso.org/standard/78176.html", "https://www.iso.org/standard/35747.html", "https://jsonresume.org/schema"]
+  },
+  "extensions": {}
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pytorch-ph:evidence-backed-resume:1",
+  "title": "Evidence-backed resume contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "documentId", "subject", "targets", "sectionOrder", "entries", "generationPolicy", "metadata"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "contract": { "const": "evidence-backed-resume/v1" },
+    "documentId": { "$ref": "#/$defs/text" },
+    "subject": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "label", "email", "location"],
+      "properties": {
+        "name": { "$ref": "#/$defs/text" }, "label": { "$ref": "#/$defs/text" },
+        "email": { "type": "string", "format": "email" }, "location": { "$ref": "#/$defs/text" },
+        "phone": { "type": "string" }, "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "targets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/target" } },
+    "sectionOrder": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/section" } },
+    "entries": { "type": "array", "items": { "$ref": "#/$defs/entry" } },
+    "generationPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["quantitativeClaimsRequireEligibleEvidence", "preserveLimitations", "requireHumanReviewBeforeExport"],
+      "properties": {
+        "quantitativeClaimsRequireEligibleEvidence": { "const": true },
+        "preserveLimitations": { "const": true },
+        "requireHumanReviewBeforeExport": { "const": true }
+      }
+    },
+    "metadata": {
+      "type": "object", "additionalProperties": false,
+      "required": ["createdAt", "updatedAt", "sources"],
+      "properties": {
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "sources": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "extensions": { "type": "object" }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "section": { "enum": ["summary", "skills", "experience", "projects", "education", "certifications", "awards", "publications", "volunteer"] },
+    "target": {
+      "type": "object", "additionalProperties": false, "required": ["id", "role", "keywords"],
+      "properties": { "id": { "$ref": "#/$defs/text" }, "role": { "$ref": "#/$defs/text" }, "keywords": { "$ref": "#/$defs/strings" } }
+    },
+    "metric": {
+      "type": "object", "additionalProperties": false, "required": ["name", "value", "unit", "scope"],
+      "properties": { "name": { "$ref": "#/$defs/text" }, "value": { "type": "number" }, "unit": { "$ref": "#/$defs/text" }, "scope": { "$ref": "#/$defs/text" } }
+    },
+    "claim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "claimType", "canonicalText", "qualityClassifications", "evidence", "output"],
+      "properties": {
+        "id": { "$ref": "#/$defs/text" }, "claimType": { "enum": ["qualitative", "quantitative"] }, "canonicalText": { "$ref": "#/$defs/text" },
+        "qualityClassifications": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["framework", "characteristic"], "properties": { "framework": { "enum": ["ISO/IEC 25010:2023", "ISO/IEC 25023:2016", "local"] }, "characteristic": { "$ref": "#/$defs/text" } } } },
+        "evidence": {
+          "type": "object", "additionalProperties": false,
+          "required": ["maturity", "status", "resumeEligible", "method", "metrics", "artifacts", "verification", "limitations"],
+          "properties": {
+            "maturity": { "enum": ["unsupported", "documented", "measured", "controlled_measured", "replicated"] },
+            "status": { "enum": ["unverified", "user_verified", "officer_verified"] }, "resumeEligible": { "type": "boolean" },
+            "method": { "$ref": "#/$defs/text" }, "metrics": { "type": "array", "items": { "$ref": "#/$defs/metric" } },
+            "artifacts": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["kind", "locator"], "properties": { "kind": { "enum": ["report", "raw_result", "source", "presentation", "certificate"] }, "locator": { "$ref": "#/$defs/text" }, "contentHash": { "type": "string" } } } },
+            "verification": { "type": "object", "additionalProperties": false, "required": ["verifier"], "properties": { "verifier": { "$ref": "#/$defs/text" }, "verifiedAt": { "type": "string", "format": "date-time" } } },
+            "limitations": { "$ref": "#/$defs/strings" }
+          }
+        },
+        "output": {
+          "type": "object", "additionalProperties": false, "required": ["include", "renderedText", "destinations", "targetIds", "atsKeywords"],
+          "properties": { "include": { "type": "boolean" }, "renderedText": { "$ref": "#/$defs/text" }, "destinations": { "$ref": "#/$defs/strings" }, "targetIds": { "$ref": "#/$defs/strings" }, "atsKeywords": { "$ref": "#/$defs/strings" } }
+        }
+      }
+    },
+    "entry": {
+      "type": "object", "additionalProperties": false, "required": ["id", "section", "title", "organization", "dateLabel", "summary", "skills", "claims"],
+      "properties": { "id": { "$ref": "#/$defs/text" }, "section": { "$ref": "#/$defs/section" }, "title": { "$ref": "#/$defs/text" }, "organization": { "type": "string" }, "dateLabel": { "type": "string" }, "summary": { "type": "string" }, "skills": { "$ref": "#/$defs/strings" }, "claims": { "type": "array", "items": { "$ref": "#/$defs/claim" } } }
+    }
+  }
+}
