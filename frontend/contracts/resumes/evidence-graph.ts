@@ -46,7 +46,7 @@ const profileSchema = z.object({
   github: z.string().url().optional(),
 }).strict();
 
-const targetSchema = z.object({
+export const targetSchema = z.object({
   id: text,
   role: text,
   keywords: z.array(text).default([]),
@@ -88,13 +88,13 @@ const entrySchema = z.object({
   }
 });
 
-const claimSchema = z.object({
+export const claimSchema = z.object({
   id: text,
   statement: text,
   classificationCodes: z.array(qualityClassificationCodeSchema).min(1),
 }).strict();
 
-const measurementSchema = z.object({
+export const measurementSchema = z.object({
   id: text,
   metric: text,
   value: z.number().finite(),
@@ -103,7 +103,7 @@ const measurementSchema = z.object({
   scope: text,
 }).strict();
 
-const evidenceSchema = z.object({
+export const evidenceSchema = z.object({
   id: text,
   testType: quantitativeTestTypeSchema,
   target: text,
@@ -121,7 +121,7 @@ const evidenceSchema = z.object({
   limitations: z.array(text).min(1),
 }).strict();
 
-const claimEvidenceLinkSchema = z.object({
+export const claimEvidenceLinkSchema = z.object({
   claimId: text,
   evidenceId: text,
   measurementIds: z.array(text).min(1),

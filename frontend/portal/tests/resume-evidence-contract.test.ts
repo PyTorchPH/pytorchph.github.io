@@ -10,19 +10,71 @@ import {
   promoteResumeDraft,
   requiredProfileGaps,
   resumeEvidenceDraftSchema,
+  resumeSourceDocumentSchema,
 } from "@pytorch-ph/domain-protocol/resumes";
 import {
+  analyzeResumeSource,
+  buildResumeSourceProfile,
   buildRenderableResume,
   resumeEvidenceExtractionSystemPrompt,
   resumeHtml,
   resumePdfBytes,
   resumePdfPageCount,
+  resumeSourceExtractionSystemPrompt,
 } from "@pytorch-ph/domain-client/resumes";
 
 const v2Path = fileURLToPath(new URL("./fixtures/evidence-resume-example.v2.json", import.meta.url));
 const v1Path = fileURLToPath(new URL("../../contracts/resumes/evidence-backed/template.v1.json", import.meta.url));
+const sourcePath = fileURLToPath(new URL("./fixtures/resume-source-example.v1.json", import.meta.url));
 const v2Example = JSON.parse(readFileSync(v2Path, "utf8"));
 const v1Template = JSON.parse(readFileSync(v1Path, "utf8"));
+const sourceExample = JSON.parse(readFileSync(sourcePath, "utf8"));
+
+test("broad source contract preserves the reference resume section inventory", () => {
+  const document = resumeSourceDocumentSchema.parse(sourceExample);
+
+  assert.deepEqual(document.presentationHints.sectionOrder, [
+    "skill_group", "experience", "project", "organization", "certificate", "award", "education",
+  ]);
+  assert.equal(document.person.profiles.length, 3);
+  assert.equal(document.records.filter((record) => record.kind === "award").length, 2);
+  assert.equal(document.records.filter((record) => record.kind === "certificate").length, 2);
+});
+
+test("one source document drives deterministic injection and analysis", () => {
+  const profile = buildResumeSourceProfile(sourceExample, "ml-engineer");
+  const analysis = analyzeResumeSource(sourceExample);
+
+  assert.deepEqual(profile.sections?.map((section) => section.id), [
+    "skill_group", "experience", "project", "organization", "certificate", "award", "education",
+  ]);
+  assert.equal(profile.links?.length, 4);
+  assert.match(JSON.stringify(profile), /245 requests per second/);
+  assert.doesNotMatch(JSON.stringify(profile), /Reduced modeled voice cost/);
+  assert.equal(analysis.evidenceCoverage.verifiedClaims, 4);
+  assert.deepEqual(analysis.evidenceCoverage.unsupportedClaimIds, ["claim-voice-cost"]);
+  assert.equal(analysis.readiness, "review_required");
+});
+
+test("source resume renders extended sections to HTML and PDF", async () => {
+  const profile = buildResumeSourceProfile(sourceExample, "ml-engineer");
+  const html = resumeHtml(profile, "compact");
+  const pdf = await resumePdfBytes(profile, "compact");
+
+  assert.match(html, /Organisations/);
+  assert.match(html, /Certificates/);
+  assert.match(html, /Awards/);
+  assert.match(html, /grid-template-columns:repeat/);
+  assert.equal(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+  assert.ok(await resumePdfPageCount(profile, "compact") <= 2);
+});
+
+test("source extraction prompt protects provenance and quantitative evidence", () => {
+  assert.match(resumeSourceExtractionSystemPrompt, /Never invent identity/);
+  assert.match(resumeSourceExtractionSystemPrompt, /Store each test once/);
+  assert.match(resumeSourceExtractionSystemPrompt, /absolute PDF coordinates/);
+  assert.match(resumeSourceExtractionSystemPrompt, /never imply certification/);
+});
 
 test("normalized evidence graph reuses one test across multiple claims", () => {
   const document = resumeEvidenceDraftSchema.parse(v2Example);

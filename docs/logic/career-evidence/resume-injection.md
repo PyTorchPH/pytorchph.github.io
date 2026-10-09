@@ -64,3 +64,12 @@ name, email, phone, and location; validates every reference; excludes unverified
 claims; applies target classification/test preferences; and then projects the graph into the legacy
 `ResumeProfile`. Projects with no quantitative evidence remain valid. Empty optional sections are
 omitted from HTML, DOCX, and PDF output. The embedded v1 contract remains supported for compatibility.
+
+## Shared semantic source
+
+`resume-source/v1` is the canonical rich input for reconstruction and analysis. It stores semantic
+records rather than form controls or PDF coordinates, supports the wider JSON Resume section
+vocabulary, and preserves normalized claims, evidence, targets, source provenance, and optional
+presentation intent. The deterministic injector projects it into the existing `ResumeProfile` plus
+ordered generic sections; the analyzer reads the same source and returns a separate readiness and
+coverage report. Neither consumer may mutate or silently strengthen the source facts.

@@ -87,11 +87,34 @@ export type ResumeProfile = {
   phone?: string;
   personalWebsite?: string;
   linkedIn?: string;
+  links?: Array<{ label: string; url: string }>;
   summary: string;
   experience: Array<{ title: string; organization: string; dateLabel: string; bullets: string[] }>;
   projects: Array<{ title: string; summary: string; bullets: string[] }>;
   skillGroups: Array<{ name: string; items: string[] }>;
   education: Array<{ school: string; program: string; dateLabel: string }>;
+  sections?: ResumeProfileSection[];
+  presentation?: {
+    density: "comfortable" | "compact" | "dense";
+    pageGoal?: number;
+  };
+};
+
+export type ResumeProfileSection = {
+  id: string;
+  title: string;
+  layout?: "stack" | "columns" | "compact_list";
+  columns?: number;
+  items: Array<{
+    id: string;
+    heading: string;
+    subheading?: string;
+    dateLabel?: string;
+    summary?: string;
+    bullets: string[];
+    inlineItems: string[];
+    links: Array<{ label: string; url: string }>;
+  }>;
 };
 
 export type ResumeArtifact = {

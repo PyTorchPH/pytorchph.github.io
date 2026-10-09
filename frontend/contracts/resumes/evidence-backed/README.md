@@ -31,3 +31,17 @@ quantitative bullets.
 The executable parser is `../evidence-graph.ts`. The complete synthetic input is
 `frontend/portal/tests/fixtures/evidence-resume-example.v2.json`; run `npm run example:resume` from
 the repository root to generate the parsed profile, HTML, and PDF under `out/resume-example/`.
+
+## Semantic source v1
+
+`resume-source/v1` is the broader source contract used by deterministic injection and resume
+analysis. It keeps identity, arbitrary resume records, normalized skills, quantitative claims,
+shared evidence, provenance, targets, and renderer-neutral presentation hints in one document.
+The injector derives a `ResumeProfile`; the analyzer derives a separate report, so analysis never
+mutates the career source of truth.
+
+The model borrows common section vocabulary from JSON Resume while retaining the stricter v2
+evidence graph. The synthetic fixture `frontend/portal/tests/fixtures/resume-source-example.v1.json`
+uses the section hierarchy of a private one-page reference resume without copying its identity or
+contact data. `npm run example:resume` emits the source, analysis, projected profile, HTML, and PDF
+under `out/resume-example/`.
