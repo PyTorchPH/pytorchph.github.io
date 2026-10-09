@@ -84,6 +84,9 @@ export type ResumeProfile = {
   headline: string;
   email: string;
   location: string;
+  phone?: string;
+  personalWebsite?: string;
+  linkedIn?: string;
   summary: string;
   experience: Array<{ title: string; organization: string; dateLabel: string; bullets: string[] }>;
   projects: Array<{ title: string; summary: string; bullets: string[] }>;

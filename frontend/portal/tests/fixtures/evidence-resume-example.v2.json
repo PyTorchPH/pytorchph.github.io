@@ -1,0 +1,244 @@
+{
+  "contract": "evidence-backed-resume/v2",
+  "documentId": "synthetic-normalized-resume-example-v2",
+  "profile": {
+    "fullName": "Samira Reyes",
+    "email": "samira.reyes@example.test",
+    "phone": "+63 900 000 0000",
+    "location": "Metro Manila, Philippines",
+    "personalWebsite": "https://example.test/samira",
+    "linkedIn": "https://www.linkedin.com/in/example-samira"
+  },
+  "missingRequiredFields": [],
+  "targets": [
+    {
+      "id": "backend-engineer",
+      "role": "Backend Engineer",
+      "keywords": ["Rust", "APIs", "performance", "reliability"],
+      "preferredClassificationCodes": ["iso25010.performance_efficiency", "iso25010.reliability"],
+      "preferredTestTypes": ["load", "reliability"]
+    },
+    {
+      "id": "product-engineer",
+      "role": "Product Engineer",
+      "keywords": ["TypeScript", "accessibility", "frontend"],
+      "preferredClassificationCodes": ["iso25010.interaction_capability"],
+      "preferredTestTypes": ["accessibility"]
+    }
+  ],
+  "taxonomy": {
+    "version": "software-quality-taxonomy/v1",
+    "references": [
+      { "id": "iso25010", "standard": "ISO/IEC 25010", "edition": "2023", "relationship": "classification" },
+      { "id": "iso25023", "standard": "ISO/IEC 25023", "edition": "2016", "relationship": "measurement_guidance" }
+    ]
+  },
+  "entries": [
+    {
+      "id": "skills-engineering",
+      "section": "skills",
+      "title": "Engineering",
+      "skills": ["Rust", "TypeScript", "SQLite", "API design", "load testing", "accessibility testing"],
+      "targetIds": [],
+      "claimIds": []
+    },
+    {
+      "id": "experience-platform-intern",
+      "section": "experience",
+      "title": "Platform Engineering Intern",
+      "organization": "Northstar Systems (Synthetic)",
+      "dateLabel": "Jan 2026 – Jun 2026",
+      "summary": "Synthetic internship entry for renderer testing.",
+      "skills": ["Rust", "SQLite", "observability"],
+      "targetIds": ["backend-engineer"],
+      "claimIds": ["claim-retry-idempotency"]
+    },
+    {
+      "id": "project-queueguard",
+      "section": "projects",
+      "title": "QueueGuard",
+      "summary": "Synthetic Rust API and durable job queue.",
+      "skills": ["Rust", "Axum", "SQLite", "load testing"],
+      "targetIds": ["backend-engineer"],
+      "claimIds": ["claim-queue-throughput", "claim-queue-latency", "claim-queue-error-rate", "claim-unverified-optimizer"]
+    },
+    {
+      "id": "project-personal-cli",
+      "section": "projects",
+      "title": "Personal CLI Tool",
+      "summary": "A valid personal project without quantitative test evidence.",
+      "skills": ["Rust", "CLI design"],
+      "targetIds": ["backend-engineer"],
+      "claimIds": []
+    },
+    {
+      "id": "project-accessible-dashboard",
+      "section": "projects",
+      "title": "Accessible Operations Dashboard",
+      "summary": "Synthetic TypeScript dashboard for product-engineering output tests.",
+      "skills": ["TypeScript", "React", "accessibility testing"],
+      "targetIds": ["product-engineer"],
+      "claimIds": ["claim-dashboard-accessibility"]
+    },
+    {
+      "id": "education-computer-science",
+      "section": "education",
+      "title": "BS Computer Science",
+      "organization": "Example State University",
+      "dateLabel": "2022 – 2026",
+      "skills": [],
+      "targetIds": [],
+      "claimIds": []
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-retry-idempotency",
+      "statement": "Validated three 10,000-job runs with zero duplicate terminal events.",
+      "classificationCodes": ["iso25010.reliability"]
+    },
+    {
+      "id": "claim-queue-throughput",
+      "statement": "Sustained a median 238.4 requests per second at 100 virtual users across three synthetic runs.",
+      "classificationCodes": ["iso25010.performance_efficiency"]
+    },
+    {
+      "id": "claim-queue-latency",
+      "statement": "Recorded 112 ms p95 response latency at 100 virtual users across three synthetic runs.",
+      "classificationCodes": ["iso25010.performance_efficiency"]
+    },
+    {
+      "id": "claim-queue-error-rate",
+      "statement": "Recorded a 0.18% HTTP error rate at 100 virtual users across three synthetic runs.",
+      "classificationCodes": ["iso25010.reliability"]
+    },
+    {
+      "id": "claim-dashboard-accessibility",
+      "statement": "Tested eight dashboard routes with zero serious or critical automated accessibility violations.",
+      "classificationCodes": ["iso25010.interaction_capability"]
+    },
+    {
+      "id": "claim-unverified-optimizer",
+      "statement": "Improved optimization performance by 900%.",
+      "classificationCodes": ["iso25010.performance_efficiency"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence-retry-runs",
+      "testType": "reliability",
+      "target": "durable job worker",
+      "component": "idempotent retry handling",
+      "method": "Three isolated 10,000-job batches with injected transient failures and deterministic event identifiers.",
+      "environmentId": "env-local-512mb",
+      "workload": { "jobsPerRun": 10000, "runs": 3 },
+      "measurements": [
+        { "id": "metric-duplicate-events", "metric": "duplicate terminal events", "value": 0, "unit": "events", "aggregation": "total", "scope": "30,000 synthetic jobs" }
+      ],
+      "artifactIds": ["artifact-retry-results"],
+      "verification": { "status": "user_verified", "verifiedBy": "example quality reviewer", "verifiedAt": "2026-10-09T08:15:00Z" },
+      "limitations": ["Used an isolated synthetic database and did not exercise a public network."]
+    },
+    {
+      "id": "evidence-queueguard-load",
+      "testType": "load",
+      "target": "HTTP API",
+      "component": "authenticated mixed read/write endpoints",
+      "method": "Three five-minute authenticated mixed read/write runs at 100 virtual users.",
+      "environmentId": "env-local-512mb",
+      "workload": { "virtualUsers": 100, "durationSeconds": 300, "runs": 3 },
+      "measurements": [
+        { "id": "metric-throughput", "metric": "throughput", "value": 238.4, "unit": "requests_per_second", "aggregation": "median", "scope": "three runs at 100 virtual users" },
+        { "id": "metric-latency-p95", "metric": "latency", "value": 112, "unit": "milliseconds", "aggregation": "p95", "scope": "all successful requests" },
+        { "id": "metric-http-error-rate", "metric": "HTTP error rate", "value": 0.18, "unit": "percent", "aggregation": "rate", "scope": "all requests" }
+      ],
+      "artifactIds": ["artifact-queueguard-results"],
+      "verification": { "status": "user_verified", "verifiedBy": "example quality reviewer", "verifiedAt": "2026-10-09T08:30:00Z" },
+      "limitations": ["Local loopback network.", "Synthetic records.", "Does not establish public-cloud capacity."]
+    },
+    {
+      "id": "evidence-dashboard-accessibility",
+      "testType": "accessibility",
+      "target": "web dashboard",
+      "component": "eight product routes",
+      "method": "Automated accessibility checks plus keyboard-flow assertions.",
+      "environmentId": "env-browser-desktop",
+      "workload": { "routes": 8, "viewport": "desktop" },
+      "measurements": [
+        { "id": "metric-accessibility-violations", "metric": "serious or critical violations", "value": 0, "unit": "violations", "aggregation": "total", "scope": "automated scan of eight routes" }
+      ],
+      "artifactIds": ["artifact-accessibility-report"],
+      "verification": { "status": "user_verified", "verifiedBy": "example quality reviewer" },
+      "limitations": ["Automated checks do not replace assistive-technology testing."]
+    },
+    {
+      "id": "evidence-unverified-optimizer",
+      "testType": "benchmark",
+      "target": "unverified optimizer",
+      "method": "Copied an unverified note without reproducing the run.",
+      "workload": { "runs": 1 },
+      "measurements": [
+        { "id": "metric-unverified-improvement", "metric": "claimed improvement", "value": 900, "unit": "percent", "aggregation": "unspecified", "scope": "unverified note" }
+      ],
+      "artifactIds": ["artifact-unverified-note"],
+      "verification": { "status": "unverified", "verifiedBy": "unverified source" },
+      "limitations": ["No reproducible run, baseline, environment, or independent verification."]
+    }
+  ],
+  "claimEvidenceLinks": [
+    { "claimId": "claim-retry-idempotency", "evidenceId": "evidence-retry-runs", "measurementIds": ["metric-duplicate-events"], "relationship": "supports" },
+    { "claimId": "claim-queue-throughput", "evidenceId": "evidence-queueguard-load", "measurementIds": ["metric-throughput"], "relationship": "supports" },
+    { "claimId": "claim-queue-latency", "evidenceId": "evidence-queueguard-load", "measurementIds": ["metric-latency-p95"], "relationship": "supports" },
+    { "claimId": "claim-queue-error-rate", "evidenceId": "evidence-queueguard-load", "measurementIds": ["metric-http-error-rate"], "relationship": "supports" },
+    { "claimId": "claim-dashboard-accessibility", "evidenceId": "evidence-dashboard-accessibility", "measurementIds": ["metric-accessibility-violations"], "relationship": "supports" },
+    { "claimId": "claim-unverified-optimizer", "evidenceId": "evidence-unverified-optimizer", "measurementIds": ["metric-unverified-improvement"], "relationship": "supports" }
+  ],
+  "narratives": [
+    {
+      "id": "summary-backend",
+      "targetId": "backend-engineer",
+      "section": "summary",
+      "text": "Backend engineer who validates API performance and reliability with reproducible evidence.",
+      "sourceClaimIds": ["claim-retry-idempotency", "claim-queue-throughput"]
+    },
+    {
+      "id": "summary-product",
+      "targetId": "product-engineer",
+      "section": "summary",
+      "text": "Product engineer who builds accessible TypeScript interfaces and verifies critical user flows.",
+      "sourceClaimIds": ["claim-dashboard-accessibility"]
+    }
+  ],
+  "environments": [
+    {
+      "id": "env-local-512mb",
+      "deployment": "local",
+      "details": { "cpu": "2 vCPU", "memoryMb": 512, "database": "SQLite WAL", "network": "loopback" }
+    },
+    {
+      "id": "env-browser-desktop",
+      "deployment": "local browser",
+      "details": { "browser": "Chromium", "viewport": "1440x900" }
+    }
+  ],
+  "artifacts": [
+    { "id": "artifact-retry-results", "type": "raw_result", "locator": "fixtures/results/synthetic-retry-runs.json" },
+    { "id": "artifact-queueguard-results", "type": "raw_result", "locator": "fixtures/results/synthetic-queueguard-load.json" },
+    { "id": "artifact-accessibility-report", "type": "report", "locator": "fixtures/results/synthetic-accessibility-report.json" },
+    { "id": "artifact-unverified-note", "type": "source", "locator": "fixtures/notes/unverified-optimizer.txt" }
+  ],
+  "generationPolicy": {
+    "quantitativeClaimsRequireEvidence": true,
+    "preserveLimitations": true,
+    "requireHumanReviewBeforeExport": true
+  },
+  "metadata": {
+    "createdAt": "2026-10-09T08:00:00Z",
+    "updatedAt": "2026-10-09T08:30:00Z",
+    "sources": ["synthetic fixtures only"]
+  },
+  "extensions": {
+    "synthetic": true,
+    "purpose": "Normalized resume generator testing; never use these claims as personal evidence."
+  }
+}

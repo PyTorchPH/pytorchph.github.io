@@ -50,3 +50,17 @@ human review.
 Evidence maturity and achievement level are separate. The browser may compute an advisory point
 preview only after officer verification and an explicitly selected published rubric level. It cannot
 approve a claim or append a point event; those remain Rust-backend responsibilities.
+
+## Normalized extraction and rendering
+
+The preferred `evidence-backed-resume/v2` draft is a normalized graph. Entries reference claim IDs;
+claim-evidence links reference shared test records and their exact measurement IDs. Environment and
+artifact records are stored once. Controlled ISO/IEC 25010 characteristic codes and test-type enums
+let deterministic code select evidence for each target resume without interpreting prose.
+
+The frontend AI prompt only extracts a draft. It records missing identity fields, omits absent
+optional sections, and must not invent contacts or measurements. Deterministic promotion requires
+name, email, phone, and location; validates every reference; excludes unverified quantitative
+claims; applies target classification/test preferences; and then projects the graph into the legacy
+`ResumeProfile`. Projects with no quantitative evidence remain valid. Empty optional sections are
+omitted from HTML, DOCX, and PDF output. The embedded v1 contract remains supported for compatibility.

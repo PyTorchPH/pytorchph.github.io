@@ -15,3 +15,19 @@ contributor, finalist/lead, o winner/top-award ang achievement.
 Ang browser ay MAY magpakita ng point preview kapag officer-verified na ang evidence at may explicit
 rubric level. Hindi ito authority: Rust review workflow at append-only point events pa rin ang
 nakakapag-award ng points.
+
+## Normalized v2 graph
+
+`evidence-backed-resume/v2` separates optional resume entries, quantitative claims, shared test
+evidence, environments, artifacts, and claim-to-evidence links. One test record can support many
+claims without copying its method, workload, environment, limitations, or artifacts. Claims contain
+only measured statements; qualitative project or experience descriptions remain on their entries.
+
+Only `fullName`, `email`, `phone`, and `location` are required before draft promotion. Personal
+website, LinkedIn, and every resume section are optional. When a section entry exists, its own
+section-specific fields become required. Projects without tests remain valid and render without
+quantitative bullets.
+
+The executable parser is `../evidence-graph.ts`. The complete synthetic input is
+`frontend/portal/tests/fixtures/evidence-resume-example.v2.json`; run `npm run example:resume` from
+the repository root to generate the parsed profile, HTML, and PDF under `out/resume-example/`.
