@@ -45,13 +45,13 @@ pub(crate) async fn member_profile(
     let all_seasons = load_seasons(db).await?;
     let season = select_season(&all_seasons, query_param(query, "season").as_deref(), now);
     let tiers = load_tiers(db).await?;
-    let ranked = standings(db, season, now).await?;
+    let ranked = standings(db, season, now, None, "both").await?;
     let (rank, entry) = find_ranked(&ranked, &target)?;
     ensure_profile_visible(entry, &viewer.id)?;
     let evidence = approved_evidence(db, &entry.member_id).await?;
     let placements = event_placements(db, &entry.member_id).await?;
     Ok(json!({
-        "standing": entry_json(entry, rank, &viewer.id, &tiers),
+        "standing": entry_json(entry, rank, &viewer.id, &tiers, "both"),
         "evidence": evidence.into_iter().map(|row| evidence_json(row, entry.anonymous)).collect::<Vec<_>>(),
         "placements": placements.into_iter().map(placement_json).collect::<Vec<_>>(),
     }))
@@ -90,8 +90,8 @@ async fn approved_evidence(db: &SqlitePool, member_id: &str) -> ApiResult<Vec<Ev
 
 async fn event_placements(db: &SqlitePool, member_id: &str) -> ApiResult<Vec<PlacementRow>> {
     sqlx::query_as(
-        "SELECT e.title, l.place, l.delta, l.created_at FROM point_ledger l JOIN events e ON e.id = l.event_id \
-         WHERE l.member_id = ? AND l.delta > 0 ORDER BY l.created_at DESC LIMIT 50",
+        "SELECT e.title, l.place, l.weighted_points, l.earned_at FROM point_awards l JOIN events e ON e.id = l.event_id \
+         WHERE l.member_id = ? ORDER BY l.earned_at DESC LIMIT 50",
     )
     .bind(member_id)
     .fetch_all(db)

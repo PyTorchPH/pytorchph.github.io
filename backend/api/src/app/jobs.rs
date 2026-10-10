@@ -100,7 +100,7 @@ async fn refresh_leaderboard_cache(db: &SqlitePool, job: &ClaimedJob) -> Result<
     sqlx::query("DELETE FROM leaderboard_cache")
         .execute(&mut *tx)
         .await?;
-    sqlx::query("INSERT INTO leaderboard_cache(member_id, points, refreshed_at) SELECT member_id, SUM(delta), ? FROM point_ledger GROUP BY member_id")
+    sqlx::query("INSERT INTO leaderboard_cache(member_id, points, refreshed_at) SELECT member_id, SUM(weighted_points), ? FROM point_awards GROUP BY member_id")
         .bind(now()).execute(&mut *tx).await?;
     sqlx::query("UPDATE jobs SET status = 'done', finished_at = ?, result = 'refreshed' WHERE id = ? AND generation = ?")
         .bind(now()).bind(&job.id).bind(job.generation)

@@ -4,7 +4,6 @@ use crate::{
     app::{jobs, routes},
     http::admission::{self, Admission, Config},
     identity::email_signup,
-    seed::{demo, sample},
 };
 use sqlx::{
     SqlitePool,
@@ -74,12 +73,8 @@ async fn prepare_database(db: &SqlitePool) -> StartupResult<()> {
         .map_err(|error| error.to_string())?;
     let recovered = admission::recover(db).await.map_err(|error| error.1)?;
     info!(recovered, "admission.spool_recovered");
-    demo::seed(db).await?;
     if env::var("SEED_TEMP_TEST_ACCOUNTS").ok().as_deref() == Some("true") {
         email_signup::seed_test_accounts(db, &env::var("TEMP_TEST_PASSWORD")?).await?;
-    }
-    if env::var("SEED_SAMPLE_DATA").ok().as_deref() == Some("true") {
-        sample::seed(db).await?;
     }
     sqlx::query(
         "UPDATE jobs SET status='pending' WHERE status='running' AND kind='leaderboard_refresh'",

@@ -9,7 +9,6 @@ use crate::{
     mail,
     member_profile::reference,
     portal,
-    seed::demo,
 };
 use axum::{
     Router,
@@ -32,6 +31,7 @@ pub(crate) fn router(
         .merge(platform_routes())
         .merge(identity_routes())
         .merge(event_routes())
+        .merge(scoring_routes())
         .merge(evidence_routes())
         .merge(mail_routes())
         .layer(axum::middleware::from_fn_with_state(
@@ -68,7 +68,6 @@ fn platform_routes() -> Router<Arc<AppState>> {
         .route("/jobs/{id}", get(jobs::read_job))
         .route("/leaderboard", get(public::public_leaderboard))
         .route("/public/events", get(public::public_events))
-        .route("/demo/fixtures", get(demo::fixtures))
         .route("/portal/api/{*path}", any(portal::gateway))
         .route("/portal/media/{id}", get(portal::media))
         .route(
@@ -111,6 +110,35 @@ fn event_routes() -> Router<Arc<AppState>> {
         .route(
             "/events/{id}/attendance/import",
             post(attendance::import_google_form),
+        )
+}
+
+fn scoring_routes() -> Router<Arc<AppState>> {
+    Router::new()
+        .route("/scoring/skills", get(crate::scoring::skills))
+        .route(
+            "/scoring/suggestion",
+            post(crate::scoring::suggest_for_event),
+        )
+        .route(
+            "/scoring/validators",
+            post(crate::scoring::assign_validator),
+        )
+        .route(
+            "/scoring/comparisons",
+            post(crate::scoring::create_comparison),
+        )
+        .route(
+            "/scoring/comparisons/pending",
+            get(crate::scoring::comparison_queue),
+        )
+        .route(
+            "/scoring/comparisons/{id}/vote",
+            post(crate::scoring::cast_vote),
+        )
+        .route(
+            "/scoring/comparisons/{id}/summary",
+            get(crate::scoring::comparison_summary),
         )
 }
 

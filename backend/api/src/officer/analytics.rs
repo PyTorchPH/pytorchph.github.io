@@ -82,7 +82,7 @@ async fn count_active_members(db: &SqlitePool) -> ApiResult<i64> {
     let session_since = (now - Duration::days(ACTIVE_WINDOW_DAYS - SESSION_DAYS)).to_rfc3339();
     let (active,): (i64,) = sqlx::query_as(
         "SELECT COUNT(*) FROM members m WHERE m.role != 'pending' AND ( \
-           EXISTS (SELECT 1 FROM point_ledger l WHERE l.member_id = m.id AND julianday(l.created_at) >= julianday(?1)) \
+           EXISTS (SELECT 1 FROM point_awards l WHERE l.member_id = m.id AND julianday(l.created_at) >= julianday(?1)) \
            OR EXISTS (SELECT 1 FROM evidence_claims c WHERE c.member_id = m.id AND julianday(c.created_at) >= julianday(?1)) \
            OR EXISTS (SELECT 1 FROM sessions s WHERE s.member_id = m.id AND julianday(s.expires_at) >= julianday(?2)))",
     )
@@ -133,7 +133,7 @@ async fn day_pulse(db: &SqlitePool, day: NaiveDate) -> ApiResult<Value> {
     .await?;
     let contributions = scalar(
         db,
-        "SELECT (SELECT COUNT(*) FROM point_ledger WHERE date(created_at) = ?1 AND delta > 0) \
+        "SELECT (SELECT COUNT(*) FROM point_awards WHERE date(created_at) = ?1) \
               + (SELECT COUNT(*) FROM evidence_claims WHERE date(created_at) = ?1)",
         &key,
     )

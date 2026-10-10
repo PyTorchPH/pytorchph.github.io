@@ -93,8 +93,10 @@ async fn snapshot(tx: &mut Tx<'_>, event_id: &str) -> ApiResult<Snapshot> {
         format!("SELECT COUNT(*) FROM entrants WHERE event_id IN {FAMILY}"),
         format!("SELECT COUNT(*) FROM results WHERE event_id IN {FAMILY}"),
         format!("SELECT COUNT(*) FROM attendance_responses WHERE event_id IN {FAMILY}"),
-        format!("SELECT COALESCE(SUM(delta), 0) FROM point_ledger WHERE event_id IN {FAMILY}"),
-        format!("SELECT COUNT(DISTINCT member_id) FROM point_ledger WHERE event_id IN {FAMILY}"),
+        format!(
+            "SELECT COALESCE(SUM(weighted_points), 0) FROM point_awards WHERE event_id IN {FAMILY}"
+        ),
+        format!("SELECT COUNT(DISTINCT member_id) FROM point_awards WHERE event_id IN {FAMILY}"),
     ] {
         let (value,): (i64,) = sqlx::query_as(sqlx::AssertSqlSafe(sql))
             .bind(event_id)

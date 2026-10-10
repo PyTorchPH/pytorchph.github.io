@@ -168,9 +168,9 @@ async fn insert_ledger_entry(
     points: i64,
     now: &str,
 ) -> ApiResult<()> {
-    sqlx::query("INSERT INTO point_ledger(id,member_id,source_type,source_id,delta,actor_id,reason,created_at) VALUES (?,?, 'verified_evidence', ?,?,?,?,?)")
+    sqlx::query("INSERT INTO point_awards(id,member_id,source_type,source_id,base_points,actor_id,reason,earned_at,created_at) VALUES (?,?,'verified_evidence',?,?,?,'officer_verified',?,?)")
         .bind(Uuid::new_v4().to_string()).bind(member_id).bind(claim_id).bind(points)
-        .bind(&officer.id).bind("officer_verified").bind(now).execute(&mut *conn).await.map_err(internal)?;
+        .bind(&officer.id).bind(now).bind(now).execute(&mut *conn).await.map_err(internal)?;
     Ok(())
 }
 

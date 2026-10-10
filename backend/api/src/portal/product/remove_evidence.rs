@@ -50,10 +50,10 @@ fn take_item(view: &mut Value, id: &str) -> ApiResult<Value> {
 
 async fn revoke_claim(db: &SqlitePool, actor: &Viewer, id: &str, item: &Value) -> ApiResult<i64> {
     let mut tx = db.begin().await.map_err(internal)?;
-    let (points,): (i64,) = sqlx::query_as("SELECT COALESCE(SUM(delta), 0) FROM point_ledger WHERE member_id = ? AND source_id = ? AND source_type = 'verified_evidence'")
+    let (points,): (i64,) = sqlx::query_as("SELECT COALESCE(SUM(weighted_points), 0) FROM point_awards WHERE member_id = ? AND source_id = ? AND source_type = 'verified_evidence'")
         .bind(&actor.id).bind(id)
         .fetch_one(&mut *tx).await.map_err(internal)?;
-    sqlx::query("DELETE FROM point_ledger WHERE member_id = ? AND source_id = ? AND source_type = 'verified_evidence'")
+    sqlx::query("DELETE FROM point_awards WHERE member_id = ? AND source_id = ? AND source_type = 'verified_evidence'")
         .bind(&actor.id).bind(id)
         .execute(&mut *tx).await.map_err(internal)?;
     sqlx::query("DELETE FROM evidence_claims WHERE id = ? AND member_id = ?")

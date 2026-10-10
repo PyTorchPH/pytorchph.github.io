@@ -331,7 +331,7 @@ async fn a_member_deletes_their_own_achievement_and_its_points_are_revoked() {
         .fetch_one(&state.db)
         .await
         .unwrap();
-    sqlx::query("INSERT INTO point_ledger(id,member_id,source_type,source_id,delta,reason,created_at) VALUES ('p1',?,'verified_evidence',?,30,'officer_verified','2026-09-30')")
+    sqlx::query("INSERT INTO point_awards(id,member_id,source_type,source_id,base_points,reason,earned_at,created_at) VALUES ('p1',?,'verified_evidence',?,30,'officer_verified','2026-09-30','2026-09-30')")
         .bind(&member_id).bind(&id).execute(&state.db).await.unwrap();
 
     // Another member cannot delete it: it is not in their own list.
@@ -362,7 +362,7 @@ async fn a_member_deletes_their_own_achievement_and_its_points_are_revoked() {
     assert_eq!(
         count(
             &state.db,
-            "SELECT COUNT(*) FROM point_ledger WHERE source_type = 'verified_evidence'"
+            "SELECT COUNT(*) FROM point_awards WHERE source_type = 'verified_evidence'"
         )
         .await,
         0

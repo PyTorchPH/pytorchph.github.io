@@ -33,7 +33,7 @@ pub(crate) async fn overlay_overview(
     let all_seasons = load_seasons(db).await?;
     let season = select_season(&all_seasons, None, now);
     let tiers = load_tiers(db).await?;
-    let ranked = standings(db, season, now).await?;
+    let ranked = standings(db, season, now, None, "both").await?;
     let standing = ranked
         .iter()
         .position(|entry| entry.is_viewer(&viewer.id))
@@ -66,7 +66,7 @@ async fn count_approved_evidence(db: &SqlitePool, member_id: &str) -> ApiResult<
 }
 
 async fn member_deltas(db: &SqlitePool, member_id: &str) -> ApiResult<Vec<(i64, String)>> {
-    sqlx::query_as("SELECT delta, created_at FROM point_ledger WHERE member_id = ?")
+    sqlx::query_as("SELECT weighted_points, earned_at FROM point_awards WHERE member_id = ?")
         .bind(member_id)
         .fetch_all(db)
         .await
@@ -102,7 +102,7 @@ async fn count_reviews(db: &SqlitePool) -> ApiResult<i64> {
 }
 
 async fn count_positive_awards(db: &SqlitePool) -> ApiResult<i64> {
-    let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM point_ledger WHERE delta > 0")
+    let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM point_awards")
         .fetch_one(db)
         .await
         .map_err(internal)?;
@@ -110,7 +110,7 @@ async fn count_positive_awards(db: &SqlitePool) -> ApiResult<i64> {
 }
 
 fn apply_standing(overview: &mut Value, rank: usize, entry: &Entry, viewer: &str, tiers: &Tiers) {
-    overview["standing"] = entry_json(entry, rank, viewer, tiers);
+    overview["standing"] = entry_json(entry, rank, viewer, tiers, "both");
     overview["summary"]["points"] = json!(entry.verified);
     overview["summary"]["rank"] = json!(rank);
     overview["summary"]["streak"] = json!(entry.streak);

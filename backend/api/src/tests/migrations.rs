@@ -51,7 +51,11 @@ async fn cascade_migration_keeps_data_and_member_deletion_removes_only_their_row
     ] {
         sqlx::query(sql).execute(&db).await.unwrap();
     }
-    let counts_before = table_counts(&db).await;
+    let counts_before: Vec<(String, i64)> = table_counts(&db)
+        .await
+        .into_iter()
+        .filter(|(name, _)| name != "point_ledger")
+        .collect();
 
     sqlx::migrate!().run(&db).await.unwrap();
     let counts_after: Vec<(String, i64)> = table_counts(&db)
@@ -85,7 +89,7 @@ async fn cascade_migration_keeps_data_and_member_deletion_removes_only_their_row
     assert_eq!(
         count(
             &db,
-            "SELECT COUNT(*) FROM point_ledger WHERE actor_id IS NULL"
+            "SELECT COUNT(*) FROM point_awards WHERE actor_id IS NULL"
         )
         .await,
         2
@@ -126,7 +130,7 @@ async fn cascade_migration_keeps_data_and_member_deletion_removes_only_their_row
     for sql in [
         "SELECT COUNT(*) FROM sessions WHERE member_id='mem'",
         "SELECT COUNT(*) FROM entrant_members WHERE member_id='mem'",
-        "SELECT COUNT(*) FROM point_ledger WHERE member_id='mem'",
+        "SELECT COUNT(*) FROM point_awards WHERE member_id='mem'",
         "SELECT COUNT(*) FROM evidence_claims",
         "SELECT COUNT(*) FROM audit_events",
         "SELECT COUNT(*) FROM leaderboard_cache",
@@ -137,7 +141,7 @@ async fn cascade_migration_keeps_data_and_member_deletion_removes_only_their_row
     assert_eq!(
         count(
             &db,
-            "SELECT COUNT(*) FROM point_ledger WHERE member_id='oth'"
+            "SELECT COUNT(*) FROM point_awards WHERE member_id='oth'"
         )
         .await,
         1
@@ -181,7 +185,7 @@ async fn cascade_migration_keeps_data_and_member_deletion_removes_only_their_row
     assert_eq!(
         count(
             &db,
-            "SELECT COUNT(*) FROM point_ledger WHERE event_id IS NOT NULL"
+            "SELECT COUNT(*) FROM point_awards WHERE event_id IS NOT NULL"
         )
         .await,
         0

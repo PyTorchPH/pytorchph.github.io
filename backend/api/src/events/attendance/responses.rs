@@ -213,10 +213,13 @@ async fn award_attendance_points(
     member_id: &str,
     response_id: &str,
 ) -> ApiResult<()> {
-    sqlx::query("INSERT INTO point_ledger(id,member_id,source_type,source_id,event_id,delta,actor_id,reason,created_at) VALUES (?,?,?,?,?,?,?,?,?)")
+    let (weight, model_version) = crate::scoring::event_weight(tx, import.event_id).await?;
+    let earned_at = crate::scoring::event_date(tx, import.event_id).await?;
+    sqlx::query("INSERT INTO point_awards(id,member_id,source_type,source_id,event_id,base_points,weight_milli,model_version,actor_id,reason,earned_at,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
         .bind(Uuid::new_v4().to_string()).bind(member_id).bind("attendance")
         .bind(format!("{}:{}", import.form_id, response_id)).bind(import.event_id)
-        .bind(import.points).bind(import.actor_id).bind("google_forms_attendance").bind(import.now)
+        .bind(import.points).bind(weight).bind(model_version).bind(import.actor_id).bind("google_forms_attendance")
+        .bind(earned_at).bind(import.now)
         .execute(&mut **tx).await.map_err(internal)?;
     Ok(())
 }

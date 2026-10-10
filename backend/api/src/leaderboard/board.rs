@@ -35,15 +35,23 @@ pub(crate) async fn member_leaderboard(
     let tiers = load_tiers(db).await?;
     let skills = load_skills(db).await?;
     let (page, page_size, view) = (page(query), page_size(query), view(query));
-    let skill_label = skill_label_for(&skills, query_param(query, "skill"));
+    let skill_slug = query_param(query, "skill");
+    let skill_label = skill_label_for(&skills, skill_slug.clone());
 
-    let all = standings(db, season, now).await?;
+    let all = standings(
+        db,
+        season,
+        now,
+        skill_slug.as_deref().filter(|_| skill_label.is_some()),
+        &view,
+    )
+    .await?;
     let skill_mix = skill_mix(&skills, &all);
     let ranked = rank_and_filter(all, skill_label.as_deref());
     let revision = leaderboard_revision(&ranked);
     let total_pages = ranked.len().div_ceil(page_size);
     let entries: Vec<Value> = page_of(&ranked, page, page_size)
-        .map(|(rank, entry)| entry_json(entry, *rank, &viewer.id, &tiers))
+        .map(|(rank, entry)| entry_json(entry, *rank, &viewer.id, &tiers, &view))
         .collect();
     Ok(json!({
         "season": season.map(|season| season_json(season, now)),
@@ -97,12 +105,22 @@ fn share_percent(holders: usize, total: usize) -> usize {
 
 fn rank_and_filter(all: Vec<Entry>, skill_label: Option<&str>) -> Vec<(usize, Entry)> {
     all.into_iter()
+        .filter(|entry| skill_label.is_none_or(|_| entry.verified > 0 || entry.pending > 0))
         .enumerate()
         .map(|(index, entry)| (index + 1, entry))
-        .filter(|(_, entry)| {
-            skill_label.is_none_or(|label| entry.skills.iter().any(|skill| skill == label))
-        })
         .collect()
+}
+
+pub(crate) async fn public_verified(db: &SqlitePool) -> ApiResult<Value> {
+    let now = Utc::now();
+    let seasons = load_seasons(db).await?;
+    let season = select_season(&seasons, None, now);
+    let entries = standings(db, season, now, None, "verified").await?;
+    Ok(
+        json!(entries.into_iter().take(100).enumerate().map(|(index,entry)|
+        json!({"rank":index+1,"displayName":entry.label,"points":entry.verified})
+    ).collect::<Vec<_>>()),
+    )
 }
 
 fn leaderboard_revision(ranked: &[(usize, Entry)]) -> String {

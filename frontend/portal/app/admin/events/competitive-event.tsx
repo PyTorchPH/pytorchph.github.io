@@ -16,6 +16,7 @@ type EventItem = { id: string; title: string; category: string; startsAt: string
 type Entrant = { id: string; name: string; kind: string; memberIds: string[] };
 type EventDetail = { id: string; title: string; category: string; startsAt: string; competitive: boolean; entrantKind: "team" | "individual" | null; lastPlace: number | null; revision: number; placePoints: [number, number][]; results: [number, string][] };
 type AttendanceSummary = { source: null | { formId: string; points: number; lastImportedAt: string | null }; awarded: number; unmatched: number };
+type Skill = { slug: string; label: string };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiOrigin}${path}`, { credentials: "include", cache: "no-store", ...init });
@@ -31,6 +32,11 @@ export function CompetitiveEventForm() {
   const [viewer, setViewer] = useState<Viewer | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
+const [skills, setSkills] = useState<Skill[]>([]);
+const [eventSkills, setEventSkills] = useState<string[]>([]);
+const [weight, setWeight] = useState("");
+const [weightReason, setWeightReason] = useState("");
+const [modelSuggestion, setModelSuggestion] = useState("");
   const [selected, setSelected] = useState<EventDetail | null>(null);
   const [entrants, setEntrants] = useState<Entrant[]>([]);
   const [title, setTitle] = useState("");
@@ -51,12 +57,13 @@ export function CompetitiveEventForm() {
   const [message, setMessage] = useState("");
 
   const refresh = useCallback(async () => {
-    const [current, approved, allEvents] = await Promise.all([
-      api<Viewer>("/auth/me"), api<Member[]>("/members"), api<EventItem[]>("/events"),
+const [current, approved, allEvents, availableSkills] = await Promise.all([
+  api<Viewer>("/auth/me"), api<Member[]>("/members"), api<EventItem[]>("/events"), api<Skill[]>("/scoring/skills"),
     ]);
     setViewer(current);
     setMembers(approved.filter((member) => member.role !== "pending"));
     setEvents(allEvents);
+setSkills(availableSkills);
   }, []);
 
   useEffect(() => {
@@ -85,15 +92,33 @@ export function CompetitiveEventForm() {
     return run(async () => {
       const competitive = !["talk", "workshop"].includes(category);
       const points = pointsCsv.split(",").map((value) => Number(value.trim()));
+if (eventSkills.length === 0) throw new Error("Pumili ng kahit isang skill tag.");
+const allocation = Math.floor(10000 / eventSkills.length);
+const skillTags = eventSkills.map((skillSlug, index) => ({ skillSlug, allocationBps: index === eventSkills.length - 1 ? 10000 - allocation * index : allocation }));
+const weightMilli = weight.trim() ? Math.round(Number(weight) * 1000) : null;
+if (weightMilli !== null && (!Number.isSafeInteger(weightMilli) || weightMilli < 1 || weightMilli > 10000)) throw new Error("Ang weight ay dapat 0.001 hanggang 10.");
       if (competitive && (!Number.isSafeInteger(lastPlace) || lastPlace < 1 || points.length !== lastPlace || points.some((value) => !Number.isSafeInteger(value) || value < 0))) {
         throw new Error("Maglagay ng nonnegative whole-number points para sa bawat place hanggang last awarded place.");
       }
       const created = await api<{ id: string }>("/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-        title, category, startsAt: new Date(startsAt).toISOString(), entrantKind: competitive ? entrantKind : null, parentId: category === "mini_contest" ? parentId : null, placePoints: competitive ? points : null,
+title, category, startsAt: new Date(startsAt).toISOString(), entrantKind: competitive ? entrantKind : null, parentId: category === "mini_contest" ? parentId : null, placePoints: competitive ? points : null,
+skillTags, weightMilli, weightReason: weightMilli === null ? null : weightReason,
       }) });
       await refresh();
       await selectEvent(created.id);
       setMessage(competitive ? "Event created. Add eligible entrants before publishing results." : "Parent event created. Puwede nang magdagdag ng mini contest.");
+    });
+  }
+
+  function previewWeight() {
+    return run(async () => {
+      if (!eventSkills.length) throw new Error("Pumili muna ng skill tag.");
+      const allocation = Math.floor(10000 / eventSkills.length);
+      const skillTags = eventSkills.map((skillSlug, index) => ({ skillSlug, allocationBps: index === eventSkills.length - 1 ? 10000 - allocation * index : allocation }));
+      const result = await api<{ status: string; weightMilli?: number; modelVersion?: number }>("/scoring/suggestion", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category, skillTags }),
+      });
+      setModelSuggestion(result.status === "ready" ? `Model v${result.modelVersion}: ${((result.weightMilli || 0) / 1000).toFixed(3)}×` : "Model suggestion unavailable. Magtakda ng organizer weight at reason.");
     });
   }
 
@@ -142,6 +167,10 @@ export function CompetitiveEventForm() {
         <div><Label htmlFor="competition-category">Category</Label><select className="w-full border border-border bg-canvas p-2" id="competition-category" value={category} onChange={(event) => setCategory(event.target.value)}><option value="talk">Talk</option><option value="workshop">Workshop</option><option value="hackathon">Hackathon</option><option value="competitive">Other competition</option><option value="mini_contest">Talk/workshop mini contest</option></select></div>
         {category === "mini_contest" && <div><Label htmlFor="competition-parent">Parent talk/workshop</Label><select className="w-full border border-border bg-canvas p-2" id="competition-parent" value={parentId} onChange={(event) => setParentId(event.target.value)}><option value="">Select parent</option>{events.filter((item) => item.category === "talk" || item.category === "workshop").map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></div>}
         <div><Label htmlFor="competition-start">Start date/time</Label><Input id="competition-start" type="datetime-local" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} /></div>
+<div><label htmlFor="event-skills">Skill tags</label><select id="event-skills" multiple value={eventSkills} onChange={(event) => setEventSkills(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>{skills.map((skill) => <option key={skill.slug} value={skill.slug}>{skill.label}</option>)}</select></div>
+<div><label htmlFor="event-weight">Organizer weight (leave blank for model suggestion)</label><input id="event-weight" type="number" min="0.001" max="10" step="0.001" value={weight} onChange={(event) => setWeight(event.target.value)} /></div>
+<div><button disabled={busy} onClick={previewWeight} type="button">Tingnan ang model suggestion</button><p role="status">{modelSuggestion}</p></div>
+{weight.trim() && <div><label htmlFor="event-weight-reason">Reason for organizer weight</label><input id="event-weight-reason" value={weightReason} onChange={(event) => setWeightReason(event.target.value)} /></div>}
         {!["talk", "workshop"].includes(category) && <><div><Label htmlFor="competition-kind">Entrants</Label><select className="w-full border border-border bg-canvas p-2" id="competition-kind" value={entrantKind} onChange={(event) => setEntrantKind(event.target.value as "individual" | "team")}><option value="team">Teams</option><option value="individual">Individuals</option></select></div>
         <div><Label htmlFor="competition-last-place">Last awarded place</Label><Input id="competition-last-place" min={1} type="number" value={lastPlace} onChange={(event) => setLastPlace(Number(event.target.value))} /></div>
         <div><Label htmlFor="competition-points">Points from 1st place onward (comma-separated)</Label><Input id="competition-points" value={pointsCsv} onChange={(event) => setPointsCsv(event.target.value)} /></div></>}

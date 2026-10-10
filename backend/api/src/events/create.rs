@@ -14,6 +14,7 @@
 //!   ├─ insert_event
 //!   └─ insert_place_points
 use super::records::{Created, Tx, audit};
+use crate::scoring;
 use crate::{ApiResult, AppState, bad, check_origin, identity::session, internal};
 use axum::{
     Json,
@@ -22,8 +23,16 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
+use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EventSkillTag {
+    pub skill_slug: String,
+    pub allocation_bps: i64,
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -34,6 +43,9 @@ pub struct NewEvent {
     pub parent_id: Option<String>,
     pub entrant_kind: Option<String>,
     pub place_points: Option<Vec<i64>>,
+    pub skill_tags: Vec<EventSkillTag>,
+    pub weight_milli: Option<i64>,
+    pub weight_reason: Option<String>,
 }
 
 // Mental model: an officer describes an event; everything is validated before the
@@ -52,7 +64,42 @@ pub async fn create_event(
         ensure_parent_accepts_mini_contest(&mut tx, parent_id).await?;
     }
     let id = Uuid::new_v4().to_string();
+    ensure_known_skills(&mut tx, &input.skill_tags).await?;
+    let tags: Vec<(String, i64)> = input
+        .skill_tags
+        .iter()
+        .map(|tag| (tag.skill_slug.clone(), tag.allocation_bps))
+        .collect();
+    let suggestion = scoring::suggested_weight(&mut tx, &input.category, &tags).await?;
+    let (weight, reason) = match (input.weight_milli, suggestion) {
+        (Some(weight), _) => (weight, input.weight_reason.as_deref().unwrap_or("")),
+        (None, Some((_, weight))) => (weight, "published_model"),
+        (None, None) => {
+            return Err(bad(
+                "Model suggestion unavailable; organizer weight required",
+            ));
+        }
+    };
+    if !(1..=10000).contains(&weight)
+        || (input.weight_milli.is_some() && !(4..=500).contains(&reason.trim().len()))
+    {
+        return Err(bad("Invalid event weight or reason"));
+    }
     insert_event(&mut tx, &id, title, &starts_at, &input, &actor.id).await?;
+    sqlx::query("INSERT INTO event_scoring(event_id,weight_milli,model_version,selected_by,decision_reason,selected_at) VALUES (?,?,?,?,?,?)")
+        .bind(&id).bind(weight).bind(suggestion.map(|(version,_)|version)).bind(&actor.id)
+        .bind(reason).bind(Utc::now().to_rfc3339()).execute(&mut *tx).await.map_err(internal)?;
+    for tag in &input.skill_tags {
+        sqlx::query(
+            "INSERT INTO event_skill_tags(event_id,skill_slug,allocation_bps) VALUES (?,?,?)",
+        )
+        .bind(&id)
+        .bind(&tag.skill_slug)
+        .bind(tag.allocation_bps)
+        .execute(&mut *tx)
+        .await
+        .map_err(internal)?;
+    }
     if let Some(points) = &input.place_points {
         insert_place_points(&mut tx, &id, points).await?;
     }
@@ -68,10 +115,41 @@ fn ensure_valid_event(title: &str, input: &NewEvent) -> ApiResult<String> {
     }
     let starts_at = parse_event_start(&input.starts_at)?;
     ensure_competition_shape(input)?;
+    let unique: HashSet<&str> = input
+        .skill_tags
+        .iter()
+        .map(|tag| tag.skill_slug.as_str())
+        .collect();
+    if input.skill_tags.is_empty()
+        || unique.len() != input.skill_tags.len()
+        || input.skill_tags.iter().any(|tag| tag.allocation_bps <= 0)
+        || input
+            .skill_tags
+            .iter()
+            .map(|tag| tag.allocation_bps)
+            .sum::<i64>()
+            != 10000
+    {
+        return Err(bad("Event skill allocations must total 10000 basis points"));
+    }
     if is_mini_contest(&input.category) != input.parent_id.is_some() {
         return Err(bad("Mini contest requires parent event"));
     }
     Ok(starts_at)
+}
+
+async fn ensure_known_skills(tx: &mut Tx<'_>, tags: &[EventSkillTag]) -> ApiResult<()> {
+    for tag in tags {
+        let known: Option<(String,)> = sqlx::query_as("SELECT slug FROM skills WHERE slug=?")
+            .bind(&tag.skill_slug)
+            .fetch_optional(&mut **tx)
+            .await
+            .map_err(internal)?;
+        if known.is_none() {
+            return Err(bad("Unknown event skill"));
+        }
+    }
+    Ok(())
 }
 
 #[inline]

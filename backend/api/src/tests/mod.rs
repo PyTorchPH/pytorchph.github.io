@@ -26,7 +26,6 @@ use crate::{
     http::admission,
     identity::{email_signup, session},
     portal,
-    seed::{demo, sample},
 };
 use axum::{
     Json, Router,
@@ -56,7 +55,7 @@ mod migrations;
 mod officer;
 mod organization;
 mod portal_gateway;
-mod seed;
+mod scoring;
 mod skill_taxonomy;
 
 async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {

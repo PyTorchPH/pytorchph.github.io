@@ -13,16 +13,7 @@ pub(crate) async fn health(State(state): State<Arc<AppState>>) -> Json<serde_jso
 pub(crate) async fn public_leaderboard(
     State(state): State<Arc<AppState>>,
 ) -> ApiResult<impl IntoResponse> {
-    let rows: Vec<(String, String, i64)> = sqlx::query_as(
-        "SELECT m.id, m.public_handle, c.points FROM leaderboard_cache c JOIN members m ON m.id = c.member_id WHERE m.role != 'pending' ORDER BY c.points DESC, m.id ASC LIMIT 100"
-    ).fetch_all(&state.db).await.map_err(internal)?;
-    let mut prior_points = None;
-    let mut peer_rank = 0;
-    let body: Vec<_> = rows.into_iter().enumerate().map(|(i, (member_id, display_name, points))| {
-        if prior_points != Some(points) { peer_rank = i + 1; }
-        prior_points = Some(points);
-        serde_json::json!({"rank": peer_rank, "memberId": member_id, "displayName": display_name, "points": points})
-    }).collect();
+    let body = crate::leaderboard::public_verified(&state.db).await?;
     let mut response = Json(body).into_response();
     response.headers_mut().insert(
         "cache-control",

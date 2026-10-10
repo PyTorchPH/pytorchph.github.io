@@ -19,5 +19,6 @@ mod standings;
 mod tiers;
 
 pub(crate) use board::member_leaderboard;
+pub(crate) use board::public_verified;
 pub(crate) use overview::overlay_overview;
 pub(crate) use profile::member_profile;

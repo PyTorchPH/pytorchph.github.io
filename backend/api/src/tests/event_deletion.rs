@@ -30,8 +30,8 @@ async fn scored_event(
         .execute(db)
         .await
         .unwrap();
-    sqlx::query("INSERT INTO point_ledger(id,member_id,event_id,place,delta,result_revision,reason,created_at) VALUES (?,?,?,1,50,1,'place',?)")
-        .bind(Uuid::new_v4().to_string()).bind(&winner.id).bind(&event).bind(&now).execute(db).await.unwrap();
+    sqlx::query("INSERT INTO point_awards(id,member_id,source_type,event_id,place,base_points,result_revision,reason,earned_at,created_at) VALUES (?,?,'event_result',?,1,50,1,'place',?,?)")
+        .bind(Uuid::new_v4().to_string()).bind(&winner.id).bind(&event).bind(&now).bind(&now).execute(db).await.unwrap();
     event
 }
 
@@ -54,7 +54,7 @@ async fn the_creator_deletes_their_event_and_its_points_and_a_snapshot_stays() {
     assert_eq!(reply["pointsRevoked"], 50);
     assert_eq!(count(&state.db, "SELECT COUNT(*) FROM events").await, 0);
     assert_eq!(
-        count(&state.db, "SELECT COUNT(*) FROM point_ledger").await,
+        count(&state.db, "SELECT COUNT(*) FROM point_awards").await,
         0
     );
     assert_eq!(count(&state.db, "SELECT COUNT(*) FROM entrants").await, 0);

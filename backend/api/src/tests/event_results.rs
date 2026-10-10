@@ -2,7 +2,7 @@
 use super::*;
 
 #[tokio::test]
-async fn officer_result_is_authoritative_and_corrections_reverse_points() {
+async fn officer_result_is_authoritative_and_corrections_replace_awards() {
     let (state, headers, _, member) = fixture().await;
     let (_, Json(created)) = events::create_event(
         State(state.clone()),
@@ -14,6 +14,12 @@ async fn officer_result_is_authoritative_and_corrections_reverse_points() {
             parent_id: None,
             entrant_kind: Some("individual".into()),
             place_points: Some(vec![50, 30]),
+            skill_tags: vec![events::EventSkillTag {
+                skill_slug: "pytorch".into(),
+                allocation_bps: 10000,
+            }],
+            weight_milli: Some(1500),
+            weight_reason: Some("Official competition weight".into()),
         }),
     )
     .await
@@ -78,15 +84,16 @@ async fn officer_result_is_authoritative_and_corrections_reverse_points() {
     .await
     .unwrap();
     assert_eq!(correction.0.revision, 2);
-    let ledger: Vec<(i64,)> =
-        sqlx::query_as("SELECT delta FROM point_ledger WHERE event_id = ? ORDER BY rowid")
-            .bind(&event_id)
-            .fetch_all(&state.db)
-            .await
-            .unwrap();
+    let awards: Vec<(i64,)> = sqlx::query_as(
+        "SELECT weighted_points FROM point_awards WHERE event_id = ? ORDER BY rowid",
+    )
+    .bind(&event_id)
+    .fetch_all(&state.db)
+    .await
+    .unwrap();
     assert_eq!(
-        ledger.into_iter().map(|row| row.0).collect::<Vec<_>>(),
-        vec![50, -50, 30]
+        awards.into_iter().map(|row| row.0).collect::<Vec<_>>(),
+        vec![45]
     );
     process_one_job(&state.db).await.unwrap();
     let points: i64 =
@@ -95,7 +102,7 @@ async fn officer_result_is_authoritative_and_corrections_reverse_points() {
             .fetch_one(&state.db)
             .await
             .unwrap();
-    assert_eq!(points, 30);
+    assert_eq!(points, 45);
 }
 
 #[tokio::test]
@@ -111,6 +118,12 @@ async fn unknown_member_and_unauthorized_user_cannot_enter_or_publish() {
             parent_id: None,
             entrant_kind: Some("team".into()),
             place_points: Some(vec![10]),
+            skill_tags: vec![events::EventSkillTag {
+                skill_slug: "pytorch".into(),
+                allocation_bps: 10000,
+            }],
+            weight_milli: Some(1000),
+            weight_reason: Some("Official competition weight".into()),
         }),
     )
     .await

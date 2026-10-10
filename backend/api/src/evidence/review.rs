@@ -311,9 +311,9 @@ async fn credit_verified_points(
     points: i64,
     now: &str,
 ) -> ApiResult<()> {
-    sqlx::query("INSERT INTO point_ledger(id,member_id,source_type,source_id,delta,actor_id,reason,created_at) VALUES (?,?,'verified_evidence',?,?,?,'officer_verified',?)")
+    sqlx::query("INSERT INTO point_awards(id,member_id,source_type,source_id,base_points,actor_id,reason,earned_at,created_at) VALUES (?,?,'verified_evidence',?,?,?,'officer_verified',?,?)")
         .bind(Uuid::new_v4().to_string()).bind(&claim.member_id).bind(claim.id).bind(points)
-        .bind(&officer.id).bind(now)
+        .bind(&officer.id).bind(now).bind(now)
         .execute(&mut *conn).await.map_err(internal)?;
     Ok(())
 }

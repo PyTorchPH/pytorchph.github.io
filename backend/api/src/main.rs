@@ -37,7 +37,7 @@ mod portal;
 mod programs;
 mod reference_data;
 mod schools;
-mod seed;
+mod scoring;
 mod skill_taxonomy;
 #[cfg(test)]
 mod tests;

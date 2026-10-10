@@ -49,6 +49,15 @@ impl Entry {
     }
 
     #[inline]
+    pub(super) fn points_for(&self, view: &str) -> i64 {
+        match view {
+            "verified" => self.verified,
+            "pending" => self.pending,
+            _ => self.points(),
+        }
+    }
+
+    #[inline]
     pub(super) fn is_viewer(&self, viewer: &str) -> bool {
         self.member_id == viewer
     }
@@ -65,10 +74,16 @@ pub(super) async fn standings(
     db: &SqlitePool,
     season: Option<&Season>,
     now: DateTime<Utc>,
+    skill: Option<&str>,
+    view: &str,
 ) -> ApiResult<Vec<Entry>> {
     let members = eligible_members(db).await?;
-    let ledger = ledger_rows(db).await?;
-    let pending = pending_claims(db).await?;
+    let ledger = ledger_rows(db, skill).await?;
+    let pending = if skill.is_some() {
+        Vec::new()
+    } else {
+        pending_claims(db).await?
+    };
     let skill_rows = member_skill_rows(db).await?;
     let units = participation_units(db).await?;
 
@@ -79,7 +94,7 @@ pub(super) async fn standings(
         .iter()
         .map(|member| build_entry(member, &verified, &provisional, &weeks, &mut skills, now))
         .collect();
-    sort_by_rank(&mut entries);
+    sort_by_rank(&mut entries, view);
     Ok(entries)
 }
 
@@ -97,8 +112,16 @@ async fn eligible_members(db: &SqlitePool) -> ApiResult<Vec<MemberRow>> {
     .map_err(internal)
 }
 
-async fn ledger_rows(db: &SqlitePool) -> ApiResult<Vec<(String, i64, String)>> {
-    sqlx::query_as("SELECT member_id, delta, created_at FROM point_ledger")
+async fn ledger_rows(
+    db: &SqlitePool,
+    skill: Option<&str>,
+) -> ApiResult<Vec<(String, i64, String)>> {
+    sqlx::query_as(
+        "SELECT p.member_id, CASE WHEN ? IS NULL THEN p.weighted_points \
+         ELSE (p.weighted_points * t.allocation_bps + 5000)/10000 END, p.earned_at \
+         FROM point_awards p LEFT JOIN event_skill_tags t ON t.event_id=p.event_id AND t.skill_slug=? \
+         WHERE ? IS NULL OR t.skill_slug IS NOT NULL"
+    ).bind(skill).bind(skill).bind(skill)
         .fetch_all(db)
         .await
         .map_err(internal)
@@ -237,10 +260,10 @@ fn streak(weeks: &BTreeSet<i64>, now: DateTime<Utc>) -> i64 {
     count
 }
 
-fn sort_by_rank(entries: &mut [Entry]) {
+fn sort_by_rank(entries: &mut [Entry], view: &str) {
     entries.sort_by(|a, b| {
-        b.points()
-            .cmp(&a.points())
+        b.points_for(view)
+            .cmp(&a.points_for(view))
             .then(b.verified.cmp(&a.verified))
             .then(a.label.cmp(&b.label))
     });
@@ -251,12 +274,13 @@ pub(super) fn entry_json(
     rank: usize,
     viewer: &str,
     tiers: &[(String, i64)],
+    view: &str,
 ) -> Value {
-    let (tier, division) = tier_of(tiers, entry.points());
+    let (tier, division) = tier_of(tiers, entry.points_for(view));
     json!({
         "rank": rank,
         "displayLabel": entry.label,
-        "points": entry.points(),
+        "points": entry.points_for(view),
         "verifiedPoints": entry.verified,
         "pendingPoints": entry.pending,
         "streak": entry.streak,

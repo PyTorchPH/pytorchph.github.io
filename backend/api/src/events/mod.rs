@@ -16,6 +16,7 @@ mod reads;
 mod records;
 mod results;
 
+pub(crate) use create::EventSkillTag;
 pub use create::create_event;
 pub use entrants::add_entrant;
 pub use reads::{list_entrants, list_events, read_event};

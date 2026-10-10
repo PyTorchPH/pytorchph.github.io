@@ -71,8 +71,7 @@ pub async fn publish_results(
     ensure_placements_fit(&mut tx, &event_id, &event, &input.placements).await?;
     let next_revision = event.revision + 1;
     if event.revision > 0 {
-        reverse_previous_results(&mut tx, &event_id, event.revision, next_revision, &actor.id)
-            .await?;
+        remove_previous_results(&mut tx, &event_id).await?;
     }
     for placement in &input.placements {
         record_placement(&mut tx, &event_id, placement, next_revision, &actor.id).await?;
@@ -211,29 +210,12 @@ async fn ensure_registered_entrant(
 }
 
 // Every positive award of the previous revision gets a matching negative correction row.
-async fn reverse_previous_results(
-    tx: &mut Tx<'_>,
-    event_id: &str,
-    revision: i64,
-    next_revision: i64,
-    actor_id: &str,
-) -> ApiResult<()> {
-    let prior: Vec<(String, String, i64, i64)> = sqlx::query_as("SELECT member_id,entrant_id,place,delta FROM point_ledger WHERE event_id = ? AND result_revision = ? AND delta > 0")
-        .bind(event_id).bind(revision).fetch_all(&mut **tx).await.map_err(internal)?;
-    for (member_id, entrant_id, place, points) in prior {
-        LedgerEntry {
-            member_id: &member_id,
-            event_id,
-            entrant_id: &entrant_id,
-            place,
-            delta: -points,
-            revision: next_revision,
-            actor_id,
-            reason: "result_correction",
-        }
-        .insert(tx)
-        .await?;
-    }
+async fn remove_previous_results(tx: &mut Tx<'_>, event_id: &str) -> ApiResult<()> {
+    sqlx::query("DELETE FROM point_awards WHERE event_id=? AND source_type='event_result'")
+        .bind(event_id)
+        .execute(&mut **tx)
+        .await
+        .map_err(internal)?;
     sqlx::query("DELETE FROM results WHERE event_id = ?")
         .bind(event_id)
         .execute(&mut **tx)
@@ -265,7 +247,7 @@ async fn record_placement(
                 event_id,
                 entrant_id: &placement.entrant_id,
                 place: placement.place,
-                delta: points,
+                base_points: points,
                 revision: next_revision,
                 actor_id,
                 reason: "official_result",
