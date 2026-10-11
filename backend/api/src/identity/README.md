@@ -71,7 +71,10 @@ remain permanently reserved and MUST NOT be reassigned.
 
 - Passwords use a memory-hard salted hash and are never logged or duplicated as plaintext.
 - Web sessions are `HttpOnly`, `Secure`, and bounded; account/permission revocation invalidates them.
-- Private calls use WireGuard, mTLS, request IDs, timestamps, and idempotency keys.
+- Private calls use WireGuard, mTLS, request IDs, timestamps, and idempotency keys for writes.
+- `identity_client.rs` is a staged, unused mTLS read client; it accepts only private-IP HTTPS URLs.
+  Do not wire it to a browser route until session-derived viewer identity and a verified WireGuard
+  deployment are in place. PEM credentials stay outside the repository and browser bundle.
 - Identity-service failure is fail-closed for login, role changes, PII access, and mailbox actions.
 - Logs contain opaque IDs and bounded outcomes, not email addresses, tokens, or guardian details.
 
