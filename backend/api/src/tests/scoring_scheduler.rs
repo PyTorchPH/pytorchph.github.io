@@ -32,6 +32,31 @@ async fn add_validators(db: &sqlx::SqlitePool, officer: &str) {
 }
 
 #[tokio::test]
+async fn expired_assignment_can_move_to_an_officer_without_manual_skill_registration() {
+    let (state, _, officer, member) = fixture().await;
+    add_validators(&state.db, &officer).await;
+    add_evidence(&state.db, &member, &officer).await;
+    let other = add_member(&state.db, "member", "Second candidate").await;
+    add_evidence(&state.db, &other, &officer).await;
+    crate::scoring::scheduler::schedule_skill(&state.db, "pytorch", "fixture-replacement")
+        .await
+        .unwrap();
+    let comparison: String = sqlx::query_scalar("SELECT id FROM skill_comparisons")
+        .fetch_one(&state.db)
+        .await
+        .unwrap();
+    let replacement = add_member(&state.db, "officer", "Unregistered officer").await;
+    sqlx::query("UPDATE comparison_validator_assignments SET due_at='2020-01-01T00:00:00Z' WHERE comparison_id=? AND validator_id=?")
+        .bind(&comparison).bind(&officer).execute(&state.db).await.unwrap();
+    crate::scoring::scheduler::schedule_all(&state.db)
+        .await
+        .unwrap();
+    let assignment: Option<(String, i64)> = sqlx::query_as("SELECT status,attempt FROM comparison_validator_assignments WHERE comparison_id=? AND validator_id=?")
+        .bind(comparison).bind(replacement).fetch_optional(&state.db).await.unwrap();
+    assert_eq!(assignment, Some(("pending".into(), 2)));
+}
+
+#[tokio::test]
 async fn scheduler_waits_for_two_evidenced_members_then_assigns_blind_officers_once() {
     let (state, headers, officer, member) = fixture().await;
     add_validators(&state.db, &officer).await;

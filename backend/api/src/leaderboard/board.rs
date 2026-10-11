@@ -13,7 +13,7 @@
 use super::{
     params::{page, page_size, query_param, view},
     seasons::{Season, load_seasons, select_season},
-    standings::{Entry, entry_json, standings},
+    standings::{Entry, entry_json, standings, verified_cohort_position},
     tiers::load_tiers,
 };
 use crate::{ApiResult, identity::session::Viewer, internal};
@@ -53,7 +53,10 @@ pub(crate) async fn member_leaderboard(
     let revision = leaderboard_revision(&ranked);
     let total_pages = ranked.len().div_ceil(page_size);
     let entries: Vec<Value> = page_of(&ranked, page, page_size)
-        .map(|(rank, entry)| entry_json(entry, *rank, &viewer.id, &tiers, &view))
+        .map(|(rank, entry)| {
+            let cohort = verified_cohort_position(ranked.iter().map(|(_, other)| other), entry);
+            entry_json(entry, *rank, cohort, &viewer.id, &tiers, &view)
+        })
         .collect();
     tracing::info!(component="leaderboard",operation="detailed_read",duration_ms=started.elapsed().as_millis() as u64,ranked_count=ranked.len(),page_size,source="live",revision=%revision,"leaderboard.read_complete");
     Ok(json!({

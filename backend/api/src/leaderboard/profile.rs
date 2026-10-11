@@ -12,7 +12,7 @@
 use super::{
     params::query_param,
     seasons::{load_seasons, select_season},
-    standings::{Entry, entry_json, standings},
+    standings::{Entry, entry_json, standings, verified_cohort_position},
     tiers::load_tiers,
 };
 use crate::{ApiError, ApiResult, identity::session::Viewer, internal};
@@ -51,7 +51,7 @@ pub(crate) async fn member_profile(
     let evidence = approved_evidence(db, &entry.member_id).await?;
     let placements = event_placements(db, &entry.member_id).await?;
     Ok(json!({
-        "standing": entry_json(entry, rank, &viewer.id, &tiers, "both"),
+        "standing": entry_json(entry, rank, verified_cohort_position(ranked.iter(), entry), &viewer.id, &tiers, "both"),
         "evidence": evidence.into_iter().map(|row| evidence_json(row, entry.anonymous)).collect::<Vec<_>>(),
         "placements": placements.into_iter().map(placement_json).collect::<Vec<_>>(),
     }))

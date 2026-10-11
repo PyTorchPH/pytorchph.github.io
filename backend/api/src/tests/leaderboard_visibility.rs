@@ -2,6 +2,63 @@
 use super::*;
 
 #[tokio::test]
+async fn tied_verified_points_have_matching_tiers_in_board_and_profile() {
+    let (state, headers, _, member) = fixture().await;
+    let other = Uuid::new_v4().to_string();
+    sqlx::query("INSERT INTO members(id,google_sub,email,display_name,public_handle,role,created_at) VALUES (?,?,?,?,?,'member',?)")
+        .bind(&other).bind(&other).bind(format!("{other}@example.test")).bind("Tier fixture")
+        .bind(format!("fixture-{}", &other[..8])).bind(chrono::Utc::now().to_rfc3339())
+        .execute(&state.db).await.unwrap();
+    for (id, owner) in [("tier-other", &other), ("tier-member", &member)] {
+        claim(&state, id, owner, "manual").await;
+        let (status, _) = portal_call(
+            &state,
+            &headers,
+            Method::PATCH,
+            &format!("/portal/api/officer/evidence/{id}"),
+            serde_json::json!({"decision":"approve","level":"contributor","reason":""}),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+    }
+    let (status, board) = portal_call(
+        &state,
+        &headers,
+        Method::GET,
+        "/portal/api/member/leaderboard",
+        serde_json::Value::Null,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let entries: Vec<_> = board["entries"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|entry| entry["verifiedPoints"].as_i64().unwrap() > 0)
+        .collect();
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0]["verifiedPoints"], entries[1]["verifiedPoints"]);
+    assert_eq!(entries[0]["tier"], entries[1]["tier"]);
+    assert_eq!(entries[0]["division"], entries[1]["division"]);
+    let member_headers = member_session(&state, &headers, &member, &"7".repeat(64)).await;
+    let (status, profile) = portal_call(
+        &state,
+        &member_headers,
+        Method::GET,
+        &format!("/portal/api/member/leaderboard/profile?id={member}"),
+        serde_json::Value::Null,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(profile["standing"]["tier"], entries[0]["tier"]);
+    assert_eq!(profile["standing"]["division"], entries[0]["division"]);
+    assert_eq!(
+        profile["standing"]["cohortPercentile"],
+        entries[0]["cohortPercentile"]
+    );
+}
+
+#[tokio::test]
 async fn leaderboard_achievements_are_private_until_the_member_opts_in() {
     let (state, officer, _, member_id) = fixture().await;
     let token = "9".repeat(64);

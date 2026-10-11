@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { InfoPopover } from "@pytorch-ph/design-system/info-popover";
-import { rankingLevels, rankingSteps, TIER_STEP_POINTS } from "@pytorch-ph/domain-protocol/leaderboards";
+import { rankingLevels, rankingSteps } from "@pytorch-ph/domain-protocol/leaderboards";
 
 // Hidden until opened: how points work and how to climb the ladder.
 export function RankingGuide() {
@@ -24,7 +24,7 @@ export function RankingGuide() {
           ))}
         </tbody>
       </table>
-      <p className="mt-3 text-xs text-muted">Every {TIER_STEP_POINTS} points moves you up one division. The <Link className="text-accent underline underline-offset-2" href="/leaderboards">leaderboards</Link> show the rank of every member.</p>
+      <p className="mt-3 text-xs text-muted">Ang tier at division ay batay sa verified points kumpara sa verified members ng napiling season. Pareho ang tier kapag tied ang points; Unranked kapag wala pang verified points. Tingnan ang <Link className="text-accent underline underline-offset-2" href="/leaderboards">leaderboards</Link> para sa standings.</p>
     </InfoPopover>
   );
 }

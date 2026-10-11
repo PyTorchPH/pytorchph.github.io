@@ -36,7 +36,7 @@ export function SkillTagPicker({ skills, selected, onChange }: {
       onSelect={(option) => { if (!selected.includes(option.value)) onChange([...selected, option.value]); setQuery(""); }}
       openOnEmpty options={available.map((skill) => ({ value: skill.slug, label: skill.label }))}
       placeholder="Search and add a skill" query={query} />
-    <div aria-label="Selected skill tags" className="mt-2 flex flex-wrap gap-2">
+    <div aria-label="Selected skill tags" className="mt-2 flex max-h-32 flex-wrap content-start gap-2 overflow-y-auto overscroll-contain rounded-lg border border-border p-2">
       {allocations.map(({ skillSlug, allocationBps }) => {
         const label = skills.find((skill) => skill.slug === skillSlug)?.label ?? skillSlug;
         return <span className="inline-flex items-center gap-2 border border-border bg-elevated px-2 py-1 text-sm" key={skillSlug}>

@@ -38,7 +38,6 @@ struct Opportunity<'a> {
     location: &'a str,
     work_mode: &'a str,
     stage: &'a str,
-    fit: Option<i64>,
 }
 
 // Mental model: validate the submitted opportunity, then add it (new) or replace it (edit)
@@ -84,7 +83,6 @@ fn parse_opportunity(input: &Value) -> ApiResult<Opportunity<'_>> {
             .trim(),
         work_mode: field(input, "workMode")?,
         stage: field(input, "stage")?,
-        fit: input.get("fit").and_then(Value::as_i64),
     };
     if !is_valid_opportunity(&opportunity, input) {
         return Err(bad("Invalid opportunity"));
@@ -93,19 +91,13 @@ fn parse_opportunity(input: &Value) -> ApiResult<Opportunity<'_>> {
 }
 
 fn is_valid_opportunity(opportunity: &Opportunity<'_>, input: &Value) -> bool {
-    let fit_in_range = opportunity
-        .fit
-        .is_none_or(|value| (0..=100).contains(&value));
-    let fit_is_number_or_null = input
-        .get("fit")
-        .is_none_or(|value| value.is_null() || opportunity.fit.is_some());
+    let fit_is_unset = input.get("fit").is_none_or(Value::is_null);
     limited(opportunity.company, 200)
         && limited(opportunity.title, 200)
         && opportunity.location.len() <= 200
         && WORK_MODES.contains(&opportunity.work_mode)
         && STAGES.contains(&opportunity.stage)
-        && fit_in_range
-        && fit_is_number_or_null
+        && fit_is_unset
 }
 
 fn opportunity_id(target: Option<&str>, input: &Value) -> ApiResult<String> {
@@ -124,7 +116,7 @@ fn opportunity_id(target: Option<&str>, input: &Value) -> ApiResult<String> {
 
 #[inline]
 fn opportunity_record(opportunity: &Opportunity<'_>, id: &str) -> Value {
-    json!({"id":id,"company":opportunity.company,"title":opportunity.title,"location":opportunity.location,"workMode":opportunity.work_mode,"stage":opportunity.stage,"fit":opportunity.fit,"salaryBand":null,"nextStage":null,"recordOrigin":"manual"})
+    json!({"id":id,"company":opportunity.company,"title":opportunity.title,"location":opportunity.location,"workMode":opportunity.work_mode,"stage":opportunity.stage,"fit":null,"salaryBand":null,"nextStage":null,"recordOrigin":"manual"})
 }
 
 fn upsert_manual(view: &mut Value, is_edit: bool, id: &str, record: &Value) -> ApiResult<()> {

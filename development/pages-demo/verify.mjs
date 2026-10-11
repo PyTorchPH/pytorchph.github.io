@@ -27,7 +27,8 @@ const memberHeading = "My performance";
 const officerHeading = "Community intelligence dashboard for chapter operations.";
 const MEMBER_EMAIL = Object.keys(ACCOUNTS).find(email => ACCOUNTS[email] === "member");
 const OFFICER_EMAIL = Object.keys(ACCOUNTS).find(email => ACCOUNTS[email] === "officer");
-const allowedExternal = request => /fonts\.(googleapis|gstatic)\.com|accounts\.google\.com/.test(request) || request.startsWith(API_ORIGIN);
+const allowedExternal = request => /fonts\.(googleapis|gstatic)\.com|accounts\.google\.com/.test(request) || request.startsWith(API_ORIGIN)
+  || (new URL(request).origin === "https://remotive.com" && new URL(request).pathname === "/api/remote-jobs");
 
 const site = await servePages({ portalOut, siteOut });
 const url = `${site.origin}${PORTAL_BASE_PATH}`;
@@ -132,18 +133,16 @@ try {
   await page.goto(`${url}/dashboard/`, { waitUntil: "networkidle" });
   await heading(memberHeading);
   await page.getByRole("link", { name: "Career Evidence" }).first().waitFor();
-  await page.getByRole("link", { name: "Skill comparisons" }).first().waitFor();
+  assert.equal(await page.getByRole("link", { name: "Skill comparisons" }).count(), 0, "Members must not see officer comparison tools");
   await page.getByRole("columnheader", { name: "Peer median" }).waitFor();
   await page.getByRole("button", { name: "How ranking works" }).click();
   await page.getByText("How to raise your rank", { exact: true }).waitFor();
   await page.keyboard.press("Escape");
-  assert.equal(await page.getByRole("heading", { name: "Officer desk", exact: true }).count(), 0, "Members must not see the officer desk");
+  assert.equal(await page.getByRole("group", { name: "Officer tools", exact: true }).count(), 0, "Members must not see officer tools");
   assert.equal(await page.getByRole("link", { name: "Command Center" }).count(), 0, "Members must not see officer tools");
   assert.ok(new URL(page.url()).pathname.startsWith(PORTAL_BASE_PATH), "Navigation must stay under the portal base path");
-  await page.getByRole("link", { name: "Skill comparisons" }).first().click();
-  await heading("Blind skill comparisons");
   assert.equal(await page.getByRole("heading", { name: "Admin setup" }).count(), 0, "Members must not see scoring administration");
-  checks.push("member-dashboard", "peer-scorecard", "ranking-guide", "member-hides-officer-tools", "member-scoring-link", "member-hides-scoring-admin", "base-path");
+  checks.push("member-dashboard", "peer-scorecard", "ranking-guide", "member-hides-officer-tools", "member-hides-scoring-tools", "member-hides-scoring-admin", "base-path");
 
   // Career section tabs sit under the hero; job analytics and automation live there.
   await page.goto(`${url}/career/resumes/`, { waitUntil: "networkidle" });
@@ -157,6 +156,19 @@ try {
   await heading("Job Market Analytics");
   await page.getByRole("button", { name: "Job automation", exact: true }).waitFor();
   checks.push("career-tabs-below-hero", "member-job-tools");
+
+  await page.goto(`${url}/career/resume-viewer/?template=classic&sample=1`, { waitUntil: "domcontentloaded" });
+  try {
+    await page.locator("canvas").waitFor();
+  } catch (error) {
+    throw new Error(`Static PDF rendering failed: ${JSON.stringify({ errors: errors.slice(-5), missingAssets: missingAssets.slice(-5), preview: (await page.locator("main").innerText()).slice(-1000) })}`, { cause: error });
+  }
+  assert.equal(await page.locator("canvas").evaluate(canvas => canvas.width > 0 && canvas.height > 0), true, "The static portal must render an actual PDF");
+  await page.getByRole("button", { name: "Fit page width" }).click();
+  await page.locator('main[data-fit-mode="width"]').waitFor();
+  await page.getByRole("button", { name: "Fit whole page" }).click();
+  await page.locator('main[data-fit-mode="page"]').waitFor();
+  checks.push("static-browser-pdf", "pdf-fit-controls");
 
   // Missing data keeps every panel on screen, each stamped, instead of one blocking card.
   api.state.failingPaths.add("/api/product/career-evidence");
@@ -173,22 +185,26 @@ try {
   await page.waitForURL(`**${PORTAL_BASE_PATH}/login/`);
   await signIn(OFFICER_EMAIL, TEST_PASSWORD);
   await heading(memberHeading);
-  await heading("Officer desk");
+  await page.getByRole("group", { name: "Officer tools", exact: true }).waitFor();
   await page.reload({ waitUntil: "networkidle" });
-  await heading("Officer desk");
+  await page.getByRole("group", { name: "Officer tools", exact: true }).waitFor();
   await page.getByRole("link", { name: "Command Center" }).first().click();
   await heading(officerHeading);
   assert.equal(await page.getByText("Elite node rank", { exact: true }).count(), 0, "The command center must not repeat the leaderboard");
   await page.getByRole("link", { name: "Event Workflow" }).first().click();
   await heading("Event workflow");
-  for (const section of ["Internal events and competitions", "Email and PDF human review"]) await heading(section);
+  await heading("Events");
+  assert.equal(await page.getByRole("heading", { name: "Email and PDF human review" }).count(), 0, "Mail review belongs in the Email workspace");
+  await page.goto(`${url}/admin/mail/`, { waitUntil: "networkidle" });
+  await heading("Email and PDF human review");
   await page.goto(`${url}/admin/scoring/`, { waitUntil: "networkidle" });
-  await heading("Blind skill comparisons");
+  await heading("Blind round robin");
   await page.getByText("Walang assigned comparison ngayon.").waitFor();
   checks.push("officer-desk", "officer-persists-reload", "shared-dashboard", "event-workflow", "scoring-page");
 
   // Settings holds account binding and privacy; binding needs the browser extension.
   await page.goto(`${url}/settings/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Connections", exact: true }).click();
   await page.getByText("Connected accounts", { exact: true }).waitFor();
   await page.getByText("Not installed", { exact: true }).waitFor();
   await page.getByRole("link", { name: "How to install" }).first().click();
@@ -220,7 +236,7 @@ try {
   assert.equal(await page.locator('input[type="password"]').count(), 0, "A restored member session must skip sign in");
   api.state.role = "officer";
   await page.goto(`${url}/login/`, { waitUntil: "networkidle" });
-  await heading("Officer desk");
+  await page.getByRole("group", { name: "Officer tools", exact: true }).waitFor();
   await page.getByRole("button", { name: "Sign out" }).first().click();
   await page.waitForURL(`**${PORTAL_BASE_PATH}/login/`);
   await page.locator('input[type="password"]').waitFor();

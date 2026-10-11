@@ -8,6 +8,9 @@
 //   ConnectionActions         check/disconnect when connected, connect/continue otherwise
 
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEvidenceExtension } from "@pytorch-ph/domain-client/client-automation";
+import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import { AlertTriangle, ChevronRight, Plug, RefreshCw, Server, Unplug } from "lucide-react";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Button } from "@pytorch-ph/design-system/button";
@@ -18,6 +21,8 @@ import { connectionTone } from "./tones";
 
 // Mental model: cards only describe state; the dialog explains the next human step without touching secrets.
 export function ConnectionsWorkspaceView({ data }: { data: ProductViewData }) {
+  const extension = useEvidenceExtension();
+  const accounts = useQuery({ queryKey: ["member-accounts"], queryFn: () => fetchJson<Array<{ provider: string }>>("/api/member/accounts", { cache: "no-store" }) });
   const [selected, setSelected] = useState<Connection | null>(null);
   const [notice, setNotice] = useState("");
   const connections = useMemo(() => data.connections || [], [data.connections]);
@@ -27,9 +32,10 @@ export function ConnectionsWorkspaceView({ data }: { data: ProductViewData }) {
   };
   return (
     <>
+      <p className="rounded-lg border border-border bg-elevated p-3 text-sm">Browser extension: <strong>{extension.state}</strong>. GitHub at LinkedIn sync ay gumagamit ng signed-in browser session mo; walang password na isi-save sa server. I-verify ang session bago mag-sync.</p>
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {connections.length ? (
-          connections.map((item) => <ConnectionCard item={item} key={item.id} onOpen={open} />)
+          connections.map((item) => <ConnectionCard accountVerified={accounts.data?.some((account) => account.provider === item.id) ?? false} extensionReady={extension.state === "available"} item={item} key={item.id} onOpen={open} />)
         ) : (
           <Card>No connection summaries.</Card>
         )}
@@ -41,8 +47,8 @@ export function ConnectionsWorkspaceView({ data }: { data: ProductViewData }) {
 
 const isConnectionLive = (item: Connection) => item.status === "connected";
 
-function ConnectionCard({ item, onOpen }: { item: Connection; onOpen: (item: Connection) => void }) {
-  const connected = isConnectionLive(item);
+function ConnectionCard({ item, onOpen, extensionReady, accountVerified }: { item: Connection; onOpen: (item: Connection) => void; extensionReady: boolean; accountVerified: boolean }) {
+  const connected = isConnectionLive(item) && extensionReady && accountVerified;
   return (
     <button
       className="focus-ring group text-left"
@@ -55,8 +61,8 @@ function ConnectionCard({ item, onOpen }: { item: Connection; onOpen: (item: Con
           >
             {connected ? <Server size={20} /> : <Unplug size={20} />}
           </div>
-          <Badge variant={connectionTone(item.status)}>
-            {item.status.replaceAll("_", " ")}
+          <Badge variant={connected ? "success" : "warning"}>
+            {connected ? "Ready to verify session" : isConnectionLive(item) ? "Saved setup · check extension/account" : item.status.replaceAll("_", " ")}
           </Badge>
         </CardHeader>
         <h2 className="font-bold">{item.label}</h2>
@@ -68,7 +74,7 @@ function ConnectionCard({ item, onOpen }: { item: Connection; onOpen: (item: Con
         </p>
         <p className="mt-5 flex items-center justify-between text-xs font-semibold text-accent">
           <span>
-            {connected ? "Manage connection" : "Connection options"}
+            {connected ? "Verify session and sync" : "Connection options"}
           </span>
           <ChevronRight
             className="transition group-hover:translate-x-1"
@@ -91,7 +97,7 @@ function ConnectionDialog({ selected, notice, onNotice, onClose }: { selected: C
         <div className="flex items-center justify-between gap-3">
           <p className="font-semibold">Current state</p>
           <Badge variant={connectionTone(selected.status)}>
-            {selected.status.replaceAll("_", " ")}
+            {isConnectionLive(selected) ? "Saved setup · browser session unverified" : selected.status.replaceAll("_", " ")}
           </Badge>
         </div>
         <p className="mt-3 text-sm leading-6 text-muted">

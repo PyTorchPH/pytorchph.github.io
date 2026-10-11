@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Award, ExternalLink, Trophy } from "lucide-react";
 import { AppDialog } from "@pytorch-ph/design-system/dialog";
@@ -12,6 +13,7 @@ const dateLabel = (value: string | null) => value ? new Date(value).toLocaleDate
 
 // Achievements of a member who shared them (or your own row), opened from the leaderboard.
 export function MemberProfileDialog({ profileId, season, onClose }: { profileId: string; season: string; onClose: () => void }) {
+  const [photoLoaded, setPhotoLoaded] = useState(false);
   const params = new URLSearchParams({ id: profileId, ...(season ? { season } : {}) });
   const query = useQuery({
     queryKey: ["leaderboard-profile", profileId, season],
@@ -22,6 +24,7 @@ export function MemberProfileDialog({ profileId, season, onClose }: { profileId:
   const description = profile ? `#${profile.standing.rank} · ${profile.standing.tier} ${profile.standing.division} · ${profile.standing.verifiedPoints.toLocaleString()} verified points` : "Loading achievements…";
   return <AppDialog description={description} onClose={onClose} title={title}>
     <div className="space-y-5 p-5 sm:p-6">
+      {profile && <div className="flex items-center gap-3"><div className="relative size-16 overflow-hidden rounded-full bg-elevated"><span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-xl font-semibold">{profile.standing.displayLabel.slice(0, 1).toUpperCase()}</span><img alt={`${profile.standing.displayLabel}'s profile photo`} className={`relative size-full object-cover ${photoLoaded ? "block" : "hidden"}`} onLoad={() => setPhotoLoaded(true)} src={`/api/member/leaderboard-photo/${encodeURIComponent(profileId)}`} /></div><span className="text-xs text-muted">{photoLoaded ? "Shared profile photo" : "Photo hidden or unavailable"}</span></div>}
       {query.isError && <p className="text-sm" role="alert">{query.error instanceof Error ? query.error.message : "Achievements are unavailable."}</p>}
       {profile && <>
         {profile.standing.verifiedSkills.length > 0 && <section><h3 className="mb-2 text-sm font-semibold text-muted">Verified skills</h3><div className="flex flex-wrap gap-1">{profile.standing.verifiedSkills.map((skill) => <Badge key={skill}>{skill}</Badge>)}</div></section>}

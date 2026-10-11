@@ -12,7 +12,8 @@ import { AppShell } from "@pytorch-ph/domain-client/navigation";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import type { JobMarketSummary } from "@pytorch-ph/domain-protocol/job-discovery";
-import { fetchJson, queryKeys } from "@pytorch-ph/domain-client/transport";
+import { queryKeys } from "@pytorch-ph/domain-client/transport";
+import { fetchPublicJobs, summarizePublicJobs } from "./public-jobs";
 import { jobMarketFilterSchema, type JobMarketFilters } from "@pytorch-ph/domain-protocol/job-discovery";
 import { Input } from "@pytorch-ph/design-system/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@pytorch-ph/design-system/table";
@@ -26,7 +27,12 @@ export function JobMarketContent({ children }: { children?: ReactNode }) {
   const [country, compareCountry, role, mode] = watch(["country", "compareCountry", "role", "mode"]);
   const selectedCountries = useMemo(() => [country, compareCountry].filter(Boolean), [country, compareCountry]);
   const query = useMemo(() => new URLSearchParams({ countries: selectedCountries.join(","), role_family: role, work_mode: mode, days: "90" }), [selectedCountries, role, mode]);
-  const market = useQuery({ queryKey: queryKeys.jobMarket(query.toString()), queryFn: () => fetchJson<JobMarketSummary>(`/api/job-market/summary?${query}`), placeholderData: (previous) => previous });
+  const market = useQuery({ queryKey: queryKeys.jobMarket(query.toString()), staleTime: 5 * 60_000, queryFn: async ({ signal }) => {
+    const jobs = mode === "any" || mode === "remote" ? await fetchPublicJobs(role, signal) : [];
+    const summary = summarizePublicJobs(jobs, selectedCountries, role);
+    if (mode === "hybrid" || mode === "onsite") summary.warnings.push("Remotive has no verified hybrid or onsite listings for this filter.");
+    return summary;
+  }, placeholderData: (previous) => previous });
   const snapshot = market.data || null;
   const data = snapshot ?? emptySummary(selectedCountries);
   const pendingLabel = market.isError ? "Market data unavailable" : "Loading data";
@@ -37,7 +43,7 @@ export function JobMarketContent({ children }: { children?: ReactNode }) {
         <div>
           <div className="data-label mb-2 text-xs uppercase tracking-widest text-accent">Evidence-backed market view</div>
           <h1 className="text-3xl font-bold tracking-[-0.02em]">Job Market Analytics</h1>
-          <p className="mt-2 max-w-3xl text-muted">Compare hiring demand and qualification barriers with verified career evidence. Unknown requirements stay unknown.</p>
+          <p className="mt-2 max-w-3xl text-muted">Explore browser-fetched Remotive listings. Unverified requirements and evidence fit stay unknown.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge><LockKeyhole size={13} /> Read only</Badge>
@@ -56,7 +62,7 @@ export function JobMarketContent({ children }: { children?: ReactNode }) {
           <label className="text-sm text-muted">Role family<Input className="mt-2" {...register("role")} /></label>
           <label className="text-sm text-muted">Work mode<select className="mt-2 w-full rounded-lg border border-border bg-elevated p-2.5 text-ink" {...register("mode")}>{["any", "remote", "hybrid", "onsite"].map((value) => <option key={value}>{value}</option>)}</select></label>
         </div>
-        <p className="mt-3 flex items-center gap-2 text-xs text-muted"><LockKeyhole size={13} />Filters query existing snapshots only. Refresh and import run through controlled backend ingestion.</p>
+        <p className="mt-3 flex items-center gap-2 text-xs text-muted"><LockKeyhole size={13} />Your browser fetches Remotive directly. This source contains remote jobs only.</p>
       </Card>
 
       <PanelsUnavailable label={market.isError ? "Data unavailable" : "Loading data"} unavailable={!snapshot}>

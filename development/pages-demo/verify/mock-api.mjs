@@ -31,6 +31,14 @@ export async function mockApi(context, { apiOrigin, siteOrigin }) {
   const unexpected = [];
   const cors = { "access-control-allow-origin": siteOrigin, "access-control-allow-credentials": "true", "access-control-allow-headers": "content-type, if-match", "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE" };
   const reply = (route, status, body) => route.fulfill({ status, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify(body) });
+  await context.route(/^https:\/\/remotive\.com\/api\/remote-jobs(?:\?.*)?$/, async route => {
+    const request = route.request();
+    if (request.method() !== "GET") {
+      unexpected.push(`${request.method()} Remotive API`);
+      return route.fulfill({ status: 405, body: "Method not allowed" });
+    }
+    return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": siteOrigin }, body: JSON.stringify({ jobs: [{ id: 1, title: "Synthetic software role", company_name: "Fixture company", candidate_required_location: "Worldwide", url: "https://remotive.com/remote-jobs/software-dev/fixture-1", publication_date: "2026-10-01T00:00:00Z" }] }) });
+  });
 
   await context.route(`${apiOrigin}/**`, async route => {
     const request = route.request();
@@ -67,6 +75,8 @@ function answerPortal(state, request, url) {
   if (state.failingPaths.has(path)) return { status: 503, body: { error: "Service temporarily unavailable" } };
   if (path === "/api/member/profile") return answerProfile(state, request);
   if (request.method() !== "GET") return { status: 403, body: { error: "Writes are not part of this check." } };
+  if (path === "/api/member/leaderboard-photo-consent" || path === "/api/member/organization-photo-consent") return { status: 200, body: { granted: false } };
+  if (path === "/api/member/organization-photo" || path.startsWith("/api/member/leaderboard-photo/")) return { status: 404, body: { error: "Photo unavailable" } };
   const fixture = fixtureFor(state.role === "officer" ? "officer" : "member", path, url.search);
   return fixture ? { status: fixture.status, body: fixture.body } : { status: 404, body: { error: "View not found" } };
 }
@@ -95,6 +105,7 @@ function programsFor(level, query) {
 
 // Pages that read the Rust API directly get bounded fixtures: layout, not live data, is under test.
 function answerDirectReads(state, url) {
+  if (url.pathname === "/scoring/progress") return state.role === "officer" ? { status: 200, body: { season: "2026-q3", cutoff: "2026-09-30T23:59:59Z", skills: [] } } : { status: 403, body: { error: "Officer required" } };
   if (url.pathname === "/public/events") return { status: 200, body: [] };
   if (url.pathname === "/scoring/skills") return { status: 200, body: [{ slug: "ml", label: "Machine Learning" }] };
   if (url.pathname === "/scoring/comparisons/pending") return state.role ? { status: 200, body: [] } : { status: 401, body: { error: "Authentication required" } };

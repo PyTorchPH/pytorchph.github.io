@@ -2,6 +2,56 @@
 use super::*;
 
 #[tokio::test]
+async fn leaderboard_photo_and_consent_fail_closed_without_identity_service() {
+    let (state, headers, _, member_id) = fixture().await;
+    for (method, path, input, expected) in [
+        (
+            Method::GET,
+            format!("member/leaderboard-photo/{member_id}"),
+            serde_json::Value::Null,
+            StatusCode::SERVICE_UNAVAILABLE,
+        ),
+        (
+            Method::GET,
+            "member/leaderboard-photo-consent".into(),
+            serde_json::Value::Null,
+            StatusCode::SERVICE_UNAVAILABLE,
+        ),
+        (
+            Method::PUT,
+            "member/leaderboard-photo-consent".into(),
+            serde_json::json!({"granted":true}),
+            StatusCode::SERVICE_UNAVAILABLE,
+        ),
+        (
+            Method::PUT,
+            "member/leaderboard-photo-consent".into(),
+            serde_json::json!({"granted":true,"memberId":member_id}),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ),
+    ] {
+        let (status, _) = portal_call(
+            &state,
+            &headers,
+            method,
+            &format!("/portal/api/{path}"),
+            input,
+        )
+        .await;
+        assert_eq!(status, expected);
+    }
+    let stored: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM portal_state WHERE state_key LIKE '%photo%'")
+            .fetch_one(&state.db)
+            .await
+            .unwrap();
+    assert_eq!(
+        stored, 0,
+        "photo consent must never be stored in website fallback state"
+    );
+}
+
+#[tokio::test]
 async fn organization_name_consent_requires_private_identity_service() {
     let (state, headers, _, _) = fixture().await;
     for (method, body) in [

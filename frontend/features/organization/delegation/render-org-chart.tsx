@@ -40,7 +40,7 @@ export function OrganizationView() {
     </section>
     <DataUnavailable label={chart.isError ? "Data unavailable" : "Loading data"} unavailable={!chart.data}>
       <div className="overflow-x-auto border border-border bg-surface p-3 sm:p-5">
-        {head ? <ul className="min-w-0 space-y-2"><PositionNode onAssign={setAssigning} position={head} positions={positions} /></ul> : <p className="text-sm text-muted">The chart has no head position.</p>}
+        {head ? <ul className="flex min-w-max justify-center"><PositionNode onAssign={setAssigning} position={head} positions={positions} /></ul> : <p className="text-sm text-muted">The chart has no head position.</p>}
       </div>
     </DataUnavailable>
     <ChangeHistory entries={chart.data?.history ?? []} positions={positions} />
@@ -53,8 +53,8 @@ type NodeProps = { position: OrgPosition; positions: OrgPosition[]; onAssign: (p
 function PositionNode({ position, positions, onAssign }: NodeProps) {
   const reports = positions.filter((candidate) => candidate.parent === position.slug);
   const seatOpen = position.seats === "many" || position.holders.length === 0;
-  return <li className="min-w-0">
-    <div className={`inline-block max-w-full border px-3 py-2 align-top ${position.heldByViewer ? "border-accent bg-accentSoft" : "border-border bg-elevated"}`}>
+  return <li className="relative flex min-w-[14rem] flex-col items-center px-2 before:absolute before:left-1/2 before:top-[-1.5rem] before:h-6 before:border-l before:border-border">
+    <div className={`w-56 min-h-28 border px-3 py-2 ${position.heldByViewer ? "border-accent bg-accentSoft" : "border-border bg-elevated"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="font-semibold">{position.title}</p>
@@ -66,7 +66,7 @@ function PositionNode({ position, positions, onAssign }: NodeProps) {
         {position.holders.length ? position.holders.map((holder) => <HolderChip holder={holder} key={holder.id} position={position} />) : <Badge variant="warning">Vacant</Badge>}
       </div>
     </div>
-    {reports.length > 0 && <ul className="ml-3 mt-2 space-y-2 border-l border-border pl-3 sm:ml-5 sm:pl-5">
+    {reports.length > 0 && <ul className="relative mt-6 flex min-w-max items-start justify-center gap-2 border-t border-border pt-6 before:absolute before:-top-6 before:left-1/2 before:h-6 before:border-l before:border-border">
       {reports.map((report) => <PositionNode key={report.slug} onAssign={onAssign} position={report} positions={positions} />)}
     </ul>}
   </li>;

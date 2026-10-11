@@ -7,10 +7,13 @@ import { Button } from "@pytorch-ph/design-system/button";
 import type { ResumeTemplateId } from "@pytorch-ph/domain-protocol/resumes";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { resumePdfBytes } from "./export-document";
+import { buildResumeSourceProfile } from "./build-source-resume";
+import { resumeSourceDocumentSchema } from "@pytorch-ph/domain-protocol/resumes";
+import sampleSource from "../../portal/tests/fixtures/resume-source-example.v1.json";
 
 type FitMode = "page" | "width" | "manual";
 
-export function ResumePdfViewer({ template }: { template: ResumeTemplateId }) {
+export function ResumePdfViewer({ template, sample = false }: { template: ResumeTemplateId; sample?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const renderRef = useRef<RenderTask | null>(null);
@@ -31,11 +34,14 @@ export function ResumePdfViewer({ template }: { template: ResumeTemplateId }) {
     let loaded: PDFDocumentProxy | null = null;
     let objectUrl = "";
     void (async () => {
-      const response = await fetch("/api/product/resumes", { cache: "no-store" });
-      if (!response.ok) throw new Error(`Resume data unavailable (${response.status}).`);
-      const view = await response.json() as ProductViewData;
-      if (!view.resumeProfile) throw new Error("Add Career Evidence to build your resume profile first.");
-      const bytes = await resumePdfBytes(view.resumeProfile, template);
+      const profile = sample ? buildResumeSourceProfile(resumeSourceDocumentSchema.parse(sampleSource), "ml-engineer") : await (async () => {
+        const response = await fetch("/api/product/resumes", { cache: "no-store" });
+        if (!response.ok) throw new Error(`Resume data unavailable (${response.status}).`);
+        const view = await response.json() as ProductViewData;
+        if (!view.resumeProfile) throw new Error("Add Career Evidence to build your resume profile first.");
+        return view.resumeProfile;
+      })();
+      const bytes = await resumePdfBytes(profile, template);
       objectUrl = URL.createObjectURL(new Blob([bytes.slice()], { type: "application/pdf" }));
       if (active) setPdfUrl(objectUrl);
       const pdfjs = await import("pdfjs-dist");
@@ -44,7 +50,7 @@ export function ResumePdfViewer({ template }: { template: ResumeTemplateId }) {
       if (active) setDocument(loaded);
     })().catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Could not load the PDF preview."); });
     return () => { active = false; void loaded?.cleanup(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [template]);
+  }, [sample, template]);
 
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -91,6 +97,7 @@ export function ResumePdfViewer({ template }: { template: ResumeTemplateId }) {
 
   return <main className="flex h-dvh flex-col overflow-hidden bg-elevated text-ink" data-fit-mode={fitMode}>
     <header className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-border bg-elevated px-3 py-2" aria-label="PDF controls">
+      {sample && <span className="rounded bg-accentSoft px-2 py-1 text-xs font-semibold text-accent">Sample resume · browser rendered</span>}
       <div className="flex items-center gap-1"><Button aria-label="Previous page" disabled={page <= 1} onClick={() => setPage((value) => value - 1)} size="icon" variant="ghost"><ChevronLeft /></Button><span className="min-w-20 text-center font-mono text-xs">{page} / {document?.numPages || "—"}</span><Button aria-label="Next page" disabled={!document || page >= document.numPages} onClick={() => setPage((value) => value + 1)} size="icon" variant="ghost"><ChevronRight /></Button></div>
       <div className="flex items-center gap-1 text-ink"><Button aria-label="Zoom out" className="text-ink" onClick={() => zoom(-0.1)} size="icon" variant="ghost"><Minus /></Button><span className="min-w-14 text-center font-mono text-xs">{Math.round(shownScale * 100)}%</span><Button aria-label="Zoom in" className="text-ink" onClick={() => zoom(0.1)} size="icon" variant="ghost"><Plus /></Button><Button aria-label="Fit whole page" className={fitMode === "page" ? undefined : "text-ink"} onClick={() => setFitMode("page")} size="sm" variant={fitMode === "page" ? "secondary" : "ghost"}><Maximize2 size={15} />Fit Page</Button><Button aria-label="Fit page width" className={fitMode === "width" ? undefined : "text-ink"} onClick={() => setFitMode("width")} size="sm" variant={fitMode === "width" ? "secondary" : "ghost"}><Rows3 size={15} />Fit Width</Button></div>
       <div className="flex items-center gap-1"><Button asChild size="icon" variant="ghost"><a aria-label="Open PDF in new tab" href={pdfUrl} rel="noreferrer" target="_blank"><ExternalLink /></a></Button><Button asChild size="icon" variant="ghost"><a aria-label="Download PDF" download={`pytorch-ph-resume-${template}.pdf`} href={downloadUrl}><Download /></a></Button></div>

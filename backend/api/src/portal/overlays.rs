@@ -44,6 +44,12 @@ async fn overlay_view(
     view: &mut Value,
 ) -> ApiResult<()> {
     overlay_saved_sections(db, &actor.id, view).await?;
+    // Fit is withheld until approved evidence and a validated weighting model exist.
+    if let Some(opportunities) = view.get_mut("opportunities").and_then(Value::as_array_mut) {
+        for opportunity in opportunities {
+            opportunity["fit"] = Value::Null;
+        }
+    }
     if path == "product/dashboard" && is_officer(&actor.role) {
         analytics::overlay_dashboard(db, view).await?;
     }

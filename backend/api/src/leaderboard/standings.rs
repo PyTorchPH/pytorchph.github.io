@@ -18,7 +18,7 @@
 //!   Entry::points / Entry::is_viewer / Entry::is_profile_visible_to
 use super::{
     seasons::{Season, current_week, is_in_season, parse_time, week_index},
-    tiers::tier_of,
+    tiers::tier_of_cohort,
 };
 use crate::{ApiResult, evidence::integrity::member_label, internal};
 use chrono::{DateTime, Utc};
@@ -86,6 +86,7 @@ pub(super) async fn standings(
     };
     let skill_rows = member_skill_rows(db).await?;
     let units = participation_units(db).await?;
+    let comparison_scores = comparison_scores(db, season).await?;
 
     let (verified, weeks) = verified_points_and_weeks(&ledger, season);
     let provisional = provisional_points(&pending, units, season);
@@ -94,8 +95,37 @@ pub(super) async fn standings(
         .iter()
         .map(|member| build_entry(member, &verified, &provisional, &weeks, &mut skills, now))
         .collect();
-    sort_by_rank(&mut entries, view);
+    sort_by_rank(&mut entries, "verified", &comparison_scores);
+    if view == "pending" {
+        sort_by_rank(&mut entries, view, &comparison_scores);
+    }
     Ok(entries)
+}
+
+async fn comparison_scores(
+    db: &SqlitePool,
+    season: Option<&Season>,
+) -> ApiResult<HashMap<String, (i64, i64)>> {
+    let Some(season) = season else {
+        return Ok(HashMap::new());
+    };
+    let votes: Vec<(String, String, String)> = sqlx::query_as(
+        "SELECT c.member_a,c.member_b,v.outcome FROM skill_comparisons c JOIN skill_comparison_votes v ON v.comparison_id=c.id WHERE c.season_slug=? AND (SELECT COUNT(*) FROM skill_comparison_votes x WHERE x.comparison_id=c.id)>=3"
+    ).bind(&season.slug).fetch_all(db).await.map_err(internal)?;
+    let mut scores: HashMap<String, (i64, i64)> = HashMap::new();
+    for (a, b, outcome) in votes {
+        let (score_a, score_b) = match outcome.as_str() {
+            "a" => (2, 0),
+            "b" => (0, 2),
+            _ => (1, 1),
+        };
+        for (id, score) in [(a, score_a), (b, score_b)] {
+            let entry = scores.entry(id).or_default();
+            entry.0 += score;
+            entry.1 += 2;
+        }
+    }
+    Ok(scores)
 }
 
 async fn eligible_members(db: &SqlitePool) -> ApiResult<Vec<MemberRow>> {
@@ -260,23 +290,42 @@ fn streak(weeks: &BTreeSet<i64>, now: DateTime<Utc>) -> i64 {
     count
 }
 
-fn sort_by_rank(entries: &mut [Entry], view: &str) {
+fn sort_by_rank(
+    entries: &mut [Entry],
+    view: &str,
+    comparison_scores: &HashMap<String, (i64, i64)>,
+) {
     entries.sort_by(|a, b| {
-        b.points_for(view)
-            .cmp(&a.points_for(view))
-            .then(b.verified.cmp(&a.verified))
-            .then(a.label.cmp(&b.label))
+        (if view == "pending" {
+            b.pending.cmp(&a.pending)
+        } else {
+            b.verified.cmp(&a.verified)
+        })
+        .then_with(|| {
+            // Unreviewed members have a neutral share so every comparison uses one total order.
+            let (aw, at) = comparison_scores
+                .get(&a.member_id)
+                .copied()
+                .unwrap_or((1, 2));
+            let (bw, bt) = comparison_scores
+                .get(&b.member_id)
+                .copied()
+                .unwrap_or((1, 2));
+            (i128::from(bw) * i128::from(at)).cmp(&(i128::from(aw) * i128::from(bt)))
+        })
+        .then(a.label.cmp(&b.label))
     });
 }
 
 pub(super) fn entry_json(
     entry: &Entry,
     rank: usize,
+    cohort: (usize, usize),
     viewer: &str,
     tiers: &[(String, i64)],
     view: &str,
 ) -> Value {
-    let (tier, division) = tier_of(tiers, entry.points_for(view));
+    let (tier, division, percentile) = tier_of_cohort(tiers, cohort.0, cohort.1, entry.verified);
     json!({
         "rank": rank,
         "displayLabel": entry.label,
@@ -289,5 +338,18 @@ pub(super) fn entry_json(
         "profileId": entry.is_profile_visible_to(viewer).then_some(&entry.member_id),
         "tier": tier,
         "division": division,
+        "cohortPercentile": percentile,
+    })
+}
+
+pub(super) fn verified_cohort_position<'a>(
+    entries: impl Iterator<Item = &'a Entry>,
+    entry: &Entry,
+) -> (usize, usize) {
+    entries.fold((1, 0), |(rank, size), other| {
+        (
+            rank + usize::from(other.verified > entry.verified),
+            size + usize::from(other.verified > 0),
+        )
     })
 }

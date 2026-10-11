@@ -12,7 +12,7 @@
 //!   └─ community_json
 use super::{
     seasons::{current_week, load_seasons, parse_time, select_season, week_index},
-    standings::{Entry, entry_json, standings},
+    standings::{Entry, entry_json, standings, verified_cohort_position},
     tiers::{Tiers, load_tiers},
 };
 use crate::{ApiResult, identity::session::Viewer, internal};
@@ -45,7 +45,14 @@ pub(crate) async fn overlay_overview(
     let point_events = count_positive_awards(db).await?;
 
     if let Some((rank, entry)) = &standing {
-        apply_standing(overview, *rank, entry, &viewer.id, &tiers);
+        apply_standing(
+            overview,
+            *rank,
+            verified_cohort_position(ranked.iter(), entry),
+            entry,
+            &viewer.id,
+            &tiers,
+        );
     }
     overview["summary"]["verifiedEvidence"] = json!(verified_evidence);
     overview["activity"] = json!(activity);
@@ -109,8 +116,15 @@ async fn count_positive_awards(db: &SqlitePool) -> ApiResult<i64> {
     Ok(count)
 }
 
-fn apply_standing(overview: &mut Value, rank: usize, entry: &Entry, viewer: &str, tiers: &Tiers) {
-    overview["standing"] = entry_json(entry, rank, viewer, tiers, "both");
+fn apply_standing(
+    overview: &mut Value,
+    rank: usize,
+    cohort: (usize, usize),
+    entry: &Entry,
+    viewer: &str,
+    tiers: &Tiers,
+) {
+    overview["standing"] = entry_json(entry, rank, cohort, viewer, tiers, "both");
     overview["summary"]["points"] = json!(entry.verified);
     overview["summary"]["rank"] = json!(rank);
     overview["summary"]["streak"] = json!(entry.streak);

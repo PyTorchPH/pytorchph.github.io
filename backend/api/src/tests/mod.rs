@@ -58,6 +58,7 @@ mod officer;
 mod organization;
 mod portal_gateway;
 mod scoring;
+mod scoring_quarters;
 mod scoring_scheduler;
 mod skill_taxonomy;
 

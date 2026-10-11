@@ -1,12 +1,11 @@
 //! Bounded, idempotent skill comparison pairing for approved evidence and officer validators.
 use super::{evidence_revision, evidence_summary};
-use chrono::Utc;
+use chrono::{Datelike, TimeZone, Utc};
 use serde_json::Value;
 use sqlx::{Sqlite, SqlitePool, Transaction};
 use uuid::Uuid;
 
 const MAX_SKILLS: i64 = 20;
-const MAX_CANDIDATES: i64 = 40;
 const MAX_PAIRS: usize = 10;
 const MAX_NEW_PER_MEMBER: i64 = 2;
 const VALIDATORS_PER_PAIR: usize = 3;
@@ -22,25 +21,65 @@ struct Candidate {
 /// fairness ties, while completed and pending comparison counts keep new members in rotation.
 pub(crate) async fn schedule_all(db: &SqlitePool) -> Result<(), sqlx::Error> {
     reassign_expired(db).await?;
+    let (season, cutoff) = completed_quarter();
     let skills: Vec<String> = sqlx::query_scalar(
-        "SELECT DISTINCT t.skill_slug FROM point_awards p JOIN event_skill_tags t ON t.event_id=p.event_id ORDER BY RANDOM() LIMIT ?",
+        "SELECT skill_slug FROM (SELECT DISTINCT t.skill_slug FROM point_awards p JOIN event_skill_tags t ON t.event_id=p.event_id WHERE p.created_at<=? UNION SELECT DISTINCT skill_slug FROM member_skills WHERE verified_at<=?) ORDER BY RANDOM() LIMIT ?",
     )
+    .bind(&cutoff)
+    .bind(&cutoff)
     .bind(MAX_SKILLS)
     .fetch_all(db)
     .await?;
     let bucket = Utc::now().format("%Y%m%d%H").to_string();
     for skill in skills {
-        if let Err(error) = schedule_skill(db, &skill, &bucket).await {
+        if let Err(error) = schedule_skill_snapshot(db, &skill, &bucket, &season, &cutoff).await {
             tracing::error!(component="scoring",operation="schedule_skill",skill=%skill,error_class="database",error=%error,"scoring.schedule_failed");
         }
     }
     Ok(())
 }
 
+#[cfg(test)]
 pub(crate) async fn schedule_skill(
     db: &SqlitePool,
     skill: &str,
     bucket: &str,
+) -> Result<(), sqlx::Error> {
+    schedule_skill_snapshot(db, skill, bucket, bucket, &Utc::now().to_rfc3339()).await
+}
+
+pub(super) fn completed_quarter() -> (String, String) {
+    completed_quarter_at(Utc::now())
+}
+
+pub(crate) fn completed_quarter_at(today: chrono::DateTime<Utc>) -> (String, String) {
+    let current_quarter = (today.month0() / 3) + 1;
+    let current_start = Utc
+        .with_ymd_and_hms(today.year(), (current_quarter - 1) * 3 + 1, 1, 0, 0, 0)
+        .single()
+        .expect("valid quarter start");
+    let previous_year = if current_quarter == 1 {
+        today.year() - 1
+    } else {
+        today.year()
+    };
+    let previous_quarter = if current_quarter == 1 {
+        4
+    } else {
+        current_quarter - 1
+    };
+    (
+        format!("{previous_year}-q{previous_quarter}"),
+        (current_start - chrono::Duration::nanoseconds(1)).to_rfc3339(),
+    )
+}
+
+pub(crate) async fn schedule_skill_snapshot(
+    db: &SqlitePool,
+    skill: &str,
+    bucket: &str,
+    season: &str,
+    cutoff: &str,
 ) -> Result<(), sqlx::Error> {
     let run_key = format!("{bucket}:{skill}");
     let now = Utc::now();
@@ -63,7 +102,7 @@ pub(crate) async fn schedule_skill(
         return Ok(());
     }
     let attempt = attempt.expect("claimed run has an attempt");
-    match schedule_skill_once(db, skill, &run_key, attempt).await {
+    match schedule_skill_once(db, skill, season, cutoff, &run_key, attempt).await {
         Ok(created) => {
             tracing::info!(component="scoring",operation="schedule_skill",skill=%skill,run_key=%run_key,attempt,created,"scoring.schedule_done");
             Ok(())
@@ -85,12 +124,13 @@ pub(crate) async fn schedule_skill(
 async fn schedule_skill_once(
     db: &SqlitePool,
     skill: &str,
+    season: &str,
+    cutoff: &str,
     run_key: &str,
     attempt: i64,
 ) -> Result<usize, sqlx::Error> {
-    let cutoff = Utc::now().to_rfc3339();
     let due_at = (Utc::now() + chrono::Duration::hours(72)).to_rfc3339();
-    let mut candidates = eligible_candidates(db, skill, &cutoff).await?;
+    let mut candidates = eligible_candidates(db, skill, season, cutoff).await?;
     if candidates.len() < 2 {
         finish_empty(db, run_key, attempt).await?;
         return Ok(0);
@@ -122,18 +162,18 @@ async fn schedule_skill_once(
                     evidence_revision(&candidates[left].evidence, &candidates[right].evidence);
                 let comparison_id = Uuid::new_v4().to_string();
                 let result = sqlx::query(
-                    "INSERT INTO skill_comparisons(id,skill_slug,member_a,member_b,evidence_cutoff,evidence_a_json,evidence_b_json,created_at,evidence_revision,scheduler_run_key) \
-                     VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+                    "INSERT INTO skill_comparisons(id,skill_slug,member_a,member_b,evidence_cutoff,evidence_a_json,evidence_b_json,created_at,evidence_revision,scheduler_run_key,season_slug) \
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
                 )
                 .bind(&comparison_id).bind(skill).bind(&candidates[left].id).bind(&candidates[right].id)
-                .bind(&cutoff).bind(&candidates[left].evidence).bind(&candidates[right].evidence)
-                .bind(&cutoff).bind(revision).bind(run_key).execute(&mut *tx).await?;
+                .bind(cutoff).bind(&candidates[left].evidence).bind(&candidates[right].evidence)
+                .bind(Utc::now().to_rfc3339()).bind(revision).bind(run_key).bind(season).execute(&mut *tx).await?;
                 if result.rows_affected() == 0 {
                     continue;
                 }
                 for validator in validators {
                     sqlx::query("INSERT INTO comparison_validator_assignments(comparison_id,validator_id,assigned_at,due_at,flip) VALUES (?,?,?,?,CASE WHEN random()<0 THEN 1 ELSE 0 END)")
-                        .bind(&comparison_id).bind(&validator).bind(&cutoff).bind(&due_at).execute(&mut *tx).await?;
+                        .bind(&comparison_id).bind(&validator).bind(cutoff).bind(&due_at).execute(&mut *tx).await?;
                     assignment_audit(&mut tx, &comparison_id, &validator, "assigned").await?;
                 }
                 candidates[a].added += 1;
@@ -161,17 +201,24 @@ async fn schedule_skill_once(
 async fn eligible_candidates(
     db: &SqlitePool,
     skill: &str,
+    season: &str,
     cutoff: &str,
 ) -> Result<Vec<Candidate>, sqlx::Error> {
     let rows: Vec<(String, i64)> = sqlx::query_as(
-        "SELECT m.id,(SELECT COUNT(*) FROM skill_comparisons c WHERE c.skill_slug=? AND (c.member_a=m.id OR c.member_b=m.id)) AS scheduled \
-         FROM members m JOIN point_awards p ON p.member_id=m.id \
-         JOIN event_skill_tags t ON t.event_id=p.event_id AND t.skill_slug=? \
-         WHERE m.role!='pending' GROUP BY m.id ORDER BY scheduled,RANDOM() LIMIT ?",
+        "SELECT m.id,(SELECT COUNT(*) FROM skill_comparisons c WHERE c.skill_slug=? AND (c.member_a=m.id OR c.member_b=m.id)) + 1000*(SELECT COUNT(*) FROM skill_comparisons c WHERE c.skill_slug=? AND c.season_slug=? AND (c.member_a=m.id OR c.member_b=m.id)) AS scheduled \
+         FROM members m WHERE m.role!='pending' AND ( \
+           EXISTS (SELECT 1 FROM point_awards p JOIN event_skill_tags t ON t.event_id=p.event_id WHERE p.member_id=m.id AND t.skill_slug=? AND p.created_at<=?) OR \
+           EXISTS (SELECT 1 FROM member_skills s JOIN evidence_claims c ON c.member_id=s.member_id AND c.kind='personal_project' AND c.status='approved' WHERE s.member_id=m.id AND s.skill_slug=? AND s.verified_at<=? AND c.reviewed_at<=?) \
+         ) ORDER BY scheduled,RANDOM()",
     )
     .bind(skill)
     .bind(skill)
-    .bind(MAX_CANDIDATES)
+    .bind(season)
+    .bind(skill)
+    .bind(cutoff)
+    .bind(skill)
+    .bind(cutoff)
+    .bind(cutoff)
     .fetch_all(db)
     .await?;
     let mut candidates = Vec::new();
@@ -180,6 +227,7 @@ async fn eligible_candidates(
         if evidence["achievements"]
             .as_array()
             .is_none_or(Vec::is_empty)
+            && evidence["projects"].as_array().is_none_or(Vec::is_empty)
         {
             continue;
         }
@@ -195,17 +243,17 @@ async fn eligible_candidates(
 
 async fn choose_validators(
     tx: &mut Transaction<'_, Sqlite>,
-    skill: &str,
+    _skill: &str,
     a: &str,
     b: &str,
 ) -> Result<Option<Vec<String>>, sqlx::Error> {
     let validators: Vec<String> = sqlx::query_scalar(
-        "SELECT v.member_id FROM scoring_validators v JOIN members m ON m.id=v.member_id \
-         WHERE v.skill_slug=? AND m.role IN ('officer','admin') AND v.member_id NOT IN (?,?) \
+        "SELECT m.id FROM members m \
+         WHERE m.role IN ('officer','admin') AND m.id NOT IN (?,?) \
          ORDER BY (SELECT COUNT(*) FROM comparison_validator_assignments a \
-                   WHERE a.validator_id=v.member_id AND a.status='pending' AND NOT EXISTS \
+                   WHERE a.validator_id=m.id AND a.status='pending' AND NOT EXISTS \
                    (SELECT 1 FROM skill_comparison_votes x WHERE x.comparison_id=a.comparison_id AND x.validator_id=a.validator_id)), RANDOM() LIMIT ?",
-    ).bind(skill).bind(a).bind(b).bind(VALIDATORS_PER_PAIR as i64)
+    ).bind(a).bind(b).bind(VALIDATORS_PER_PAIR as i64)
         .fetch_all(&mut **tx).await?;
     Ok((validators.len() == VALIDATORS_PER_PAIR).then_some(validators))
 }
@@ -234,7 +282,7 @@ async fn reassign_expired(db: &SqlitePool) -> Result<(), sqlx::Error> {
     .bind(Utc::now().to_rfc3339())
     .fetch_all(db)
     .await?;
-    for (comparison, prior, skill, member_a, member_b, attempt) in expired {
+    for (comparison, prior, _skill, member_a, member_b, attempt) in expired {
         let mut tx = db.begin().await?;
         let updated = sqlx::query("UPDATE comparison_validator_assignments SET status='expired',finished_at=? WHERE comparison_id=? AND validator_id=? AND status='pending'")
             .bind(Utc::now().to_rfc3339()).bind(&comparison).bind(&prior).execute(&mut *tx).await?;
@@ -246,11 +294,11 @@ async fn reassign_expired(db: &SqlitePool) -> Result<(), sqlx::Error> {
         let mut replaced = false;
         if attempt < 3 {
             let replacement: Option<String> = sqlx::query_scalar(
-                "SELECT v.member_id FROM scoring_validators v JOIN members m ON m.id=v.member_id \
-                 WHERE v.skill_slug=? AND m.role IN ('officer','admin') AND v.member_id NOT IN (?,?) \
-                 AND NOT EXISTS (SELECT 1 FROM comparison_validator_assignments a WHERE a.comparison_id=? AND a.validator_id=v.member_id) \
+                "SELECT m.id FROM members m \
+                 WHERE m.role IN ('officer','admin') AND m.id NOT IN (?,?) \
+                 AND NOT EXISTS (SELECT 1 FROM comparison_validator_assignments a WHERE a.comparison_id=? AND a.validator_id=m.id) \
                  ORDER BY RANDOM() LIMIT 1",
-            ).bind(&skill).bind(&member_a).bind(&member_b).bind(&comparison)
+            ).bind(&member_a).bind(&member_b).bind(&comparison)
                 .fetch_optional(&mut *tx).await?;
             if let Some(replacement) = replacement {
                 let now = Utc::now();

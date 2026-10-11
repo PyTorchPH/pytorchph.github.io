@@ -45,13 +45,13 @@ export function ResumeStudioView({ data }: { data: ProductViewData }) {
       <Card className="border-dashed bg-surface py-12 text-center">
         <FileText className="mx-auto text-muted" />
         <h2 className="mt-4 font-bold">No verified resume snapshot</h2>
-        <p className="mt-2 text-sm text-muted">
-          Approve evidence in Career Evidence before selecting a template.
-        </p>
+        <p className="mt-2 text-sm text-muted">Approve evidence in Career Evidence before building your own resume.</p>
+        <Link className="mt-4 inline-block font-semibold text-accent underline" href="/career/resume-viewer/?template=classic&sample=1">View the ATS-ready Classic sample</Link>
       </Card>
     );
   return (
     <>
+      <Link className="mb-4 inline-block text-sm font-semibold text-accent underline" href="/career/resume-viewer/?template=classic&sample=1">View the ATS-ready Classic sample</Link>
       <section className="grid gap-4 md:grid-cols-3">
         {resumeTemplates.map((item, index) => <TemplateCard index={index} item={item} key={item.id} onOpen={setTemplateId} />)}
       </section>

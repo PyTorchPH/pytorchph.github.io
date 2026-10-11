@@ -134,13 +134,17 @@
 
 .footer-container {
   position: relative;
+  @include desktop {
+    display: flex;
+    align-items: flex-start;
+    gap: rem(24px);
+  }
 }
 
 .footer-logo-wrapper {
   @include desktop {
-    position: absolute;
-    top: 0;
-    left: $site_horizontal_padding;
+    position: static;
+    flex: 0 0 130px;
   }
 }
 
@@ -164,12 +168,14 @@
 
 .footer-links-wrapper {
   display: flex;
+  flex: 1 1 0;
   flex-wrap: wrap;
+  min-width: 0;
   border-bottom: 1px solid white;
 
   @include desktop {
-    flex-wrap: initial;
-    justify-content: flex-end;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 }
 
@@ -179,18 +185,19 @@
 
   @include desktop {
     margin-bottom: 0;
-    width: 15%;
+    width: auto;
+    flex: 1 1 140px;
     margin-right: 23px;
 
     &.follow-us-col {
-      width: 18%;
+      width: auto;
       margin-right: 0;
     }
   }
 
   @include small-desktop {
-    width: 58%;
-    margin-right: 30px;
+    width: auto;
+    margin-right: 23px;
   }
 }
 

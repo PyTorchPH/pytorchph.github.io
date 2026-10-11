@@ -6,8 +6,10 @@ use axum::{
     http::{HeaderMap, StatusCode},
 };
 use chrono::Utc;
+use hmac::{Hmac, Mac};
 use serde::Deserialize;
 use serde_json::{Value, json};
+use sha2::Sha256;
 use sqlx::{Row, SqliteConnection, SqlitePool};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -57,6 +59,42 @@ pub(crate) async fn skills(
             .map(|(slug, label)| json!({"slug":slug,"label":label}))
             .collect::<Vec<_>>()
     )))
+}
+
+pub(crate) async fn season_progress(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+) -> ApiResult<Json<Value>> {
+    session::require_officer(&state, &headers).await?;
+    let (season, cutoff) = scheduler::completed_quarter();
+    let skills: Vec<(String, String)> =
+        sqlx::query_as("SELECT slug,label FROM skills ORDER BY label")
+            .fetch_all(&state.db)
+            .await
+            .map_err(internal)?;
+    let mut rows = Vec::new();
+    for (slug, label) in skills {
+        let candidates: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM members m WHERE m.role!='pending' AND (EXISTS (SELECT 1 FROM point_awards p JOIN event_skill_tags t ON t.event_id=p.event_id WHERE p.member_id=m.id AND t.skill_slug=? AND p.created_at<=?) OR EXISTS (SELECT 1 FROM member_skills s JOIN evidence_claims c ON c.member_id=s.member_id AND c.kind='personal_project' AND c.status='approved' WHERE s.member_id=m.id AND s.skill_slug=? AND s.verified_at<=? AND c.reviewed_at<=?))",
+        ).bind(&slug).bind(&cutoff).bind(&slug).bind(&cutoff).bind(&cutoff).fetch_one(&state.db).await.map_err(internal)?;
+        if candidates == 0 {
+            continue;
+        }
+        let scheduled: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM skill_comparisons WHERE season_slug=? AND skill_slug=?",
+        )
+        .bind(&season)
+        .bind(&slug)
+        .fetch_one(&state.db)
+        .await
+        .map_err(internal)?;
+        let reviewed: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM skill_comparisons c WHERE c.season_slug=? AND c.skill_slug=? AND (SELECT COUNT(*) FROM skill_comparison_votes v WHERE v.comparison_id=c.id)>=3",
+        ).bind(&season).bind(&slug).fetch_one(&state.db).await.map_err(internal)?;
+        rows.push(json!({"slug":slug,"label":label,"candidates":candidates,
+            "totalPairs":candidates * (candidates - 1) / 2,"scheduled":scheduled,"reviewed":reviewed}));
+    }
+    Ok(Json(json!({"season":season,"cutoff":cutoff,"skills":rows})))
 }
 
 pub(crate) async fn suggested_weight(
@@ -294,10 +332,9 @@ pub(crate) async fn comparison_queue(
         return Err(ApiError(StatusCode::FORBIDDEN, "Officer required"));
     }
     let rows = sqlx::query(
-        "SELECT c.id,c.skill_slug,c.evidence_a_json,c.evidence_b_json,COALESCE(a.flip,0) FROM skill_comparisons c \
-         JOIN scoring_validators v ON v.skill_slug=c.skill_slug AND v.member_id=? \
+        "SELECT c.id,c.skill_slug,c.evidence_a_json,c.evidence_b_json,COALESCE(a.flip,0),c.member_a,c.member_b,COALESCE(c.season_slug,'legacy') FROM skill_comparisons c \
          LEFT JOIN comparison_validator_assignments a ON a.comparison_id=c.id AND a.validator_id=? \
-         WHERE c.member_a!=? AND c.member_b!=? AND (c.scheduler_run_key IS NULL OR (a.status='pending' AND a.due_at>=?)) AND NOT EXISTS \
+         WHERE c.member_a!=? AND c.member_b!=? AND ((c.scheduler_run_key IS NULL AND EXISTS (SELECT 1 FROM scoring_validators v WHERE v.skill_slug=c.skill_slug AND v.member_id=?)) OR (a.status='pending' AND a.due_at>=?)) AND NOT EXISTS \
          (SELECT 1 FROM skill_comparison_votes x WHERE x.comparison_id=c.id AND x.validator_id=?) \
          ORDER BY c.created_at LIMIT 30",
     )
@@ -316,14 +353,29 @@ pub(crate) async fn comparison_queue(
         let skill: String = row.get(1);
         let mut a: Value = serde_json::from_str(row.get::<&str, _>(2)).map_err(internal)?;
         let mut b: Value = serde_json::from_str(row.get::<&str, _>(3)).map_err(internal)?;
+        let season: String = row.get(7);
+        let mut label_a = candidate_label(&state.email_code_secret, &season, &skill, row.get(5));
+        let mut label_b = candidate_label(&state.email_code_secret, &season, &skill, row.get(6));
         if row.get::<i64, _>(4) == 1 {
             std::mem::swap(&mut a, &mut b);
+            std::mem::swap(&mut label_a, &mut label_b);
         }
-        result.push(json!({"id":id,"skill":skill,
-            "a":{"achievements":a["achievements"]},
-            "b":{"achievements":b["achievements"]}}));
+        result.push(json!({"id":id,"skill":skill,"season":season,
+            "a":{"label":label_a,"achievements":a["achievements"],"projects":a["projects"]},
+            "b":{"label":label_b,"achievements":b["achievements"],"projects":b["projects"]}}));
     }
     Ok(Json(json!(result)))
+}
+
+fn candidate_label(secret: &str, season: &str, skill: &str, member_id: &str) -> String {
+    let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes()).expect("HMAC key accepted");
+    mac.update(b"scoring-candidate-v1:");
+    mac.update(season.as_bytes());
+    mac.update(b":");
+    mac.update(skill.as_bytes());
+    mac.update(b":");
+    mac.update(member_id.as_bytes());
+    format!("#{}", &hex::encode(mac.finalize().into_bytes())[..16])
 }
 
 async fn evidence_summary(
@@ -341,8 +393,12 @@ async fn evidence_summary(
         "SELECT e.category,SUM(p.base_points) FROM point_awards p JOIN events e ON e.id=p.event_id \
          JOIN event_skill_tags t ON t.event_id=e.id WHERE p.member_id=? AND t.skill_slug=? AND p.created_at<=? GROUP BY e.category"
     ).bind(member_id).bind(skill).bind(cutoff).fetch_all(db).await?;
+    let projects: Vec<(i64, String)> = sqlx::query_as(
+        "SELECT COALESCE(points,0),reviewed_at FROM evidence_claims WHERE member_id=? AND kind='personal_project' AND status='approved' AND reviewed_at<=? ORDER BY reviewed_at DESC LIMIT 10",
+    ).bind(member_id).bind(cutoff).fetch_all(db).await?;
     Ok(json!({
         "achievements":event_rows.into_iter().map(|(kind,place,base,at)|json!({"kind":kind,"place":place,"basePoints":base,"date":at})).collect::<Vec<_>>(),
+        "projects":projects.into_iter().map(|(points,at)|json!({"kind":"approved project","points":points,"date":at})).collect::<Vec<_>>(),
         "featureTotals":feature_rows.into_iter().collect::<std::collections::HashMap<_,_>>()
     }))
 }
@@ -363,10 +419,10 @@ pub(crate) async fn cast_vote(
     }
     let mut tx = state.db.begin().await.map_err(internal)?;
     let eligible: Option<(Option<String>, i64)> = sqlx::query_as(
-        "SELECT c.scheduler_run_key,COALESCE(a.flip,0) FROM skill_comparisons c JOIN scoring_validators v ON v.skill_slug=c.skill_slug AND v.member_id=? \
+        "SELECT c.scheduler_run_key,COALESCE(a.flip,0) FROM skill_comparisons c \
          LEFT JOIN comparison_validator_assignments a ON a.comparison_id=c.id AND a.validator_id=? \
-         WHERE c.id=? AND c.member_a!=? AND c.member_b!=? AND (c.scheduler_run_key IS NULL OR (a.status='pending' AND a.due_at>=?))"
-    ).bind(&viewer.id).bind(&viewer.id).bind(&id).bind(&viewer.id).bind(&viewer.id).bind(Utc::now().to_rfc3339())
+         WHERE c.id=? AND c.member_a!=? AND c.member_b!=? AND ((c.scheduler_run_key IS NULL AND EXISTS (SELECT 1 FROM scoring_validators v WHERE v.skill_slug=c.skill_slug AND v.member_id=?)) OR (a.status='pending' AND a.due_at>=?))"
+    ).bind(&viewer.id).bind(&id).bind(&viewer.id).bind(&viewer.id).bind(&viewer.id).bind(Utc::now().to_rfc3339())
         .fetch_optional(&mut *tx).await.map_err(internal)?;
     if eligible.is_none() {
         return Err(ApiError(

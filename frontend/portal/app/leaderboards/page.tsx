@@ -15,7 +15,7 @@ import { Progress } from "@pytorch-ph/design-system/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@pytorch-ph/design-system/table";
 import { MemberProfileDialog } from "./member-profile-dialog";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
-import { rankForPoints, type LeaderboardPayload, type LeaderboardView } from "@pytorch-ph/domain-protocol/leaderboards";
+import { type LeaderboardPayload, type LeaderboardView } from "@pytorch-ph/domain-protocol/leaderboards";
 
 const subscribeToLocation = () => () => undefined;
 const PAGE_SIZE = 10;
@@ -61,8 +61,7 @@ export default function LeaderboardsPage() {
   const highlighted = useSyncExternalStore(subscribeToLocation, readHighlightedMember, () => null);
   const highlightedEntry = highlighted ? data?.entries.find((entry) => entry.displayLabel === highlighted) : undefined;
   const current = data?.entries.find((entry) => entry.isCurrentUser);
-  const range = current ? rankForPoints(current.points) : null;
-  const progress = range ? range.ceiling ? ((current!.points - range.floor) / (range.ceiling - range.floor)) * 100 : 100 : 0;
+  const progress = current?.cohortPercentile ?? 0;
   return <AppShell>
     <div className="space-y-5">
       <section className="page-hero" data-tour="leaderboards-heading">
@@ -74,7 +73,7 @@ export default function LeaderboardsPage() {
 
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="bg-surface"><div className="flex items-center gap-2 text-muted"><Trophy size={18} /> Your standing</div><p className="mt-4 text-3xl font-bold">{current ? `${current.points.toLocaleString()} points` : "Not listed"}</p><p className="mt-1 text-sm text-muted">{current ? `${current.verifiedPoints.toLocaleString()} verified · ${current.pendingPoints.toLocaleString()} pending` : "No points in this verification view."}</p></Card>
-        <Card className="bg-surface"><div className="flex items-center gap-2 text-muted"><Medal size={18} /> Tier progress</div><div className="mt-4 flex items-center justify-between"><strong>{current ? `${current.tier} ${current.division}` : "Unranked"}</strong><span className="text-xs text-muted">{range?.ceiling ? `${range.ceiling - current!.points} to next` : current ? "Top tier" : "—"}</span></div><Progress className="mt-3" value={progress} /></Card>
+        <Card className="bg-surface"><div className="flex items-center gap-2 text-muted"><Medal size={18} /> Season-relative tier</div><div className="mt-4 flex items-center justify-between"><strong>{current ? `${current.tier} ${current.division}` : "Unranked"}</strong><span className="text-xs text-muted">{current?.verifiedPoints ? `${progress}th percentile` : "Awaiting verified results"}</span></div><Progress className="mt-3" value={progress} />{current?.comparisonWinRate != null && <p className="mt-2 text-xs text-muted">Round robin win share: {current.comparisonWinRate}%</p>}</Card>
         <Card className="bg-surface"><div className="flex items-center gap-2 text-muted"><Clock3 size={18} /> Season clock</div><p className="mt-4 text-xl font-bold">{data?.season.state === "completed" ? "Archived · read only" : countdown(data?.season.endsAt)}</p><p className="mt-1 text-sm text-muted">Asia/Manila quarterly boundary</p></Card>
       </section>
 

@@ -88,6 +88,31 @@ pub(crate) async fn dispatch_write(
                 })?;
             (StatusCode::OK, json!({"granted":saved}))
         }
+        ("PUT", "member/leaderboard-photo-consent") => {
+            let granted = input
+                .as_object()
+                .filter(|value| value.len() == 1)
+                .and_then(|value| value.get("granted"))
+                .and_then(Value::as_bool)
+                .ok_or(crate::bad("Invalid leaderboard photo consent"))?;
+            let client = state.identity_client.as_deref().ok_or(ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            ))?;
+            let id = Uuid::parse_str(&actor.id).map_err(|_| {
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+            })?;
+            let saved = client
+                .leaderboard_photo_consent(id, Some(granted))
+                .await
+                .map_err(|_| {
+                    ApiError(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "Identity service unavailable",
+                    )
+                })?;
+            (StatusCode::OK, json!({"granted":saved}))
+        }
         ("POST", "officer/organization/assignments") => (
             StatusCode::CREATED,
             organization::assignments::assign_position(

@@ -103,6 +103,25 @@ async fn special_read(
                 })?;
             Some(json!({"granted":granted}))
         }
+        "member/leaderboard-photo-consent" => {
+            let client = identity_client.ok_or(ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            ))?;
+            let id = Uuid::parse_str(&actor.id).map_err(|_| {
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+            })?;
+            let granted = client
+                .leaderboard_photo_consent(id, None)
+                .await
+                .map_err(|_| {
+                    ApiError(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "Identity service unavailable",
+                    )
+                })?;
+            Some(json!({"granted":granted}))
+        }
         "officer/organization/members" => {
             Some(organization::chart::assignable_members(db, &query_param(query, "q")).await?)
         }

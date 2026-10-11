@@ -20,6 +20,7 @@ pub(crate) struct IdentityClient {
 pub(crate) enum NamePurpose {
     PublicProfile,
     OrganizationChart,
+    LeaderboardPhoto,
 }
 
 impl NamePurpose {
@@ -27,6 +28,7 @@ impl NamePurpose {
         match self {
             Self::PublicProfile => "public_profile",
             Self::OrganizationChart => "organization_chart",
+            Self::LeaderboardPhoto => "leaderboard_photo",
         }
     }
 }
@@ -49,6 +51,70 @@ pub(crate) enum IdentityError {
 }
 
 impl IdentityClient {
+    pub(crate) async fn leaderboard_photo(
+        &self,
+        member_id: Uuid,
+        viewer_id: Uuid,
+    ) -> Result<Option<Vec<u8>>, IdentityError> {
+        let response = self
+            .photo_request_with_purpose(
+                Method::GET,
+                member_id,
+                viewer_id,
+                "organization-photo",
+                None,
+                NamePurpose::LeaderboardPhoto,
+            )
+            .await?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 65_536).await?;
+        if bytes.is_empty() {
+            return Err(IdentityError::Unavailable);
+        }
+        Ok(Some(bytes))
+    }
+
+    pub(crate) async fn leaderboard_photo_consent(
+        &self,
+        member_id: Uuid,
+        granted: Option<bool>,
+    ) -> Result<bool, IdentityError> {
+        let body = granted.map(|value| {
+            (
+                serde_json::json!({"granted":value})
+                    .to_string()
+                    .into_bytes(),
+                "application/json",
+            )
+        });
+        let response = self
+            .photo_request_with_purpose(
+                if granted.is_some() {
+                    Method::PUT
+                } else {
+                    Method::GET
+                },
+                member_id,
+                member_id,
+                "leaderboard-photo-consent",
+                body,
+                NamePurpose::LeaderboardPhoto,
+            )
+            .await?;
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 4096).await?;
+        serde_json::from_slice::<ConsentReply>(&bytes)
+            .map(|value| value.granted)
+            .map_err(|_| IdentityError::Unavailable)
+    }
+
     pub(crate) async fn organization_photo(
         &self,
         member_id: Uuid,
@@ -193,6 +259,26 @@ impl IdentityClient {
         body: Option<Vec<u8>>,
         media_type: Option<&str>,
     ) -> Result<reqwest::Response, IdentityError> {
+        self.photo_request_with_purpose(
+            method,
+            member_id,
+            viewer_id,
+            endpoint,
+            body.zip(media_type),
+            NamePurpose::OrganizationChart,
+        )
+        .await
+    }
+
+    async fn photo_request_with_purpose(
+        &self,
+        method: Method,
+        member_id: Uuid,
+        viewer_id: Uuid,
+        endpoint: &str,
+        payload: Option<(Vec<u8>, &str)>,
+        purpose: NamePurpose,
+    ) -> Result<reqwest::Response, IdentityError> {
         let url = self
             .base
             .join(&format!("v1/identities/{member_id}/{endpoint}"))
@@ -206,12 +292,10 @@ impl IdentityClient {
             .request(method, url)
             .header("x-request-id", Uuid::new_v4().to_string())
             .header("x-viewer-id", viewer_id.to_string())
-            .header("x-name-purpose", NamePurpose::OrganizationChart.code())
+            .header("x-name-purpose", purpose.code())
             .header("x-request-timestamp", timestamp.to_string());
-        if let Some(media_type) = media_type {
+        if let Some((body, media_type)) = payload {
             request = request.header("content-type", media_type);
-        }
-        if let Some(body) = body {
             request = request.body(body);
         }
         request.send().await.map_err(|_| IdentityError::Unavailable)
@@ -352,9 +436,46 @@ impl IdentityClient {
     }
 }
 
+async fn bounded_response_bytes(
+    mut response: reqwest::Response,
+    limit: usize,
+) -> Result<Vec<u8>, IdentityError> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > limit as u64)
+    {
+        return Err(IdentityError::Unavailable);
+    }
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|_| IdentityError::Unavailable)?
+    {
+        if chunk.len() > limit - bytes.len() {
+            return Err(IdentityError::Unavailable);
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    Ok(bytes)
+}
+
 #[cfg(test)]
 mod tests {
     use super::IdentityClient;
+
+    #[tokio::test]
+    async fn oversized_identity_response_is_rejected_before_proxying() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let router =
+            axum::Router::new().route("/", axum::routing::get(|| async { vec![0_u8; 65_537] }));
+        let server = tokio::spawn(async move { axum::serve(listener, router).await.unwrap() });
+        let response = reqwest::get(format!("http://{address}/")).await.unwrap();
+        let result = super::bounded_response_bytes(response, 65_536).await;
+        server.abort();
+        assert!(matches!(result, Err(super::IdentityError::Unavailable)));
+    }
 
     #[test]
     fn rejects_public_or_credential_bearing_urls_before_loading_keys() {

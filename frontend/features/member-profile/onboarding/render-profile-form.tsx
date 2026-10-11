@@ -23,26 +23,26 @@ import { StudyWorkSection } from "./study-work";
 
 // Mental model: both reads must succeed before the form mounts, so the draft is seeded exactly once
 // from the saved profile (Settings → "Edit profile details" reuses this page prefilled).
-export function CompleteProfile() {
+export function CompleteProfile({ embedded = false }: { embedded?: boolean }) {
   const options = useQuery({ queryKey: PROFILE_OPTIONS_QUERY_KEY, queryFn: fetchProfileOptions, staleTime: Infinity });
   const profile = useMemberProfile();
   if (options.isError || profile.isError) return <LoadProblem />;
   if (!options.data || !profile.data) return <p className="text-sm text-muted">Loading your profile…</p>;
   const editing = profile.data.complete;
-  return <Card className="mx-auto max-w-3xl">
+  return <Card className={embedded ? "bg-surface" : "mx-auto max-w-3xl"}>
     <CardHeader><div>
       {!editing && <p className="data-label mb-1 text-xs uppercase tracking-widest text-accent">Step 2 of 2 · Create your account</p>}
       <CardTitle>{editing ? "Edit profile details" : "Welcome! Finish creating your account"}</CardTitle>
       <CardDescription>{editing ? "Update the details you shared when you joined." : "You are now a member of PyTorch Philippines. A few questions help us plan events for the community; it takes about a minute."}</CardDescription>
     </div></CardHeader>
-    <ProfileForm initial={draftFromProfile(profile.data.profile)} options={options.data} />
+    <ProfileForm initial={draftFromProfile(profile.data.profile)} options={options.data} redirectOnSave={!embedded} />
   </Card>;
 }
 
-function ProfileForm({ initial, options }: { initial: ProfileDraft; options: ProfileOptions }) {
+function ProfileForm({ initial, options, redirectOnSave }: { initial: ProfileDraft; options: ProfileOptions; redirectOnSave: boolean }) {
   const [draft, setDraft] = useState(initial);
   const [problem, setProblem] = useState<string | null>(null);
-  const save = useSaveProfile(setProblem);
+  const save = useSaveProfile(setProblem, redirectOnSave);
   const update = (changes: Partial<ProfileDraft>) => setDraft((current) => ({ ...current, ...changes }));
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -62,7 +62,7 @@ function ProfileForm({ initial, options }: { initial: ProfileDraft; options: Pro
   </form>;
 }
 
-function useSaveProfile(onProblem: (message: string) => void) {
+function useSaveProfile(onProblem: (message: string) => void, redirectOnSave: boolean) {
   const router = useRouter();
   const queryClient = useQueryClient();
   return useMutation({
@@ -70,7 +70,7 @@ function useSaveProfile(onProblem: (message: string) => void) {
     onSuccess: (status) => {
       queryClient.setQueryData(PROFILE_QUERY_KEY, status);
       toast.success("Profile saved.");
-      router.replace("/dashboard/");
+      if (redirectOnSave) router.replace("/dashboard/");
     },
     onError: (error) => onProblem(error instanceof Error ? error.message : "Could not save your profile."),
   });

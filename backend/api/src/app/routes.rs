@@ -116,6 +116,7 @@ fn event_routes() -> Router<Arc<AppState>> {
 fn scoring_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/scoring/skills", get(crate::scoring::skills))
+        .route("/scoring/progress", get(crate::scoring::season_progress))
         .route(
             "/scoring/suggestion",
             post(crate::scoring::suggest_for_event),
