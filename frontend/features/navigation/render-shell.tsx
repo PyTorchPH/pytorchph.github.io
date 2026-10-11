@@ -46,7 +46,6 @@ type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; capa
 const sharedNavItems: NavItem[] = [
   { href: "/dashboard", label: "My Performance", icon: Home },
   { href: "/leaderboards", label: "Leaderboards", icon: Trophy },
-  { href: "/admin/scoring", label: "Skill comparisons", icon: Scale },
   { href: "/career/evidence", label: "Career Evidence", icon: UserRound },
   { href: "/career/resumes", label: "Resumes & Opportunities", icon: BriefcaseBusiness, alsoActiveOn: ["/jobs/opportunities", "/jobs/analytics", "/jobs/automation"] },
   { href: "/events", label: "Community Events", icon: CalendarDays },
@@ -58,6 +57,7 @@ const sharedNavItems: NavItem[] = [
 // Officers get these in addition: configuration and the workflows they run.
 const officerNavItems: NavItem[] = [
   { href: "/admin/dashboard", label: "Command Center", icon: LayoutDashboard },
+  { href: "/admin/scoring", label: "Skill comparisons", icon: Scale },
   { href: "/admin/events", label: "Event Workflow", icon: ClipboardList },
   { href: "/admin/organization", label: "Organization", icon: Network },
   { href: "/admin/mail", label: "Email Drafts", icon: Mail },

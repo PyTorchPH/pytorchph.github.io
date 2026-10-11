@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import {
   ArrowRight,
   Bot,
-  CheckCircle2,
   CircleDot,
   Database,
   FileCheck2,
@@ -76,7 +75,7 @@ function HeroNotices({ safety, automation, view, blockers }: { safety: string; a
   </div>;
 }
 
-function EvidenceView({ data }: { data: ProductViewData }) {
+export function EvidenceView({ data }: { data: ProductViewData }) {
   const evidence = data.evidence;
   if (!evidence) return <Empty title="No evidence view is available" />;
   const steps = [
@@ -97,7 +96,7 @@ function EvidenceView({ data }: { data: ProductViewData }) {
   </div>;
 }
 
-function ResumeView({ data }: { data: ProductViewData }) {
+export function ResumeView({ data }: { data: ProductViewData }) {
   return <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{data.resumes?.length ? data.resumes.map((resume) => <Card className="flex flex-col bg-surface" key={resume.id}><CardHeader><div><div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-accentSoft text-accent"><FileCheck2 size={20} /></div><CardTitle>{resume.label}</CardTitle><CardDescription>{resume.summary}</CardDescription></div><Badge variant={resume.ready ? "success" : "warning"}>{resume.ready ? "Ready" : "Incomplete"}</Badge></CardHeader><div className="mt-auto grid grid-cols-2 gap-2"><div className="rounded-lg bg-elevated p-3"><p className="data-label text-xl font-bold">{resume.skillGroupCount}</p><p className="text-xs text-muted">skill groups</p></div><div className="rounded-lg bg-elevated p-3"><p className="data-label text-xl font-bold">{resume.projectCount}</p><p className="text-xs text-muted">projects</p></div></div>{resume.formats.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{resume.formats.map((format) => <a className="focus-ring border border-accent/30 bg-accentSoft px-3 py-1.5 text-xs font-semibold text-accent" href={format.url} key={format.label} rel="noreferrer" target="_blank">{format.label}</a>)}</div>}</Card>) : <Empty title="No generated resume artifacts" detail="Run the evidence middleman and resume generator before an artifact can appear here." />}</section>;
 }
 
@@ -139,7 +138,7 @@ function useDemoAction(view: ProductView) {
   });
 }
 
-function ConnectionsView({ data }: { data: ProductViewData }) {
+export function ConnectionsView({ data }: { data: ProductViewData }) {
   return <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{data.connections?.length ? data.connections.map((item) => { const connected = item.status === "connected"; return <Card className="bg-surface" key={item.id}><CardHeader><div className={`flex h-10 w-10 items-center justify-center rounded-lg ${connected ? "bg-success/10 text-success" : "bg-elevated text-muted"}`}>{connected ? <Server size={20} /> : <Unplug size={20} />}</div><Badge variant={connected ? "success" : item.status === "verification_required" ? "warning" : "default"}>{item.status.replaceAll("_", " ")}</Badge></CardHeader><h2 className="font-bold">{item.label}</h2><p className="mt-1 text-xs uppercase tracking-widest text-muted">{item.category.replaceAll("_", " ")}</p><p className="mt-4 text-sm leading-6 text-muted">{item.detail}</p></Card>; }) : <Empty title="No connection summaries" />}</section>;
 }
 

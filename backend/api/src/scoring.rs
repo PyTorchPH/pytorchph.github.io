@@ -12,6 +12,8 @@ use sqlx::{Row, SqliteConnection, SqlitePool};
 use std::sync::Arc;
 use uuid::Uuid;
 
+pub(crate) mod scheduler;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct NewComparison {
@@ -30,7 +32,7 @@ pub(crate) struct ValidatorAssignment {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Vote {
-    outcome: String,
+    pub(crate) outcome: String,
 }
 
 #[derive(Deserialize)]
@@ -40,7 +42,11 @@ pub(crate) struct SuggestionRequest {
     skill_tags: Vec<crate::events::EventSkillTag>,
 }
 
-pub(crate) async fn skills(State(state): State<Arc<AppState>>) -> ApiResult<Json<Value>> {
+pub(crate) async fn skills(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+) -> ApiResult<Json<Value>> {
+    session::require_officer(&state, &headers).await?;
     let rows: Vec<(String, String)> =
         sqlx::query_as("SELECT slug,label FROM skills ORDER BY label")
             .fetch_all(&state.db)
@@ -75,6 +81,30 @@ pub(crate) async fn suggested_weight(
     Ok(Some((version, (weighted + 5000) / 10000)))
 }
 
+pub(crate) async fn proposed_place_points(
+    conn: &mut SqliteConnection,
+    version: i64,
+    category: &str,
+) -> ApiResult<Option<Vec<i64>>> {
+    let encoded: String =
+        sqlx::query_scalar("SELECT place_points_json FROM scoring_model_versions WHERE version=?")
+            .bind(version)
+            .fetch_one(conn)
+            .await
+            .map_err(internal)?;
+    let schedules: Value = serde_json::from_str(&encoded).map_err(internal)?;
+    let Some(points) = schedules.get(category).and_then(Value::as_array) else {
+        return Ok(None);
+    };
+    let parsed: Option<Vec<i64>> = points.iter().map(Value::as_i64).collect();
+    Ok(parsed.filter(|values| {
+        !values.is_empty()
+            && values.len() <= 100
+            && values.iter().all(|value| *value >= 0)
+            && values.windows(2).all(|pair| pair[0] >= pair[1])
+    }))
+}
+
 pub(crate) async fn suggest_for_event(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -101,7 +131,14 @@ pub(crate) async fn suggest_for_event(
     let suggestion = suggested_weight(&mut conn, &input.category, &tags).await?;
     Ok(Json(match suggestion {
         Some((version, weight)) => {
-            json!({"status":"ready","modelVersion":version,"weightMilli":weight})
+            let points = proposed_place_points(&mut conn, version, &input.category).await?;
+            let details: String =
+                sqlx::query_scalar("SELECT details_md FROM scoring_model_versions WHERE version=?")
+                    .bind(version)
+                    .fetch_one(&mut *conn)
+                    .await
+                    .map_err(internal)?;
+            json!({"status":"ready","modelVersion":version,"weightMilli":weight,"placePoints":points,"detailsMarkdown":details})
         }
         None => json!({"status":"unavailable"}),
     }))
@@ -139,13 +176,13 @@ pub(crate) async fn assign_validator(
         return Err(ApiError(StatusCode::FORBIDDEN, "Admin required"));
     }
     let exists: Option<(String,)> =
-        sqlx::query_as("SELECT id FROM members WHERE id=? AND role!='pending'")
+        sqlx::query_as("SELECT id FROM members WHERE id=? AND role IN ('officer','admin')")
             .bind(&input.member_id)
             .fetch_optional(&state.db)
             .await
             .map_err(internal)?;
     if exists.is_none() {
-        return Err(bad("Approved member required"));
+        return Err(bad("Approved officer required"));
     }
     sqlx::query("INSERT INTO scoring_validators(member_id,skill_slug,assigned_by,assigned_at) VALUES (?,?,?,?) ON CONFLICT(member_id,skill_slug) DO NOTHING")
         .bind(&input.member_id).bind(&input.skill_slug).bind(&actor.id).bind(Utc::now().to_rfc3339())
@@ -183,8 +220,12 @@ pub(crate) async fn create_comparison(
     }
     let id = Uuid::new_v4().to_string();
     let now = Utc::now().to_rfc3339();
-    let evidence_a = evidence_summary(&state.db, &a, &input.skill_slug, &now).await?;
-    let evidence_b = evidence_summary(&state.db, &b, &input.skill_slug, &now).await?;
+    let evidence_a = evidence_summary(&state.db, &a, &input.skill_slug, &now)
+        .await
+        .map_err(internal)?;
+    let evidence_b = evidence_summary(&state.db, &b, &input.skill_slug, &now)
+        .await
+        .map_err(internal)?;
     if evidence_a["achievements"]
         .as_array()
         .is_none_or(|rows| rows.is_empty())
@@ -194,30 +235,77 @@ pub(crate) async fn create_comparison(
     {
         return Err(bad("Both candidates need skill evidence"));
     }
-    sqlx::query("INSERT INTO skill_comparisons(id,skill_slug,member_a,member_b,evidence_cutoff,evidence_a_json,evidence_b_json,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?)")
+    let evidence_a = evidence_a.to_string();
+    let evidence_b = evidence_b.to_string();
+    let revision = evidence_revision(&evidence_a, &evidence_b);
+    let inserted = sqlx::query("INSERT INTO skill_comparisons(id,skill_slug,member_a,member_b,evidence_cutoff,evidence_a_json,evidence_b_json,created_by,created_at,evidence_revision) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING")
         .bind(&id).bind(&input.skill_slug).bind(&a).bind(&b).bind(&now)
-        .bind(evidence_a.to_string()).bind(evidence_b.to_string()).bind(&actor.id).bind(&now)
+        .bind(&evidence_a).bind(&evidence_b).bind(&actor.id).bind(&now).bind(revision)
         .execute(&state.db).await.map_err(internal)?;
+    if inserted.rows_affected() == 0 {
+        return Err(ApiError(
+            StatusCode::CONFLICT,
+            "Comparison already exists for this evidence",
+        ));
+    }
     Ok(Json(json!({"id":id})))
+}
+
+pub(super) fn evidence_revision(a: &str, b: &str) -> String {
+    use sha2::{Digest, Sha256};
+    let mut digest = Sha256::new();
+    digest.update(a.as_bytes());
+    digest.update([0]);
+    digest.update(b.as_bytes());
+    hex::encode(digest.finalize())
 }
 
 // Mental model: the validator receives only two evidence summaries. IDs, names, handles,
 // URLs, authored titles and current point totals never cross this response boundary.
+pub(crate) async fn review_required_comparisons(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+) -> ApiResult<Json<Value>> {
+    let viewer = session::viewer(&state, &headers).await?;
+    if viewer.role != "admin" {
+        return Err(ApiError(StatusCode::FORBIDDEN, "Admin required"));
+    }
+    let rows: Vec<(String, String, i64)> = sqlx::query_as(
+        "SELECT c.id,c.skill_slug,COUNT(*) FROM skill_comparisons c \
+         JOIN comparison_validator_assignments a ON a.comparison_id=c.id \
+         WHERE a.status='review_required' GROUP BY c.id,c.skill_slug ORDER BY c.created_at LIMIT 30",
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(internal)?;
+    Ok(Json(json!(
+        rows.into_iter()
+            .map(|(id, skill, tasks)| json!({"id":id,"skill":skill,"tasks":tasks}))
+            .collect::<Vec<_>>()
+    )))
+}
+
 pub(crate) async fn comparison_queue(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
 ) -> ApiResult<Json<Value>> {
     let viewer = session::viewer(&state, &headers).await?;
+    if !matches!(viewer.role.as_str(), "officer" | "admin") {
+        return Err(ApiError(StatusCode::FORBIDDEN, "Officer required"));
+    }
     let rows = sqlx::query(
-        "SELECT c.id,c.skill_slug,c.evidence_a_json,c.evidence_b_json FROM skill_comparisons c \
+        "SELECT c.id,c.skill_slug,c.evidence_a_json,c.evidence_b_json,COALESCE(a.flip,0) FROM skill_comparisons c \
          JOIN scoring_validators v ON v.skill_slug=c.skill_slug AND v.member_id=? \
-         WHERE c.member_a!=? AND c.member_b!=? AND NOT EXISTS \
+         LEFT JOIN comparison_validator_assignments a ON a.comparison_id=c.id AND a.validator_id=? \
+         WHERE c.member_a!=? AND c.member_b!=? AND (c.scheduler_run_key IS NULL OR (a.status='pending' AND a.due_at>=?)) AND NOT EXISTS \
          (SELECT 1 FROM skill_comparison_votes x WHERE x.comparison_id=c.id AND x.validator_id=?) \
          ORDER BY c.created_at LIMIT 30",
     )
     .bind(&viewer.id)
     .bind(&viewer.id)
     .bind(&viewer.id)
+    .bind(&viewer.id)
+    .bind(Utc::now().to_rfc3339())
     .bind(&viewer.id)
     .fetch_all(&state.db)
     .await
@@ -226,8 +314,11 @@ pub(crate) async fn comparison_queue(
     for row in rows {
         let id: String = row.get(0);
         let skill: String = row.get(1);
-        let a: Value = serde_json::from_str(row.get::<&str, _>(2)).map_err(internal)?;
-        let b: Value = serde_json::from_str(row.get::<&str, _>(3)).map_err(internal)?;
+        let mut a: Value = serde_json::from_str(row.get::<&str, _>(2)).map_err(internal)?;
+        let mut b: Value = serde_json::from_str(row.get::<&str, _>(3)).map_err(internal)?;
+        if row.get::<i64, _>(4) == 1 {
+            std::mem::swap(&mut a, &mut b);
+        }
         result.push(json!({"id":id,"skill":skill,
             "a":{"achievements":a["achievements"]},
             "b":{"achievements":b["achievements"]}}));
@@ -240,16 +331,16 @@ async fn evidence_summary(
     member_id: &str,
     skill: &str,
     cutoff: &str,
-) -> ApiResult<Value> {
+) -> Result<Value, sqlx::Error> {
     let event_rows: Vec<(String,Option<i64>,i64,String)> = sqlx::query_as(
         "SELECT e.category,p.place,p.base_points,e.starts_at FROM point_awards p JOIN events e ON e.id=p.event_id \
          JOIN event_skill_tags t ON t.event_id=e.id WHERE p.member_id=? AND t.skill_slug=? AND p.created_at<=? \
          ORDER BY e.starts_at DESC LIMIT 30"
-    ).bind(member_id).bind(skill).bind(cutoff).fetch_all(db).await.map_err(internal)?;
+    ).bind(member_id).bind(skill).bind(cutoff).fetch_all(db).await?;
     let feature_rows: Vec<(String,i64)> = sqlx::query_as(
         "SELECT e.category,SUM(p.base_points) FROM point_awards p JOIN events e ON e.id=p.event_id \
          JOIN event_skill_tags t ON t.event_id=e.id WHERE p.member_id=? AND t.skill_slug=? AND p.created_at<=? GROUP BY e.category"
-    ).bind(member_id).bind(skill).bind(cutoff).fetch_all(db).await.map_err(internal)?;
+    ).bind(member_id).bind(skill).bind(cutoff).fetch_all(db).await?;
     Ok(json!({
         "achievements":event_rows.into_iter().map(|(kind,place,base,at)|json!({"kind":kind,"place":place,"basePoints":base,"date":at})).collect::<Vec<_>>(),
         "featureTotals":feature_rows.into_iter().collect::<std::collections::HashMap<_,_>>()
@@ -264,27 +355,49 @@ pub(crate) async fn cast_vote(
 ) -> ApiResult<Json<Value>> {
     check_origin(&state, &headers)?;
     let viewer = session::viewer(&state, &headers).await?;
+    if !matches!(viewer.role.as_str(), "officer" | "admin") {
+        return Err(ApiError(StatusCode::FORBIDDEN, "Officer required"));
+    }
     if !matches!(input.outcome.as_str(), "a" | "b" | "draw") {
         return Err(bad("Invalid outcome"));
     }
-    let eligible: Option<(i64,)> = sqlx::query_as(
-        "SELECT 1 FROM skill_comparisons c JOIN scoring_validators v ON v.skill_slug=c.skill_slug AND v.member_id=? \
-         WHERE c.id=? AND c.member_a!=? AND c.member_b!=?"
-    ).bind(&viewer.id).bind(&id).bind(&viewer.id).bind(&viewer.id)
-        .fetch_optional(&state.db).await.map_err(internal)?;
+    let mut tx = state.db.begin().await.map_err(internal)?;
+    let eligible: Option<(Option<String>, i64)> = sqlx::query_as(
+        "SELECT c.scheduler_run_key,COALESCE(a.flip,0) FROM skill_comparisons c JOIN scoring_validators v ON v.skill_slug=c.skill_slug AND v.member_id=? \
+         LEFT JOIN comparison_validator_assignments a ON a.comparison_id=c.id AND a.validator_id=? \
+         WHERE c.id=? AND c.member_a!=? AND c.member_b!=? AND (c.scheduler_run_key IS NULL OR (a.status='pending' AND a.due_at>=?))"
+    ).bind(&viewer.id).bind(&viewer.id).bind(&id).bind(&viewer.id).bind(&viewer.id).bind(Utc::now().to_rfc3339())
+        .fetch_optional(&mut *tx).await.map_err(internal)?;
     if eligible.is_none() {
         return Err(ApiError(
             StatusCode::FORBIDDEN,
             "Validator assignment required",
         ));
     }
+    let (scheduled, flip) = eligible
+        .as_ref()
+        .map(|row| (row.0.is_some(), row.1 == 1))
+        .unwrap_or((false, false));
+    let canonical_outcome = match (flip, input.outcome.as_str()) {
+        (true, "a") => "b",
+        (true, "b") => "a",
+        _ => input.outcome.as_str(),
+    };
     let inserted = sqlx::query("INSERT INTO skill_comparison_votes(comparison_id,validator_id,outcome,decided_at) VALUES (?,?,?,?) ON CONFLICT(comparison_id,validator_id) DO NOTHING")
-        .bind(&id).bind(&viewer.id).bind(&input.outcome).bind(Utc::now().to_rfc3339())
-        .execute(&state.db).await.map_err(internal)?;
+        .bind(&id).bind(&viewer.id).bind(canonical_outcome).bind(Utc::now().to_rfc3339())
+        .execute(&mut *tx).await.map_err(internal)?;
     if inserted.rows_affected() == 0 {
         return Err(ApiError(StatusCode::CONFLICT, "Vote already submitted"));
     }
-    tracing::info!(component="scoring",operation="validator_vote",comparison_id=%id,validator_id=%viewer.id,outcome=%input.outcome,"scoring.vote_recorded");
+    if scheduled {
+        sqlx::query("UPDATE comparison_validator_assignments SET status='completed',finished_at=? WHERE comparison_id=? AND validator_id=? AND status='pending'")
+            .bind(Utc::now().to_rfc3339()).bind(&id).bind(&viewer.id).execute(&mut *tx).await.map_err(internal)?;
+        scheduler::assignment_audit(&mut tx, &id, &viewer.id, "completed")
+            .await
+            .map_err(internal)?;
+    }
+    tx.commit().await.map_err(internal)?;
+    tracing::info!(component="scoring",operation="validator_vote",comparison_id=%id,validator_id=%viewer.id,outcome=%canonical_outcome,"scoring.vote_recorded");
     Ok(Json(json!({"ok":true})))
 }
 

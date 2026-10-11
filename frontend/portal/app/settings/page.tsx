@@ -12,6 +12,7 @@ import { Badge } from "@pytorch-ph/design-system/badge";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import { Input, Label } from "@pytorch-ph/design-system/input";
+import { SegmentedTabs, TabPanel } from "@pytorch-ph/design-system/tabs";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import { LeaveCommunity } from "../../components/leave-community";
 import { LocalAIConnection } from "../../components/local-ai-connection";
@@ -21,6 +22,7 @@ import type { MemberPrivacySettings } from "@pytorch-ph/domain-protocol/privacy-
 type Mode = LeaderboardIdentitySettings["mode"];
 
 export default function SettingsPage() {
+  const [section, setSection] = useState<"privacy" | "profile" | "connections" | "account">("privacy");
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["leaderboard-identity"], queryFn: () => fetchJson<LeaderboardIdentitySettings>("/api/member/leaderboard-identity", { cache: "no-store" }) });
   const [username, setUsername] = useState("");
@@ -29,8 +31,16 @@ export default function SettingsPage() {
   const [availability, setAvailability] = useState<"idle" | "available" | "unavailable">("idle");
   const privacyQuery = usePrivacySettings();
   const [privacy, setPrivacy] = useState<MemberPrivacySettings | null>(null);
+  const organizationConsent = useQuery({ queryKey: ["organization-name-consent"], queryFn: () => fetchJson<{ granted: boolean }>("/api/member/organization-name-consent", { cache: "no-store" }), retry: false });
+  const [showOrganizationName, setShowOrganizationName] = useState(false);
   useEffect(() => { if (query.data) { setUsername(query.data.username); setMode(query.data.mode); setConsent(query.data.realNameConsent); } }, [query.data]);
   useEffect(() => { if (privacyQuery.data) setPrivacy(privacyQuery.data); }, [privacyQuery.data]);
+  useEffect(() => { if (organizationConsent.data) setShowOrganizationName(organizationConsent.data.granted); }, [organizationConsent.data]);
+  const saveOrganizationConsent = useMutation({
+    mutationFn: () => fetchJson<{ granted: boolean }>("/api/member/organization-name-consent", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ granted: showOrganizationName }) }),
+    onSuccess: (saved) => { queryClient.setQueryData(["organization-name-consent"], saved); toast.success("Organization name consent saved."); },
+    onError: () => toast.error("Organization name consent could not be saved."),
+  });
   const mutation = useMutation({
     mutationFn: async () => {
       const identity = await fetchJson<LeaderboardIdentitySettings>("/api/member/leaderboard-identity", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, mode, realNameConsent: consent }) });
@@ -58,6 +68,9 @@ export default function SettingsPage() {
       <div><h1 className="text-3xl font-bold tracking-[-0.02em]">Settings</h1><p className="mt-2 text-muted">Leaderboard and privacy, AI connection, and connected accounts.</p></div>
       <Badge variant="orange">Private by default</Badge>
     </div>
+    <div aria-label="Settings sections"><SegmentedTabs items={[{ value: "privacy", label: "Leaderboard & privacy" }, { value: "profile", label: "Profile" }, { value: "connections", label: "Connections" }, { value: "account", label: "Account" }]} onChange={setSection} value={section} /></div>
+    <TabPanel>
+    {section === "privacy" && <>
     <Card className="bg-surface" data-tour="settings-privacy" id="privacy">
       <CardHeader><div><CardTitle>Leaderboard &amp; privacy</CardTitle><CardDescription>How you appear on leaderboards and what leaves your device. <Link className="text-accent underline underline-offset-2" href="/trust">How your data is protected</Link></CardDescription></div><UserCog aria-hidden="true" className="text-accent" /></CardHeader>
       {query.data?.reviewRequired && <div className="mb-4 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">Review the generated username before continuing.</div>}
@@ -72,12 +85,20 @@ export default function SettingsPage() {
       <h3 className="mb-2 mt-6 text-sm font-semibold">Privacy</h3>
       {privacy ? <PrivacyToggles onChange={setPrivacy} value={privacy} /> : <p className="text-sm text-muted">{privacyQuery.isError ? "Privacy controls are unavailable right now." : "Loading privacy controls…"}</p>}
       <Button className="mt-4 w-full sm:w-auto" disabled={query.isLoading || !privacy || mutation.isPending || !username || (mode === "real_name" && !consent)} onClick={() => mutation.mutate()} type="button">{mutation.isPending ? "Saving…" : "Save leaderboard and privacy"}</Button>
+      <div className="mt-6 border-t border-border pt-5">
+        <h3 className="font-semibold">Organization chart name</h3>
+        <p className="mt-1 text-sm text-muted">Allow officers to see your display name on the organization chart. Without this consent, the chart shows your public handle and initials.</p>
+        {organizationConsent.isError ? <p className="mt-2 text-sm text-muted">This control is available after the private identity service is configured.</p> : <><label className="mt-3 flex items-center gap-3 text-sm"><input checked={showOrganizationName} disabled={!organizationConsent.data} onChange={(event) => setShowOrganizationName(event.target.checked)} type="checkbox" />Show my display name on the organization chart</label><Button className="mt-3" disabled={!organizationConsent.data || saveOrganizationConsent.isPending} onClick={() => saveOrganizationConsent.mutate()} type="button" variant="secondary">Save organization name consent</Button></>}
+      </div>
     </Card>
+    </>}
+    {section === "profile" && <>
     <Card className="bg-surface" id="profile-details">
       <CardHeader className="mb-0 flex-wrap items-center"><div><CardTitle>Profile details</CardTitle><CardDescription>Status, school or company, interests, and demographics consent.</CardDescription></div><Button asChild variant="outline"><Link href="/onboarding/">Edit profile details</Link></Button></CardHeader>
     </Card>
-    <LocalAIConnection />
-    <AccountBinding />
-    <LeaveCommunity />
+    </>}
+    {section === "connections" && <><LocalAIConnection /><AccountBinding /></>}
+    {section === "account" && <LeaveCommunity />}
+    </TabPanel>
   </AppShell>;
 }

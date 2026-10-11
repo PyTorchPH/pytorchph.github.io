@@ -19,30 +19,32 @@ use super::{
     store::{scope, stored, view_not_found},
 };
 use crate::{
-    ApiResult, collab_mail, events,
+    ApiError, ApiResult, collab_mail, events,
     evidence::integrity,
     feedback::attachments,
-    identity::{accounts, session::Viewer},
+    identity::{accounts, identity_client::IdentityClient, session::Viewer},
     leaderboard, member_profile, organization, skill_taxonomy,
 };
 use axum::{http::StatusCode, response::Response};
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
+use uuid::Uuid;
 
 // Mental model: a few paths answer from dedicated logic, table-backed views are computed
 // from their tables, and everything else is the member's saved JSON or the demo fixture.
 pub(crate) async fn answer_read(
     db: &SqlitePool,
+    identity_client: Option<&IdentityClient>,
     actor: &Viewer,
     path: &str,
     query: Option<&str>,
 ) -> ApiResult<Response> {
-    if let Some(value) = special_read(db, actor, path, query).await? {
+    if let Some(value) = special_read(db, identity_client, actor, path, query).await? {
         return Ok(reply(StatusCode::OK, value));
     }
     let key = format!("/api/{path}");
     // Leaderboard, integrity and review data come from their tables, not JSON state.
-    if let Some(value) = computed_view(db, actor, path, &key, query).await? {
+    if let Some(value) = computed_view(db, identity_client, actor, path, &key, query).await? {
         return Ok(reply(StatusCode::OK, value));
     }
     saved_or_fixture_view(db, actor, path, &key, query).await
@@ -50,6 +52,7 @@ pub(crate) async fn answer_read(
 
 async fn special_read(
     db: &SqlitePool,
+    identity_client: Option<&IdentityClient>,
     actor: &Viewer,
     path: &str,
     query: Option<&str>,
@@ -62,6 +65,25 @@ async fn special_read(
             Some(json!({"available": member::username_available(db, &actor.id, &username).await?}))
         }
         "feedback" => Some(feedback::read_feedback(db, actor, query).await?),
+        "member/organization-name-consent" => {
+            let client = identity_client.ok_or(ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            ))?;
+            let id = Uuid::parse_str(&actor.id).map_err(|_| {
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+            })?;
+            let granted = client
+                .organization_name_consent(id, None)
+                .await
+                .map_err(|_| {
+                    ApiError(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "Identity service unavailable",
+                    )
+                })?;
+            Some(json!({"granted":granted}))
+        }
         "officer/organization/members" => {
             Some(organization::chart::assignable_members(db, &query_param(query, "q")).await?)
         }
@@ -78,6 +100,7 @@ fn query_param(query: Option<&str>, name: &str) -> String {
 
 async fn computed_view(
     db: &SqlitePool,
+    identity_client: Option<&IdentityClient>,
     actor: &Viewer,
     path: &str,
     key: &str,
@@ -96,7 +119,9 @@ async fn computed_view(
         "member/accounts" => accounts::list(db, actor).await?,
         "member/profile" => member_profile::read_profile(db, actor).await?,
         "officer/demographics" => member_profile::demographics(db).await?,
-        "officer/organization" => organization::chart::org_chart(db, actor).await?,
+        "officer/organization" => {
+            organization::chart::org_chart_with_identity(db, identity_client, actor).await?
+        }
         "officer/events" => events::delete::officer_event_list(db, actor).await?,
         "officer/mail-collab" => collab_mail::view::list_drafts(db, actor).await?,
         _ if path.starts_with("officer/mail-collab/") => {

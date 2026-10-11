@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, CheckCircle2, ExternalLink, ShieldAlert } from "lucide-react";
+import { ExternalLink, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@pytorch-ph/domain-client/navigation";
 import { Badge } from "@pytorch-ph/design-system/badge";

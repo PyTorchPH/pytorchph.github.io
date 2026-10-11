@@ -67,4 +67,5 @@ export function parseComposed(reply: string, positions: PositionOption[], creato
 }
 
 // Plain text only, like the server: no control characters, trimmed, bounded.
+// eslint-disable-next-line no-control-regex -- Control characters are removed from plain text.
 const plain = (value: unknown, max: number) => typeof value === "string" ? value.replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, "").trim().slice(0, max) : "";

@@ -7,7 +7,6 @@ import {
   BarChart,
   CartesianGrid,
   Line,
-  LineChart,
   Pie,
   PieChart,
   Cell,

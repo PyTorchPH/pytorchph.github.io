@@ -37,9 +37,9 @@ export function OrganizationView() {
       <p className="mt-3 max-w-3xl leading-7 text-muted">Each position is filled by the holder of the position directly above it. You can assign and remove people only in the positions right under yours, and resign from your own.</p>
     </section>
     <DataUnavailable label={chart.isError ? "Data unavailable" : "Loading data"} unavailable={!chart.data}>
-      <Card className="bg-surface">
-        {head ? <ul className="space-y-3"><PositionNode onAssign={setAssigning} position={head} positions={positions} /></ul> : <p className="text-sm text-muted">The chart has no head position.</p>}
-      </Card>
+      <div className="overflow-x-auto border border-border bg-surface p-3 sm:p-5">
+        {head ? <ul className="min-w-0 space-y-2"><PositionNode onAssign={setAssigning} position={head} positions={positions} /></ul> : <p className="text-sm text-muted">The chart has no head position.</p>}
+      </div>
     </DataUnavailable>
     <ChangeHistory entries={chart.data?.history ?? []} positions={positions} />
     {assigning && <AssignDialog onClose={() => setAssigning(null)} position={assigning} />}
@@ -51,8 +51,8 @@ type NodeProps = { position: OrgPosition; positions: OrgPosition[]; onAssign: (p
 function PositionNode({ position, positions, onAssign }: NodeProps) {
   const reports = positions.filter((candidate) => candidate.parent === position.slug);
   const seatOpen = position.seats === "many" || position.holders.length === 0;
-  return <li>
-    <div className={`border p-3 ${position.heldByViewer ? "border-accent bg-accentSoft" : "border-border bg-elevated"}`}>
+  return <li className="min-w-0">
+    <div className={`inline-block max-w-full border px-3 py-2 align-top ${position.heldByViewer ? "border-accent bg-accentSoft" : "border-border bg-elevated"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="font-semibold">{position.title}</p>
@@ -64,7 +64,7 @@ function PositionNode({ position, positions, onAssign }: NodeProps) {
         {position.holders.length ? position.holders.map((holder) => <HolderChip holder={holder} key={holder.id} position={position} />) : <Badge variant="warning">Vacant</Badge>}
       </div>
     </div>
-    {reports.length > 0 && <ul className="ml-4 mt-3 space-y-3 border-l border-border pl-4">
+    {reports.length > 0 && <ul className="ml-3 mt-2 space-y-2 border-l border-border pl-3 sm:ml-5 sm:pl-5">
       {reports.map((report) => <PositionNode key={report.slug} onAssign={onAssign} position={report} positions={positions} />)}
     </ul>}
   </li>;
@@ -74,8 +74,9 @@ function HolderChip({ holder, position }: { holder: { id: string; name: string; 
   const remove = useChartMutation(() => removeHolder(position.slug, holder.id), `${holder.name} was removed from ${position.title}.`);
   const resign = useChartMutation(() => resignPosition(position.slug), `You resigned from ${position.title}.`);
   const isViewer = position.heldByViewer && position.holders.length === 1;
+  const initials = (holder.name === holder.handle ? holder.handle.slice(0, 2) : holder.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("")).toUpperCase();
   return <span className="inline-flex items-center gap-2 border border-border bg-surface px-2 py-1 text-sm">
-    {holder.name} <span className="text-xs text-muted">@{holder.handle}</span>
+    <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accentSoft text-[10px] font-bold text-accent">{initials}</span><span className="truncate">{holder.name === holder.handle ? `@${holder.handle}` : holder.name}</span>
     {position.canManage && <button className="text-xs font-semibold text-accent underline" disabled={remove.isPending} onClick={() => confirm(`Remove ${holder.name} from ${position.title}?`) && remove.mutate()} type="button">Remove</button>}
     {isViewer && <button className="text-xs font-semibold text-accent underline" disabled={resign.isPending} onClick={() => confirm(`Resign from ${position.title}? Only the position above can assign you again.`) && resign.mutate()} type="button">Resign</button>}
   </span>;

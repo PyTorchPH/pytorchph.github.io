@@ -64,7 +64,14 @@ pub async fn gateway(
     let actor = session::viewer(&state, &headers).await?;
     ensure_portal_access(&actor, &path)?;
     if method == Method::GET {
-        return reads::answer_read(&state.db, &actor, &path, uri.query()).await;
+        return reads::answer_read(
+            &state.db,
+            state.identity_client.as_deref(),
+            &actor,
+            &path,
+            uri.query(),
+        )
+        .await;
     }
     check_origin(&state, &headers)?;
     let _write_guard = WRITE_LOCK.lock().await;

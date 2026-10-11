@@ -20,6 +20,8 @@ use crate::{
 };
 use axum::http::StatusCode;
 use serde_json::Value;
+use serde_json::json;
+use uuid::Uuid;
 
 // Mental model: the table is read top to bottom and the first matching (method, path) wins;
 // each arm names the status it answers with and the module that owns the change.
@@ -36,6 +38,31 @@ pub(crate) async fn dispatch_write(
             StatusCode::OK,
             member::save_privacy(db, &actor.id, input).await?,
         ),
+        ("PUT", "member/organization-name-consent") => {
+            let granted = input
+                .as_object()
+                .filter(|value| value.len() == 1)
+                .and_then(|value| value.get("granted"))
+                .and_then(Value::as_bool)
+                .ok_or(crate::bad("Invalid organization name consent"))?;
+            let client = state.identity_client.as_deref().ok_or(ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            ))?;
+            let id = Uuid::parse_str(&actor.id).map_err(|_| {
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+            })?;
+            let saved = client
+                .organization_name_consent(id, Some(granted))
+                .await
+                .map_err(|_| {
+                    ApiError(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "Identity service unavailable",
+                    )
+                })?;
+            (StatusCode::OK, json!({"granted":saved}))
+        }
         ("POST", "officer/organization/assignments") => (
             StatusCode::CREATED,
             organization::assignments::assign_position(

@@ -6,17 +6,18 @@
 
 import type { ComponentType, InputHTMLAttributes } from "react";
 import { AlertCircle } from "lucide-react";
+import { cn } from "@pytorch-ph/design-system/merge-classes";
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   icon: ComponentType<{ size?: number; className?: string }>;
 };
 
-export function Field({ icon: Icon, className: _className, ...props }: FieldProps) {
+export function Field({ icon: Icon, className, ...props }: FieldProps) {
   return (
     <div className="relative">
       <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" size={16} />
       <input
-        className="focus-ring w-full rounded-lg border border-border bg-elevated py-3 pl-10 pr-4 text-ink placeholder:text-muted transition-all duration-300 focus:border-accent/50 focus:bg-elevated"
+        className={cn("focus-ring w-full rounded-lg border border-border bg-elevated py-3 pl-10 pr-4 text-ink placeholder:text-muted transition-all duration-300 focus:border-accent/50 focus:bg-elevated", className)}
         {...props}
       />
     </div>

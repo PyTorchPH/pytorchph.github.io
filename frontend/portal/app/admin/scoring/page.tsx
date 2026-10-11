@@ -12,6 +12,7 @@ type Skill = { slug: string; label: string };
 type Member = { id: string; displayName: string; role: string };
 type Achievement = { kind: string; place: number | null; basePoints: number; date: string };
 type Comparison = { id: string; skill: string; a: { achievements: Achievement[] }; b: { achievements: Achievement[] } };
+type ReviewRequired = { id: string; skill: string; tasks: number };
 type Viewer = { role: string };
 
 async function request<T>(path: string, body?: unknown): Promise<T> {
@@ -29,6 +30,7 @@ function SkillComparisonContent() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [queue, setQueue] = useState<Comparison[]>([]);
+  const [reviewRequired, setReviewRequired] = useState<ReviewRequired[]>([]);
   const [skill, setSkill] = useState("");
   const [memberA, setMemberA] = useState("");
   const [memberB, setMemberB] = useState("");
@@ -38,14 +40,24 @@ function SkillComparisonContent() {
 
   async function refresh() {
     const who = await request<Viewer>("/auth/me");
-    const [available, pending, approved] = await Promise.all([
+    if (who.role !== "officer" && who.role !== "admin") {
+      setViewer(who);
+      setSkills([]);
+      setQueue([]);
+      setMembers([]);
+      setReviewRequired([]);
+      return;
+    }
+    const [available, pending, approved, review] = await Promise.all([
       request<Skill[]>("/scoring/skills"), request<Comparison[]>("/scoring/comparisons/pending"),
       who.role === "admin" ? request<Member[]>("/members") : Promise.resolve([]),
+      who.role === "admin" ? request<ReviewRequired[]>("/scoring/comparisons/review-required") : Promise.resolve([]),
     ]);
     setViewer(who);
     setSkills(available);
     setQueue(pending);
     setMembers(approved.filter((member) => member.role !== "pending"));
+    setReviewRequired(review);
     setSkill((current) => current || available[0]?.slug || "");
   }
 
@@ -60,6 +72,9 @@ function SkillComparisonContent() {
   }
 
   if (!origin) return <p role="status">Scoring backend unavailable.</p>;
+  if (viewer && viewer.role !== "officer" && viewer.role !== "admin") {
+    return <Card className="bg-surface"><p>Officer access is required for skill comparisons.</p></Card>;
+  }
   return <div className="space-y-6">
     <section className="page-hero">
       <Badge variant="orange">Skill validation</Badge>
@@ -71,7 +86,7 @@ function SkillComparisonContent() {
       <div><h2 className="text-xl font-semibold">Admin setup</h2><p className="text-sm text-muted">Assign a vetted validator, then create a pair within the chosen skill.</p></div>
       <div><label className="block text-sm font-medium" htmlFor="scoring-skill">Skill</label><select className="mt-1 w-full rounded-md border border-border bg-elevated p-2" id="scoring-skill" value={skill} onChange={(event) => setSkill(event.target.value)}>{skills.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select></div>
       <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-        <div><label className="block text-sm font-medium" htmlFor="scoring-validator">Validator</label><select className="mt-1 w-full rounded-md border border-border bg-elevated p-2" id="scoring-validator" value={validator} onChange={(event) => setValidator(event.target.value)}><option value="">Select a member</option>{members.map((member) => <option key={member.id} value={member.id}>{member.displayName} ({member.role})</option>)}</select></div>
+        <div><label className="block text-sm font-medium" htmlFor="scoring-validator">Validator</label><select className="mt-1 w-full rounded-md border border-border bg-elevated p-2" id="scoring-validator" value={validator} onChange={(event) => setValidator(event.target.value)}><option value="">Select an officer</option>{members.filter((member) => member.role === "officer" || member.role === "admin").map((member) => <option key={member.id} value={member.id}>{member.displayName} ({member.role})</option>)}</select></div>
         <Button disabled={busy || !skill || !validator} onClick={() => void act(() => request("/scoring/validators", { memberId: validator, skillSlug: skill }))} type="button">Assign validator</Button>
       </div>
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
@@ -79,6 +94,10 @@ function SkillComparisonContent() {
         <div><label className="block text-sm font-medium" htmlFor="scoring-b">Second candidate</label><select className="mt-1 w-full rounded-md border border-border bg-elevated p-2" id="scoring-b" value={memberB} onChange={(event) => setMemberB(event.target.value)}><option value="">Select a member</option>{members.filter((member) => member.id !== memberA).map((member) => <option key={member.id} value={member.id}>{member.displayName}</option>)}</select></div>
         <Button disabled={busy || !skill || !memberA || !memberB || memberA === memberB} onClick={() => void act(() => request("/scoring/comparisons", { skillSlug: skill, memberA, memberB }))} type="button" variant="secondary">Create comparison</Button>
       </div>
+    </Card>}
+    {viewer?.role === "admin" && reviewRequired.length > 0 && <Card className="space-y-2 bg-surface" role="alert">
+      <h2 className="font-semibold">Comparison assignments need admin review</h2>
+      <ul className="list-disc pl-5 text-sm">{reviewRequired.map((item) => <li key={item.id}>{item.skill} · comparison {item.id} · {item.tasks} review task{item.tasks === 1 ? "" : "s"}</li>)}</ul>
     </Card>}
     {viewer && <section className="space-y-4"><h2 className="text-xl font-semibold">Assigned comparisons</h2>
       {queue.length === 0 && <Card className="bg-surface"><p className="text-muted">Walang assigned comparison ngayon.</p></Card>}

@@ -11,9 +11,8 @@ import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidenc
 import type { EvidenceClaim } from "@pytorch-ph/domain-protocol/organization";
 
 const PENDING_CLAIMS = ["manual_pending", "scraped_pending", "disputed"];
-const CLOSED_EVENTS = ["sado_approved", "rejected"];
 
-// The officer-only part of My Performance: work that is waiting for an officer, with a link to each tool.
+// Command Center work waiting for an officer, with a link to each tool.
 export function OfficerDesk() {
   const officer = useCapabilities().portal.audience === "officer";
   const claims = useQuery({ enabled: officer, queryKey: ["evidence-review"], queryFn: () => fetchJson<EvidenceClaim[]>("/api/officer/evidence", { cache: "no-store" }) });

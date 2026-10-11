@@ -49,13 +49,16 @@ mod event_results;
 mod evidence;
 mod feedback;
 mod identity;
+mod identity_boundary;
 mod leaderboard_visibility;
 mod member_profile;
 mod migrations;
+mod model_placements;
 mod officer;
 mod organization;
 mod portal_gateway;
 mod scoring;
+mod scoring_scheduler;
 mod skill_taxonomy;
 
 async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
@@ -93,6 +96,7 @@ async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
         .unwrap();
     let state = Arc::new(AppState {
         db,
+        identity_client: None,
         google_client_id: "test".into(),
         bootstrap_admin_email: "admin@example.test".into(),
         allowed_origin: "https://pytorch.ph".into(),

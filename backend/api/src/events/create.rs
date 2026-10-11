@@ -71,6 +71,26 @@ pub async fn create_event(
         .map(|tag| (tag.skill_slug.clone(), tag.allocation_bps))
         .collect();
     let suggestion = scoring::suggested_weight(&mut tx, &input.category, &tags).await?;
+    let proposal = if let Some((version, _)) = suggestion {
+        scoring::proposed_place_points(&mut tx, version, &input.category).await?
+    } else {
+        None
+    };
+    let selected_points = input
+        .entrant_kind
+        .as_ref()
+        .and_then(|_| input.place_points.clone().or_else(|| proposal.clone()));
+    if input.entrant_kind.is_some() && selected_points.is_none() {
+        return Err(bad(
+            "Placement schedule unavailable; organizer points required",
+        ));
+    }
+    let place_override =
+        input.place_points.is_some() && proposal.as_ref() != input.place_points.as_ref();
+    let place_reason = input.weight_reason.as_deref().unwrap_or("").trim();
+    if place_override && proposal.is_some() && !(4..=500).contains(&place_reason.len()) {
+        return Err(bad("Placement override reason required"));
+    }
     let (weight, reason) = match (input.weight_milli, suggestion) {
         (Some(weight), _) => (weight, input.weight_reason.as_deref().unwrap_or("")),
         (None, Some((_, weight))) => (weight, "published_model"),
@@ -85,10 +105,23 @@ pub async fn create_event(
     {
         return Err(bad("Invalid event weight or reason"));
     }
-    insert_event(&mut tx, &id, title, &starts_at, &input, &actor.id).await?;
-    sqlx::query("INSERT INTO event_scoring(event_id,weight_milli,model_version,selected_by,decision_reason,selected_at) VALUES (?,?,?,?,?,?)")
+    insert_event(
+        &mut tx,
+        &id,
+        title,
+        &starts_at,
+        &input,
+        selected_points.as_deref(),
+        &actor.id,
+    )
+    .await?;
+    sqlx::query("INSERT INTO event_scoring(event_id,weight_milli,model_version,selected_by,decision_reason,selected_at,proposed_place_points_json,selected_place_points_json,placement_override_reason) VALUES (?,?,?,?,?,?,?,?,?)")
         .bind(&id).bind(weight).bind(suggestion.map(|(version,_)|version)).bind(&actor.id)
-        .bind(reason).bind(Utc::now().to_rfc3339()).execute(&mut *tx).await.map_err(internal)?;
+        .bind(reason).bind(Utc::now().to_rfc3339())
+        .bind(proposal.as_ref().map(|points| serde_json::to_string(points).expect("serializable points")))
+        .bind(selected_points.as_ref().map(|points| serde_json::to_string(points).expect("serializable points")))
+        .bind(place_override.then_some(if proposal.is_some() { place_reason } else { "manual_no_model" }))
+        .execute(&mut *tx).await.map_err(internal)?;
     for tag in &input.skill_tags {
         sqlx::query(
             "INSERT INTO event_skill_tags(event_id,skill_slug,allocation_bps) VALUES (?,?,?)",
@@ -100,7 +133,7 @@ pub async fn create_event(
         .await
         .map_err(internal)?;
     }
-    if let Some(points) = &input.place_points {
+    if let Some(points) = &selected_points {
         insert_place_points(&mut tx, &id, points).await?;
     }
     audit(&mut tx, &actor.id, "event.created", &id, 0).await?;
@@ -172,20 +205,22 @@ fn parse_event_start(value: &str) -> ApiResult<String> {
         .to_rfc3339())
 }
 
-// Competitive events carry an entrant kind and points per place; others carry neither.
+// Competitive events carry an entrant kind; place points may come from the model.
 fn ensure_competition_shape(input: &NewEvent) -> ApiResult<()> {
-    match &input.place_points {
-        Some(points) => {
-            if !is_known_entrant_kind(input.entrant_kind.as_deref()) {
-                return Err(bad("Entrant kind required"));
-            }
-            if !are_valid_place_points(points) {
-                return Err(bad("Invalid placement points"));
-            }
+    let category_requires_competition = !matches!(input.category.as_str(), "talk" | "workshop");
+    match (input.entrant_kind.as_deref(), input.place_points.as_deref()) {
+        (None, None) if !category_requires_competition => Ok(()),
+        (Some(kind), None)
+            if is_known_entrant_kind(Some(kind)) && category_requires_competition =>
+        {
             Ok(())
         }
-        None if input.entrant_kind.is_some() => Err(bad("Entrant kind requires placements")),
-        None => Ok(()),
+        (Some(kind), Some(points))
+            if is_known_entrant_kind(Some(kind)) && are_valid_place_points(points) =>
+        {
+            Ok(())
+        }
+        _ => Err(bad("Invalid competition entrant kind or placement points")),
     }
 }
 
@@ -197,8 +232,9 @@ fn is_known_entrant_kind(kind: Option<&str>) -> bool {
 #[inline]
 fn are_valid_place_points(points: &[i64]) -> bool {
     !points.is_empty()
-        && points.len() <= i32::MAX as usize
+        && points.len() <= 100
         && points.iter().all(|value| *value >= 0)
+        && points.windows(2).all(|pair| pair[0] >= pair[1])
 }
 
 #[inline]
@@ -228,10 +264,11 @@ async fn insert_event(
     title: &str,
     starts_at: &str,
     input: &NewEvent,
+    points: Option<&[i64]>,
     actor_id: &str,
 ) -> ApiResult<()> {
-    let competitive = input.place_points.is_some();
-    let last_place = input.place_points.as_ref().map(|items| items.len() as i64);
+    let competitive = points.is_some();
+    let last_place = points.map(|items| items.len() as i64);
     sqlx::query("INSERT INTO events(id,parent_id,title,category,starts_at,competitive,entrant_kind,last_place,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
         .bind(id).bind(&input.parent_id).bind(title).bind(&input.category).bind(starts_at)
         .bind(competitive as i64).bind(&input.entrant_kind).bind(last_place)

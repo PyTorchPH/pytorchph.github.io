@@ -1,9 +1,11 @@
 //! Process-wide state shared by every request handler.
-use crate::identity::email_signup;
+use crate::identity::{email_signup, identity_client::IdentityClient};
 use sqlx::SqlitePool;
+use std::sync::Arc;
 
 pub(crate) struct AppState {
     pub(crate) db: SqlitePool,
+    pub(crate) identity_client: Option<Arc<IdentityClient>>,
     pub(crate) google_client_id: String,
     pub(crate) bootstrap_admin_email: String,
     pub(crate) allowed_origin: String,

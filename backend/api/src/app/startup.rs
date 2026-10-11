@@ -3,7 +3,7 @@ use crate::{
     AppState,
     app::{jobs, routes},
     http::admission::{self, Admission, Config},
-    identity::email_signup,
+    identity::{email_signup, identity_client::IdentityClient},
 };
 use sqlx::{
     SqlitePool,
@@ -87,6 +87,7 @@ async fn prepare_database(db: &SqlitePool) -> StartupResult<()> {
 fn build_state(db: SqlitePool) -> StartupResult<Arc<AppState>> {
     Ok(Arc::new(AppState {
         db,
+        identity_client: configured_identity_client()?,
         google_client_id: env::var("GOOGLE_CLIENT_ID")?,
         bootstrap_admin_email: env::var("BOOTSTRAP_ADMIN_EMAIL")?,
         allowed_origin: env::var("ALLOWED_ORIGIN")?,
@@ -105,6 +106,38 @@ fn build_state(db: SqlitePool) -> StartupResult<Arc<AppState>> {
         mail_relay: email_signup::RelayConfig::from_env()?,
         password_slots: tokio::sync::Semaphore::new(2),
     }))
+}
+
+fn configured_identity_client() -> StartupResult<Option<Arc<IdentityClient>>> {
+    let names = [
+        "IDENTITY_SERVICE_URL",
+        "IDENTITY_CLIENT_CERT_FILE",
+        "IDENTITY_CLIENT_KEY_FILE",
+        "IDENTITY_SERVER_CA_FILE",
+    ];
+    let present = names.iter().filter(|name| env::var(name).is_ok()).count();
+    if present == 0 {
+        if env::var("IDENTITY_REQUIRED").ok().as_deref() == Some("true") {
+            return Err("identity service configuration required".into());
+        }
+        return Ok(None);
+    }
+    if present != names.len() {
+        return Err("incomplete identity service configuration".into());
+    }
+    let client = IdentityClient::from_pem(
+        &env::var(names[0])?,
+        &std::fs::read(env::var(names[1])?)?,
+        &std::fs::read(env::var(names[2])?)?,
+        &std::fs::read(env::var(names[3])?)?,
+    )
+    .map_err(|_| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "invalid identity service TLS configuration",
+        )
+    })?;
+    Ok(Some(Arc::new(client)))
 }
 
 async fn serve(app: axum::Router) -> StartupResult<()> {

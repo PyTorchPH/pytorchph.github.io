@@ -146,7 +146,6 @@ function usePrefilledEmail(apply: (email: string) => void) {
   useEffect(() => {
     const email = new URLSearchParams(window.location.search).get("email")?.trim();
     if (email) apply(email);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once, on arrival
   }, []);
 }
 

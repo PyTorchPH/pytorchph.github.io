@@ -7,7 +7,7 @@
 //!      ├─ claim_next_job
 //!      ├─ refresh_leaderboard_cache
 //!      └─ mark_job_unsupported
-use crate::{ApiError, ApiResult, AppState, identity::session, internal};
+use crate::{ApiError, ApiResult, AppState, identity::session, internal, scoring};
 use axum::{
     Json,
     extract::{Path, State},
@@ -19,6 +19,7 @@ use std::{sync::Arc, time::Duration};
 use tracing::{error, info};
 
 const POLL_INTERVAL: Duration = Duration::from_secs(2);
+const COMPARISON_INTERVAL: Duration = Duration::from_secs(300);
 const LEADERBOARD_REFRESH: &str = "leaderboard_refresh";
 
 #[derive(Serialize)]
@@ -45,9 +46,16 @@ pub(crate) async fn read_job(
 
 // Mental model: a single background loop; a failed job is logged and the loop keeps going.
 pub(crate) async fn run_job_worker(db: SqlitePool) {
+    let mut next_comparison_run = tokio::time::Instant::now();
     loop {
         if let Err(error) = process_one_job(&db).await {
             error!(error = %error, "worker.job_failed");
+        }
+        if tokio::time::Instant::now() >= next_comparison_run {
+            if let Err(error) = scoring::scheduler::schedule_all(&db).await {
+                error!(component="scoring",operation="schedule_all",error=%error,"worker.comparison_schedule_failed");
+            }
+            next_comparison_run = tokio::time::Instant::now() + COMPARISON_INTERVAL;
         }
         tokio::time::sleep(POLL_INTERVAL).await;
     }
@@ -96,6 +104,7 @@ async fn claim_next_job(db: &SqlitePool) -> Result<Option<ClaimedJob>, sqlx::Err
 
 // Rebuilds the cached totals from the point ledger in one transaction.
 async fn refresh_leaderboard_cache(db: &SqlitePool, job: &ClaimedJob) -> Result<(), sqlx::Error> {
+    let started = std::time::Instant::now();
     let mut tx = db.begin().await?;
     sqlx::query("DELETE FROM leaderboard_cache")
         .execute(&mut *tx)
@@ -106,7 +115,9 @@ async fn refresh_leaderboard_cache(db: &SqlitePool, job: &ClaimedJob) -> Result<
         .bind(now()).bind(&job.id).bind(job.generation)
         .execute(&mut *tx)
         .await?;
-    tx.commit().await
+    tx.commit().await?;
+    info!(component="leaderboard",operation="refresh_cache",duration_ms=started.elapsed().as_millis() as u64,job_id=%job.id,generation=job.generation,"leaderboard.refresh_complete");
+    Ok(())
 }
 
 async fn mark_job_unsupported(db: &SqlitePool, job: &ClaimedJob) -> Result<(), sqlx::Error> {

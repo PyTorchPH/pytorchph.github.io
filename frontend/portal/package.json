@@ -9,7 +9,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:capabilities": "tsx --test tests/capabilities.test.ts",
     "test:portal-hosts": "tsx --test tests/portal-hosts.test.ts",

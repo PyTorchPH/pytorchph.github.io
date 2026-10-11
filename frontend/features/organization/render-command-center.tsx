@@ -6,28 +6,20 @@ import {
   Activity,
   AlertTriangle,
   ArrowUpRight,
-  BarChart3,
-  Bot,
-  BriefcaseBusiness,
   CalendarCheck,
   CheckCircle2,
   Database,
-  FileCheck2,
   Sparkles,
-  Unplug,
-  UserRound,
   Users,
   Zap,
 } from "lucide-react";
 import { AppShell } from "@pytorch-ph/domain-client/navigation";
-import { DeveloperDiagnostics } from "@pytorch-ph/domain-client/organization";
-import { useCapabilities } from "@pytorch-ph/domain-client/onboarding";
+import { DeveloperDiagnostics, OfficerDesk } from "@pytorch-ph/domain-client/organization";
 import { MemberDemographics } from "@pytorch-ph/domain-client/member-profile";
 import { SkillCompiler } from "./skill-compiler/render-skill-compiler";
 import { ActivityTrendChart, DepartmentLoadChart } from "@pytorch-ph/domain-client/organization";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Card } from "@pytorch-ph/design-system/card";
-import type { CapabilityKey } from "@pytorch-ph/domain-protocol/identity";
 import type { AnalyticsState, DashboardAnalytics, ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { unavailableDashboardAnalytics } from "@pytorch-ph/domain-protocol/career-evidence";
 import { fetchJson, queryKeys } from "@pytorch-ph/domain-client/transport";
@@ -36,25 +28,6 @@ import { FilipinoPhrase } from "@pytorch-ph/design-system/filipino-phrase";
 
 const metricIcons = [Users, Activity, AlertTriangle, CalendarCheck];
 const emptyMetricLabels = ["Total Members", "Active Members", "Inactive Members", "Upcoming Events"];
-
-type Destination = {
-  href: string;
-  title: string;
-  description: string;
-  value: (data: ProductViewData) => string;
-  detail: (data: ProductViewData) => string;
-  icon: typeof UserRound;
-  capability: CapabilityKey;
-};
-
-const destinations: Destination[] = [
-  { href: "/career/evidence", title: "Evidence readiness", description: "Trace sources through the middleman.", value: (data) => data.evidence?.ready ? "READY" : "SETUP", detail: (data) => `${data.evidence?.sources.length || 0} approved sources`, icon: UserRound, capability: "evidence_read" },
-  { href: "/career/resumes", title: "Resume artifacts", description: "Review role-specific generated outputs.", value: (data) => String(data.resumes?.filter((item) => item.ready).length || 0), detail: () => "Human-reviewed artifacts", icon: FileCheck2, capability: "resume_read" },
-  { href: "/jobs/analytics", title: "Market snapshot", description: "Compare demand with verified evidence.", value: () => "READ", detail: () => "Analytics is read-only", icon: BarChart3, capability: "analytics_read" },
-  { href: "/jobs/automation", title: "Application goal", description: "Monitor safe work and review gates.", value: (data) => `${data.operations?.completed || 0}/${data.operations?.target || 0}`, detail: (data) => `${data.operations?.reviews.length || 0} human reviews`, icon: Bot, capability: "application_draft" },
-  { href: "/jobs/opportunities", title: "Target opportunities", description: "Inspect roles and funnel progress.", value: (data) => String(data.opportunities?.length || 0), detail: () => "Manual review available", icon: BriefcaseBusiness, capability: "opportunities_read" },
-  { href: "/connections", title: "Provider health", description: "Check approved sessions and services.", value: (data) => String(data.connections?.filter((item) => item.status === "connected").length || 0), detail: () => "Connected providers", icon: Unplug, capability: "connections" },
-];
 
 function ModuleBadge({ state }: { state: AnalyticsState }) {
   if (state === "live") return <Badge variant="success"><Database size={13} />Live data</Badge>;
@@ -102,7 +75,7 @@ function DashboardContent() {
   const error = query.error instanceof Error ? query.error.message : "";
   const resolved = data || DASHBOARD_FALLBACK;
   const analytics = resolved.analytics || unavailableDashboardAnalytics();
-  return <div className="space-y-4"><OperationsHero data={resolved} error={error} loading={!data && !error} /><MetricRibbon module={analytics.metrics} />
+  return <div className="space-y-4"><OperationsHero data={resolved} error={error} loading={!data && !error} /><OfficerDesk /><MetricRibbon module={analytics.metrics} />
     <section className="grid gap-4 xl:grid-cols-2"><Card className="border-border bg-surface" data-tour="dashboard-activity"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-bold tracking-[-0.02em] text-ink">Weekly activity pulse</h2><p className="mt-1 text-sm text-muted">Events and member contributions tracked by day.</p></div><div className="flex flex-wrap gap-2"><ModuleBadge state={analytics.activity.state} />{analytics.activity.state !== "unavailable" && <Badge variant="orange"><Zap size={14} />Engagement</Badge>}</div></div><ActivityTrendChart data={analytics.activity.data} state={analytics.activity.state} /></Card><Card className="border-border bg-surface"><div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="font-bold tracking-[-0.02em] text-ink">Department load</h2><p className="mt-1 text-sm text-muted">Open work versus approved capacity.</p></div><div className="flex items-center gap-2"><ModuleBadge state={analytics.departments.state} /><ArrowUpRight className="text-accent" size={20} /></div></div><DepartmentLoadChart data={analytics.departments.data} state={analytics.departments.state} /></Card></section>
     <MemberDemographics />
     <SkillCompiler />

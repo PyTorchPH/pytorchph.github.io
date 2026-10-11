@@ -10,6 +10,7 @@ use std::{
 use url::Host;
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub(crate) struct IdentityClient {
     http: Client,
     base: Url,
@@ -34,6 +35,11 @@ impl NamePurpose {
 #[serde(rename_all = "camelCase")]
 struct NameReply {
     display_name: String,
+}
+
+#[derive(Deserialize)]
+struct ConsentReply {
+    granted: bool,
 }
 
 #[derive(Debug)]
@@ -131,6 +137,50 @@ impl IdentityClient {
             StatusCode::NOT_FOUND => Ok(None),
             _ => Err(IdentityError::Unavailable),
         }
+    }
+
+    /// Only the website API may call this after authenticating the member's session.
+    pub(crate) async fn organization_name_consent(
+        &self,
+        member_id: Uuid,
+        granted: Option<bool>,
+    ) -> Result<bool, IdentityError> {
+        let url = self
+            .base
+            .join(&format!("v1/identities/{member_id}/consent"))
+            .map_err(|_| IdentityError::InvalidConfiguration)?;
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| IdentityError::Unavailable)?
+            .as_secs();
+        let request = match granted {
+            Some(value) => self
+                .http
+                .put(url)
+                .json(&serde_json::json!({"granted":value})),
+            None => self.http.get(url),
+        };
+        let response = request
+            .header("x-request-id", Uuid::new_v4().to_string())
+            .header("x-viewer-id", member_id.to_string())
+            .header("x-name-purpose", NamePurpose::OrganizationChart.code())
+            .header("x-request-timestamp", timestamp.to_string())
+            .send()
+            .await
+            .map_err(|_| IdentityError::Unavailable)?;
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = response
+            .bytes()
+            .await
+            .map_err(|_| IdentityError::Unavailable)?;
+        if bytes.len() > 4096 {
+            return Err(IdentityError::Unavailable);
+        }
+        let reply: ConsentReply =
+            serde_json::from_slice(&bytes).map_err(|_| IdentityError::Unavailable)?;
+        Ok(reply.granted)
     }
 }
 

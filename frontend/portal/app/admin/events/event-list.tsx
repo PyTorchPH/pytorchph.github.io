@@ -22,12 +22,12 @@ type EventListView = { events: EventRow[]; deletions: Deletion[] };
 const EVENTS_KEY = ["officer-events"] as const;
 const dateLabel = (value: string) => new Date(value).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 
-export function EventList() {
+export function EventList({ category = "all" }: { category?: "all" | "workshops" | "hackathons" | "learning" }) {
   const view = useQuery({ queryKey: EVENTS_KEY, queryFn: () => fetchJson<EventListView>("/api/officer/events", { cache: "no-store" }) });
-  const events = view.data?.events ?? [];
+  const events = (view.data?.events ?? []).filter((event) => category === "all" || (category === "workshops" && event.category === "workshop") || (category === "hackathons" && event.category === "hackathon") || (category === "learning" && event.category === "talk"));
   return <>
     <Card className="bg-surface">
-      <CardHeader><div><CardTitle>Events</CardTitle><CardDescription>Deleting an event also removes its entrants, results, attendance, and the points it awarded. A record of the deletion is kept.</CardDescription></div></CardHeader>
+      <CardHeader><div><CardTitle>Events</CardTitle><CardDescription>{category === "learning" ? "Learning lessons currently use the talk event category. Workshops appear in their own tab." : "Deleting an event also removes its entrants, results, attendance, and the points it awarded. A record of the deletion is kept."}</CardDescription></div></CardHeader>
       <DataUnavailable label={view.isError ? "Data unavailable" : "Loading data"} unavailable={!view.data}>
         {events.length ? <ul className="divide-y divide-border">
           {events.map((event) => <li className="flex flex-wrap items-center justify-between gap-3 py-3" key={event.id}>

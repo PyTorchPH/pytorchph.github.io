@@ -15,6 +15,7 @@ from pathlib import Path
 import torch
 
 CATEGORIES = ("talk", "workshop", "hackathon", "competitive", "mini_contest")
+COMPETITIVE_CATEGORIES = ("hackathon", "competitive", "mini_contest")
 LABELS = {"a": 0, "draw": 1, "b": 2}
 MIN_COMPARISONS = 30
 
@@ -24,14 +25,25 @@ def main() -> None:
     parser.add_argument("--db", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--publish", action="store_true")
+    parser.add_argument("--details", type=Path, help="Markdown explanation for the immutable model version")
+    parser.add_argument("--place-schedule", type=Path, help="JSON category to fixed place-points array")
     args = parser.parse_args()
+    if args.publish and (args.details is None or args.place_schedule is None):
+        parser.error("--publish requires --details and --place-schedule")
+    details = args.details.read_text(encoding="utf-8").strip() if args.details else ""
+    schedule = json.loads(args.place_schedule.read_text(encoding="utf-8")) if args.place_schedule else {}
+    if args.publish:
+        validate_schedule(schedule)
+        if not details:
+            parser.error("--details must contain a model explanation")
     torch.manual_seed(137)
     with sqlite3.connect(args.db) as db:
         examples = load_consensus(db)
         coefficients, validation = train_all(examples)
         if not coefficients:
             raise SystemExit("unavailable: insufficient validated comparisons")
-        artifact = {"coefficients": coefficients, "validation": validation}
+        artifact = {"coefficients": coefficients, "validation": validation,
+                    "detailsMarkdown": details, "placePoints": schedule}
         args.output.write_text(json.dumps(artifact, sort_keys=True, indent=2), encoding="utf-8")
         if args.publish:
             publish(db, artifact, sum(item["votes"] for item in examples))
@@ -138,13 +150,24 @@ def comparison_logits(differences: torch.Tensor, weights: torch.Tensor,
     return torch.stack((margin / 2, draw.expand_as(margin), -margin / 2), dim=1)
 
 
+def validate_schedule(schedule: dict) -> None:
+    if not isinstance(schedule, dict) or set(schedule) != set(COMPETITIVE_CATEGORIES):
+        raise ValueError("place schedule must cover hackathon, competitive, and mini_contest")
+    for category, points in schedule.items():
+        if (not isinstance(points, list) or not 1 <= len(points) <= 100
+                or any(type(point) is not int or point < 0 for point in points)
+                or any(left < right for left, right in zip(points, points[1:]))):
+            raise ValueError(f"invalid descending place points for {category}")
+
+
 def publish(db: sqlite3.Connection, artifact: dict, votes: int) -> None:
     version = db.execute("SELECT COALESCE(MAX(version),0)+1 FROM scoring_model_versions").fetchone()[0]
     db.execute(
-        "INSERT INTO scoring_model_versions(version,coefficients_json,validation_json,training_votes,published_at) "
-        "VALUES (?,?,?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'))",
+        "INSERT INTO scoring_model_versions(version,coefficients_json,validation_json,training_votes,details_md,place_points_json,published_at) "
+        "VALUES (?,?,?,?,?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'))",
         (version, json.dumps(artifact["coefficients"], sort_keys=True),
-         json.dumps(artifact["validation"], sort_keys=True), votes),
+         json.dumps(artifact["validation"], sort_keys=True), votes,
+         artifact["detailsMarkdown"], json.dumps(artifact["placePoints"], sort_keys=True)),
     )
     db.commit()
 

@@ -133,6 +133,10 @@ fn scoring_routes() -> Router<Arc<AppState>> {
             get(crate::scoring::comparison_queue),
         )
         .route(
+            "/scoring/comparisons/review-required",
+            get(crate::scoring::review_required_comparisons),
+        )
+        .route(
             "/scoring/comparisons/{id}/vote",
             post(crate::scoring::cast_vote),
         )

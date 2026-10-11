@@ -6,7 +6,7 @@ import { DataUnavailable } from "@pytorch-ph/design-system/data-unavailable";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Flame, Sparkles, Trophy } from "lucide-react";
 import { AppShell } from "@pytorch-ph/domain-client/navigation";
-import { OfficerDesk, PersonalActivityChart, SkillPointsChart } from "@pytorch-ph/domain-client/organization";
+import { PersonalActivityChart, SkillPointsChart } from "@pytorch-ph/domain-client/organization";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Card } from "@pytorch-ph/design-system/card";
 import { FilipinoPhrase } from "@pytorch-ph/design-system/filipino-phrase";
@@ -72,7 +72,6 @@ export function MemberDashboard() {
         </div>
       </section>
 
-    <OfficerDesk />
   </div></AppShell>;
 }
 

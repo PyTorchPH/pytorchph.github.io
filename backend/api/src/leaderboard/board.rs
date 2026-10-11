@@ -21,6 +21,7 @@ use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
+use std::time::Instant;
 
 // Mental model: rank everyone in the chosen season first, so rank numbers never change when
 // a skill filter or a page narrows the view; then cut the page and describe the filters.
@@ -29,6 +30,7 @@ pub(crate) async fn member_leaderboard(
     viewer: &Viewer,
     query: Option<&str>,
 ) -> ApiResult<Value> {
+    let started = Instant::now();
     let now = Utc::now();
     let all_seasons = load_seasons(db).await?;
     let season = select_season(&all_seasons, query_param(query, "season").as_deref(), now);
@@ -53,6 +55,7 @@ pub(crate) async fn member_leaderboard(
     let entries: Vec<Value> = page_of(&ranked, page, page_size)
         .map(|(rank, entry)| entry_json(entry, *rank, &viewer.id, &tiers, &view))
         .collect();
+    tracing::info!(component="leaderboard",operation="detailed_read",duration_ms=started.elapsed().as_millis() as u64,ranked_count=ranked.len(),page_size,source="live",revision=%revision,"leaderboard.read_complete");
     Ok(json!({
         "season": season.map(|season| season_json(season, now)),
         "view": view,
@@ -65,7 +68,7 @@ pub(crate) async fn member_leaderboard(
         "skills": skills.iter().map(skill_json).collect::<Vec<_>>(),
         "seasons": all_seasons.iter().map(|season| season_summary_json(season, now)).collect::<Vec<_>>(),
         "skillMix": skill_mix,
-        "meta": {"mode": "live", "label": "Live leaderboard"},
+        "meta": {"mode": "live", "label": "Live leaderboard", "maxStaleSeconds": 0, "readAfterWrite": "committed"},
     }))
 }
 

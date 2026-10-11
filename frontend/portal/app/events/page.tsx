@@ -10,6 +10,7 @@ import { Badge } from "@pytorch-ph/design-system/badge";
 import { Button } from "@pytorch-ph/design-system/button";
 import { AppDialog } from "@pytorch-ph/design-system/dialog";
 import { FilipinoPhrase } from "@pytorch-ph/design-system/filipino-phrase";
+import { SegmentedTabs, TabPanel } from "@pytorch-ph/design-system/tabs";
 import { fetchJson, queryKeys } from "@pytorch-ph/domain-client/transport";
 import { hasPriorityEnrollment } from "@pytorch-ph/domain-protocol/identity";
 import type { ChapterEvent, ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
@@ -41,7 +42,7 @@ const EVENT_TABS: Array<{ id: string; label: string; match: RegExp }> = [
   { id: "workshops", label: "Workshops", match: /workshop|clinic|lab/i },
   { id: "hackathons", label: "Hackathons", match: /hackathon/i },
   { id: "competitions", label: "Competitions", match: /competitive|contest|competition/i },
-  { id: "learning", label: "Learning sessions", match: /orientation|study|learning|bootcamp|course/i },
+  { id: "learning", label: "Learning lessons", match: /orientation|study|learning|bootcamp|course/i },
 ];
 const tabOf = (kind: string) => EVENT_TABS.find((tab) => tab.match.test(kind))?.id ?? "other";
 
@@ -122,15 +123,15 @@ function EventsContent() {
       </div>
     </section>
 
-    <div aria-label="Event types" className="flex flex-wrap gap-2" role="tablist">{tabs.map((item) => <button aria-selected={tab === item.id} className={`focus-ring border px-4 py-2 text-sm font-semibold ${tab === item.id ? "border-accent bg-accentSoft text-accent" : "border-border text-muted hover:text-ink"}`} key={item.id} onClick={() => setTab(item.id)} role="tab" type="button">{item.label} <span className="ml-1 font-mono text-xs">{item.count}</span></button>)}</div>
+    <div aria-label="Event types"><SegmentedTabs items={tabs.map((item) => ({ value: item.id, label: `${item.label} ${item.count}` }))} onChange={setTab} value={tab} /></div>
 
-    {failed ? <p className="text-sm text-muted" role="alert">Events are unavailable right now.</p> : <section aria-label="Upcoming events" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" data-tour="events-grid" role="tabpanel">
+    <TabPanel>{failed ? <p className="text-sm text-muted" role="alert">Events are unavailable right now.</p> : <section aria-label="Upcoming events" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" data-tour="events-grid">
       {shown.map((event) => <button className="focus-ring group overflow-hidden border border-border bg-surface text-left transition-colors hover:border-accent" key={event.id} onClick={() => setOpenId(event.id)} type="button">
         <EventCover event={event} />
         <h2 className="p-4 text-base font-bold leading-snug tracking-[-0.01em] group-hover:text-accent">{event.title}</h2>
       </button>)}
       {!shown.length && <p className="text-sm text-muted">{loading ? "Loading events…" : "No upcoming events of this type yet."}</p>}
-    </section>}
+    </section>}</TabPanel>
 
     {open && <EventDetails event={open} onClose={() => setOpenId(null)} onToggle={dashboard?.meta.mode === "local_demo" && open.chapter ? () => toggleRegistration.mutate(open.chapter!.id) : undefined} priorityLabel={priorityLabel} toggling={toggleRegistration.isPending} />}
   </div>;

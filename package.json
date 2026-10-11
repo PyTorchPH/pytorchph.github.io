@@ -26,6 +26,7 @@
     "build": "npm run build --workspace @pytorch-ph/portal",
     "start": "npm run start --workspace @pytorch-ph/portal",
     "typecheck": "npm run typecheck --workspace @pytorch-ph/portal",
+    "lint": "eslint \"frontend/portal/app/**/*.{ts,tsx}\" \"frontend/portal/components/**/*.{ts,tsx}\" \"frontend/features/**/*.{ts,tsx}\"",
     "test:boundaries": "node --test tests/node/workspace-boundaries.test.mjs tests/node/logic-doc-contracts.test.mjs tests/node/observability-project.test.mjs tests/node/production-preview.test.mjs",
     "test:grades": "npm run test --workspace @pytorch-ph/academic-records",
     "example:resume": "npm run example:resume --workspace @pytorch-ph/portal",
@@ -37,5 +38,10 @@
     "test:nationwide": "npm run test:nationwide --workspace @pytorch-ph/portal",
     "build:pages": "node development/pages-demo/build-portal-demo.mjs",
     "test:pages": "node development/pages-demo/verify.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "typescript-eslint": "^8.71.1"
   }
 }
