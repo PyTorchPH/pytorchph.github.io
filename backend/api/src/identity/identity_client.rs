@@ -1,7 +1,7 @@
 //! Staged private identity client. No route or startup path uses it until the migration cutover.
 #![allow(dead_code)]
 
-use reqwest::{Certificate, Client, Identity, StatusCode, Url};
+use reqwest::{Certificate, Client, Identity, Method, StatusCode, Url};
 use serde::Deserialize;
 use std::{
     error::Error,
@@ -49,6 +49,174 @@ pub(crate) enum IdentityError {
 }
 
 impl IdentityClient {
+    pub(crate) async fn organization_photo(
+        &self,
+        member_id: Uuid,
+        viewer_id: Uuid,
+    ) -> Result<Option<Vec<u8>>, IdentityError> {
+        let response = self
+            .photo_request(
+                Method::GET,
+                member_id,
+                viewer_id,
+                "organization-photo",
+                None,
+                None,
+            )
+            .await?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = response
+            .bytes()
+            .await
+            .map_err(|_| IdentityError::Unavailable)?;
+        if bytes.is_empty() || bytes.len() > 65_536 {
+            return Err(IdentityError::Unavailable);
+        }
+        Ok(Some(bytes.to_vec()))
+    }
+
+    pub(crate) async fn write_organization_photo(
+        &self,
+        member_id: Uuid,
+        bytes: Vec<u8>,
+        media_type: &str,
+    ) -> Result<(), IdentityError> {
+        let response = self
+            .photo_request(
+                Method::PUT,
+                member_id,
+                member_id,
+                "organization-photo",
+                Some(bytes),
+                Some(media_type),
+            )
+            .await?;
+        if response.status() == StatusCode::NO_CONTENT {
+            Ok(())
+        } else {
+            Err(IdentityError::Unavailable)
+        }
+    }
+
+    pub(crate) async fn delete_organization_photo(
+        &self,
+        member_id: Uuid,
+    ) -> Result<(), IdentityError> {
+        let response = self
+            .photo_request(
+                Method::DELETE,
+                member_id,
+                member_id,
+                "organization-photo",
+                None,
+                None,
+            )
+            .await?;
+        if response.status() == StatusCode::NO_CONTENT {
+            Ok(())
+        } else {
+            Err(IdentityError::Unavailable)
+        }
+    }
+
+    pub(crate) async fn purge_organization_photo_data(
+        &self,
+        member_id: Uuid,
+    ) -> Result<(), IdentityError> {
+        let response = self
+            .photo_request(
+                Method::DELETE,
+                member_id,
+                member_id,
+                "organization-photo-data",
+                None,
+                None,
+            )
+            .await?;
+        if response.status() == StatusCode::NO_CONTENT {
+            Ok(())
+        } else {
+            Err(IdentityError::Unavailable)
+        }
+    }
+
+    pub(crate) async fn organization_photo_consent(
+        &self,
+        member_id: Uuid,
+        granted: Option<bool>,
+    ) -> Result<bool, IdentityError> {
+        let body = granted.map(|value| {
+            serde_json::json!({"granted":value})
+                .to_string()
+                .into_bytes()
+        });
+        let response = self
+            .photo_request(
+                if granted.is_some() {
+                    Method::PUT
+                } else {
+                    Method::GET
+                },
+                member_id,
+                member_id,
+                "organization-photo-consent",
+                body,
+                granted.map(|_| "application/json"),
+            )
+            .await?;
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = response
+            .bytes()
+            .await
+            .map_err(|_| IdentityError::Unavailable)?;
+        if bytes.len() > 4096 {
+            return Err(IdentityError::Unavailable);
+        }
+        serde_json::from_slice::<ConsentReply>(&bytes)
+            .map(|value| value.granted)
+            .map_err(|_| IdentityError::Unavailable)
+    }
+
+    async fn photo_request(
+        &self,
+        method: Method,
+        member_id: Uuid,
+        viewer_id: Uuid,
+        endpoint: &str,
+        body: Option<Vec<u8>>,
+        media_type: Option<&str>,
+    ) -> Result<reqwest::Response, IdentityError> {
+        let url = self
+            .base
+            .join(&format!("v1/identities/{member_id}/{endpoint}"))
+            .map_err(|_| IdentityError::InvalidConfiguration)?;
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| IdentityError::Unavailable)?
+            .as_secs();
+        let mut request = self
+            .http
+            .request(method, url)
+            .header("x-request-id", Uuid::new_v4().to_string())
+            .header("x-viewer-id", viewer_id.to_string())
+            .header("x-name-purpose", NamePurpose::OrganizationChart.code())
+            .header("x-request-timestamp", timestamp.to_string());
+        if let Some(media_type) = media_type {
+            request = request.header("content-type", media_type);
+        }
+        if let Some(body) = body {
+            request = request.body(body);
+        }
+        request.send().await.map_err(|_| IdentityError::Unavailable)
+    }
+
     /// PEM material must come from secret files outside the repository and never reach the browser.
     pub(crate) fn from_pem(
         base_url: &str,

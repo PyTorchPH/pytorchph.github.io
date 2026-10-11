@@ -19,6 +19,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use std::sync::Arc;
+use uuid::Uuid;
 
 const CONFIRMATION: &str = "DELETE";
 
@@ -38,6 +39,19 @@ pub async fn delete_account(
     let actor = viewer(&state, &headers).await?;
     ensure_confirmed(&input)?;
     ensure_not_last_admin(&state.db, &actor).await?;
+    if let Some(identity) = state.identity_client.as_deref() {
+        let id = Uuid::parse_str(&actor.id)
+            .map_err(|_| ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity"))?;
+        identity
+            .purge_organization_photo_data(id)
+            .await
+            .map_err(|_| {
+                ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Private photo cleanup unavailable",
+                )
+            })?;
+    }
     let deleted = remove_member(&state.db, &actor).await?;
     tracing::info!(
         component = "auth",

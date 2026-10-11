@@ -71,12 +71,13 @@ function PositionNode({ position, positions, onAssign }: NodeProps) {
 }
 
 function HolderChip({ holder, position }: { holder: { id: string; name: string; handle: string }; position: OrgPosition }) {
+  const [photoAvailable, setPhotoAvailable] = useState(true);
   const remove = useChartMutation(() => removeHolder(position.slug, holder.id), `${holder.name} was removed from ${position.title}.`);
   const resign = useChartMutation(() => resignPosition(position.slug), `You resigned from ${position.title}.`);
   const isViewer = position.heldByViewer && position.holders.length === 1;
   const initials = (holder.name === holder.handle ? holder.handle.slice(0, 2) : holder.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("")).toUpperCase();
   return <span className="inline-flex items-center gap-2 border border-border bg-surface px-2 py-1 text-sm">
-    <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accentSoft text-[10px] font-bold text-accent">{initials}</span><span className="truncate">{holder.name === holder.handle ? `@${holder.handle}` : holder.name}</span>
+    <span aria-hidden="true" className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accentSoft text-[10px] font-bold text-accent">{initials}{photoAvailable && <img alt="" className="absolute inset-0 h-full w-full object-cover" onError={() => setPhotoAvailable(false)} src={`/api/officer/organization/photo/${encodeURIComponent(holder.id)}`} />}</span><span className="truncate">{holder.name === holder.handle ? `@${holder.handle}` : holder.name}</span>
     {position.canManage && <button className="text-xs font-semibold text-accent underline" disabled={remove.isPending} onClick={() => confirm(`Remove ${holder.name} from ${position.title}?`) && remove.mutate()} type="button">Remove</button>}
     {isViewer && <button className="text-xs font-semibold text-accent underline" disabled={resign.isPending} onClick={() => confirm(`Resign from ${position.title}? Only the position above can assign you again.`) && resign.mutate()} type="button">Resign</button>}
   </span>;

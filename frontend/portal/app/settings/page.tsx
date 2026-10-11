@@ -18,6 +18,7 @@ import { LeaveCommunity } from "../../components/leave-community";
 import { LocalAIConnection } from "../../components/local-ai-connection";
 import type { LeaderboardIdentitySettings } from "@pytorch-ph/domain-protocol/leaderboards";
 import type { MemberPrivacySettings } from "@pytorch-ph/domain-protocol/privacy-feedback";
+import { OrganizationPhotoSettings } from "./organization-photo-settings";
 
 type Mode = LeaderboardIdentitySettings["mode"];
 
@@ -90,6 +91,7 @@ export default function SettingsPage() {
         <p className="mt-1 text-sm text-muted">Allow officers to see your display name on the organization chart. Without this consent, the chart shows your public handle and initials.</p>
         {organizationConsent.isError ? <p className="mt-2 text-sm text-muted">This control is available after the private identity service is configured.</p> : <><label className="mt-3 flex items-center gap-3 text-sm"><input checked={showOrganizationName} disabled={!organizationConsent.data} onChange={(event) => setShowOrganizationName(event.target.checked)} type="checkbox" />Show my display name on the organization chart</label><Button className="mt-3" disabled={!organizationConsent.data || saveOrganizationConsent.isPending} onClick={() => saveOrganizationConsent.mutate()} type="button" variant="secondary">Save organization name consent</Button></>}
       </div>
+      <OrganizationPhotoSettings />
     </Card>
     </>}
     {section === "profile" && <>

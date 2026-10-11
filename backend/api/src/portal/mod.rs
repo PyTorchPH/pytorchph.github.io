@@ -25,6 +25,7 @@ mod media;
 mod member;
 mod operations;
 mod overlays;
+mod photo;
 mod product;
 mod reads;
 mod store;
@@ -63,6 +64,12 @@ pub async fn gateway(
 ) -> ApiResult<Response> {
     let actor = session::viewer(&state, &headers).await?;
     ensure_portal_access(&actor, &path)?;
+    if photo::is_photo_path(&path) {
+        if method != Method::GET {
+            check_origin(&state, &headers)?;
+        }
+        return photo::handle(&state, &actor, &path, &method, &headers, body).await;
+    }
     if method == Method::GET {
         return reads::answer_read(
             &state.db,
