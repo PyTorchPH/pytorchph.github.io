@@ -98,6 +98,8 @@
       "id": "project-research-mcp",
       "kind": "project",
       "name": "PaperBridge",
+      "period": { "label": "08/2026 – Present" },
+      "links": [{ "label": "Project", "url": "https://example.com/projects/paperbridge" }],
       "summary": "Provenance-first MCP service for retrieving and citing research artifacts.",
       "highlights": ["Implemented caching, rate limiting, and bounded retry across six synthetic providers."],
       "claimIds": ["claim-tool-calls"],

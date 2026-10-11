@@ -1,5 +1,7 @@
 import type { ResumeProfile, ResumeProfileSection } from "@pytorch-ph/domain-protocol/career-evidence";
 import { resumeTemplates, type ResumeTemplateId } from "@pytorch-ph/domain-protocol/resumes";
+import { awardParagraphRuns, entryTitleRuns, type ResumeTextRun } from "./entry-presentation";
+import { drawPdfParagraphRow, wrapPdfParagraph } from "./render-pdf-paragraph";
 
 export { resumeTemplates, type ResumeTemplateId };
 
@@ -23,14 +25,23 @@ function contactItems(profile: ResumeProfile) {
 }
 
 function genericSectionHtml(section: ResumeProfileSection) {
+  if (section.id === "award") return `<section><h2>${escapeHtml(section.title)}</h2><p class="achievements-paragraph">${textRunsHtml(awardParagraphRuns(section))}</p></section>`;
   const columns = section.layout === "columns" ? ` style="--columns:${section.columns || 2}"` : "";
   const className = section.layout ? ` class="section-items ${section.layout}"` : " class=\"section-items\"";
   const items = section.items.map((item) => {
-    const heading = [item.heading, item.subheading].filter(Boolean).map((value) => escapeHtml(value!)).join(" · ");
-    const links = item.links.length ? `<p class="links">${item.links.map((link) => `<a href="${escapeHtml(link.url)}">${escapeHtml(link.label)}</a>`).join(" · ")}</p>` : "";
-    return `<article><div class="entry-heading"><h3>${heading}</h3>${item.dateLabel ? `<span class="date">${escapeHtml(item.dateLabel)}</span>` : ""}</div>${item.summary ? `<p>${escapeHtml(item.summary)}</p>` : ""}${item.inlineItems.length ? `<p>${item.inlineItems.map(escapeHtml).join(", ")}</p>` : ""}${item.bullets.length ? list(item.bullets) : ""}${links}</article>`;
+    const heading = textRunsHtml(entryTitleRuns(item, section.id === "project"));
+    const links = item.links.length > 1 ? `<p class="links">${item.links.slice(1).map((link) => `<a href="${escapeHtml(link.url)}">${escapeHtml(link.label)}</a>`).join(" · ")}</p>` : "";
+    return `<article><div class="entry-heading"><h3>${heading}</h3>${item.dateLabel ? `<span class="date">${escapeHtml(item.dateLabel)}</span>` : ""}</div>${item.summary && section.id !== "project" ? `<p>${escapeHtml(item.summary)}</p>` : ""}${item.inlineItems.length ? `<p>${item.inlineItems.map(escapeHtml).join(", ")}</p>` : ""}${item.bullets.length ? list(item.bullets) : ""}${links}</article>`;
   }).join("");
   return `<section><h2>${escapeHtml(section.title)}</h2><div${className}${columns}>${items}</div></section>`;
+}
+
+function textRunsHtml(runs: ResumeTextRun[]) {
+  return runs.map((run) => {
+    const text = escapeHtml(run.text);
+    const content = run.url ? `<a class="entry-title" href="${escapeHtml(run.url)}">${text}</a>` : text;
+    return run.bold ? `<strong>${content}</strong>` : `<span class="entry-description">${content}</span>`;
+  }).join("");
 }
 
 export function resumeHtml(profile: ResumeProfile, templateId: ResumeTemplateId) {
@@ -47,7 +58,7 @@ export function resumeHtml(profile: ResumeProfile, templateId: ResumeTemplateId)
   const sections = profile.sections?.length ? profile.sections.map(genericSectionHtml).join("") : legacySections;
   const contacts = contactItems(profile).map(escapeHtml).join(" · ");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(profile.fullName)} resume</title><style>
-  @page{size:A4;margin:${dense ? "8mm" : "15mm"}}*{box-sizing:border-box}body{max-width:790px;margin:0 auto;color:#172033;font-family:Arial,Helvetica,sans-serif;font-size:${dense ? "8.1pt" : compact ? "10.2pt" : "10.8pt"};line-height:${dense ? "1.18" : compact ? "1.32" : "1.45"}}header{border-bottom:2px solid ${template.accent};padding-bottom:${dense ? "5px" : "10px"};margin-bottom:${dense ? "6px" : "14px"}}h1{font-size:${dense ? "18pt" : compact ? "22pt" : "25pt"};margin:0;color:${template.accent}}header p{margin:${dense ? "1px" : "4px"} 0}h2{font-size:${dense ? "9pt" : "11.5pt"};text-transform:uppercase;letter-spacing:.08em;color:${template.accent};border-bottom:1px solid #cbd5e1;padding-bottom:2px;margin:${dense ? "6px" : compact ? "11px" : "16px"} 0 ${dense ? "3px" : "7px"}}h3{font-size:${dense ? "8.4pt" : "10.8pt"};margin:0}.entry-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:${dense ? "3px" : "7px"}}.date{color:#526176;white-space:nowrap}.section-items.columns{display:grid;grid-template-columns:repeat(var(--columns),minmax(0,1fr));gap:${dense ? "1px 12px" : "4px 20px"}}.section-items.compact_list article{break-inside:avoid}.links a{color:inherit}p{margin:${dense ? "1px" : "3px"} 0}ul{margin:${dense ? "1px" : "4px"} 0 ${dense ? "3px" : "7px"};padding-left:18px}li{margin:${dense ? "0" : "2px"} 0}@media print{body{max-width:none}}
+  @page{size:A4;margin:${dense ? "8mm" : "15mm"}}*{box-sizing:border-box}body{max-width:790px;margin:0 auto;color:#172033;font-family:Arial,Helvetica,sans-serif;font-size:${dense ? "8.1pt" : compact ? "10.2pt" : "10.8pt"};line-height:${dense ? "1.18" : compact ? "1.32" : "1.45"}}header{border-bottom:2px solid ${template.accent};padding-bottom:${dense ? "5px" : "10px"};margin-bottom:${dense ? "6px" : "14px"}}h1{font-size:${dense ? "18pt" : compact ? "22pt" : "25pt"};margin:0;color:${template.accent}}header p{margin:${dense ? "1px" : "4px"} 0}h2{font-size:${dense ? "9pt" : "11.5pt"};text-transform:uppercase;letter-spacing:.08em;color:${template.accent};border-bottom:1px solid #cbd5e1;padding-bottom:2px;margin:${dense ? "6px" : compact ? "11px" : "16px"} 0 ${dense ? "3px" : "7px"}}h3{font-size:${dense ? "8.4pt" : "10.8pt"};margin:0}.entry-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:${dense ? "3px" : "7px"}}.entry-heading h3{flex:1;min-width:0}.entry-title{color:inherit;text-decoration:none}.entry-description{font-weight:normal}.date{color:#526176;white-space:nowrap;flex-shrink:0}.section-items.columns{display:grid;grid-template-columns:repeat(var(--columns),minmax(0,1fr));gap:${dense ? "1px 12px" : "4px 20px"}}.section-items.compact_list article{break-inside:avoid}.links a{color:inherit}p{margin:${dense ? "1px" : "3px"} 0}ul{margin:${dense ? "1px" : "4px"} 0 ${dense ? "3px" : "7px"};padding-left:18px}li{margin:${dense ? "0" : "2px"} 0}@media print{body{max-width:none}}
   </style></head><body><header><h1>${escapeHtml(profile.fullName)}</h1><p><strong>${escapeHtml(profile.headline)}</strong></p><p>${contacts}</p></header>${sections}</body></html>`;
 }
 
@@ -80,17 +91,9 @@ export async function downloadDocx(profile: ResumeProfile, templateId: ResumeTem
     ...(profile.skillGroups.length ? [new Paragraph({ heading: HeadingLevel.HEADING_1, text: "Skills" }), ...profile.skillGroups.map((group) => new Paragraph({ children: [new TextRun({ text: `${group.name}: `, bold: true }), new TextRun(group.items.join(", "))] }))] : []),
     ...(profile.education.length ? [new Paragraph({ heading: HeadingLevel.HEADING_1, text: "Education" }), ...profile.education.map((item) => new Paragraph(`${item.school} · ${item.program} · ${item.dateLabel}`))] : []),
   ];
-  const genericChildren = profile.sections?.flatMap((section) => [
-    new Paragraph({ heading: HeadingLevel.HEADING_1, text: section.title }),
-    ...section.items.flatMap((item) => [
-      new Paragraph({ heading: HeadingLevel.HEADING_2, text: [item.heading, item.subheading].filter(Boolean).join(" · ") }),
-      ...(item.dateLabel ? [new Paragraph(item.dateLabel)] : []),
-      ...(item.summary ? [new Paragraph(item.summary)] : []),
-      ...(item.inlineItems.length ? [new Paragraph(item.inlineItems.join(", "))] : []),
-      ...item.bullets.map((bullet) => new Paragraph({ text: bullet, bullet: { level: 0 } })),
-      ...(item.links.length ? [new Paragraph(item.links.map((link) => `${link.label}: ${link.url}`).join(" · "))] : []),
-    ]),
-  ]);
+  const margin = profile.presentation?.density === "dense" ? 454 : 850;
+  const { renderDocxSections } = await import("./render-docx-sections");
+  const genericChildren = profile.sections ? renderDocxSections(profile.sections, 11906 - 2 * margin) : [];
   const children = profile.sections?.length
     ? [
       new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: profile.fullName, bold: true })] }),
@@ -100,7 +103,7 @@ export async function downloadDocx(profile: ResumeProfile, templateId: ResumeTem
       ...(genericChildren || []),
     ]
     : legacyChildren;
-  const document = new Document({ creator: "PyTorch PH Resume Studio", title: `${profile.fullName} resume`, sections: [{ children }] });
+  const document = new Document({ creator: "PyTorch PH Resume Studio", title: `${profile.fullName} resume`, sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: margin, right: margin, bottom: margin, left: margin } } }, children }] });
   download(await Packer.toBlob(document), exportName(templateId, "docx", demo));
 }
 
@@ -124,17 +127,35 @@ export async function createResumePdf(profile: ResumeProfile, templateId: Resume
   pdf.setTextColor("#172033"); line(profile.headline, dense ? 8.5 : 11, true, dense ? 10 : 15); line(contactItems(profile).join(" · "), dense ? 7 : 9, false, dense ? 9 : 15); y += dense ? 1 : 4;
   const heading = (value: string) => { y += dense ? 3 : 7; ensure(dense ? 18 : 28); pdf.setTextColor(template.accent); line(value.toUpperCase(), dense ? 8 : 10, true, dense ? 9 : 14); pdf.setDrawColor(template.accent); pdf.line(margin, y - (dense ? 6 : 9), margin + width, y - (dense ? 6 : 9)); pdf.setTextColor("#172033"); };
   const bullets = (values: string[]) => values.forEach((value) => line(`• ${value}`, dense ? 7.2 : 9.5, false, dense ? 9 : 13));
+  const paragraph = (runs: ResumeTextRun[], size: number, gap: number, date?: string) => {
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(dense ? 7 : 9);
+    const reservation = date ? pdf.getTextWidth(date) + 12 : 0;
+    const rows = wrapPdfParagraph(pdf, runs, size, width, reservation);
+    ensure(rows.length * gap + 4);
+    rows.forEach((row, index) => {
+      ensure(gap + 4);
+      drawPdfParagraphRow(pdf, row, margin, y, size);
+      if (date && index === 0) {
+        pdf.setFont("helvetica", "normal"); pdf.setFontSize(dense ? 7 : 9);
+        pdf.text(date, margin + width, y, { align: "right" });
+      }
+      y += gap;
+    });
+  };
   if (profile.summary) { heading("Professional summary"); line(profile.summary, dense ? 7.2 : 9.5, false, dense ? 9 : 13); }
   if (profile.sections?.length) {
     profile.sections.forEach((section) => {
       heading(section.title);
+      if (section.id === "award") {
+        paragraph(awardParagraphRuns(section), dense ? 7.2 : 9.5, dense ? 9 : 13);
+        return;
+      }
       section.items.forEach((item) => {
-        line([item.heading, item.subheading].filter(Boolean).join(" · "), dense ? 7.6 : 10, true, dense ? 9 : 14);
-        if (item.dateLabel) line(item.dateLabel, dense ? 7 : 9, false, dense ? 8 : 15);
-        if (item.summary) line(item.summary, dense ? 7.2 : 9.5, false, dense ? 9 : 13);
+        paragraph(entryTitleRuns(item, section.id === "project"), dense ? 7.6 : 10, dense ? 9 : 14, item.dateLabel);
+        if (item.summary && section.id !== "project") line(item.summary, dense ? 7.2 : 9.5, false, dense ? 9 : 13);
         if (item.inlineItems.length) line(item.inlineItems.join(", "), dense ? 7.2 : 9.5, false, dense ? 9 : 13);
         bullets(item.bullets);
-        if (item.links.length) line(item.links.map((link) => `${link.label}: ${link.url}`).join(" · "), dense ? 6.8 : 8.5, false, dense ? 8 : 12);
+        if (item.links.length > 1) paragraph(item.links.slice(1).flatMap((link, index) => [...(index ? [{ text: " · " }] : []), { text: link.label, url: link.url }]), dense ? 6.8 : 8.5, dense ? 8 : 12);
       });
     });
   } else {

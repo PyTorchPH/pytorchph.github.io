@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { Document, Packer } from "docx";
+import JSZip from "jszip";
+import { renderDocxSections } from "../../features/resumes/render-docx-sections";
 
 import {
   assessClaimEvidence,
@@ -29,6 +32,72 @@ const sourcePath = fileURLToPath(new URL("./fixtures/resume-source-example.v1.js
 const v2Example = JSON.parse(readFileSync(v2Path, "utf8"));
 const v1Template = JSON.parse(readFileSync(v1Path, "utf8"));
 const sourceExample = JSON.parse(readFileSync(sourcePath, "utf8"));
+
+test("source injection groups metrics by shared verified test without changing the AST", () => {
+  const source = resumeSourceDocumentSchema.parse(sourceExample);
+  const throughput = source.claims.find((claim) => claim.id === "claim-load-throughput")!;
+  throughput.statement = "Sustained 245 requests per second under 200 virtual users.";
+  source.claims.push({ ...throughput, id: "claim-load-latency", statement: "Measured 108 ms p95 latency under the same workload." });
+  source.claimEvidenceLinks.push({ claimId: "claim-load-latency", evidenceId: "evidence-rust-load", measurementIds: ["metric-p95"], relationship: "supports" });
+  source.records.find((record) => record.id === "project-rust-serving")!.claimIds.push("claim-load-latency");
+  const before = JSON.stringify(source);
+  const profile = buildResumeSourceProfile(source, "ml-engineer");
+  const bullets = profile.sections!.find((section) => section.id === "project")!.items[0].bullets;
+  assert.deepEqual(bullets, ["Sustained 245 requests per second under 200 virtual users; Measured 108 ms p95 latency under the same workload."]);
+  assert.deepEqual(profile.projects[0].bullets, bullets);
+  assert.equal(JSON.stringify(source), before);
+});
+
+test("different test runs remain separate and unverified results stay out of condensed bullets", () => {
+  const source = resumeSourceDocumentSchema.parse(sourceExample);
+  const claim = source.claims.find((item) => item.id === "claim-load-throughput")!;
+  const evidence = source.evidence.find((item) => item.id === "evidence-rust-load")!;
+  source.evidence.push({ ...evidence, id: "evidence-second-run" }, { ...evidence, id: "evidence-unverified-run", verification: { status: "unverified", verifiedBy: "unreviewed fixture" } });
+  source.claims.push({ ...claim, id: "claim-second-run", statement: "A separate run reached 240 requests per second." }, { ...claim, id: "claim-unverified-run", statement: "An unverified run reached 999 requests per second." });
+  source.claimEvidenceLinks.push(
+    { claimId: "claim-second-run", evidenceId: "evidence-second-run", measurementIds: ["metric-rps"], relationship: "supports" },
+    { claimId: "claim-unverified-run", evidenceId: "evidence-unverified-run", measurementIds: ["metric-rps"], relationship: "supports" },
+  );
+  source.records.find((record) => record.id === "project-rust-serving")!.claimIds.push("claim-second-run", "claim-unverified-run");
+  const profile = buildResumeSourceProfile(source, "ml-engineer");
+  assert.equal(profile.projects[0].bullets.length, 2);
+  assert.match(profile.projects[0].bullets[1], /separate run/);
+  assert.doesNotMatch(JSON.stringify(profile), /999 requests/);
+});
+
+test("sample titles are clickable without link styling and awards occupy one paragraph", async () => {
+  const profile = buildResumeSourceProfile(sourceExample, "ml-engineer");
+  const html = resumeHtml(profile, "compact");
+  assert.match(html, /<a class="entry-title" href="https:\/\/example\.com\/projects\/paperbridge">PaperBridge<\/a>/);
+  assert.match(html, /\.entry-title\{color:inherit;text-decoration:none\}/);
+  assert.match(html, /class="entry-description">, Provenance-first MCP service/);
+  assert.match(html, /<span class="date">08\/2026 – Present<\/span>/);
+  const awards = html.match(/<section><h2>Awards<\/h2>(.*?)<\/section>/s)![1];
+  assert.equal((awards.match(/<p /g) || []).length, 1);
+  assert.doesNotMatch(awards, /<article|<ul|<li/);
+  assert.match(awards, /Top 10 Finalist/);
+  assert.match(awards, /Grand Winner/);
+  const bytes = await resumePdfBytes(profile, "compact");
+  assert.match(new TextDecoder().decode(bytes), /\/URI \(https:\/\/example\.com\/projects\/paperbridge\)/);
+});
+
+test("DOCX keeps title hyperlinks, right-aligned dates, and one awards paragraph", async () => {
+  const profile = buildResumeSourceProfile(sourceExample, "ml-engineer");
+  const document = new Document({ sections: [{ children: renderDocxSections(profile.sections!, 10206) }] });
+  const zip = await JSZip.loadAsync(await Packer.toBuffer(document));
+  const xml = await zip.file("word/document.xml")!.async("string");
+  const relationships = await zip.file("word/_rels/document.xml.rels")!.async("string");
+  assert.match(relationships, /Target="https:\/\/example\.com\/projects\/paperbridge"/);
+  const project = xml.match(/<w:p>(?:(?!<\/w:p>).)*PaperBridge(?:(?!<\/w:p>).)*<\/w:p>/s)![0];
+  assert.match(project, /<w:hyperlink/);
+  assert.match(project, /w:val="right" w:pos="10206"/);
+  assert.match(project, /08\/2026 – Present/);
+  assert.match(project, /w:color w:val="172033"/);
+  assert.match(project, /w:u w:val="none"/);
+  const awards = xml.match(/<w:p>(?:(?!<\/w:p>).)*Top 10 Finalist(?:(?!<\/w:p>).)*<\/w:p>/s)![0];
+  assert.match(awards, /Grand Winner/);
+  assert.doesNotMatch(awards, /w:numPr/);
+});
 
 test("broad source contract preserves the reference resume section inventory", () => {
   const document = resumeSourceDocumentSchema.parse(sourceExample);

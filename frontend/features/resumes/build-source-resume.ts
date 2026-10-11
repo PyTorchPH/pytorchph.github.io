@@ -1,4 +1,5 @@
 import type { ResumeProfile, ResumeProfileSection } from "@pytorch-ph/domain-protocol/career-evidence";
+import { condenseSourceAchievements } from "./condense-source-achievements";
 import {
   resumeSourceDocumentSchema,
   type ResumeSourceDocument,
@@ -68,8 +69,8 @@ export function buildResumeSourceProfile(input: unknown, targetId?: string): Res
     linkedIn: linkedIn?.url,
     links,
     summary: document.person.positioning.summary || "",
-    experience: legacyExperience(records, statements),
-    projects: legacyProjects(records, statements),
+    experience: legacyExperience(document, records, statements),
+    projects: legacyProjects(document, records, statements),
     skillGroups: records.filter((record) => record.kind === "skill_group").map((record) => ({
       name: record.name,
       items: [...record.skills, ...record.skillIds.flatMap((id) => skills.get(id) || [])],
@@ -115,7 +116,7 @@ function buildSection(
       subheading: record.role || record.organization || record.issuer,
       dateLabel: periodLabel(record) || undefined,
       summary: record.summary,
-      bullets: [...record.highlights, ...record.claimIds.flatMap((id) => statements.get(id) || [])],
+      bullets: condenseSourceAchievements(document, record, statements),
       inlineItems: [...record.skills, ...record.skillIds.flatMap((id) => skills.get(id) || [])],
       links: record.links,
     })),
@@ -138,20 +139,28 @@ function verifiedClaimStatements(document: ResumeSourceDocument, targetId?: stri
   return statements;
 }
 
-function legacyExperience(records: ResumeSourceRecord[], statements: Map<string, string>) {
+function legacyExperience(
+  document: ResumeSourceDocument,
+  records: ResumeSourceRecord[],
+  statements: Map<string, string>,
+) {
   return records.filter((record) => record.kind === "experience").map((record) => ({
     title: record.role || record.name,
     organization: record.organization!,
     dateLabel: periodLabel(record),
-    bullets: [...record.highlights, ...record.claimIds.flatMap((id) => statements.get(id) || [])],
+    bullets: condenseSourceAchievements(document, record, statements),
   }));
 }
 
-function legacyProjects(records: ResumeSourceRecord[], statements: Map<string, string>) {
+function legacyProjects(
+  document: ResumeSourceDocument,
+  records: ResumeSourceRecord[],
+  statements: Map<string, string>,
+) {
   return records.filter((record) => record.kind === "project").map((record) => ({
     title: record.name,
     summary: record.summary || "",
-    bullets: [...record.highlights, ...record.claimIds.flatMap((id) => statements.get(id) || [])],
+    bullets: condenseSourceAchievements(document, record, statements),
   }));
 }
 
