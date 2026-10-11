@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import type { ProfileOptions } from "@pytorch-ph/domain-protocol/identity";
-import { PROFILE_OPTIONS_QUERY_KEY, PROFILE_QUERY_KEY, fetchProfileOptions, saveProfile } from "../api";
+import { PROFILE_OPTIONS_QUERY_KEY, PROFILE_QUERY_KEY, PROFILE_PACKAGE_QUERY_KEY, fetchProfileOptions, saveProfile } from "../api";
 import { useMemberProfile } from "../use-profile-gate";
 import { AboutYouSection } from "./about-you";
 import { draftFromProfile, findDraftProblem, toProfileInput, type ProfileDraft } from "./form-state";
@@ -69,6 +69,7 @@ function useSaveProfile(onProblem: (message: string) => void, redirectOnSave: bo
     mutationFn: (draft: ProfileDraft) => saveProfile(toProfileInput(draft)),
     onSuccess: (status) => {
       queryClient.setQueryData(PROFILE_QUERY_KEY, status);
+      queryClient.invalidateQueries({ queryKey: PROFILE_PACKAGE_QUERY_KEY });
       toast.success("Profile saved.");
       if (redirectOnSave) router.replace("/dashboard/");
     },

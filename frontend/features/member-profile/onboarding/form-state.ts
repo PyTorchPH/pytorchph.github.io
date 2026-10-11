@@ -34,7 +34,7 @@ export const MIN_AGE = 1;
 export const MAX_AGE = 120;
 
 export const emptyDraft = (): ProfileDraft => ({
-  gender: "", genderDescription: "", age: "", agePreferNotToSay: false, regionCode: "", status: "", channel: "", interests: [], analyticsConsent: false,
+  gender: "", genderDescription: "", age: "", agePreferNotToSay: false, regionCode: "", status: "", channel: "", interests: [], analyticsConsent: true,
   school: { code: "", label: "", unlistedName: "", level: "", programCode: "", programLabel: "", unlistedProgram: "", yearLevel: "" },
   employment: { companyId: "", companyLabel: "", newCompanyName: "", isNewCompany: false, industry: "", jobRole: "", experienceRange: "" },
 });

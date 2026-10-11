@@ -15,11 +15,16 @@ use super::{
     standings::{Entry, entry_json, standings, verified_cohort_position},
     tiers::load_tiers,
 };
-use crate::{ApiError, ApiResult, identity::session::Viewer, internal};
+use crate::{
+    ApiError, ApiResult,
+    identity::{identity_client::IdentityClient, session::Viewer},
+    internal,
+};
 use axum::http::StatusCode;
 use chrono::Utc;
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
+use uuid::Uuid;
 
 /// Title, kind, points, reviewed at, source URL, verified level.
 type EvidenceRow = (
@@ -37,6 +42,7 @@ type PlacementRow = (String, Option<i64>, i64, String);
 // check that the viewer may see them, then list approved evidence and event placements.
 pub(crate) async fn member_profile(
     db: &SqlitePool,
+    identity_client: Option<&IdentityClient>,
     viewer: &Viewer,
     query: Option<&str>,
 ) -> ApiResult<Value> {
@@ -48,6 +54,28 @@ pub(crate) async fn member_profile(
     let ranked = standings(db, season, now, None, "both").await?;
     let (rank, entry) = find_ranked(&ranked, &target)?;
     ensure_profile_visible(entry, &viewer.id)?;
+    if entry.member_id != viewer.id
+        && let Some(client) = identity_client
+    {
+        let id = Uuid::parse_str(&entry.member_id).map_err(|_| {
+            ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            )
+        })?;
+        let settings = client.settings(id, None).await.map_err(|_| {
+            ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            )
+        })?;
+        if !settings.share_achievements {
+            return Err(ApiError(
+                StatusCode::FORBIDDEN,
+                "This member keeps achievements private",
+            ));
+        }
+    }
     let evidence = approved_evidence(db, &entry.member_id).await?;
     let placements = event_placements(db, &entry.member_id).await?;
     Ok(json!({

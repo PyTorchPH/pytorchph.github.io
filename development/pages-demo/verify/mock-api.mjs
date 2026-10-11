@@ -26,7 +26,7 @@ const WHOLE_LIST_LEVELS = new Set(["junior_high", "senior_high"]);
 
 // Mental model: one mutable session per browser context; each test step flips `state` to shape
 // what the next page load sees (who is signed in, whether their profile is complete, what fails).
-export async function mockApi(context, { apiOrigin, siteOrigin }) {
+export async function mockApi(context, { apiOrigin, siteOrigin, portalHandler }) {
   const state = { role: null, profileComplete: true, failingPaths: new Set(), portalRequests: 0 };
   const unexpected = [];
   const cors = { "access-control-allow-origin": siteOrigin, "access-control-allow-credentials": "true", "access-control-allow-headers": "content-type, if-match", "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE" };
@@ -44,7 +44,8 @@ export async function mockApi(context, { apiOrigin, siteOrigin }) {
     const request = route.request();
     if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
     const url = new URL(request.url());
-    const answer = answerAuth(state, request, url) ?? answerPortal(state, request, url) ?? answerReference(url) ?? answerDirectReads(state, url);
+    const answer = answerAuth(state, request, url) ?? answerPortal(state, request, url, portalHandler) ?? answerReference(url) ?? answerDirectReads(state, url);
+    if (answer?.bytes) return route.fulfill({ status: answer.status, headers: { ...cors, "content-type": answer.contentType, "cache-control": "private, no-store" }, body: answer.bytes });
     if (answer) return reply(route, answer.status, answer.body);
     unexpected.push(`${request.method()} ${url.pathname}`);
     return reply(route, 404, { error: "Not mocked" });
@@ -67,12 +68,14 @@ function answerAuth(state, request, url) {
   return null;
 }
 
-function answerPortal(state, request, url) {
+function answerPortal(state, request, url, portalHandler) {
   if (!url.pathname.startsWith("/portal/api/")) return null;
   state.portalRequests += 1;
   if (!state.role) return { status: 401, body: { error: "Authentication required" } };
   const path = url.pathname.slice("/portal".length);
   if (state.failingPaths.has(path)) return { status: 503, body: { error: "Service temporarily unavailable" } };
+  const custom = portalHandler?.(state, request, url, path);
+  if (custom) return custom;
   if (path === "/api/member/profile") return answerProfile(state, request);
   if (request.method() !== "GET") return { status: 403, body: { error: "Writes are not part of this check." } };
   if (path === "/api/member/leaderboard-photo-consent" || path === "/api/member/organization-photo-consent") return { status: 200, body: { granted: false } };
@@ -86,7 +89,7 @@ function answerProfile(state, request) {
   return { status: 200, body: { complete: state.profileComplete, profile: null } };
 }
 
-function fixtureFor(audience, path, search) {
+export function fixtureFor(audience, path, search = "") {
   const views = fixtures[audience];
   const exact = views[path + search] ?? views[path];
   if (exact) return exact;

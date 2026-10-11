@@ -1,8 +1,8 @@
-//! Staged private identity client. No route or startup path uses it until the migration cutover.
+//! Private mTLS identity client used only when explicitly configured; deployment/import remain staged.
 #![allow(dead_code)]
 
 use reqwest::{Certificate, Client, Identity, Method, StatusCode, Url};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
     error::Error,
     time::{Duration, SystemTime, UNIX_EPOCH},
@@ -39,6 +39,24 @@ struct NameReply {
     display_name: String,
 }
 
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct PrivateProfile {
+    pub(crate) display_name: String,
+    pub(crate) phone_number: Option<String>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct IdentitySettings {
+    pub(crate) real_name_visible: bool,
+    pub(crate) photo_visible: bool,
+    pub(crate) analytics_opt_out: bool,
+    pub(crate) hide_google_identity: bool,
+    pub(crate) automatic_error_reports: bool,
+    pub(crate) share_achievements: bool,
+}
+
 #[derive(Deserialize)]
 struct ConsentReply {
     granted: bool,
@@ -51,6 +69,125 @@ pub(crate) enum IdentityError {
 }
 
 impl IdentityClient {
+    pub(crate) async fn purge_private_data(&self, member_id: Uuid) -> Result<(), IdentityError> {
+        let url = self
+            .base
+            .join(&format!("v1/identities/{member_id}/private-data"))
+            .map_err(|_| IdentityError::InvalidConfiguration)?;
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| IdentityError::Unavailable)?
+            .as_secs();
+        let response = self
+            .http
+            .delete(url)
+            .header("x-request-id", Uuid::new_v4().to_string())
+            .header("x-viewer-id", member_id.to_string())
+            .header("x-name-purpose", NamePurpose::PublicProfile.code())
+            .header("x-request-timestamp", timestamp.to_string())
+            .send()
+            .await
+            .map_err(|_| IdentityError::Unavailable)?;
+        if response.status() == StatusCode::NO_CONTENT {
+            Ok(())
+        } else {
+            Err(IdentityError::Unavailable)
+        }
+    }
+
+    pub(crate) async fn settings(
+        &self,
+        member_id: Uuid,
+        update: Option<&IdentitySettings>,
+    ) -> Result<IdentitySettings, IdentityError> {
+        let url = self
+            .base
+            .join(&format!("v1/identities/{member_id}/settings"))
+            .map_err(|_| IdentityError::InvalidConfiguration)?;
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| IdentityError::Unavailable)?
+            .as_secs();
+        let request = match update {
+            Some(value) => self.http.put(url).json(value),
+            None => self.http.get(url),
+        };
+        let response = request
+            .header("x-request-id", Uuid::new_v4().to_string())
+            .header("x-viewer-id", member_id.to_string())
+            .header("x-name-purpose", NamePurpose::PublicProfile.code())
+            .header("x-request-timestamp", timestamp.to_string())
+            .send()
+            .await
+            .map_err(|_| IdentityError::Unavailable)?;
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 4096).await?;
+        serde_json::from_slice(&bytes).map_err(|_| IdentityError::Unavailable)
+    }
+
+    /// Only the authenticated owner may receive these fields through the website gateway.
+    pub(crate) async fn private_profile(
+        &self,
+        member_id: Uuid,
+    ) -> Result<PrivateProfile, IdentityError> {
+        let url = self
+            .base
+            .join(&format!("v1/identities/{member_id}/profile"))
+            .map_err(|_| IdentityError::InvalidConfiguration)?;
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| IdentityError::Unavailable)?
+            .as_secs();
+        let response = self
+            .http
+            .get(url)
+            .header("x-request-id", Uuid::new_v4().to_string())
+            .header("x-viewer-id", member_id.to_string())
+            .header("x-name-purpose", NamePurpose::PublicProfile.code())
+            .header("x-request-timestamp", timestamp.to_string())
+            .send()
+            .await
+            .map_err(|_| IdentityError::Unavailable)?;
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 4096).await?;
+        serde_json::from_slice(&bytes).map_err(|_| IdentityError::Unavailable)
+    }
+
+    pub(crate) async fn save_private_profile(
+        &self,
+        member_id: Uuid,
+        phone_number: Option<&str>,
+    ) -> Result<PrivateProfile, IdentityError> {
+        let url = self
+            .base
+            .join(&format!("v1/identities/{member_id}/profile"))
+            .map_err(|_| IdentityError::InvalidConfiguration)?;
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| IdentityError::Unavailable)?
+            .as_secs();
+        let response = self
+            .http
+            .put(url)
+            .header("x-request-id", Uuid::new_v4().to_string())
+            .header("x-viewer-id", member_id.to_string())
+            .header("x-name-purpose", NamePurpose::PublicProfile.code())
+            .header("x-request-timestamp", timestamp.to_string())
+            .json(&serde_json::json!({"phoneNumber":phone_number}))
+            .send()
+            .await
+            .map_err(|_| IdentityError::Unavailable)?;
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 4096).await?;
+        serde_json::from_slice(&bytes).map_err(|_| IdentityError::Unavailable)
+    }
+
     pub(crate) async fn leaderboard_photo(
         &self,
         member_id: Uuid,
@@ -144,6 +281,33 @@ impl IdentityClient {
             return Err(IdentityError::Unavailable);
         }
         Ok(Some(bytes.to_vec()))
+    }
+
+    pub(crate) async fn self_photo(
+        &self,
+        member_id: Uuid,
+    ) -> Result<Option<Vec<u8>>, IdentityError> {
+        let response = self
+            .photo_request_with_purpose(
+                Method::GET,
+                member_id,
+                member_id,
+                "self-photo",
+                None,
+                NamePurpose::PublicProfile,
+            )
+            .await?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 65_536).await?;
+        if bytes.is_empty() {
+            return Err(IdentityError::Unavailable);
+        }
+        Ok(Some(bytes))
     }
 
     pub(crate) async fn write_organization_photo(

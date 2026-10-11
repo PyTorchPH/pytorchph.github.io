@@ -57,6 +57,7 @@ mod model_placements;
 mod officer;
 mod organization;
 mod portal_gateway;
+mod profile_package;
 mod scoring;
 mod scoring_quarters;
 mod scoring_scheduler;

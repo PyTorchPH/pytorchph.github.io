@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthShell } from "../render-shell";
@@ -52,6 +53,7 @@ export function LoginForm({ demoControls, onAuthenticated, onExampleSignIn }: Lo
 // Mental model: ask the API who is signed in; a viewer means enter now, anything else shows the form.
 function useSessionRestore(onAuthenticated?: (role: string) => void) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [checkingSession, setCheckingSession] = useState(hasAuthApi());
   const onAuthenticatedRef = useRef(onAuthenticated);
   onAuthenticatedRef.current = onAuthenticated;
@@ -63,20 +65,23 @@ function useSessionRestore(onAuthenticated?: (role: string) => void) {
       .then(viewer => {
         if (!viewer || controller.signal.aborted) return;
         restored = true;
+        queryClient.clear();
         if (onAuthenticatedRef.current) onAuthenticatedRef.current(viewer.role);
         else router.replace("/dashboard");
       })
       .catch(() => { /* Keep sign in available if the API cannot be reached. */ })
       .finally(() => { if (!controller.signal.aborted && !restored) setCheckingSession(false); });
     return () => controller.abort();
-  }, [router]);
+  }, [router, queryClient]);
   return checkingSession;
 }
 
 // With the API, entering is the caller's choice or the dashboard; the local portal asks membership status first.
 function useEnterAfterSignIn(onAuthenticated?: (role: string) => void): EnterAfterSignIn {
   const router = useRouter();
+  const queryClient = useQueryClient();
   return async (role?: string) => {
+    queryClient.clear();
     if (hasAuthApi()) {
       if (onAuthenticated) onAuthenticated(role ?? "member");
       else { router.replace("/dashboard"); router.refresh(); }

@@ -16,17 +16,26 @@ use super::{
     standings::{Entry, entry_json, standings, verified_cohort_position},
     tiers::load_tiers,
 };
-use crate::{ApiResult, identity::session::Viewer, internal};
+use crate::{
+    ApiResult,
+    identity::{
+        identity_client::{IdentityClient, NamePurpose},
+        session::Viewer,
+    },
+    internal,
+};
 use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
 use std::time::Instant;
+use uuid::Uuid;
 
 // Mental model: rank everyone in the chosen season first, so rank numbers never change when
 // a skill filter or a page narrows the view; then cut the page and describe the filters.
 pub(crate) async fn member_leaderboard(
     db: &SqlitePool,
+    identity_client: Option<&IdentityClient>,
     viewer: &Viewer,
     query: Option<&str>,
 ) -> ApiResult<Value> {
@@ -52,12 +61,40 @@ pub(crate) async fn member_leaderboard(
     let ranked = rank_and_filter(all, skill_label.as_deref());
     let revision = leaderboard_revision(&ranked);
     let total_pages = ranked.len().div_ceil(page_size);
-    let entries: Vec<Value> = page_of(&ranked, page, page_size)
-        .map(|(rank, entry)| {
-            let cohort = verified_cohort_position(ranked.iter().map(|(_, other)| other), entry);
-            entry_json(entry, *rank, cohort, &viewer.id, &tiers, &view)
-        })
-        .collect();
+    let mut entries = Vec::new();
+    for (rank, entry) in page_of(&ranked, page, page_size) {
+        let cohort = verified_cohort_position(ranked.iter().map(|(_, other)| other), entry);
+        let mut row = entry_json(entry, *rank, cohort, &viewer.id, &tiers, &view);
+        if entry.member_id != viewer.id
+            && let Some(client) = identity_client
+        {
+            let shared = match Uuid::parse_str(&entry.member_id) {
+                Ok(id) => client
+                    .settings(id, None)
+                    .await
+                    .map(|settings| settings.share_achievements)
+                    .unwrap_or(false),
+                Err(_) => false,
+            };
+            if !shared {
+                row["profileId"] = Value::Null;
+            }
+        }
+        if entry.real_name_requested
+            && !entry.anonymous
+            && let (Some(client), Ok(member_id), Ok(viewer_id)) = (
+                identity_client,
+                Uuid::parse_str(&entry.member_id),
+                Uuid::parse_str(&viewer.id),
+            )
+            && let Ok(Some(name)) = client
+                .display_name(member_id, viewer_id, NamePurpose::PublicProfile)
+                .await
+        {
+            row["displayLabel"] = json!(name);
+        }
+        entries.push(row);
+    }
     tracing::info!(component="leaderboard",operation="detailed_read",duration_ms=started.elapsed().as_millis() as u64,ranked_count=ranked.len(),page_size,source="live",revision=%revision,"leaderboard.read_complete");
     Ok(json!({
         "season": season.map(|season| season_json(season, now)),
@@ -184,6 +221,7 @@ mod tests {
             streak: 1,
             skills: vec!["Rust".into()],
             anonymous: false,
+            real_name_requested: false,
             shares_achievements: true,
         }
     }

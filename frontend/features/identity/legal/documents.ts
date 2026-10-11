@@ -60,10 +60,10 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentKey, LegalDocument> = {
         "Activity in the portal: evidence you submit, event participation, leaderboard points, and bug reports you choose to send.",
       ] },
       { heading: "2. Why we use it", paragraphs: [
-        "To run your account and the portal, review evidence, rank the leaderboard, organize events, and keep the service secure. With your separate consent, your profile answers are also counted in anonymous demographic statistics that help officers plan programs.",
+        "To run your account and the portal, review evidence, rank the leaderboard, organize events, and keep the service secure. Profile answers are included in aggregate community demographics by default to help officers plan programs; you can opt out in onboarding or Settings.",
       ] },
       { heading: "3. Sensitive personal information", paragraphs: [
-        "Your age and education are sensitive personal information under RA 10173. We collect them only with your consent, every question offers a “prefer not to say” style answer, and they are never shown to other members.",
+        "Profile answers remain private to your account and authorized officers. You can leave optional answers blank or choose “prefer not to say”; individual answers are not shown to other members.",
       ] },
       { heading: "4. Who can see it", paragraphs: [
         "Other members see only your public leaderboard profile. Officers see what they need to review evidence and manage the organization. Demographic reports show only groups of five or more people, so no individual can be singled out.",
@@ -76,7 +76,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentKey, LegalDocument> = {
         "Passwords are hashed, sessions use secure cookies, and access to officer tools is limited by role. AI provider keys never leave your browser extension.",
       ] },
       { heading: "7. Your rights", paragraphs: [
-        "Under RA 10173 you have the right to be informed, to access, to correct, to object, to erase or block, to data portability, and to claim damages. You can correct your profile or withdraw analytics consent anytime in Settings, and delete your account there.",
+        "Under RA 10173 you have the right to be informed, to access, to correct, to object, to erase or block, to data portability, and to claim damages. You can correct your profile or opt out of aggregate demographics in Settings, and delete your account there.",
         "For other requests, contact the PyTorch PH officers through the portal’s report form. You may also file a complaint with the National Privacy Commission.",
       ] },
     ],

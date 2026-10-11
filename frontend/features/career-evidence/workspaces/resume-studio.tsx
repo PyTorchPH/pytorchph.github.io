@@ -13,19 +13,22 @@
 //   pageFitText, pageFitTone  how the measured page count reads
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ChevronRight, Download, ExternalLink, FileText } from "lucide-react";
 import { Badge } from "@pytorch-ph/design-system/badge";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Card } from "@pytorch-ph/design-system/card";
 import { AppDialog } from "@pytorch-ph/design-system/dialog";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
+import { useProfilePackage } from "@pytorch-ph/domain-client/member-profile";
 import {
   downloadDocx,
   downloadHtml,
   downloadPdf,
   resumePdfPageCount,
   resumeTemplates,
+  resumeFromProfilePackage,
+  resumeWithPrivateProfile,
   type ResumeTemplateId,
 } from "@pytorch-ph/domain-client/resumes";
 
@@ -35,17 +38,22 @@ type ResumeTemplate = (typeof resumeTemplates)[number];
 // Mental model: approved evidence becomes one normalized profile; every template, preview and export reads it.
 export function ResumeStudioView({ data }: { data: ProductViewData }) {
   const [templateId, setTemplateId] = useState<ResumeTemplateId | null>(null);
-  const profile = data.resumeProfile;
+  const profilePackage = useProfilePackage();
+  const demo = data.meta.mode === "local_demo";
+  const profile = useMemo(() => profilePackage.isError && !demo ? undefined : profilePackage.data
+    ? data.resumeProfile
+      ? resumeWithPrivateProfile(data.resumeProfile, profilePackage.data)
+      : resumeFromProfilePackage(profilePackage.data)
+    : demo ? data.resumeProfile : undefined, [profilePackage.data, profilePackage.isError, data.resumeProfile, demo]);
   const pageCount = usePdfPageCount(profile, templateId);
   const exporter = useExportRunner();
   const template = resumeTemplates.find((item) => item.id === templateId);
-  const demo = data.meta.mode === "local_demo";
   if (!profile)
     return (
       <Card className="border-dashed bg-surface py-12 text-center">
         <FileText className="mx-auto text-muted" />
-        <h2 className="mt-4 font-bold">No verified resume snapshot</h2>
-        <p className="mt-2 text-sm text-muted">Approve evidence in Career Evidence before building your own resume.</p>
+        <h2 className="mt-4 font-bold">Profile unavailable</h2>
+        <p className="mt-2 text-sm text-muted">{profilePackage.isLoading ? "Loading your profile…" : "Your saved profile could not be loaded."}</p>
         <Link className="mt-4 inline-block font-semibold text-accent underline" href="/career/resume-viewer/?template=classic&sample=1">View the ATS-ready Classic sample</Link>
       </Card>
     );
@@ -195,7 +203,7 @@ function ResumePreview({ templateId }: { templateId: ResumeTemplateId }) {
       className="h-[72dvh] min-h-[520px] w-full rounded-xl border border-border bg-elevated"
       data-testid="resume-pdf-frame"
       sandbox="allow-downloads allow-popups allow-same-origin allow-scripts"
-      src={`/career/resume-viewer?template=${templateId}`}
+      src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/career/resume-viewer?template=${templateId}`}
       title={`${templateId} actual PDF resume preview`}
     />
   );

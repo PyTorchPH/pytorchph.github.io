@@ -3,6 +3,7 @@
 import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@pytorch-ph/design-system/button";
 
 const API_ORIGIN = (process.env.NEXT_PUBLIC_AUTH_API_ORIGIN ?? process.env.NEXT_PUBLIC_API_ORIGIN ?? "").replace(/\/$/, "");
@@ -10,6 +11,7 @@ const STATIC_DEMO = process.env.NEXT_PUBLIC_STATIC_DEMO === "1";
 
 export function SignOutButton() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [error, setError] = useState("");
   return <>
     <Button className="mt-2 w-full justify-start gap-3" onClick={async () => {
@@ -23,6 +25,7 @@ export function SignOutButton() {
           const response = await fetch("/api/auth/signout", { method: "POST" });
           if (!response.ok) throw new Error("Sign out failed. Please try again.");
         }
+        queryClient.clear();
         router.replace("/login");
         router.refresh();
       } catch (reason) {

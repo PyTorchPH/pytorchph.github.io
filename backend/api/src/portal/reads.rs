@@ -65,6 +65,63 @@ async fn special_read(
             Some(json!({"available": member::username_available(db, &actor.id, &username).await?}))
         }
         "feedback" => Some(feedback::read_feedback(db, actor, query).await?),
+        "member/consents" => {
+            let client = identity_client.ok_or(ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            ))?;
+            let id = Uuid::parse_str(&actor.id).map_err(|_| {
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+            })?;
+            let settings = client.settings(id, None).await.map_err(|_| {
+                ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Identity service unavailable",
+                )
+            })?;
+            Some(json!(settings))
+        }
+        "member/profile-package" => {
+            let client = identity_client.ok_or(ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            ))?;
+            let member_id = Uuid::parse_str(&actor.id).map_err(|_| {
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+            })?;
+            let private = client.private_profile(member_id).await.map_err(|_| {
+                ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Identity service unavailable",
+                )
+            })?;
+            let consents = client.settings(member_id, None).await.map_err(|_| {
+                ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Identity service unavailable",
+                )
+            })?;
+            let public = member_profile::read_profile(db, actor).await?;
+            let career = stored(db, &actor.id, "/api/product/career-evidence").await?;
+            let achievements = career
+                .as_ref()
+                .and_then(|value| value.pointer("/evidence/items"))
+                .and_then(Value::as_array)
+                .map(|items| {
+                    items
+                        .iter()
+                        .filter(|item| {
+                            item.get("verificationState").and_then(Value::as_str)
+                                == Some("user_verified")
+                        })
+                        .cloned()
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+            Some(
+                json!({"private":private,"public":public,"achievements":achievements,"consents":consents}),
+            )
+        }
         "member/organization-name-consent" => {
             let client = identity_client.ok_or(ApiError(
                 StatusCode::SERVICE_UNAVAILABLE,
@@ -148,8 +205,12 @@ async fn computed_view(
         return Ok(Some(attachments::attachments(db, actor, report_id).await?));
     }
     let value = match path {
-        "member/leaderboard" => leaderboard::member_leaderboard(db, actor, query).await?,
-        "member/leaderboard/profile" => leaderboard::member_profile(db, actor, query).await?,
+        "member/leaderboard" => {
+            leaderboard::member_leaderboard(db, identity_client, actor, query).await?
+        }
+        "member/leaderboard/profile" => {
+            leaderboard::member_profile(db, identity_client, actor, query).await?
+        }
         "member/overview" => overview_with_standing(db, actor, key).await?,
         "officer/evidence" => integrity::officer_claims(db).await?,
         "officer/evidence/appeals" => integrity::officer_appeals(db).await?,

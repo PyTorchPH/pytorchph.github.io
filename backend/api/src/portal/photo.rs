@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 pub(super) fn is_photo_path(path: &str) -> bool {
     path == "member/organization-photo"
+        || path == "member/self-photo"
         || path.starts_with("officer/organization/photo/")
         || path.starts_with("member/leaderboard-photo/")
 }
@@ -25,6 +26,24 @@ pub(super) async fn handle(
     let identity = state.identity_client.as_deref().ok_or_else(unavailable)?;
     let viewer_id = Uuid::parse_str(&actor.id).map_err(|_| unavailable())?;
     match (method.as_str(), path) {
+        ("GET", "member/self-photo") => {
+            let bytes = identity
+                .self_photo(viewer_id)
+                .await
+                .map_err(|_| unavailable())?;
+            let Some(bytes) = bytes else {
+                return Err(ApiError(StatusCode::NOT_FOUND, "Photo unavailable"));
+            };
+            Ok((
+                [
+                    (header::CONTENT_TYPE, "image/webp"),
+                    (header::CACHE_CONTROL, "private, no-store"),
+                    (header::X_CONTENT_TYPE_OPTIONS, "nosniff"),
+                ],
+                bytes,
+            )
+                .into_response())
+        }
         ("GET", _) if path.starts_with("member/leaderboard-photo/") => {
             let member_id = Uuid::parse_str(path.trim_start_matches("member/leaderboard-photo/"))
                 .map_err(|_| ApiError(StatusCode::NOT_FOUND, "Photo unavailable"))?;

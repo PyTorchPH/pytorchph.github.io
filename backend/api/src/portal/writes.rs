@@ -34,10 +34,91 @@ pub(crate) async fn dispatch_write(
 ) -> ApiResult<(StatusCode, Value)> {
     let db = &state.db;
     Ok(match (method, path) {
-        ("PUT", "member/privacy") => (
-            StatusCode::OK,
-            member::save_privacy(db, &actor.id, input).await?,
-        ),
+        ("PUT", "member/private-profile") => {
+            let phone = input
+                .as_object()
+                .filter(|value| value.len() == 1)
+                .and_then(|value| value.get("phoneNumber"))
+                .ok_or(crate::bad("Invalid private profile"))?;
+            let phone = if phone.is_null() {
+                None
+            } else {
+                phone.as_str()
+            };
+            if phone.is_none() && !input.get("phoneNumber").is_some_and(Value::is_null) {
+                return Err(crate::bad("Invalid phone number"));
+            }
+            if phone.is_some_and(|value| !valid_phone(value)) {
+                return Err(crate::bad("Invalid phone number"));
+            }
+            let client = state.identity_client.as_deref().ok_or(ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            ))?;
+            let id = Uuid::parse_str(&actor.id).map_err(|_| {
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+            })?;
+            let saved = client.save_private_profile(id, phone).await.map_err(|_| {
+                ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Identity service unavailable",
+                )
+            })?;
+            (StatusCode::OK, json!(saved))
+        }
+        ("PUT", "member/consents") => {
+            let settings: crate::identity::identity_client::IdentitySettings =
+                serde_json::from_value(input)
+                    .map_err(|_| crate::bad("Invalid consent settings"))?;
+            let client = state.identity_client.as_deref().ok_or(ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Identity service unavailable",
+            ))?;
+            let id = Uuid::parse_str(&actor.id).map_err(|_| {
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+            })?;
+            let saved = client.settings(id, Some(&settings)).await.map_err(|_| {
+                ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Identity service unavailable",
+                )
+            })?;
+            super::consents::project(db, &actor.id, &saved).await?;
+            (StatusCode::OK, json!(saved))
+        }
+        ("PUT", "member/privacy") => {
+            let Some(client) = state.identity_client.as_deref() else {
+                return Ok((
+                    StatusCode::OK,
+                    member::save_privacy(db, &actor.id, input).await?,
+                ));
+            };
+            let id = Uuid::parse_str(&actor.id).map_err(|_| {
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+            })?;
+            let settings = client.settings(id, None).await.map_err(|_| {
+                ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Identity service unavailable",
+                )
+            })?;
+            let anonymous = input
+                .get("anonymousRanking")
+                .and_then(Value::as_bool)
+                .ok_or(crate::bad("Invalid privacy settings"))?;
+            let projected = json!({
+                "hideGoogleIdentity": settings.hide_google_identity,
+                "hideRealName": !settings.real_name_visible,
+                "deviceCacheEnabled": false,
+                "anonymousRanking": anonymous,
+                "automaticErrorReports": settings.automatic_error_reports,
+                "shareAchievements": settings.share_achievements,
+            });
+            (
+                StatusCode::OK,
+                member::save_privacy(db, &actor.id, projected).await?,
+            )
+        }
         ("PUT", "member/organization-name-consent") => {
             let granted = input
                 .as_object()
@@ -160,10 +241,34 @@ pub(crate) async fn dispatch_write(
             organization::assignments::resign_position(db, actor, text_field(&input, "position"))
                 .await?,
         ),
-        ("PUT", "member/profile") => (
-            StatusCode::OK,
-            member_profile::save_profile(db, actor, &input).await?,
-        ),
+        ("PUT", "member/profile") => {
+            if let Some(client) = state.identity_client.as_deref() {
+                let analytics_consent = input
+                    .get("analyticsConsent")
+                    .and_then(Value::as_bool)
+                    .ok_or(crate::bad("Invalid analytics choice"))?;
+                let id = Uuid::parse_str(&actor.id).map_err(|_| {
+                    ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity")
+                })?;
+                let mut settings = client.settings(id, None).await.map_err(|_| {
+                    ApiError(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "Identity service unavailable",
+                    )
+                })?;
+                settings.analytics_opt_out = !analytics_consent;
+                client.settings(id, Some(&settings)).await.map_err(|_| {
+                    ApiError(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "Identity service unavailable",
+                    )
+                })?;
+            }
+            (
+                StatusCode::OK,
+                member_profile::save_profile(db, actor, &input).await?,
+            )
+        }
         ("POST", _) if is_attachments_path(path) => (
             StatusCode::CREATED,
             attachments::add_attachment(
@@ -292,6 +397,13 @@ pub(crate) async fn dispatch_write(
             ));
         }
     })
+}
+
+#[inline]
+fn valid_phone(value: &str) -> bool {
+    (8..=16).contains(&value.len())
+        && value.starts_with('+')
+        && value[1..].bytes().all(|digit| digit.is_ascii_digit())
 }
 
 #[inline]

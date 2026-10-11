@@ -26,8 +26,15 @@ use serde_json::{Value, json};
 use sqlx::SqlitePool;
 use std::collections::{BTreeSet, HashMap};
 
-/// Member id, public handle, chosen username, anonymousRanking flag, shareAchievements flag.
-type MemberRow = (String, String, Option<String>, Option<i64>, Option<i64>);
+/// Member id, public handle, chosen username, display mode, anonymous flag, sharing flag.
+type MemberRow = (
+    String,
+    String,
+    Option<String>,
+    Option<String>,
+    Option<i64>,
+    Option<i64>,
+);
 
 #[derive(Clone)]
 pub(super) struct Entry {
@@ -38,6 +45,7 @@ pub(super) struct Entry {
     pub streak: i64,
     pub skills: Vec<String>,
     pub anonymous: bool,
+    pub real_name_requested: bool,
     // Implicit deny: achievements are visible to others only after the member opts in.
     pub shares_achievements: bool,
 }
@@ -132,6 +140,7 @@ async fn eligible_members(db: &SqlitePool) -> ApiResult<Vec<MemberRow>> {
     sqlx::query_as(
         "SELECT m.id, m.public_handle, \
                 (SELECT json_extract(value_json, '$.username') FROM portal_state WHERE scope = m.id AND state_key = '/api/member/leaderboard-identity'), \
+                (SELECT json_extract(value_json, '$.mode') FROM portal_state WHERE scope = m.id AND state_key = '/api/member/leaderboard-identity'), \
                 (SELECT json_extract(value_json, '$.anonymousRanking') FROM portal_state WHERE scope = m.id AND state_key = '/api/member/privacy'), \
                 (SELECT json_extract(value_json, '$.shareAchievements') FROM portal_state WHERE scope = m.id AND state_key = '/api/member/privacy') \
          FROM members m WHERE m.role != 'pending' \
@@ -239,7 +248,7 @@ fn skills_by_member(rows: &[(String, String)]) -> HashMap<&str, Vec<String>> {
 }
 
 fn build_entry(
-    (id, handle, username, anonymous, shares): &MemberRow,
+    (id, handle, username, mode, anonymous, shares): &MemberRow,
     verified: &HashMap<&str, i64>,
     provisional: &HashMap<&str, i64>,
     weeks: &HashMap<&str, BTreeSet<i64>>,
@@ -254,6 +263,7 @@ fn build_entry(
         streak: weeks.get(id.as_str()).map_or(0, |set| streak(set, now)),
         skills: skills.remove(id.as_str()).unwrap_or_default(),
         anonymous: is_flag_on(*anonymous),
+        real_name_requested: mode.as_deref() == Some("real_name"),
         shares_achievements: is_flag_on(*shares),
     }
 }

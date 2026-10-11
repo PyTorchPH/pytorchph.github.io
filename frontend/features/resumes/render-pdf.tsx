@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download, ExternalLink, Maximize2, Minus, Plus, Rows3 } from "lucide-react";
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from "pdfjs-dist";
 import { Button } from "@pytorch-ph/design-system/button";
 import type { ResumeTemplateId } from "@pytorch-ph/domain-protocol/resumes";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
+import { fetchProfilePackage, PROFILE_PACKAGE_QUERY_KEY } from "@pytorch-ph/domain-client/member-profile";
 import { resumePdfBytes } from "./export-document";
+import { resumeFromProfilePackage, resumeWithPrivateProfile } from "./profile-fallback";
 import { buildResumeSourceProfile } from "./build-source-resume";
 import { resumeSourceDocumentSchema } from "@pytorch-ph/domain-protocol/resumes";
 import sampleSource from "../../portal/tests/fixtures/resume-source-example.v1.json";
@@ -14,6 +17,7 @@ import sampleSource from "../../portal/tests/fixtures/resume-source-example.v1.j
 type FitMode = "page" | "width" | "manual";
 
 export function ResumePdfViewer({ template, sample = false }: { template: ResumeTemplateId; sample?: boolean }) {
+  const queryClient = useQueryClient();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const renderRef = useRef<RenderTask | null>(null);
@@ -38,8 +42,11 @@ export function ResumePdfViewer({ template, sample = false }: { template: Resume
         const response = await fetch("/api/product/resumes", { cache: "no-store" });
         if (!response.ok) throw new Error(`Resume data unavailable (${response.status}).`);
         const view = await response.json() as ProductViewData;
-        if (!view.resumeProfile) throw new Error("Add Career Evidence to build your resume profile first.");
-        return view.resumeProfile;
+        const profilePackage = await queryClient.fetchQuery({ queryKey: PROFILE_PACKAGE_QUERY_KEY, queryFn: ({ signal }) => fetchProfilePackage(signal), staleTime: 5 * 60_000 }).catch(() => null);
+        if (view.resumeProfile && profilePackage) return resumeWithPrivateProfile(view.resumeProfile, profilePackage);
+        if (view.meta.mode === "local_demo" && view.resumeProfile) return view.resumeProfile;
+        if (!profilePackage) throw new Error("Your saved profile could not be loaded.");
+        return resumeFromProfilePackage(profilePackage);
       })();
       const bytes = await resumePdfBytes(profile, template);
       objectUrl = URL.createObjectURL(new Blob([bytes.slice()], { type: "application/pdf" }));
@@ -50,7 +57,7 @@ export function ResumePdfViewer({ template, sample = false }: { template: Resume
       if (active) setDocument(loaded);
     })().catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Could not load the PDF preview."); });
     return () => { active = false; void loaded?.cleanup(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [sample, template]);
+  }, [queryClient, sample, template]);
 
   useEffect(() => {
     const surface = surfaceRef.current;

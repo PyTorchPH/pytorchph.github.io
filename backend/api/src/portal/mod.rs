@@ -18,6 +18,7 @@
 //!   media       owner-only evidence photos
 //!   operations  client operational events and the AI provider catalog
 //!   fields      reading and bounding request fields
+mod consents;
 mod feedback;
 mod fields;
 mod fixtures;

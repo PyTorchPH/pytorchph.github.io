@@ -42,15 +42,12 @@ pub async fn delete_account(
     if let Some(identity) = state.identity_client.as_deref() {
         let id = Uuid::parse_str(&actor.id)
             .map_err(|_| ApiError(StatusCode::SERVICE_UNAVAILABLE, "Invalid member identity"))?;
-        identity
-            .purge_organization_photo_data(id)
-            .await
-            .map_err(|_| {
-                ApiError(
-                    StatusCode::SERVICE_UNAVAILABLE,
-                    "Private photo cleanup unavailable",
-                )
-            })?;
+        identity.purge_private_data(id).await.map_err(|_| {
+            ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Private identity cleanup unavailable",
+            )
+        })?;
     }
     let deleted = remove_member(&state.db, &actor).await?;
     tracing::info!(

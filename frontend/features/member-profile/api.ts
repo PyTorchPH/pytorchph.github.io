@@ -12,6 +12,7 @@ import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import type { CompanyOption, Demographics, ProfileInput, ProfileOptions, ProfileStatus, ProgramOption, SchoolOption } from "@pytorch-ph/domain-protocol/identity";
 
 export const PROFILE_QUERY_KEY = ["member-profile"] as const;
+export const PROFILE_PACKAGE_QUERY_KEY = ["member-profile-package"] as const;
 export const PROFILE_OPTIONS_QUERY_KEY = ["member-profile", "options"] as const;
 export const DEMOGRAPHICS_QUERY_KEY = ["officer-demographics"] as const;
 
@@ -21,6 +22,39 @@ const API_ORIGIN = (process.env.NEXT_PUBLIC_AUTH_API_ORIGIN ?? process.env.NEXT_
 
 export function fetchProfile(): Promise<ProfileStatus> {
   return fetchJson<ProfileStatus>("/api/member/profile", { credentials: "include" });
+}
+
+export type ProfilePackage = {
+  private: { displayName: string; phoneNumber: string | null };
+  public: ProfileStatus;
+  achievements: Array<{ id?: string; title?: string; verificationState?: string }>;
+  consents: IdentitySettings;
+};
+
+export type IdentitySettings = {
+  realNameVisible: boolean;
+  photoVisible: boolean;
+  analyticsOptOut: boolean;
+  hideGoogleIdentity: boolean;
+  automaticErrorReports: boolean;
+  shareAchievements: boolean;
+};
+
+export function fetchProfilePackage(signal?: AbortSignal): Promise<ProfilePackage> {
+  return fetchJson<ProfilePackage>("/api/member/profile-package", { credentials: "include", cache: "no-store", signal });
+}
+
+export function saveIdentitySettings(value: IdentitySettings): Promise<IdentitySettings> {
+  return fetchJson<IdentitySettings>("/api/member/consents", {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(value),
+  });
+}
+
+export function fetchIdentitySettings(): Promise<IdentitySettings> {
+  return fetchJson<IdentitySettings>("/api/member/consents", { credentials: "include", cache: "no-store" });
 }
 
 export function saveProfile(input: ProfileInput): Promise<ProfileStatus> {

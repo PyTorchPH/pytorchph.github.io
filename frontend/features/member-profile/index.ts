@@ -6,5 +6,6 @@
 //   demographics/render-demographics     MemberDemographics (Command Center section)
 export * from "./api";
 export * from "./use-profile-gate";
+export * from "./use-profile-package";
 export { CompleteProfile } from "./onboarding/render-profile-form";
 export { MemberDemographics } from "./demographics/render-demographics";

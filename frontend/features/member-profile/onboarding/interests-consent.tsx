@@ -43,8 +43,8 @@ export function InterestsSection({ draft, options, update }: SectionProps) {
 export function ConsentSection({ draft, update }: Omit<SectionProps, "options">) {
   return <FormSection title="Consent">
     <div className="flex items-start gap-2">
-      <input checked={draft.analyticsConsent} className="mt-1 h-4 w-4 accent-accent" id="profile-consent" onChange={(event) => update({ analyticsConsent: event.target.checked })} type="checkbox" />
-      <label className="text-sm leading-6" htmlFor="profile-consent">Include my answers in community demographics (optional). See the <LegalLink document="privacy" />.</label>
+      <input checked={!draft.analyticsConsent} className="mt-1 h-4 w-4 accent-accent" id="profile-consent" onChange={(event) => update({ analyticsConsent: !event.target.checked })} type="checkbox" />
+      <label className="text-sm leading-6" htmlFor="profile-consent">Do not include my answers in community demographics. See the <LegalLink document="privacy" />.</label>
       <InfoPopover label="How demographics are used" title="How demographics are used">
         <p className="text-sm leading-6">Only aggregated counts are shown to officers; groups under 5 are hidden; you can delete everything by leaving PyTorch PH.</p>
       </InfoPopover>

@@ -10,6 +10,7 @@ import { IdentityCodes } from "@pytorch-ph/domain-client/identity";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import { Button } from "@pytorch-ph/design-system/button";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
+import { useProfilePackage } from "@pytorch-ph/domain-client/member-profile";
 import type { LeaderboardIdentitySettings, MemberOverview } from "@pytorch-ph/domain-protocol/leaderboards";
 import { DataUnavailable } from "@pytorch-ph/design-system/data-unavailable";
 import { meritBlocks, upskillRadar } from "./evidence-charts";
@@ -36,6 +37,7 @@ function parseUpskillPlan(reply: string): UpskillPlan {
 }
 
 function ProfileContent() {
+  const profilePackage = useProfilePackage();
   // Only accounts verified through the extension count as connected.
   const accounts = useQuery({ queryKey: ["member-accounts"], queryFn: () => fetchJson<VerifiedAccount[]>("/api/member/accounts", { cache: "no-store" }) });
   const identity = useQuery({ queryKey: ["leaderboard-identity"], queryFn: () => fetchJson<LeaderboardIdentitySettings>("/api/member/leaderboard-identity", { cache: "no-store" }) });
@@ -89,7 +91,8 @@ Return {"summary": string, "recommendations": [{"focusSkill": string, "rationale
                 <UserRound size={30} />
               </div>
               <div>
-                <h2 className="text-xl font-bold tracking-[-0.02em]">{memberLabel}</h2>
+                <h2 className="text-xl font-bold tracking-[-0.02em]">{profilePackage.data?.private.displayName || memberLabel}</h2>
+                {profilePackage.data?.private.phoneNumber && <p className="text-sm text-muted">{profilePackage.data.private.phoneNumber}</p>}
                 <p className="text-sm text-muted">PyTorch Philippines member · {membership.data?.state === "active" ? "Membership active (free)" : "Membership under review"}</p>
               </div>
             </div>
