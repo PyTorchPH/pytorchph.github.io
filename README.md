@@ -46,7 +46,7 @@ No live deployment or data migration is included in this adaptation.
 
 Assessment: **2026-10-12**, `pytorch-ph-ec2-assessment-2026-10-12`.
 Public GET workload: `/public/events` and `/leaderboard`; no live database writes.
-The API ran on a shared **2-vCPU host with 412.27 MiB RAM**. A separate
+The API ran on a shared **Lightsail 2-vCPU host with 412.27 MiB OS-visible RAM**. A separate
 **m7i-flex.large (2 vCPU, 8 GiB), ap-southeast-1** generated the requests.
 
 | Measurement | Observed result |
@@ -67,16 +67,19 @@ operator IP changed; its client results were recovered separately. These measure
 do not establish maximum sustainable throughput, human-user capacity, or spare capacity
 for a second website.
 
-**Cost/performance:** the test-runner compute rate recorded from AWS pricing was
-**US$0.1197/hour**, approximately **US$0.085 for 42 minutes**, excluding EBS, public
-IPv4, transfer, taxes, and credits. This is an estimate, not an invoiced total.
-See [AWS EC2 On-Demand pricing](https://aws.amazon.com/ec2/pricing/on-demand/).
-The runner generated traffic; this price does not describe API hosting cost.
-The shared API host's actual hourly cost (`C`, USD/hour) remains unverified, so its
-measured dollar ratio is unavailable. Using the clean short-test rate as a provisional
-reference gives `500 / C` requests/second per USD/hour and `C / 1.8` USD per million
-successful requests **only if 500 requests/second remains sustainable for a full hour**.
-Neither hourly sustainability nor that cost has been established.
+**Lightsail cost/performance:** the Linux public-IPv4 **0.5 GB / 2-vCPU bundle
+(`nano_3_0`) costs US$5/month**, including 20 GB SSD and 1 TB transfer allowance.
+The Singapore Lightsail bundle API and [AWS Lightsail pricing](https://aws.amazon.com/lightsail/pricing/)
+were checked on 2026-10-12. These specifications match the tested host's size;
+the target instance's bundle assignment and actual invoice have not been verified.
+
+Using that plan price, **500 tested requests/second / US$5 monthly base cost =
+100 requests/second per US$1 of monthly base cost**. This normalizes short-test
+throughput against the hosting plan price; it does not establish a monthly request
+volume, long-term throughput, or an SLA. The price covers the shared host, so this
+comparison assigns its entire base cost to the API. Transfer overages, snapshots,
+other services, taxes, and credits can change the actual cost. The EC2 instance
+served only as the load generator and is excluded from this hosting ratio.
 
 Detailed results, source manifest, failure reasons, cleanup, and artifact hashes are
 stored locally in `../portfolio-evidence-artifacts/2026-10-12/ec2/assessment-evidence.json`
