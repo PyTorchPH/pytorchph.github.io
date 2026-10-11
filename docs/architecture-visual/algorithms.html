@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fil">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PyTorch PH · Algorithm Lab</title>
+  <link rel="stylesheet" href="algorithm-lab.css">
+  <script src="algorithm-lab.js" defer></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="index.html"><b>◉</b> PyTorch PH <small>/ ALGORITHM LAB</small></a>
+    <nav aria-label="Mga page"><a href="index.html#system">01 · System</a><a href="index.html#security">02 · Security</a><a href="algorithms.html" aria-current="page">03 · Algorithms</a></nav>
+  </header>
+  <div class="workspace">
+    <aside><div class="eyebrow">SA LOOB NG SYSTEM</div><div id="catalog" aria-label="Mga algorithm"></div><p class="disclaimer">Synthetic examples · source-backed logic<br>Walang live request o tunay na PII.</p></aside>
+    <main>
+      <section class="title-row"><div><div class="eyebrow" id="category"></div><h1 id="title"></h1><p id="purpose"></p></div><span id="status"></span></section>
+      <section class="inputs" id="inputs" aria-label="Baguhin ang sample inputs"></section>
+      <section class="stage" aria-label="Algorithm visualization">
+        <div class="stage-top"><span id="stage-label">INPUT → PROCESS → RESULT</span><div><button id="focus" aria-label="I-focus ang kasalukuyang hakbang" title="Sundan ang active step">⌖</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="zoomIn" aria-label="Zoom in">+</button><button id="fit" aria-label="Ibalik ang buong diagram">⊡</button></div></div>
+        <div class="canvas-wrap"><svg id="canvas" viewBox="0 0 1100 470" role="img" aria-label="Algorithm flow"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#667994"/></marker></defs><g id="scene"></g></svg></div>
+        <div class="playback"><button id="restart" aria-label="Simulan muli">↺</button><button id="previous" aria-label="Nakaraang hakbang">←</button><button id="play">▶ Patakbuhin</button><button id="next" aria-label="Susunod na hakbang">→</button><input id="scrub" type="range" min="0" max="5" value="0" aria-label="Hakbang"><output id="counter"></output></div>
+      </section>
+      <section class="explanation"><div><span class="eyebrow" id="step-number"></span><h2 id="step-title" aria-live="polite"></h2><p id="step-note"></p></div><div class="result" id="result" aria-live="polite"></div></section>
+      <details><summary>Code source ↗</summary><div id="source"></div><p>Visual simulation ito ng nakalistang function at sample path. Hindi nito pinapatakbo ang Rust service, TLS, database, o image codec.</p></details>
+      <div class="legend"><span><i class="done"></i>Napagdaanan</span><span><i class="active"></i>Kasalukuyan</span><span><i class="blocked"></i>Huminto / denied</span><span>I-click ang step · i-drag ang canvas · scroll para mag-zoom</span></div>
+    </main>
+  </div>
+</body>
+</html>
