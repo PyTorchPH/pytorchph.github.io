@@ -111,6 +111,39 @@ async fn full_ram_queue_spills_to_disk_and_replays_as_the_same_member() {
 }
 
 #[tokio::test]
+async fn private_photo_requests_never_spill_to_website_sqlite() {
+    let (state, officer, _, member_id) = fixture().await;
+    let (gate, app) = admission_app(&state, tight(1 << 20));
+    let admission::Admit::Now(busy) = gate.gate.enter(2, false) else {
+        panic!("slot free")
+    };
+    for (method, path) in [
+        (
+            Method::PUT,
+            "/portal/api/member/organization-photo".to_owned(),
+        ),
+        (
+            Method::PUT,
+            "/portal/api/member/organization-photo-consent".to_owned(),
+        ),
+        (
+            Method::GET,
+            format!("/portal/api/officer/organization/photo/{member_id}"),
+        ),
+    ] {
+        let (status, headers, _, _) =
+            send(&app, method, &path, &officer, "private photo bytes").await;
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(headers["retry-after"], "1");
+    }
+    assert_eq!(
+        count(&state.db, "SELECT COUNT(*) FROM request_spool").await,
+        0
+    );
+    drop(busy);
+}
+
+#[tokio::test]
 async fn auth_never_spills_and_a_full_disk_budget_is_the_only_rejection() {
     let (state, officer, _, _) = fixture().await;
     let (gate, app) = admission_app(&state, tight(0));

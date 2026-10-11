@@ -3,8 +3,9 @@
 //! queue is full, requests are written to an on-disk spool (SQLite) and answered at once with
 //! 202 + a job id; spool workers replay them through the same router, highest priority first,
 //! and store the response for the client to collect from GET /queue/{id}.
-//! Auth requests never spill (their responses set cookies), and only a full spool — the disk
-//! budget — ever produces 503. Limits come from the environment (see Config::from_env).
+//! Auth requests never spill (their responses set cookies). Private photo requests reject a full
+//! RAM queue so their bytes and responses never enter website SQLite. Limits come from the
+//! environment (see Config::from_env).
 //!
 //! Module map (caller-first):
 //!   admit                  middleware in front of every route
@@ -24,7 +25,7 @@ mod status;
 use crate::{ApiError, AppState};
 use axum::{
     extract::{Request, State},
-    http::{Method, StatusCode},
+    http::{HeaderValue, Method, StatusCode, header},
     middleware::Next,
     response::{IntoResponse, Response},
 };
@@ -97,6 +98,28 @@ pub async fn admit(
             }
         },
         Admit::Full => {
+            if is_private_photo_path(request.uri().path()) {
+                tracing::warn!(
+                    component = "admission",
+                    operation = "private_photo_admission",
+                    outcome = "rejected",
+                    reason = "ram_queue_full",
+                    "admission.private_photo_rejected"
+                );
+                let mut response = ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Photo service busy; retry shortly",
+                )
+                .into_response();
+                response
+                    .headers_mut()
+                    .insert(header::RETRY_AFTER, HeaderValue::from_static("1"));
+                response.headers_mut().insert(
+                    header::CACHE_CONTROL,
+                    HeaderValue::from_static("private, no-store"),
+                );
+                return response;
+            }
             return spool::spool(&admission, class, request)
                 .await
                 .unwrap_or_else(IntoResponse::into_response);
@@ -106,6 +129,13 @@ pub async fn admit(
     drop(permit);
     drop(consistency);
     response
+}
+
+#[inline]
+fn is_private_photo_path(path: &str) -> bool {
+    path == "/portal/api/member/organization-photo"
+        || path == "/portal/api/member/organization-photo-consent"
+        || path.starts_with("/portal/api/officer/organization/photo/")
 }
 
 /// Lower number = served first. 0 never queues.
