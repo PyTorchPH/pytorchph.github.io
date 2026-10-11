@@ -53,9 +53,20 @@ function SchoolBlock({ school, levels, onChange }: SchoolBlockProps) {
       <OptionSelect id="profile-school-level" label="Level" onChange={(level) => onChange({ level, yearLevel: "", programCode: "", programLabel: "", unlistedProgram: "" })} options={levels} value={school.level} />
       {rule.programLabel && <ProgramField key={school.level} label={rule.programLabel} onChange={onChange} school={school} wholeList={rule.wholeList} />}
       {rule.yearLabel === "Grade"
-        ? <TextField id="profile-year" label={`Grade (${rule.min}–${rule.max})`} max={rule.max} min={rule.min} onChange={(yearLevel) => onChange({ yearLevel })} type="number" value={school.yearLevel} />
+        ? <GradeField key={school.level} min={rule.min} max={rule.max} onChange={(yearLevel) => onChange({ yearLevel })} value={school.yearLevel} />
         : <OptionSelect id="profile-year" label="Year" onChange={(yearLevel) => onChange({ yearLevel })} options={yearOptions(rule.min, rule.max)} value={school.yearLevel} />}
     </div>
+  </div>;
+}
+
+// Typing only filters listed grades; it never changes the saved value until one is selected.
+function GradeField({ min, max, value, onChange }: { min: number; max: number; value: string; onChange: (grade: string) => void }) {
+  const [query, setQuery] = useState(value ? `Grade ${value}` : "");
+  const options = Array.from({ length: max - min + 1 }, (_, index) => ({ value: String(min + index), label: `Grade ${min + index}` }));
+  const matches = options.filter((option) => option.label.toLowerCase().includes(query.trim().toLowerCase()));
+  return <div className="space-y-1.5">
+    <label className="text-sm font-semibold" htmlFor="profile-year">Grade ({min}–{max})</label>
+    <Combobox id="profile-year" label="Search and choose grade" query={query} onQueryChange={(text) => { setQuery(text); onChange(""); }} options={matches} onSelect={(option) => { setQuery(option.label); onChange(option.value); }} placeholder="Choose or search grade" emptyText="Choose a listed grade" openOnEmpty required />
   </div>;
 }
 

@@ -386,6 +386,7 @@ async fn each_school_level_accepts_only_its_grades_and_asks_for_a_program_only_w
         ("elementary", 7, None),
         ("junior_high", 6, None),
         ("senior_high", 2, Some("STEM")),
+        ("senior_high", 30, Some("test-stem")),
         ("senior_high", 12, None),
         ("undergraduate", 9, Some("BSCS")),
     ] {
@@ -396,6 +397,14 @@ async fn each_school_level_accepts_only_its_grades_and_asks_for_a_program_only_w
             "{level} {year} {program:?} should be rejected"
         );
     }
+    let saved_grade: i64 = sqlx::query_scalar("SELECT year_level FROM member_education")
+        .fetch_one(&state.db)
+        .await
+        .unwrap();
+    assert_eq!(
+        saved_grade, 11,
+        "rejected grades must not replace the saved grade"
+    );
 }
 
 #[tokio::test]

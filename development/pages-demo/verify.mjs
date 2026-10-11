@@ -117,11 +117,16 @@ try {
   await page.locator("#profile-school-level").selectOption("senior_high");
   await page.locator("#profile-program option", { hasText: "STEM — Science, Technology, Engineering, and Mathematics" }).first().waitFor({ state: "attached" });
   await page.getByText("Grade (11–12)").waitFor();
+  await page.locator("#profile-year").fill("30");
+  assert.equal(await page.locator('[role="listbox"] [role="option"]').count(), 0, "Grade 30 must not be selectable");
+  await page.locator("#profile-year").fill("");
+  await page.getByRole("option", { name: "Grade 12" }).click();
+  assert.equal(await page.locator("#profile-year").inputValue(), "Grade 12");
   await page.locator("#profile-school-level").selectOption("undergraduate");
-  await page.locator("#profile-program").fill("bscs");
+  await page.getByRole("combobox", { name: "Search program / course" }).fill("bscs");
   await page.getByRole("option", { name: /Bachelor of Science in Computer Science/ }).first().waitFor();
   api.state.profileComplete = true;
-  checks.push("first-timer-onboarding-gate", "first-timer-sidebar-hidden", "program-catalog-dropdown-and-search");
+  checks.push("first-timer-onboarding-gate", "first-timer-sidebar-hidden", "program-catalog-dropdown-and-search", "grade-search-restricts-choices");
 
   // Members see their performance, peers, and the ranking guide, but no officer tools.
   await page.goto(`${url}/dashboard/`, { waitUntil: "networkidle" });

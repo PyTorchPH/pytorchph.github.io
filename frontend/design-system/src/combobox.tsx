@@ -25,11 +25,12 @@ type ComboboxProps = {
   emptyText?: string;
   footer?: ReactNode;
   required?: boolean;
+  openOnEmpty?: boolean;
 };
 
 // Mental model: typing updates the caller's query; the caller refreshes options; the popup shows
 // them and the keyboard walks the list without moving focus off the input.
-export function Combobox({ id, label, query, onQueryChange, options, onSelect, placeholder, loading = false, emptyText = "No matches", footer, required }: ComboboxProps) {
+export function Combobox({ id, label, query, onQueryChange, options, onSelect, placeholder, loading = false, emptyText = "No matches", footer, required, openOnEmpty = false }: ComboboxProps) {
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useActiveOption(options.length);
@@ -51,8 +52,8 @@ export function Combobox({ id, label, query, onQueryChange, options, onSelect, p
       className="focus-ring h-11 w-full border border-ink/40 bg-elevated px-3 text-sm text-ink placeholder:text-muted"
       id={id}
       onBlur={() => window.setTimeout(() => setOpen(false), 120)}
-      onChange={(event) => { onQueryChange(event.target.value); setOpen(isOpenable(event.target.value)); setActive(0); }}
-      onFocus={() => setOpen(isOpenable(query))}
+      onChange={(event) => { onQueryChange(event.target.value); setOpen(isOpenable(event.target.value, openOnEmpty)); setActive(0); }}
+      onFocus={() => setOpen(isOpenable(query, openOnEmpty))}
       onKeyDown={handleKey}
       placeholder={placeholder}
       required={required}
@@ -93,4 +94,4 @@ function OptionList({ listId, options, active, loading, emptyText, footer, onHov
 
 const optionId = (listId: string, index: number) => `${listId}-option-${index}`;
 
-const isOpenable = (query: string) => query.trim().length > 0;
+const isOpenable = (query: string, openOnEmpty: boolean) => openOnEmpty || query.trim().length > 0;
