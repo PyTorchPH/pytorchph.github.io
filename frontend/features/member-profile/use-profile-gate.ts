@@ -19,15 +19,16 @@ export function useMemberProfile() {
   return useQuery<ProfileStatus>({ queryKey: PROFILE_QUERY_KEY, queryFn: fetchProfile, staleTime: PROFILE_STALE_MS, retry: false });
 }
 
-// Mental model: only an explicit `complete: false` redirects. Signed-out visitors, API errors, and
-// the static demo without a backend all leave the page alone.
-export function useProfileGate(pathname: string): void {
+// Mental model: an unfinished profile has no portal navigation or protected page body;
+// exempt profile/settings routes remain available so the member can finish or sign out.
+export function useProfileGate(pathname: string): { navigationReady: boolean; incomplete: boolean; blocked: boolean } {
   const router = useRouter();
   const { data } = useMemberProfile();
   const mustComplete = data?.complete === false && !isGateExempt(pathname);
   useEffect(() => {
     if (mustComplete) router.replace("/onboarding/");
   }, [mustComplete, router]);
+  return { navigationReady: data?.complete === true, incomplete: data?.complete === false, blocked: mustComplete };
 }
 
 const isGateExempt = (pathname: string) =>

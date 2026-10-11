@@ -109,6 +109,9 @@ try {
   await signIn(MEMBER_EMAIL, TEST_PASSWORD);
   await page.waitForURL(`**${PORTAL_BASE_PATH}/onboarding/`);
   await page.getByText("Welcome! Finish creating your account").waitFor();
+  assert.equal(await page.getByRole("navigation", { name: "Portal" }).count(), 0, "An unfinished profile must not see portal navigation");
+  assert.equal(await page.getByRole("button", { name: "Open menu" }).count(), 0, "An unfinished profile must not open the sidebar");
+  await page.getByRole("button", { name: "Sign out" }).waitFor();
   // Programs come from the catalog: senior high strands in a dropdown, college degrees by search.
   await page.locator("#profile-status").selectOption("student");
   await page.locator("#profile-school-level").selectOption("senior_high");
@@ -118,12 +121,13 @@ try {
   await page.locator("#profile-program").fill("bscs");
   await page.getByRole("option", { name: /Bachelor of Science in Computer Science/ }).first().waitFor();
   api.state.profileComplete = true;
-  checks.push("first-timer-onboarding-gate", "program-catalog-dropdown-and-search");
+  checks.push("first-timer-onboarding-gate", "first-timer-sidebar-hidden", "program-catalog-dropdown-and-search");
 
   // Members see their performance, peers, and the ranking guide, but no officer tools.
   await page.goto(`${url}/dashboard/`, { waitUntil: "networkidle" });
   await heading(memberHeading);
   await page.getByRole("link", { name: "Career Evidence" }).first().waitFor();
+  await page.getByRole("link", { name: "Skill comparisons" }).first().waitFor();
   await page.getByRole("columnheader", { name: "Peer median" }).waitFor();
   await page.getByRole("button", { name: "How ranking works" }).click();
   await page.getByText("How to raise your rank", { exact: true }).waitFor();
@@ -131,7 +135,10 @@ try {
   assert.equal(await page.getByRole("heading", { name: "Officer desk", exact: true }).count(), 0, "Members must not see the officer desk");
   assert.equal(await page.getByRole("link", { name: "Command Center" }).count(), 0, "Members must not see officer tools");
   assert.ok(new URL(page.url()).pathname.startsWith(PORTAL_BASE_PATH), "Navigation must stay under the portal base path");
-  checks.push("member-dashboard", "peer-scorecard", "ranking-guide", "member-hides-officer-tools", "base-path");
+  await page.getByRole("link", { name: "Skill comparisons" }).first().click();
+  await heading("Blind skill comparisons");
+  assert.equal(await page.getByRole("heading", { name: "Admin setup" }).count(), 0, "Members must not see scoring administration");
+  checks.push("member-dashboard", "peer-scorecard", "ranking-guide", "member-hides-officer-tools", "member-scoring-link", "member-hides-scoring-admin", "base-path");
 
   // Career section tabs sit under the hero; job analytics and automation live there.
   await page.goto(`${url}/career/resumes/`, { waitUntil: "networkidle" });
@@ -170,7 +177,10 @@ try {
   await page.getByRole("link", { name: "Event Workflow" }).first().click();
   await heading("Event workflow");
   for (const section of ["Internal events and competitions", "Email and PDF human review"]) await heading(section);
-  checks.push("officer-desk", "officer-persists-reload", "shared-dashboard", "event-workflow");
+  await page.goto(`${url}/admin/scoring/`, { waitUntil: "networkidle" });
+  await heading("Blind skill comparisons");
+  await page.getByText("Walang assigned comparison ngayon.").waitFor();
+  checks.push("officer-desk", "officer-persists-reload", "shared-dashboard", "event-workflow", "scoring-page");
 
   // Settings holds account binding and privacy; binding needs the browser extension.
   await page.goto(`${url}/settings/`, { waitUntil: "networkidle" });
@@ -183,7 +193,7 @@ try {
   assert.equal(manifest.display, "standalone");
   checks.push("account-binding", "logo-landing", "installable-app");
 
-  const routes = ["/login/", "/register/", "/onboarding/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/jobs/analytics/", "/jobs/automation/", "/events/", "/leaderboards/", "/admin/organization/", "/admin/events/", "/admin/mail/", "/membership/", "/trust/", "/settings/", "/setup/evidence-extension/"];
+  const routes = ["/login/", "/register/", "/onboarding/", "/dashboard/", "/dashboard/profile/", "/dashboard/community/", "/community-preview/", "/career/evidence/", "/career/resumes/", "/jobs/opportunities/", "/jobs/analytics/", "/jobs/automation/", "/events/", "/leaderboards/", "/admin/organization/", "/admin/events/", "/admin/scoring/", "/admin/mail/", "/membership/", "/trust/", "/settings/", "/setup/evidence-extension/"];
   for (const path of routes) {
     await page.goto(`${url}${path}`, { waitUntil: "networkidle" });
     assert.equal(await page.locator('aside[aria-label="Demo notice"], .on-dark.fixed.inset-x-0.top-0').count(), 0, `Fixed demo banner on ${path}`);

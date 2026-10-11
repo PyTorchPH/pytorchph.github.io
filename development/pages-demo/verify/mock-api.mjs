@@ -7,7 +7,7 @@
 //   ├─ answerPortal      /portal/api/* → profile gate, forced failures, fixtures
 //   │   └─ fixtureFor    exact path+query, then path, then same endpoint
 //   ├─ answerReference   /reference/profile-options · schools · programs · companies
-//   └─ answerDirectReads /public/events · /events · /members (empty lists)
+//   └─ answerDirectReads /public/events · /events · /members · scoring reads
 
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
@@ -93,9 +93,11 @@ function programsFor(level, query) {
     .map(([code, , name, shortName, group]) => ({ code, label: name, shortName, group }));
 }
 
-// Pages that read the Rust API directly (events, member lists) get empty lists: layout, not data, is under test.
+// Pages that read the Rust API directly get bounded fixtures: layout, not live data, is under test.
 function answerDirectReads(state, url) {
   if (url.pathname === "/public/events") return { status: 200, body: [] };
+  if (url.pathname === "/scoring/skills") return { status: 200, body: [{ slug: "ml", label: "Machine Learning" }] };
+  if (url.pathname === "/scoring/comparisons/pending") return state.role ? { status: 200, body: [] } : { status: 401, body: { error: "Authentication required" } };
   if (url.pathname === "/events" || url.pathname === "/members") return state.role ? { status: 200, body: [] } : { status: 401, body: { error: "Authentication required" } };
   return null;
 }

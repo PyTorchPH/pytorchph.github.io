@@ -20,6 +20,7 @@ import {
   Search,
   Settings,
   Shield,
+  Scale,
   Trophy,
   UserCheck,
   UserRound,
@@ -45,6 +46,7 @@ type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; capa
 const sharedNavItems: NavItem[] = [
   { href: "/dashboard", label: "My Performance", icon: Home },
   { href: "/leaderboards", label: "Leaderboards", icon: Trophy },
+  { href: "/admin/scoring", label: "Skill comparisons", icon: Scale },
   { href: "/career/evidence", label: "Career Evidence", icon: UserRound },
   { href: "/career/resumes", label: "Resumes & Opportunities", icon: BriefcaseBusiness, alsoActiveOn: ["/jobs/opportunities", "/jobs/analytics", "/jobs/automation"] },
   { href: "/events", label: "Community Events", icon: CalendarDays },
@@ -67,7 +69,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   // Static hosting serves routes with a trailing slash; navigation links are written without one.
   const pathname = usePathname().replace(/\/+$/, "") || "/";
   // Members who have not finished "Complete your profile" are sent to /onboarding first.
-  useProfileGate(pathname);
+  const { navigationReady, incomplete, blocked } = useProfileGate(pathname);
   const [open, setOpen] = useState(false);
   // Desktop only: the sidebar can be collapsed; the choice is remembered in this browser.
   const [collapsed, setCollapsed] = useState(false);
@@ -156,18 +158,21 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-canvas text-ink">
       <SiteHeader
         className="sticky top-0"
-        start={<Button aria-label="Open menu" className="lg:hidden" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary"><Menu size={18} /></Button>}
+        start={navigationReady ? <Button aria-label="Open menu" className="lg:hidden" onClick={() => setOpen(true)} size="icon" type="button" variant="secondary"><Menu size={18} /></Button> : undefined}
+        end={incomplete ? <SignOutButton /> : undefined}
       />
-      <div className={cn("hidden lg:fixed lg:bottom-0 lg:left-0 lg:top-20", collapsed ? "lg:hidden" : "lg:block")}>{sidebar}</div>
-      <button aria-expanded={!collapsed} aria-label={collapsed ? "Open sidebar" : "Close sidebar"} className={cn("focus-ring fixed top-24 z-40 hidden h-10 w-6 items-center justify-center border border-l-0 border-border bg-surface text-muted shadow-md hover:text-accent lg:flex", collapsed ? "left-0" : "left-72")} onClick={toggleSidebar} title={collapsed ? "Open sidebar" : "Close sidebar"} type="button">{collapsed ? <ChevronRight aria-hidden="true" size={16} /> : <ChevronLeft aria-hidden="true" size={16} />}</button>
-      <Sheet onOpenChange={setOpen} open={open}>{sidebar}</Sheet>
-      <main className={cn("transition-[padding] duration-200", collapsed ? "lg:pl-6" : "lg:pl-72")}>
+      {navigationReady && <>
+        <div className={cn("hidden lg:fixed lg:bottom-0 lg:left-0 lg:top-20", collapsed ? "lg:hidden" : "lg:block")}>{sidebar}</div>
+        <button aria-expanded={!collapsed} aria-label={collapsed ? "Open sidebar" : "Close sidebar"} className={cn("focus-ring fixed top-24 z-40 hidden h-10 w-6 items-center justify-center border border-l-0 border-border bg-surface text-muted shadow-md hover:text-accent lg:flex", collapsed ? "left-0" : "left-72")} onClick={toggleSidebar} title={collapsed ? "Open sidebar" : "Close sidebar"} type="button">{collapsed ? <ChevronRight aria-hidden="true" size={16} /> : <ChevronLeft aria-hidden="true" size={16} />}</button>
+        <Sheet onOpenChange={setOpen} open={open}>{sidebar}</Sheet>
+      </>}
+      <main className={cn("transition-[padding] duration-200", navigationReady && (collapsed ? "lg:pl-6" : "lg:pl-72"))}>
         <div className="relative mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
           {/* Sits in the top-right corner of the page hero that follows it. */}
           {hasTour && <div className="on-dark absolute right-4 top-3 z-10 sm:right-6 lg:right-8 lg:top-4" data-page-tour>
             <Button aria-label="Replay page tour" data-tour="tour-help" onClick={requestProductTour} size="sm" title="Show the tour of this page again" type="button" variant="outline"><CircleHelp aria-hidden="true" size={16} />Page tour</Button>
           </div>}
-          {children}
+          {blocked ? <p role="status">Dinadala ka sa profile form…</p> : children}
         </div>
       </main>
       <ProductTourController />
