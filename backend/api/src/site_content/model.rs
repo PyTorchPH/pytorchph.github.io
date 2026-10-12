@@ -57,8 +57,12 @@ pub(crate) fn validate(document: &Value) -> ApiResult<()> {
                 "topic",
                 "startsAt",
                 "dateStatus",
+                "scheduleLabel",
                 "venue",
                 "registrationUrl",
+                "series",
+                "modules",
+                "photoUrl",
             ][..],
         ),
         (

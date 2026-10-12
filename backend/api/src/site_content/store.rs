@@ -1,5 +1,5 @@
 //! Immutable website revisions, optimistic editing and current-president publication quorum.
-use super::model;
+use super::{model, programs};
 use crate::{
     ApiError, ApiResult, bad,
     identity::session::Viewer,
@@ -13,9 +13,9 @@ use sqlx::SqlitePool;
 pub(crate) async fn published(db: &SqlitePool) -> ApiResult<Value> {
     let (revision, body, at): (i64, String, String) = sqlx::query_as("SELECT r.revision,r.body_json,r.created_at FROM site_content_state s JOIN site_content_revisions r ON r.revision=s.published_revision WHERE s.id=1")
         .fetch_one(db).await.map_err(internal)?;
-    Ok(
-        json!({"revision":revision,"updatedAt":at,"document":serde_json::from_str::<Value>(&body).map_err(internal)?}),
-    )
+    let mut document = serde_json::from_str::<Value>(&body).map_err(internal)?;
+    programs::merge(db, &mut document).await?;
+    Ok(json!({"revision":revision,"updatedAt":at,"document":document}))
 }
 
 pub(crate) async fn draft(db: &SqlitePool, actor: &Viewer) -> ApiResult<Value> {
@@ -27,8 +27,10 @@ pub(crate) async fn draft(db: &SqlitePool, actor: &Viewer) -> ApiResult<Value> {
     let mut tx = db.begin().await.map_err(internal)?;
     let can_approve = tree::holds(&mut tx, &actor.id, "president").await?;
     tx.commit().await.map_err(internal)?;
+    let mut document = serde_json::from_str::<Value>(&body).map_err(internal)?;
+    programs::merge(db, &mut document).await?;
     Ok(
-        json!({"revision":revision,"publishedRevision":published,"document":serde_json::from_str::<Value>(&body).map_err(internal)?,"approvals":count,"requiredApprovals":presidency::required(db).await?,"canApprove":can_approve}),
+        json!({"revision":revision,"publishedRevision":published,"document":document,"approvals":count,"requiredApprovals":presidency::required(db).await?,"canApprove":can_approve}),
     )
 }
 

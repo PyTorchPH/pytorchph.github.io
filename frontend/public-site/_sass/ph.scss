@@ -626,6 +626,10 @@ $hero_kicker: #ffb59e;
 .ph-managed-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(unquote("min(100%, 260px)"), 1fr)); gap: 24px; margin: 24px 0; }
 .ph-managed-grid .ph-card { min-width: 0; overflow-wrap: anywhere; }
 .ph-managed-grid p { white-space: pre-wrap; }
+.ph-content-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.ph-content-tabs button { border: 1px solid #6b7280; border-radius: 999px; background: transparent; color: inherit; padding: 8px 14px; font: inherit; cursor: pointer; }
+.ph-content-tabs button[aria-selected="true"] { border-color: #ee4c2c; background: #ee4c2c; color: #fff; }
+.ph-content-tabs button:focus-visible { outline: 3px solid rgba(238,76,44,.35); outline-offset: 2px; }
 .ph-managed-photo { width: 240px; max-width: 100%; height: 240px; object-fit: cover; border-radius: 16px; margin-bottom: 20px; }
 .ph-island-image { width: 100%; height: auto; margin-bottom: 24px; }
 .ph-footer-contacts { flex: 0 0 100%; display: flex; flex-wrap: wrap; gap: 20px; padding: 16px 0; color: white; }

@@ -70,7 +70,7 @@
 
     <h3 class="ph-subheading" id="pytorch-news">PyTorch news</h3>
     {%- if include.full %}{% assign news_limit = 6 %}{% else %}{% assign news_limit = 3 %}{% endif %}
-    <div class="row ph-card-grid">
+    <div class="row ph-card-grid" data-site-content="pytorch-news">
       {%- for item in pytorch_news limit: news_limit %}
       <div class="col-md-4">
         <article class="ph-card">

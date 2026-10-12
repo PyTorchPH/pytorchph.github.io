@@ -34,7 +34,7 @@ fn content_validation_rejects_script_urls_bad_dates_unknown_fields_and_oversized
     value["unexpected"] = json!(true);
     assert!(model::validate(&value).is_err());
     let mut value = baseline;
-    value["events"] = json!([{"id":"one","title":"Real event","eventType":"training","topic":"PyTorch","startsAt":"invalid","dateStatus":"confirmed","venue":"Online","registrationUrl":""}]);
+    value["events"] = json!([{"id":"one","title":"Real event","eventType":"training","topic":"PyTorch","startsAt":"invalid","dateStatus":"confirmed","scheduleLabel":"To be announced","venue":"Online","registrationUrl":"","series":"PyTorch Fundamentals","modules":"Introduction","photoUrl":""}]);
     assert!(model::validate(&value).is_err());
     value["events"][0]["startsAt"] = json!("");
     value["events"][0]["dateStatus"] = json!("coming_soon");
