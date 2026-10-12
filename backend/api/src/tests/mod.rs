@@ -62,6 +62,9 @@ mod scoring;
 mod scoring_quarters;
 mod scoring_scheduler;
 mod site_content;
+mod public_directory;
+mod public_events;
+mod event_permissions;
 mod skill_taxonomy;
 
 pub(crate) async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {

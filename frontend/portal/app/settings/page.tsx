@@ -21,6 +21,7 @@ import { LocalAIConnection } from "../../components/local-ai-connection";
 import type { LeaderboardIdentitySettings } from "@pytorch-ph/domain-protocol/leaderboards";
 import type { MemberPrivacySettings } from "@pytorch-ph/domain-protocol/privacy-feedback";
 import { OrganizationPhotoSettings } from "./organization-photo-settings";
+import { PublicRoleVisibilitySettings } from "./public-role-visibility";
 import { ProfileConsentSettings } from "./profile-consents";
 import { PrivateProfileSettings } from "./private-profile-settings";
 
@@ -82,6 +83,7 @@ export default function SettingsPage() {
       </div>
       <h3 className="mb-2 mt-6 text-sm font-semibold">Privacy</h3>
       <ProfileConsentSettings />
+      <PublicRoleVisibilitySettings />
       <Button className="mt-4 w-full sm:w-auto" disabled={query.isLoading || !privacy || mutation.isPending || !username || (mode === "real_name" && !consent)} onClick={() => mutation.mutate()} type="button">{mutation.isPending ? "Saving…" : "Save leaderboard and privacy"}</Button>
     </Card>
     </>}

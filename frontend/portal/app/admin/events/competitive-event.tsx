@@ -31,6 +31,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function CompetitiveEventForm({ mode = "create" }: { mode?: "create" | "results" }) {
   const [viewer, setViewer] = useState<Viewer | null>(null);
+  const [eventPermissions, setEventPermissions] = useState({ canCreate: false, canPublish: false });
   const [members, setMembers] = useState<Member[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
 const [skills, setSkills] = useState<Skill[]>([]);
@@ -45,6 +46,13 @@ const [modelDetails, setModelDetails] = useState("");
   const [category, setCategory] = useState("hackathon");
   const [parentId, setParentId] = useState("");
   const [startsAt, setStartsAt] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
+  const [publicTopic, setPublicTopic] = useState("");
+  const [publicDescription, setPublicDescription] = useState("");
+  const [publicVenue, setPublicVenue] = useState("");
+  const [registrationUrl, setRegistrationUrl] = useState("");
+  const [publicSeries, setPublicSeries] = useState("");
   const [entrantKind, setEntrantKind] = useState<"individual" | "team">("team");
   const [lastPlace, setLastPlace] = useState(3);
   const [pointsCsv, setPointsCsv] = useState("");
@@ -59,12 +67,15 @@ const [modelDetails, setModelDetails] = useState("");
   const [message, setMessage] = useState("");
 
   const refresh = useCallback(async () => {
-const [current, approved, allEvents, availableSkills] = await Promise.all([
+const [current, approved, allEvents, availableSkills, permissions] = await Promise.all([
   api<Viewer>("/auth/me"), api<Member[]>("/members"), api<EventItem[]>("/events"), api<Skill[]>("/scoring/skills"),
+  api<{ canCreate: boolean; canPublish: boolean }>("/events/permissions"),
     ]);
     setViewer(current);
     setMembers(approved.filter((member) => member.role !== "pending"));
     setEvents(allEvents);
+    setEventPermissions(permissions);
+    if (!permissions.canPublish) setIsPublic(false);
 setSkills(availableSkills);
   }, []);
 
@@ -93,6 +104,9 @@ setSkills(availableSkills);
   function create() {
     return run(async () => {
       const competitive = !["talk", "workshop"].includes(category);
+      if (!eventPermissions.canCreate) throw new Error("Hindi pinapayagan ng kasalukuyang position ang paggawa ng event.");
+      if (isPublic && !eventPermissions.canPublish) throw new Error("Hindi pinapayagan ng kasalukuyang position ang pag-publish ng event.");
+      if (isPublic && !publicDescription.trim()) throw new Error("Kailangan ng description bago ipakita ang event sa public website.");
       const points = pointsCsv.trim() ? pointsCsv.split(",").map((value) => Number(value.trim())) : null;
 if (eventSkills.length === 0) throw new Error("Pumili ng kahit isang skill tag.");
 const skillTags = allocateSkillTags(eventSkills);
@@ -104,6 +118,7 @@ if (weightMilli !== null && (!Number.isSafeInteger(weightMilli) || weightMilli <
       const created = await api<{ id: string }>("/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
 title, category, startsAt: new Date(startsAt).toISOString(), entrantKind: competitive ? entrantKind : null, parentId: category === "mini_contest" ? parentId : null, placePoints: competitive ? points : null,
 skillTags, weightMilli, weightReason: weightReason || null,
+publication: { isPublic, isDemo, topic: publicTopic, description: publicDescription, venue: publicVenue, registrationUrl: isDemo ? "" : registrationUrl, series: publicSeries },
       }) });
       await refresh();
       if (competitive) await selectEvent(created.id);
@@ -163,11 +178,18 @@ skillTags, weightMilli, weightReason: weightReason || null,
   return <Card className="space-y-5 bg-surface">
     <div><h3 className="font-heading text-lg font-semibold">{mode === "create" ? "Create event" : "Manage event results"}</h3><p className="text-sm text-muted">{mode === "create" ? "Set categories, skill allocations, and proposed place points." : "Register entrants, publish placements, and import attendance."}</p></div>
     {!viewer ? <div><p className="mb-2 text-sm">Sign in with an approved officer account.</p>{googleClientId ? <OfficialGoogleConnect onConnected={() => void refresh().catch((error: Error) => setMessage(error.message))} onError={setMessage} /> : <Link className="text-accent underline" href="/login/">Go to sign in</Link>}</div> : viewer.role !== "officer" && viewer.role !== "admin" ? <p className="text-sm text-muted">Officer approval is required.</p> : <>
-      {mode === "create" && <><div className="grid gap-3 sm:grid-cols-2">
+      {mode === "create" && !eventPermissions.canCreate && <p className="text-sm text-muted">Walang event-create permission ang kasalukuyang position mo.</p>}
+      {mode === "create" && eventPermissions.canCreate && <><div className="grid gap-3 sm:grid-cols-2">
         <div><Label htmlFor="competition-title">Event title</Label><Input id="competition-title" value={title} onChange={(event) => setTitle(event.target.value)} /></div>
         <div><Label htmlFor="competition-category">Category</Label><select className="w-full border border-border bg-canvas p-2" id="competition-category" value={category} onChange={(event) => { setCategory(event.target.value); setModelSuggestion(""); setModelDetails(""); }}><option value="talk">Talk</option><option value="workshop">Workshop</option><option value="hackathon">Hackathon</option><option value="competitive">Other competition</option><option value="mini_contest">Talk/workshop mini contest</option></select></div>
         {category === "mini_contest" && <div><Label htmlFor="competition-parent">Parent talk/workshop</Label><select className="w-full border border-border bg-canvas p-2" id="competition-parent" value={parentId} onChange={(event) => setParentId(event.target.value)}><option value="">Select parent</option>{events.filter((item) => item.category === "talk" || item.category === "workshop").map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></div>}
         <div><Label htmlFor="competition-start">Start date/time</Label><Input id="competition-start" type="datetime-local" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} /></div>
+        <div className="space-y-2 sm:col-span-2"><label className="flex items-center gap-2"><input type="checkbox" disabled={!eventPermissions.canPublish} checked={isPublic} onChange={(event) => setIsPublic(event.target.checked)} />Ipakita sa public website</label><label className="flex items-center gap-2"><input type="checkbox" checked={isDemo} onChange={(event) => { setIsDemo(event.target.checked); if (event.target.checked) setRegistrationUrl(""); }} />Demo/Test event</label><p className="text-xs text-muted">Private ang default. Ang public event ay babasahin mula sa saved record sa susunod na page load o refresh. Walang registration link ang Demo/Test.</p></div>
+        <div><Label htmlFor="event-public-topic">Public topic</Label><Input id="event-public-topic" maxLength={500} value={publicTopic} onChange={(event) => setPublicTopic(event.target.value)} /></div>
+        <div className="sm:col-span-2"><Label htmlFor="event-public-description">Event description {isPublic ? "(required)" : "(draft)"}</Label><textarea id="event-public-description" className="w-full border border-border bg-canvas p-2" rows={5} maxLength={2000} required={isPublic} value={publicDescription} onChange={(event) => setPublicDescription(event.target.value)} /><p className="text-xs text-muted">Ito ang content na ipapakita sa upcoming events. Hanggang 2,000 characters; plain text lang.</p></div>
+        <div><Label htmlFor="event-public-venue">Venue/platform</Label><Input id="event-public-venue" maxLength={300} value={publicVenue} onChange={(event) => setPublicVenue(event.target.value)} /></div>
+        <div><Label htmlFor="event-registration-url">Registration URL (HTTPS)</Label><Input id="event-registration-url" type="url" maxLength={2000} disabled={isDemo} value={registrationUrl} onChange={(event) => setRegistrationUrl(event.target.value)} /></div>
+        <div><Label htmlFor="event-public-series">Program/series</Label><Input id="event-public-series" maxLength={200} value={publicSeries} onChange={(event) => setPublicSeries(event.target.value)} /></div>
         <SkillTagPicker skills={skills} selected={eventSkills} onChange={(selected) => { setEventSkills(selected); setModelSuggestion(""); setModelDetails(""); }} />
         <div><Label htmlFor="event-weight">Organizer weight</Label><Input id="event-weight" type="number" min="0.001" max="10" step="0.001" value={weight} onChange={(event) => setWeight(event.target.value)} /><p className="mt-1 text-xs text-muted">Iwang blangko para sa published model weight. Kung unavailable ang model, kailangan ng organizer weight.</p></div>
         <div><Button disabled={busy || !eventSkills.length} onClick={previewWeight} type="button" variant="secondary">Tingnan ang model suggestion</Button><p className="mt-2 text-sm text-muted" role="status">{modelSuggestion}</p>{modelDetails && <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap border border-border bg-elevated p-3 text-xs leading-5">{modelDetails}</pre>}</div>

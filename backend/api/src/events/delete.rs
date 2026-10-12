@@ -16,6 +16,7 @@ type Tx<'a> = Transaction<'a, Sqlite>;
 
 const LIST_LIMIT: i64 = 200;
 const LOG_LIMIT: i64 = 100;
+type OfficerEventRow = (String, String, String, String, String, String, bool, bool);
 
 struct Snapshot {
     title: String,
@@ -156,9 +157,9 @@ pub(crate) async fn officer_event_list(db: &SqlitePool, viewer: &Viewer) -> ApiR
     let is_president = tree::holds(&mut tx, &viewer.id, "president").await?;
     tx.commit().await.map_err(internal)?;
     let is_admin = viewer.role == "admin";
-    let events: Vec<(String, String, String, String, String, String)> = sqlx::query_as(
-        "SELECT e.id, e.title, e.category, e.starts_at, COALESCE(e.created_by, ''), COALESCE(m.display_name, 'Former member') \
-         FROM events e LEFT JOIN members m ON m.id = e.created_by WHERE e.parent_id IS NULL ORDER BY e.starts_at DESC LIMIT ?",
+    let events: Vec<OfficerEventRow> = sqlx::query_as(
+        "SELECT e.id, e.title, e.category, e.starts_at, COALESCE(e.created_by, ''), COALESCE(m.display_name, 'Former member'), COALESCE(p.is_public,0), COALESCE(p.is_demo,0) \
+         FROM events e LEFT JOIN members m ON m.id = e.created_by LEFT JOIN event_publication p ON p.event_id=e.id WHERE e.parent_id IS NULL ORDER BY e.starts_at DESC LIMIT ?",
     )
     .bind(LIST_LIMIT)
     .fetch_all(db)
@@ -175,9 +176,10 @@ pub(crate) async fn officer_event_list(db: &SqlitePool, viewer: &Viewer) -> ApiR
     .await
     .map_err(internal)?;
     Ok(json!({
-        "events": events.into_iter().map(|(id, title, category, starts_at, created_by, creator)| json!({
+        "events": events.into_iter().map(|(id, title, category, starts_at, created_by, creator, is_public, is_demo)| json!({
             "id": id, "title": title, "category": category, "startsAt": starts_at, "createdBy": creator,
             "canDelete": is_admin || is_president || created_by == viewer.id,
+            "isPublic": is_public, "isDemo": is_demo,
         })).collect::<Vec<_>>(),
         "deletions": log.into_iter().map(|(title, category, starts_at, deleted_by, points, members, at)| json!({
             "title": title, "category": category, "startsAt": starts_at, "deletedBy": deleted_by,

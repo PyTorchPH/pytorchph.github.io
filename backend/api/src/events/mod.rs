@@ -12,13 +12,18 @@ pub(crate) mod attendance;
 mod create;
 pub(crate) mod delete;
 mod entrants;
+mod publication_access;
 mod reads;
 mod records;
 mod results;
 
 pub(crate) use create::EventSkillTag;
+#[cfg(test)]
 pub use create::create_event;
+pub use create::create_public_event;
+pub use create::update_publication;
 pub use entrants::add_entrant;
+pub use reads::read_permissions;
 pub use reads::{list_entrants, list_events, read_event};
 pub use results::publish_results;
 // Request bodies the tests build directly.

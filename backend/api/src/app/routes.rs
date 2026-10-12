@@ -13,7 +13,7 @@ use crate::{
 use axum::{
     Router,
     http::{HeaderName, HeaderValue, Method, header},
-    routing::{any, delete, get, post},
+    routing::{any, delete, get, post, put},
 };
 use std::sync::Arc;
 use tower_http::{cors::CorsLayer, limit::RequestBodyLimitLayer, trace::TraceLayer};
@@ -68,6 +68,12 @@ fn platform_routes() -> Router<Arc<AppState>> {
         .route("/jobs/{id}", get(jobs::read_job))
         .route("/leaderboard", get(public::public_leaderboard))
         .route("/public/events", get(public::public_events))
+        .route("/events/{id}/publication", put(events::update_publication))
+        .route("/events/permissions", get(events::read_permissions))
+        .route(
+            "/public/organization-photos/{token}",
+            get(crate::site_content::directory::photo),
+        )
         .route(
             "/public/site-content",
             get(crate::site_content::public_content),
@@ -100,7 +106,7 @@ fn event_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/events",
-            post(events::create_event).get(events::list_events),
+            post(events::create_public_event).get(events::list_events),
         )
         .route(
             "/events/{id}/entrants",

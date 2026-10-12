@@ -59,6 +59,7 @@ async fn special_read(
 ) -> ApiResult<Option<Value>> {
     Ok(match path {
         "officer/site-content" => Some(crate::site_content::store::draft(db, actor).await?),
+        "officer/campus-chapters" => Some(crate::site_content::campus::view(db, actor).await?),
         // AI keys and calls stay in the member's extension; the server only lists providers.
         "backend/local-ai/providers" => Some(operations::ai_providers()),
         "member/leaderboard-identity" if query.is_some() => {
@@ -122,6 +123,30 @@ async fn special_read(
             Some(
                 json!({"private":private,"public":public,"achievements":achievements,"consents":consents}),
             )
+        }
+        "member/public-role-visibility" => {
+            let count:i64=sqlx::query_scalar("SELECT COUNT(*) FROM member_positions p JOIN members m ON m.id=p.member_id WHERE m.id=? AND m.role IN ('officer','admin')")
+                .bind(&actor.id).fetch_one(db).await.map_err(crate::internal)?;
+            if count == 0 {
+                Some(json!({"isAssigned":false,"nameVisible":false,"photoVisible":false}))
+            } else {
+                let client = identity_client.ok_or(ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Identity service unavailable",
+                ))?;
+                let visibility = client
+                    .public_role_visibility(Uuid::parse_str(&actor.id).map_err(crate::internal)?)
+                    .await
+                    .map_err(|_| {
+                        ApiError(
+                            StatusCode::SERVICE_UNAVAILABLE,
+                            "Identity service unavailable",
+                        )
+                    })?;
+                Some(
+                    json!({"isAssigned":true,"nameVisible":visibility.name_visible,"photoVisible":visibility.photo_visible}),
+                )
+            }
         }
         "member/organization-name-consent" => {
             let client = identity_client.ok_or(ApiError(

@@ -27,6 +27,7 @@ export function ProfileConsentSettings() {
       queryClient.invalidateQueries({ queryKey: ["member-privacy"] });
       queryClient.invalidateQueries({ queryKey: ["member-leaderboard"] });
       queryClient.invalidateQueries({ queryKey: ["officer-organization"] });
+      queryClient.invalidateQueries({ queryKey: ["public-role-visibility"] });
       toast.success("Privacy settings saved.");
     },
     onError: () => toast.error("Privacy settings could not be saved."),

@@ -14,6 +14,7 @@ import { Button } from "@pytorch-ph/design-system/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import { DataUnavailable } from "@pytorch-ph/design-system/data-unavailable";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
+import { EventPublicationSettings } from "./event-publication-settings";
 
 type EventRow = { id: string; title: string; category: string; startsAt: string; createdBy: string; canDelete: boolean };
 type Deletion = { title: string; category: string; startsAt: string; deletedBy: string; pointsRevoked: number; membersAffected: number; deletedAt: string };
@@ -36,6 +37,7 @@ export function EventList({ category = "all" }: { category?: "all" | "workshops"
               <p className="text-xs text-muted">{dateLabel(event.startsAt)} · created by {event.createdBy}</p>
             </div>
             <div className="flex items-center gap-2"><Badge>{event.category.replaceAll("_", " ")}</Badge>{event.canDelete && <DeleteButton event={event} />}</div>
+            <EventPublicationSettings eventId={event.id} />
           </li>)}
         </ul> : <p className="py-6 text-center text-sm text-muted">No events yet.</p>}
       </DataUnavailable>

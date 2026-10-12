@@ -96,7 +96,18 @@ pub(crate) fn validate(document: &Value) -> ApiResult<()> {
         }
         let mut ids = HashSet::new();
         for row in rows {
-            texts(row, columns)?;
+            let mut validated = row.clone();
+            if key == "articles"
+                && let Some(event_id) = validated
+                    .as_object_mut()
+                    .and_then(|row| row.remove("eventId"))
+            {
+                let id = text(&event_id)?;
+                if !id.is_empty() && uuid::Uuid::parse_str(id).is_err() {
+                    return Err(bad("Invalid linked event ID"));
+                }
+            }
+            texts(&validated, columns)?;
             let id = text(&row["id"])?;
             if id.is_empty()
                 || id.len() > 80

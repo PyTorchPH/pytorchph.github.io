@@ -21,6 +21,7 @@ pub(crate) enum NamePurpose {
     PublicProfile,
     OrganizationChart,
     LeaderboardPhoto,
+    PublicRoleProfile,
 }
 
 impl NamePurpose {
@@ -29,6 +30,7 @@ impl NamePurpose {
             Self::PublicProfile => "public_profile",
             Self::OrganizationChart => "organization_chart",
             Self::LeaderboardPhoto => "leaderboard_photo",
+            Self::PublicRoleProfile => "public_role_profile",
         }
     }
 }
@@ -37,6 +39,20 @@ impl NamePurpose {
 #[serde(rename_all = "camelCase")]
 struct NameReply {
     display_name: String,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct PublicRoleProfile {
+    pub(crate) display_name: String,
+    pub(crate) photo_available: bool,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct PublicRoleVisibility {
+    pub(crate) name_visible: bool,
+    pub(crate) photo_visible: bool,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -69,6 +85,92 @@ pub(crate) enum IdentityError {
 }
 
 impl IdentityClient {
+    pub(crate) async fn public_role_visibility(
+        &self,
+        member_id: Uuid,
+    ) -> Result<PublicRoleVisibility, IdentityError> {
+        let response = self
+            .photo_request_with_purpose(
+                Method::GET,
+                member_id,
+                Uuid::nil(),
+                "public-role-visibility",
+                None,
+                NamePurpose::PublicRoleProfile,
+            )
+            .await?;
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 4096).await?;
+        serde_json::from_slice(&bytes).map_err(|_| IdentityError::Unavailable)
+    }
+
+    /// Gateway checks current role membership before calling; nil viewer cannot claim ownership.
+    pub(crate) async fn public_role_profile(
+        &self,
+        member_id: Uuid,
+    ) -> Result<Option<PublicRoleProfile>, IdentityError> {
+        let response = self
+            .photo_request_with_purpose(
+                Method::GET,
+                member_id,
+                Uuid::nil(),
+                "public-role-profile",
+                None,
+                NamePurpose::PublicRoleProfile,
+            )
+            .await?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 4096).await?;
+        let profile: PublicRoleProfile =
+            serde_json::from_slice(&bytes).map_err(|_| IdentityError::Unavailable)?;
+        if profile.display_name.trim().is_empty() || profile.display_name.chars().count() > 120 {
+            return Err(IdentityError::Unavailable);
+        }
+        Ok(Some(profile))
+    }
+
+    pub(crate) async fn public_role_photo(
+        &self,
+        member_id: Uuid,
+    ) -> Result<Option<Vec<u8>>, IdentityError> {
+        let response = self
+            .photo_request_with_purpose(
+                Method::GET,
+                member_id,
+                Uuid::nil(),
+                "organization-photo",
+                None,
+                NamePurpose::PublicRoleProfile,
+            )
+            .await?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        if response
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            != Some("image/webp")
+        {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 65_536).await?;
+        if bytes.is_empty() {
+            return Err(IdentityError::Unavailable);
+        }
+        Ok(Some(bytes))
+    }
+
     pub(crate) async fn purge_private_data(&self, member_id: Uuid) -> Result<(), IdentityError> {
         let url = self
             .base

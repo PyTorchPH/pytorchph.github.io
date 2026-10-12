@@ -1,2 +1,5 @@
 backend/api/migrations/0026_dual_presidency.sql text eol=crlf
 backend/api/migrations/0027_managed_site_content.sql text eol=crlf
+backend/api/migrations/0032_public_event_content.sql text eol=lf
+backend/api/migrations/0033_campus_chapter_assignments.sql text eol=lf
+backend/api/migrations/0034_event_position_permissions.sql text eol=lf

@@ -49,6 +49,22 @@ pub(crate) async fn save(db: &SqlitePool, actor: &Viewer, input: &Value) -> ApiR
     if changed.rows_affected() != 1 {
         return Err(stale());
     }
+    for article in document["articles"]
+        .as_array()
+        .ok_or(bad("Articles required"))?
+    {
+        if let Some(id) = article
+            .get("eventId")
+            .and_then(Value::as_str)
+            .filter(|id| !id.is_empty())
+        {
+            let exists:i64=sqlx::query_scalar("SELECT COUNT(*) FROM events e JOIN event_publication p ON p.event_id=e.id WHERE e.id=? AND p.is_public=1")
+                .bind(id).fetch_one(&mut *tx).await.map_err(internal)?;
+            if exists != 1 {
+                return Err(bad("Linked event must be public"));
+            }
+        }
+    }
     let next = revision + 1;
     sqlx::query("INSERT INTO site_content_revisions VALUES (?,?,?,?)")
         .bind(next)

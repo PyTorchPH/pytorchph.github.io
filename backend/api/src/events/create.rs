@@ -18,7 +18,7 @@ use crate::scoring;
 use crate::{ApiResult, AppState, bad, check_origin, identity::session, internal};
 use axum::{
     Json,
-    extract::State,
+    extract::{Path, State},
     http::{HeaderMap, StatusCode},
 };
 use chrono::{DateTime, Utc};
@@ -26,6 +26,102 @@ use serde::Deserialize;
 use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
+
+#[derive(Default, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Publication {
+    #[serde(default)]
+    is_public: bool,
+    #[serde(default)]
+    is_demo: bool,
+    #[serde(default)]
+    topic: String,
+    #[serde(default)]
+    description: String,
+    #[serde(default)]
+    venue: String,
+    #[serde(default)]
+    registration_url: String,
+    #[serde(default)]
+    series: String,
+}
+
+pub async fn create_public_event(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Json(mut input): Json<serde_json::Value>,
+) -> ApiResult<(StatusCode, Json<Created>)> {
+    check_origin(&state, &headers)?;
+    session::require_officer(&state, &headers).await?;
+    let object = input
+        .as_object_mut()
+        .ok_or_else(|| malformed_public_input(bad("Invalid event body")))?;
+    let publication: Publication = object
+        .remove("publication")
+        .map(serde_json::from_value)
+        .transpose()
+        .map_err(|_| malformed_public_input(bad("Invalid event publication")))?
+        .unwrap_or_default();
+    let event = serde_json::from_value(input)
+        .map_err(|_| malformed_public_input(bad("Invalid event body")))?;
+    create_with_publication(state, headers, event, publication, true)
+        .await
+        .map_err(malformed_public_input)
+}
+
+fn malformed_public_input(mut error: crate::ApiError) -> crate::ApiError {
+    if error.0 == StatusCode::UNPROCESSABLE_ENTITY {
+        error.0 = StatusCode::BAD_REQUEST;
+    }
+    error
+}
+
+pub async fn update_publication(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(event_id): Path<String>,
+    Json(input): Json<serde_json::Value>,
+) -> ApiResult<Json<serde_json::Value>> {
+    check_origin(&state, &headers)?;
+    let actor = session::require_officer(&state, &headers).await?;
+    let publication: Publication = serde_json::from_value(input)
+        .map_err(|_| malformed_public_input(bad("Invalid event publication")))?;
+    ensure_valid_publication(&publication).map_err(malformed_public_input)?;
+    let mut tx = state.db.begin().await.map_err(internal)?;
+    let existing: Option<(String,bool,bool)> = sqlx::query_as("SELECT COALESCE(e.created_by,''),COALESCE(p.is_public,0),COALESCE(p.is_demo,0) FROM events e LEFT JOIN event_publication p ON p.event_id=e.id WHERE e.id=?")
+        .bind(&event_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(internal)?;
+    let (owner, was_public, was_demo) =
+        existing.ok_or(crate::ApiError(StatusCode::NOT_FOUND, "Event not found"))?;
+    super::publication_access::require_update(
+        &mut tx,
+        &actor,
+        &owner,
+        was_public,
+        was_demo,
+        publication.is_public,
+        publication.is_demo,
+    )
+    .await?;
+    sqlx::query("INSERT INTO event_publication(event_id,is_public,is_demo,topic,venue,registration_url,series,description) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO UPDATE SET is_public=excluded.is_public,is_demo=excluded.is_demo,topic=excluded.topic,venue=excluded.venue,registration_url=excluded.registration_url,series=excluded.series,description=excluded.description")
+        .bind(&event_id).bind(publication.is_public).bind(publication.is_demo)
+        .bind(publication.topic.trim()).bind(publication.venue.trim())
+        .bind(publication.registration_url.trim()).bind(publication.series.trim())
+        .bind(publication.description.trim())
+        .execute(&mut *tx).await.map_err(internal)?;
+    audit(
+        &mut tx,
+        &actor.id,
+        "event.publication_updated",
+        &event_id,
+        0,
+    )
+    .await?;
+    tx.commit().await.map_err(internal)?;
+    Ok(Json(serde_json::json!({"ok":true})))
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -50,16 +146,31 @@ pub struct NewEvent {
 
 // Mental model: an officer describes an event; everything is validated before the
 // transaction, then the event row, its place points and an audit row land together.
+#[cfg(test)]
 pub async fn create_event(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     Json(input): Json<NewEvent>,
 ) -> ApiResult<(StatusCode, Json<Created>)> {
+    create_with_publication(state, headers, input, Publication::default(), false).await
+}
+
+async fn create_with_publication(
+    state: Arc<AppState>,
+    headers: HeaderMap,
+    input: NewEvent,
+    publication: Publication,
+    enforce_positions: bool,
+) -> ApiResult<(StatusCode, Json<Created>)> {
     check_origin(&state, &headers)?;
     let actor = session::require_officer(&state, &headers).await?;
     let title = input.title.trim();
     let starts_at = ensure_valid_event(title, &input)?;
+    ensure_valid_publication(&publication)?;
     let mut tx = state.db.begin().await.map_err(internal)?;
+    if enforce_positions {
+        super::publication_access::require_create(&mut tx, &actor, publication.is_public).await?;
+    }
     if let Some(parent_id) = &input.parent_id {
         ensure_parent_accepts_mini_contest(&mut tx, parent_id).await?;
     }
@@ -115,6 +226,12 @@ pub async fn create_event(
         &actor.id,
     )
     .await?;
+    sqlx::query("INSERT INTO event_publication(event_id,is_public,is_demo,topic,venue,registration_url,series,description) VALUES (?,?,?,?,?,?,?,?)")
+        .bind(&id).bind(publication.is_public).bind(publication.is_demo)
+        .bind(publication.topic.trim()).bind(publication.venue.trim())
+        .bind(publication.registration_url.trim()).bind(publication.series.trim())
+        .bind(publication.description.trim())
+        .execute(&mut *tx).await.map_err(internal)?;
     sqlx::query("INSERT INTO event_scoring(event_id,weight_milli,model_version,selected_by,decision_reason,selected_at,proposed_place_points_json,selected_place_points_json,placement_override_reason) VALUES (?,?,?,?,?,?,?,?,?)")
         .bind(&id).bind(weight).bind(suggestion.map(|(version,_)|version)).bind(&actor.id)
         .bind(reason).bind(Utc::now().to_rfc3339())
@@ -139,6 +256,46 @@ pub async fn create_event(
     audit(&mut tx, &actor.id, "event.created", &id, 0).await?;
     tx.commit().await.map_err(internal)?;
     Ok((StatusCode::CREATED, Json(Created::first(id))))
+}
+
+/// Returns the normalized UTC start time once the request describes a valid event.
+fn ensure_valid_publication(publication: &Publication) -> ApiResult<()> {
+    if publication.description.chars().count() > 2000
+        || publication
+            .description
+            .chars()
+            .any(|value| value.is_control() && value != '\n')
+        || (publication.is_public && publication.description.trim().is_empty())
+    {
+        return Err(bad(
+            "Public events require a description of at most 2000 characters",
+        ));
+    }
+    for (value, maximum) in [
+        (&publication.topic, 500),
+        (&publication.venue, 300),
+        (&publication.registration_url, 2000),
+        (&publication.series, 200),
+    ] {
+        if value.chars().count() > maximum || value.chars().any(char::is_control) {
+            return Err(bad("Invalid event publication text"));
+        }
+    }
+    let url = publication.registration_url.trim();
+    if publication.is_demo && !url.is_empty() {
+        return Err(bad("Demo events cannot have registration links"));
+    }
+    if !url.is_empty() {
+        let parsed = reqwest::Url::parse(url).map_err(|_| bad("Invalid registration URL"))?;
+        if parsed.scheme() != "https"
+            || parsed.host_str().is_none()
+            || !parsed.username().is_empty()
+            || parsed.password().is_some()
+        {
+            return Err(bad("Registration URL must use HTTPS without credentials"));
+        }
+    }
+    Ok(())
 }
 
 /// Returns the normalized UTC start time once the request describes a valid event.
