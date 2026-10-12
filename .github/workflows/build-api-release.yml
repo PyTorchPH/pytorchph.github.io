@@ -1,0 +1,44 @@
+name: Build API release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - backend/api/**
+      - .github/workflows/build-api-release.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: backend/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust 1.94
+        run: |
+          rustup toolchain install 1.94.0 --profile minimal
+          rustup default 1.94.0
+
+      - name: Test locked backend
+        run: cargo test --locked
+
+      - name: Build locked release
+        run: cargo build --locked --release
+
+      - name: Record release checksum
+        run: sha256sum target/release/pytorch-ph-api > target/release/pytorch-ph-api.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pytorch-ph-api-linux-x86_64-${{ github.sha }}
+          path: |
+            backend/api/target/release/pytorch-ph-api
+            backend/api/target/release/pytorch-ph-api.sha256
+          if-no-files-found: error
+          retention-days: 7

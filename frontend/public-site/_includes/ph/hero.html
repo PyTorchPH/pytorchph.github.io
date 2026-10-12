@@ -1,7 +1,7 @@
 {% assign display_title = page.hero_title | default: page.title | default: site.title %}
 {% assign display_lead = page.hero_lead %}
-{% if page.body-class == "ph-home" %}{% assign display_title = site.data.site_content.branding.tagline | default: site.title %}{% endif %}
-{% if page.body-class == "ph-home" or page.body-class == "ph-about" %}{% assign display_lead = site.data.site_content.branding.description %}{% endif %}
+{% if page.body-class == "ph-home" %}{% assign display_title = site.data.community_identity.tagline | default: site.title %}{% endif %}
+{% if page.body-class == "ph-home" or page.body-class == "ph-about" %}{% assign display_lead = site.data.community_identity.description %}{% endif %}
 {%- comment -%}
   Page hero. It sizes to its content, so long headings never collide with the header on small screens.
   Front matter: hero_kicker (a short Filipino phrase), hero_kicker_meaning (its English meaning, for
@@ -17,9 +17,9 @@
       {%- if page.hero_kicker %}
       <p class="ph-hero-kicker"><span lang="fil"{% if page.hero_kicker_meaning %} title="{{ page.hero_kicker_meaning }}"{% endif %}>{{ page.hero_kicker }}</span>{% if page.hero_kicker_meaning %}<span class="ph-visually-hidden"> ({{ page.hero_kicker_meaning }})</span>{% endif %}</p>
       {%- endif %}
-      <h1 id="hero-heading"{% if page.body-class == "ph-home" %} data-site-content="tagline"{% endif %}>{{ display_title | escape }}</h1>
+      <h1 id="hero-heading">{{ display_title | escape }}</h1>
       {%- if display_lead %}
-      <p class="lead"{% if page.body-class == "ph-home" or page.body-class == "ph-about" %} data-site-content="description"{% endif %}>{{ display_lead | escape }}</p>
+      <p class="lead">{{ display_lead | escape }}</p>
       {%- endif %}
       {%- if page.hero_actions %}
       <div class="ph-hero-actions">

@@ -3,39 +3,33 @@ use crate::{ApiResult, bad};
 use serde_json::Value;
 use std::collections::HashSet;
 
+const COLLECTIONS: [&str; 4] = ["leadership", "events", "chapters", "articles"];
+
+pub(crate) fn dynamic_document(stored: &Value) -> ApiResult<Value> {
+    let source = stored.as_object().ok_or(bad("Expected a content object"))?;
+    let document = Value::Object(
+        COLLECTIONS
+            .iter()
+            .map(|key| {
+                source
+                    .get(*key)
+                    .cloned()
+                    .map(|value| ((*key).to_owned(), value))
+                    .ok_or(bad("Missing dynamic content collection"))
+            })
+            .collect::<ApiResult<_>>()?,
+    );
+    validate(&document)?;
+    Ok(document)
+}
+
 // Mental model: validate the document shape, then each collection's exact fields and semantics.
 pub(crate) fn validate(document: &Value) -> ApiResult<()> {
-    fields(
-        document,
-        &[
-            "branding",
-            "about",
-            "leadership",
-            "events",
-            "chapters",
-            "articles",
-            "contacts",
-        ],
-    )?;
+    fields(document, &COLLECTIONS)?;
     if document.to_string().len() > 128 * 1024 {
         return Err(bad("Website content exceeds 128 KiB"));
     }
-    texts(&document["branding"], &["tagline", "description"])?;
-    texts(&document["contacts"], &["facebook", "linkedin", "email"])?;
-    for key in ["facebook", "linkedin"] {
-        url(&document["contacts"][key])?;
-    }
-    let email = text(&document["contacts"]["email"])?;
-    if !email.is_empty()
-        && (email.len() > 254
-            || email.contains(['\r', '\n', ' ', '?', '#', '&'])
-            || email.split('@').count() != 2
-            || !email.split('@').all(|part| !part.is_empty()))
-    {
-        return Err(bad("Invalid public email address"));
-    }
     for (key, columns) in [
-        ("about", &["heading", "text"][..]),
         (
             "leadership",
             &[
@@ -103,17 +97,15 @@ pub(crate) fn validate(document: &Value) -> ApiResult<()> {
         let mut ids = HashSet::new();
         for row in rows {
             texts(row, columns)?;
-            if key != "about" {
-                let id = text(&row["id"])?;
-                if id.is_empty()
-                    || id.len() > 80
-                    || !id
-                        .bytes()
-                        .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
-                    || !ids.insert(id)
-                {
-                    return Err(bad("Entry IDs must be nonempty and unique"));
-                }
+            let id = text(&row["id"])?;
+            if id.is_empty()
+                || id.len() > 80
+                || !id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+                || !ids.insert(id)
+            {
+                return Err(bad("Entry IDs must be nonempty and unique"));
             }
             for field in ["photoUrl", "registrationUrl"] {
                 if let Some(value) = row.get(field) {

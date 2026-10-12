@@ -18,22 +18,19 @@ fn content_validation_rejects_script_urls_bad_dates_unknown_fields_and_oversized
         "https://user:pass@example.org/",
     ] {
         let mut value = baseline.clone();
-        value["contacts"]["facebook"] = json!(url);
+        value["events"][0]["registrationUrl"] = json!(url);
         assert!(model::validate(&value).is_err());
     }
     let mut value = baseline.clone();
-    value["contacts"]["email"] = json!("a@example.org?subject=x");
+    value["leadership"][0]["title"] = json!("a".repeat(8001));
     assert!(model::validate(&value).is_err());
     let mut value = baseline.clone();
-    value["branding"]["description"] = json!("a".repeat(8001));
-    assert!(model::validate(&value).is_err());
-    let mut value = baseline.clone();
-    value["branding"]["description"] = serde_json::Value::Null;
+    value["leadership"][0]["title"] = serde_json::Value::Null;
     assert!(model::validate(&value).is_err());
     let mut value = baseline.clone();
     value["unexpected"] = json!(true);
     assert!(model::validate(&value).is_err());
-    let mut value = baseline;
+    let mut value = baseline.clone();
     value["events"] = json!([{"id":"one","title":"Real event","eventType":"training","topic":"PyTorch","startsAt":"invalid","dateStatus":"confirmed","scheduleLabel":"To be announced","venue":"Online","registrationUrl":"","series":"PyTorch Fundamentals","modules":"Introduction","photoUrl":""}]);
     assert!(model::validate(&value).is_err());
     value["events"][0]["startsAt"] = json!("");
@@ -42,6 +39,13 @@ fn content_validation_rejects_script_urls_bad_dates_unknown_fields_and_oversized
     let duplicate = value["events"][0].clone();
     value["events"].as_array_mut().unwrap().push(duplicate);
     assert!(model::validate(&value).is_err());
+
+    let mut legacy = baseline.clone();
+    legacy["branding"] = json!({"tagline":"Static","description":"Static"});
+    legacy["about"] = json!([]);
+    legacy["contacts"] = json!({"facebook":"","linkedin":"","email":""});
+    assert_eq!(model::dynamic_document(&legacy).unwrap(), baseline);
+    assert!(model::validate(&legacy).is_err());
 }
 
 #[tokio::test]
@@ -75,7 +79,7 @@ async fn website_drafts_remain_private_until_distinct_current_presidents_approve
         StatusCode::UNAUTHORIZED
     );
     let mut document = seed();
-    document["branding"]["tagline"] = json!("Private draft marker <script>not executable</script>");
+    document["events"][0]["title"] = json!("Private draft marker <script>not executable</script>");
     let (status, draft) = portal_call(
         &state,
         &headers,
@@ -89,8 +93,8 @@ async fn website_drafts_remain_private_until_distinct_current_presidents_approve
     let published = store::published(&state.db).await.unwrap();
     assert_eq!(published["revision"], 1);
     assert_ne!(
-        published["document"]["branding"]["tagline"],
-        document["branding"]["tagline"]
+        published["document"]["events"][0]["title"],
+        document["events"][0]["title"]
     );
     assert!(published.get("canApprove").is_none());
     assert!(published.get("approvals").is_none());
@@ -160,7 +164,7 @@ async fn website_drafts_remain_private_until_distinct_current_presidents_approve
         store::published(&state.db).await.unwrap()["document"],
         document
     );
-    document["branding"]["tagline"] = json!("Next draft");
+    document["events"][0]["title"] = json!("Next draft");
     assert_eq!(
         portal_call(
             &state,

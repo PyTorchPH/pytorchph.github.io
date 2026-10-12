@@ -59,7 +59,14 @@
       </div>
     </nav>
 
-    <nav class="ph-footer-contacts" data-site-content="contacts" aria-label="Contact PyTorch Philippines" hidden></nav>
+    {% assign contacts = site.data.public_contacts %}
+    {% if contacts.facebook or contacts.linkedin or contacts.email %}
+    <nav class="ph-footer-contacts" aria-label="Contact PyTorch Philippines">
+      {% if contacts.facebook %}<a href="{{ contacts.facebook | escape }}" rel="noopener noreferrer">Facebook</a>{% endif %}
+      {% if contacts.linkedin %}<a href="{{ contacts.linkedin | escape }}" rel="noopener noreferrer">LinkedIn</a>{% endif %}
+      {% if contacts.email %}<a href="mailto:{{ contacts.email | escape }}">{{ contacts.email | escape }}</a>{% endif %}
+    </nav>
+    {% endif %}
     <div class="trademark-disclaimer">
       <ul>
         <li>PyTorch Philippines is an independent, community-led user group and is not operated by the PyTorch Foundation. Content may not reflect the latest PyTorch release; see <a href="{{ site.external_urls.org_www }}">pytorch.org</a> for official information.</li>

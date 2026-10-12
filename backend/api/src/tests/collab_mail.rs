@@ -40,7 +40,7 @@ async fn parts_reach_only_their_owners_and_the_chain_sends_the_exact_approved_em
     let comms = officer_at(db, "comms", "communications_officer").await;
 
     let created = create::create_draft(db, &creator, &json!({
-        "title": "PyTorch Day", "subject": "Join PyTorch Day", "recipients": ["members@example.test"], "mode": "ai",
+        "title": "PyTorch Day", "subject": "Join PyTorch Day", "recipients": ["members@example.test"], "mailbox": "partnerships@pytorch.ph", "mode": "ai",
         "sections": [
             {"content": "PyTorch Day is on October 20 at the main hall.", "ownerPosition": "head_partnerships_outreach",
              "tags": [{"label": "date", "phrase": "October 20", "ownerPosition": "coo"}]},
@@ -214,7 +214,7 @@ async fn officers_outside_the_email_cannot_see_or_edit_it_and_vacant_owners_are_
     // Not a part owner and not in the chain (the CMO would be: it is the fallback sender).
     let outsider = officer_at(db, "outsider", "cto").await;
     let _treasurer = officer_at(db, "treasurer", "treasurer").await;
-    let base = json!({"title": "T", "subject": "S", "recipients": ["a@example.test"], "sections": [{"content": "Budget text.", "ownerPosition": "treasurer"}]});
+    let base = json!({"title": "T", "subject": "S", "recipients": ["a@example.test"], "mailbox": "partnerships@pytorch.ph", "sections": [{"content": "Budget text.", "ownerPosition": "treasurer"}]});
     let draft = create::create_draft(db, &creator, &base).await.unwrap()["id"]
         .as_str()
         .unwrap()
@@ -230,9 +230,9 @@ async fn officers_outside_the_email_cannot_see_or_edit_it_and_vacant_owners_are_
             .is_empty()
     );
 
-    let vacant = json!({"title": "T", "subject": "S", "recipients": ["a@example.test"], "sections": [{"content": "Venue text.", "ownerPosition": "coo"}]});
+    let vacant = json!({"title": "T", "subject": "S", "recipients": ["a@example.test"], "mailbox": "partnerships@pytorch.ph", "sections": [{"content": "Venue text.", "ownerPosition": "coo"}]});
     assert!(create::create_draft(db, &creator, &vacant).await.is_err());
-    let bad_tag = json!({"title": "T", "subject": "S", "recipients": ["a@example.test"], "sections": [{"content": "Hello.", "ownerPosition": "treasurer", "tags": [{"label": "date", "phrase": "not in text", "ownerPosition": "treasurer"}]}]});
+    let bad_tag = json!({"title": "T", "subject": "S", "recipients": ["a@example.test"], "mailbox": "partnerships@pytorch.ph", "sections": [{"content": "Hello.", "ownerPosition": "treasurer", "tags": [{"label": "date", "phrase": "not in text", "ownerPosition": "treasurer"}]}]});
     assert!(create::create_draft(db, &creator, &bad_tag).await.is_err());
 }
 
@@ -247,7 +247,7 @@ async fn one_approval_mode_and_revoked_president_are_rechecked_before_send() {
     let secretary = officer_at(db, "secretary-single", "secretary_general").await;
     let president = officer_at(db, "president-single", "president").await;
     let comms = officer_at(db, "comms-single", "communications_officer").await;
-    let created = create::create_draft(db, &creator, &json!({"title":"T", "subject":"S", "recipients":["a@example.test"], "mode":"manual", "sections":[{"content":"Confirmed content", "ownerPosition":"head_partnerships_outreach"}]})).await.unwrap();
+    let created = create::create_draft(db, &creator, &json!({"title":"T", "subject":"S", "recipients":["a@example.test"], "mailbox":"partnerships@pytorch.ph", "mode":"manual", "sections":[{"content":"Confirmed content", "ownerPosition":"head_partnerships_outreach"}]})).await.unwrap();
     let draft = created["id"].as_str().unwrap();
     let hash = view_of(db, &creator, draft).await["email"]["assembledHash"].clone();
     chain::approve_step(db, &secretary, draft, &json!({"assembledHash":hash}))

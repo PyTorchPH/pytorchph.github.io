@@ -11,7 +11,7 @@ use std::sync::Arc;
 pub(crate) async fn public_content(State(state): State<Arc<AppState>>) -> ApiResult<Json<Value>> {
     let mut bundle = store::published(&state.db).await?;
     let news = official_news::load(&state).await;
-    bundle["schemaVersion"] = Value::from(2);
+    bundle["schemaVersion"] = Value::from(3);
     bundle["officialPytorchNews"] = news["items"].clone();
     bundle["sources"] = serde_json::json!({"officialPytorchNews": news["source"]});
     Ok(Json(bundle))
