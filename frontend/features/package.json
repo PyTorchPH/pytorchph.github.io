@@ -16,6 +16,7 @@
     "./privacy-feedback": "./privacy-feedback/index.ts",
     "./public-site": "./public-site/index.ts",
     "./resumes": "./resumes/index.ts",
+    "./skills": "./skills/index.ts",
     "./transport": "./transport/index.ts"
   },
   "dependencies": {

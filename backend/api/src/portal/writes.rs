@@ -244,6 +244,16 @@ pub(crate) async fn dispatch_write(
             StatusCode::CREATED,
             skill_taxonomy::publish_taxonomy(db, actor, &input).await?,
         ),
+        ("PATCH", _) if path.starts_with("officer/skills/pending/") => (
+            StatusCode::OK,
+            skill_taxonomy::review_candidate(
+                db,
+                actor,
+                after(path, "officer/skills/pending/"),
+                &input,
+            )
+            .await?,
+        ),
         ("POST", "officer/organization/resign") => (
             StatusCode::OK,
             organization::assignments::resign_position(db, actor, text_field(&input, "position"))

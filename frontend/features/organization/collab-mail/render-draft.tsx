@@ -19,8 +19,9 @@ import { Badge } from "@pytorch-ph/design-system/badge";
 import { Button } from "@pytorch-ph/design-system/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import { DataUnavailable } from "@pytorch-ph/design-system/data-unavailable";
+import { SegmentedTabs } from "@pytorch-ph/design-system/tabs";
 import {
-  answerQuestion, approveStep, confirmSection, editSection, fetchDraft, listDrafts, sendDraft, setTag,
+  answerQuestion, approveStep, confirmSection, editSection, fetchDraft, fetchMailWorkspace, sendDraft, setTag,
   type DraftView, type ViewQuestion, type ViewSection, type ViewTag,
 } from "./api";
 import { Composer } from "./render-composer";
@@ -29,21 +30,27 @@ const STAGE_LABELS: Record<string, string> = { in_review: "Parts in review", sec
 const STATE_TONE: Record<string, "success" | "warning" | "default"> = { confirmed: "success", changed: "warning", pending: "default" };
 
 export function CollabMailView() {
-  const drafts = useQuery({ queryKey: ["collab-mail"], queryFn: listDrafts });
+  const drafts = useQuery({ queryKey: ["mail-workspace"], queryFn: fetchMailWorkspace });
   const [open, setOpen] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
+  const [folder,setFolder]=useState<"inbox"|"sent"|"drafts">("drafts");
+  const [mailbox,setMailbox]=useState("all");
+  const [messageType,setMessageType]=useState("all");
+  const visible=(drafts.data?.items??[]).filter((item)=>item.folder===folder&&(mailbox==="all"||item.mailbox===mailbox)&&(messageType==="all"||item.messageType===messageType));
+  const canDraft=drafts.data?.mailboxes.some((item)=>item.permissions.draft)??false;
   return <div className="space-y-6">
     <section className="page-hero">
       <h1 className="text-3xl font-extrabold tracking-[-0.02em]">Email drafts</h1>
       <p className="mt-3 max-w-3xl leading-7 text-muted">Event emails reviewed part by part: each officer sees only the paragraphs and facts they own. When every part is confirmed, the email goes to the Secretariat, then the President, then Communications sends it.</p>
-      <Button className="mt-4" onClick={() => setComposing(!composing)} size="sm" variant="secondary">{composing ? "Close the new email" : "New event email"}</Button>
+      {canDraft&&<Button className="mt-4" onClick={() => setComposing(!composing)} size="sm" variant="secondary">{composing ? "Close the new email" : "New email"}</Button>}
     </section>
-    {composing && <Composer onCreated={(id) => { setComposing(false); setOpen(id); void drafts.refetch(); }} />}
+    {composing && <Composer mailboxes={(drafts.data?.mailboxes ?? []).filter((item) => item.permissions.draft)} onCreated={(id) => { setComposing(false); setOpen(id); void drafts.refetch(); }} />}
+    <div className="space-y-3"><SegmentedTabs items={[{value:"inbox",label:"Inbox"},{value:"sent",label:"Sent"},{value:"drafts",label:"Drafts"}]} onChange={(value)=>setFolder(value as typeof folder)} value={folder}/><SegmentedTabs items={[{value:"all",label:"All mailboxes"},...(drafts.data?.mailboxes??[]).map((item)=>({value:item.alias,label:item.label}))]} onChange={setMailbox} value={mailbox}/><SegmentedTabs items={[{value:"all",label:"All types"},{value:"workshop",label:"Workshops"},{value:"hackathon",label:"Hackathons"},{value:"competition",label:"Competitions"},{value:"talk",label:"Talks"},{value:"learning_lesson",label:"Learning lessons"},{value:"other",label:"Other"}]} onChange={setMessageType} value={messageType}/></div>
     <Card className="bg-surface">
       <CardHeader><div><CardTitle>Your emails</CardTitle><CardDescription>Emails you started, own a part of, or need to approve.</CardDescription></div></CardHeader>
       <DataUnavailable label={drafts.isError ? "Data unavailable" : "Loading data"} unavailable={!drafts.data}>
-        {drafts.data?.length ? <ul className="divide-y divide-border">
-          {drafts.data.map((draft) => <li className="flex flex-wrap items-center justify-between gap-2 py-2" key={draft.id}>
+        {visible.length ? <ul className="divide-y divide-border">
+          {visible.map((draft) => <li className="flex flex-wrap items-center justify-between gap-2 py-2" key={draft.id}>
             <button className="text-left font-semibold underline-offset-2 hover:underline" onClick={() => setOpen(draft.id)} type="button">{draft.title}</button>
             <span className="flex items-center gap-2 text-xs">
               {draft.openTasks > 0 && <Badge variant="warning">{draft.openTasks} for you</Badge>}
@@ -51,7 +58,7 @@ export function CollabMailView() {
               <Badge>{STAGE_LABELS[draft.stage] ?? draft.stage}</Badge>
             </span>
           </li>)}
-        </ul> : <p className="py-6 text-center text-sm text-muted">No emails need you yet.</p>}
+        </ul> : <p className="py-6 text-center text-sm text-muted">No emails match this mailbox and type.</p>}
       </DataUnavailable>
     </Card>
     {open && <DraftDetail id={open} />}
@@ -130,7 +137,7 @@ function useDraftAction(draftId: string, run: () => Promise<unknown>, success: s
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: run,
-    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["collab-mail"] }); toast.success(success); },
+    onSuccess: async () => { await Promise.all([queryClient.invalidateQueries({ queryKey: ["collab-mail"] }),queryClient.invalidateQueries({ queryKey: ["mail-workspace"] })]); toast.success(success); },
     onError: async (error) => { await queryClient.invalidateQueries({ queryKey: ["collab-mail", draftId] }); toast.error(error instanceof Error ? error.message : "Not saved."); },
   });
 }

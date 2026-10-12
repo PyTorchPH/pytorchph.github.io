@@ -13,6 +13,8 @@ import { Badge } from "@pytorch-ph/design-system/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design-system/card";
 import type { JobMarketSummary } from "@pytorch-ph/domain-protocol/job-discovery";
 import { queryKeys } from "@pytorch-ph/domain-client/transport";
+import { fetchJson } from "@pytorch-ph/domain-client/transport";
+import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { fetchPublicJobs, summarizePublicJobs } from "./public-jobs";
 import { jobMarketFilterSchema, type JobMarketFilters } from "@pytorch-ph/domain-protocol/job-discovery";
 import { Input } from "@pytorch-ph/design-system/input";
@@ -27,12 +29,14 @@ export function JobMarketContent({ children }: { children?: ReactNode }) {
   const [country, compareCountry, role, mode] = watch(["country", "compareCountry", "role", "mode"]);
   const selectedCountries = useMemo(() => [country, compareCountry].filter(Boolean), [country, compareCountry]);
   const query = useMemo(() => new URLSearchParams({ countries: selectedCountries.join(","), role_family: role, work_mode: mode, days: "90" }), [selectedCountries, role, mode]);
-  const market = useQuery({ queryKey: queryKeys.jobMarket(query.toString()), staleTime: 5 * 60_000, queryFn: async ({ signal }) => {
+  const evidence = useQuery({ queryKey: ["product", "career-evidence"], queryFn: () => fetchJson<ProductViewData>("/api/product/career-evidence", { cache: "no-store" }) });
+  const memberSkills = evidence.data?.evidence?.skills ?? [];
+  const market = useQuery({ queryKey: [...queryKeys.jobMarket(query.toString()), memberSkills.join("|")], staleTime: 5 * 60_000, queryFn: async ({ signal }) => {
     const jobs = mode === "any" || mode === "remote" ? await fetchPublicJobs(role, signal) : [];
-    const summary = summarizePublicJobs(jobs, selectedCountries, role);
+    const summary = summarizePublicJobs(jobs, selectedCountries, role, memberSkills);
     if (mode === "hybrid" || mode === "onsite") summary.warnings.push("Remotive has no verified hybrid or onsite listings for this filter.");
     return summary;
-  }, placeholderData: (previous) => previous });
+  }, enabled: evidence.isSuccess, placeholderData: (previous) => previous });
   const snapshot = market.data || null;
   const data = snapshot ?? emptySummary(selectedCountries);
   const pendingLabel = market.isError ? "Market data unavailable" : "Loading data";

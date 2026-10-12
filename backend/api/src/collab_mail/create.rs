@@ -30,6 +30,11 @@ pub(crate) async fn create_draft(
         return Err(bad("Add 1 to 25 recipient email addresses"));
     }
     let owned = held_positions(db, &actor.id).await?;
+    let may_draft: bool = actor.role == "admin" || sqlx::query_scalar::<_, i64>("SELECT EXISTS(SELECT 1 FROM mail_alias_grants g JOIN member_positions p ON p.position_slug=g.position_slug WHERE g.alias=? AND g.can_draft=1 AND p.member_id=?)")
+        .bind(&draft.mailbox).bind(&actor.id).fetch_one(db).await.map_err(internal)? == 1;
+    if !may_draft {
+        return Err(bad("You cannot create drafts for this mailbox"));
+    }
     let id = Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
     let mut tx = db.begin().await.map_err(internal)?;
@@ -42,10 +47,10 @@ pub(crate) async fn create_draft(
         })
         .collect();
     ensure_holders(&mut tx, &owners).await?;
-    sqlx::query("INSERT INTO collab_drafts(id, title, subject, recipients_json, creator_id, mode, stage, created_at, updated_at) VALUES (?,?,?,?,?,?,'in_review',?,?)")
+    sqlx::query("INSERT INTO collab_drafts(id, title, subject, recipients_json, creator_id, mode, stage, created_at, updated_at, mailbox_alias, message_type) VALUES (?,?,?,?,?,?,'in_review',?,?,?,?)")
         .bind(&id).bind(&draft.title).bind(&draft.subject)
         .bind(serde_json::to_string(&draft.recipients).map_err(internal)?)
-        .bind(&actor.id).bind(draft.mode).bind(&now).bind(&now)
+        .bind(&actor.id).bind(draft.mode).bind(&now).bind(&now).bind(&draft.mailbox).bind(&draft.message_type)
         .execute(&mut *tx).await.map_err(internal)?;
     for (ord, section) in draft.sections.iter().enumerate() {
         insert_section(&mut tx, &id, ord as i64, section, actor, &owned, draft.mode).await?;

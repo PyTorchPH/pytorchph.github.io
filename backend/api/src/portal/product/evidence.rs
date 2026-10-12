@@ -12,12 +12,12 @@
 //!   │   └─ evidence_kind
 //!   ├─ upsert_manual_item          replace the edited manual item, or add a new one first
 //!   └─ queue_for_review            approved items go to officer review
-use crate::evidence::integrity;
 use crate::portal::{
     fields::{bounded_strings, field, limited},
     store::{current, save},
 };
 use crate::{ApiError, ApiResult, bad};
+use crate::{evidence::integrity, skill_taxonomy};
 use axum::http::StatusCode;
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
@@ -191,5 +191,12 @@ async fn queue_for_review(
         source,
         item["description"].as_str().unwrap_or(""),
     )
-    .await
+    .await?;
+    let skills = item["skills"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|value| value.as_str().map(str::to_owned))
+        .collect::<Vec<_>>();
+    skill_taxonomy::sync_claim_skills(db, id, member_id, &skills).await
 }

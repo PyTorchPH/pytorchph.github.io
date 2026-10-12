@@ -15,7 +15,8 @@ use sqlx::{Row, SqlitePool, sqlite::SqliteRow};
 const CLAIM_COLUMNS: &str = "c.id, c.member_id, c.kind, c.title, c.source_url, c.source, c.origin, \
     c.content_hash, c.status, c.points, c.review_reason, COALESCE(c.reviewed_at, c.created_at), \
     (SELECT r.decision FROM evidence_claim_reviews r WHERE r.claim_id = c.id ORDER BY r.reviewed_at DESC LIMIT 1), \
-    (SELECT r.verified_level FROM evidence_claim_reviews r WHERE r.claim_id = c.id AND r.verified_level IS NOT NULL ORDER BY r.reviewed_at DESC LIMIT 1)";
+    (SELECT r.verified_level FROM evidence_claim_reviews r WHERE r.claim_id = c.id AND r.verified_level IS NOT NULL ORDER BY r.reviewed_at DESC LIMIT 1), \
+    c.submitted_text, COALESCE((SELECT json_group_array(json_object('raw',e.raw,'skillSlug',e.skill_slug,'state',e.state)) FROM evidence_claim_skills e WHERE e.claim_id=c.id),'[]')";
 
 /// Review queue: pending and disputed claims first, then the latest decisions.
 pub(crate) async fn officer_claims(db: &SqlitePool) -> ApiResult<Value> {
@@ -65,6 +66,13 @@ fn claim_json(row: &SqliteRow) -> Value {
     if let Some(level) = level {
         claim["proposedLevel"] = json!(level);
     }
+    let skills =
+        serde_json::from_str::<Value>(&row.get::<String, _>(15)).unwrap_or_else(|_| json!([]));
+    claim["normalizedPayload"] = json!({
+        "kind": kind,
+        "text": row.get::<Option<String>, _>(14),
+        "skills": skills,
+    });
     claim
 }
 

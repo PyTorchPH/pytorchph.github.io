@@ -8,7 +8,7 @@ import { Button } from "@pytorch-ph/design-system/button";
 import type { ResumeTemplateId } from "@pytorch-ph/domain-protocol/resumes";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { fetchProfilePackage, PROFILE_PACKAGE_QUERY_KEY } from "@pytorch-ph/domain-client/member-profile";
-import { resumePdfBytes } from "./export-document";
+import { renderCvPdfBytes } from "./rendercv-typst";
 import { resumeFromProfilePackage, resumeWithPrivateProfile } from "./profile-fallback";
 import { buildResumeSourceProfile } from "./build-source-resume";
 import { resumeSourceDocumentSchema } from "@pytorch-ph/domain-protocol/resumes";
@@ -48,7 +48,7 @@ export function ResumePdfViewer({ template, sample = false }: { template: Resume
         if (!profilePackage) throw new Error("Your saved profile could not be loaded.");
         return resumeFromProfilePackage(profilePackage);
       })();
-      const bytes = await resumePdfBytes(profile, template);
+      const bytes = await renderCvPdfBytes(profile, template);
       objectUrl = URL.createObjectURL(new Blob([bytes.slice()], { type: "application/pdf" }));
       if (active) setPdfUrl(objectUrl);
       const pdfjs = await import("pdfjs-dist");

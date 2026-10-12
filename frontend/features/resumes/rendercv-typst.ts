@@ -135,8 +135,14 @@ function legacySections(profile: ResumeProfile): ResumeProfileSection[] {
 }
 
 function renderCvStyle(templateId: ResumeTemplateId) {
-  if (templateId === "modern") return { margin: "1.6cm", bodySize: "10pt", nameSize: "28pt", sectionSize: "1.35em", lineSpacing: "0.55em", color: "rgb(0, 79, 144)", sectionType: "moderncv", entrySpacing: "1em", bulletSpacing: "0.1cm", headerAlignment: "left" };
-  if (templateId === "compact") return { margin: "1.25cm", bodySize: "9pt", nameSize: "24pt", sectionSize: "1.2em", lineSpacing: "0.4em", color: "rgb(0, 0, 0)", sectionType: "with_full_line", entrySpacing: "0.7em", bulletSpacing: "0.06cm", headerAlignment: "center" };
+  if (templateId === "moderncv" || templateId === "modern") return { margin: "1.6cm", bodySize: "10pt", nameSize: "28pt", sectionSize: "1.35em", lineSpacing: "0.55em", color: "rgb(0, 79, 144)", sectionType: "moderncv", entrySpacing: "1em", bulletSpacing: "0.1cm", headerAlignment: "left" };
+  if (templateId === "engineeringresumes" || templateId === "compact") return { margin: "1.25cm", bodySize: "9pt", nameSize: "24pt", sectionSize: "1.2em", lineSpacing: "0.4em", color: "rgb(0, 0, 0)", sectionType: "with_full_line", entrySpacing: "0.7em", bulletSpacing: "0.06cm", headerAlignment: "center" };
+  if (templateId === "engineeringclassic") return { margin: "1.45cm", bodySize: "9.5pt", nameSize: "25pt", sectionSize: "1.25em", lineSpacing: "0.45em", color: "rgb(31, 41, 55)", sectionType: "with_full_line", entrySpacing: "0.8em", bulletSpacing: "0.08cm", headerAlignment: "left" };
+  if (templateId === "sb2nov") return { margin: "1.2cm", bodySize: "9pt", nameSize: "23pt", sectionSize: "1.15em", lineSpacing: "0.38em", color: "rgb(0, 0, 0)", sectionType: "with_full_line", entrySpacing: "0.65em", bulletSpacing: "0.05cm", headerAlignment: "center" };
+  if (templateId === "harvard") return { margin: "1.75cm", bodySize: "10pt", nameSize: "27pt", sectionSize: "1.3em", lineSpacing: "0.58em", color: "rgb(122, 0, 25)", sectionType: "with_full_line", entrySpacing: "1em", bulletSpacing: "0.1cm", headerAlignment: "center" };
+  if (templateId === "ember") return { margin: "1.5cm", bodySize: "9.7pt", nameSize: "27pt", sectionSize: "1.28em", lineSpacing: "0.5em", color: "rgb(180, 83, 9)", sectionType: "with_full_line", entrySpacing: "0.85em", bulletSpacing: "0.08cm", headerAlignment: "left" };
+  if (templateId === "ink") return { margin: "1.55cm", bodySize: "9.8pt", nameSize: "26pt", sectionSize: "1.25em", lineSpacing: "0.5em", color: "rgb(17, 17, 17)", sectionType: "with_full_line", entrySpacing: "0.9em", bulletSpacing: "0.08cm", headerAlignment: "left" };
+  if (templateId === "opal") return { margin: "1.7cm", bodySize: "10pt", nameSize: "29pt", sectionSize: "1.35em", lineSpacing: "0.58em", color: "rgb(15, 118, 110)", sectionType: "with_full_line", entrySpacing: "1.05em", bulletSpacing: "0.1cm", headerAlignment: "center" };
   return { margin: "1.8cm", bodySize: "10pt", nameSize: "30pt", sectionSize: "1.4em", lineSpacing: "0.6em", color: "rgb(0, 79, 144)", sectionType: "with_full_line", entrySpacing: "1.2em", bulletSpacing: "0.12cm", headerAlignment: "center" };
 }
 

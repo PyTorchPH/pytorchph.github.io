@@ -18,7 +18,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@pytorch-ph/design
 import { Input, Label } from "@pytorch-ph/design-system/input";
 import { aiComplete, aiStatus } from "@pytorch-ph/domain-client/client-automation";
 import { fetchOrgChart } from "../delegation/api";
-import { createDraft } from "./api";
+import { createDraft, type MailWorkspace } from "./api";
 import { TAG_LABELS, blankSection, composePrompt, defaultTagOwner, parseComposed, type DraftSection, type PositionOption, type TagLabel } from "./compose";
 
 const AI_MAX_TOKENS = 3000;
@@ -30,13 +30,15 @@ function usePositions() {
   return { positions, mine };
 }
 
-export function Composer({ onCreated }: { onCreated: (id: string) => void }) {
+export function Composer({ mailboxes, onCreated }: { mailboxes: MailWorkspace["mailboxes"]; onCreated: (id: string) => void }) {
   const { positions, mine } = usePositions();
   const ai = useQuery({ queryKey: ["local-ai-status"], queryFn: aiStatus });
   const [notes, setNotes] = useState("");
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
   const [recipients, setRecipients] = useState("");
+  const [mailbox, setMailbox] = useState(mailboxes[0]?.alias ?? "events@pytorch.ph");
+  const [messageType, setMessageType] = useState("other");
   const [mode, setMode] = useState<"ai" | "manual">("manual");
   const [sections, setSections] = useState<DraftSection[]>([]);
   const draftWithAi = useMutation({
@@ -45,7 +47,7 @@ export function Composer({ onCreated }: { onCreated: (id: string) => void }) {
     onError: (error) => toast.error(error instanceof Error ? error.message : "The AI could not draft this."),
   });
   const create = useMutation({
-    mutationFn: () => createDraft({ title, subject, recipients: recipients.split(/[\s,;]+/).filter(Boolean), mode, sections }),
+    mutationFn: () => createDraft({ title, subject, recipients: recipients.split(/[\s,;]+/).filter(Boolean), mailbox, messageType, mode, sections }),
     onSuccess: ({ id }) => { toast.success("Sent to each part's owner for review."); onCreated(id); },
     onError: (error) => toast.error(error instanceof Error ? error.message : "The email was not created."),
   });
@@ -56,6 +58,10 @@ export function Composer({ onCreated }: { onCreated: (id: string) => void }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div><Label htmlFor="mail-title">Title (for officers)</Label><Input id="mail-title" onChange={(event) => setTitle(event.target.value)} value={title} /></div>
         <div><Label htmlFor="mail-subject">Email subject</Label><Input id="mail-subject" onChange={(event) => setSubject(event.target.value)} value={subject} /></div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="text-sm font-medium">Shared mailbox<select className="mt-1 h-10 w-full border border-border bg-surface px-3 text-sm" onChange={(event) => setMailbox(event.target.value)} value={mailbox}>{mailboxes.map((item) => <option key={item.alias} value={item.alias}>{item.label}</option>)}</select></label>
+        <label className="text-sm font-medium">Email type<select className="mt-1 h-10 w-full border border-border bg-surface px-3 text-sm" onChange={(event) => setMessageType(event.target.value)} value={messageType}><option value="workshop">Workshop</option><option value="hackathon">Hackathon</option><option value="competition">Competition</option><option value="talk">Talk</option><option value="learning_lesson">Learning lesson</option><option value="other">Other</option></select></label>
       </div>
       <div><Label htmlFor="mail-recipients">Recipients (comma separated)</Label><Input id="mail-recipients" onChange={(event) => setRecipients(event.target.value)} placeholder="members@pytorch.ph" value={recipients} /></div>
       <div>

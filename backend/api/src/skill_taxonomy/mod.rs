@@ -7,11 +7,15 @@
 //!   publish      validate and store a taxonomy version (skills, categories, raw→skill aliases)
 //!   tally        members per normalized skill under the newest version, most common first
 pub(crate) mod access;
+pub(crate) mod catalog;
 pub(crate) mod publish;
 pub(crate) mod raw_skills;
 pub(crate) mod tally;
 
 pub(crate) use access::can_compile;
+pub(crate) use catalog::{
+    credit_claim_skills, pending_candidates, review_candidate, skill_catalog, sync_claim_skills,
+};
 pub(crate) use publish::publish_taxonomy;
 pub(crate) use raw_skills::raw_skill_counts;
 pub(crate) use tally::skill_tally;

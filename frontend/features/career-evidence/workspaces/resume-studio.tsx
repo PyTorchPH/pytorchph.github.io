@@ -25,14 +25,14 @@ import {
   downloadRenderCvPdf,
   downloadRenderCvYaml,
   resumePdfPageCount,
-  resumeTemplates,
+  renderCvTemplates,
   resumeFromProfilePackage,
   resumeWithPrivateProfile,
   type ResumeTemplateId,
 } from "@pytorch-ph/domain-client/resumes";
 
 type ResumeProfile = NonNullable<ProductViewData["resumeProfile"]>;
-type ResumeTemplate = (typeof resumeTemplates)[number];
+type ResumeTemplate = (typeof renderCvTemplates)[number];
 
 // Mental model: approved evidence becomes one normalized profile; every template, preview and export reads it.
 export function ResumeStudioView({ data }: { data: ProductViewData }) {
@@ -46,7 +46,7 @@ export function ResumeStudioView({ data }: { data: ProductViewData }) {
     : demo ? data.resumeProfile : undefined, [profilePackage.data, profilePackage.isError, data.resumeProfile, demo]);
   const pageCount = usePdfPageCount(profile, templateId);
   const exporter = useExportRunner();
-  const template = resumeTemplates.find((item) => item.id === templateId);
+  const template = renderCvTemplates.find((item) => item.id === templateId);
   if (!profile)
     return (
       <Card className="border-dashed bg-surface py-12 text-center">
@@ -60,7 +60,7 @@ export function ResumeStudioView({ data }: { data: ProductViewData }) {
     <>
       <Link className="mb-4 inline-block text-sm font-semibold text-accent underline" href="/career/resume-viewer/?template=classic&sample=1">View the ATS-ready Classic sample</Link>
       <section className="grid gap-4 md:grid-cols-3">
-        {resumeTemplates.map((item, index) => <TemplateCard index={index} item={item} key={item.id} onOpen={setTemplateId} />)}
+        {renderCvTemplates.map((item, index) => <TemplateCard index={index} item={item} key={item.id} onOpen={setTemplateId} />)}
       </section>
       {templateId && template && (
         <ResumeDialog demo={demo} exporter={exporter} onClose={() => setTemplateId(null)} pageCount={pageCount} profile={profile} template={template} templateId={templateId} />

@@ -19,6 +19,7 @@ import { Button } from "@pytorch-ph/design-system/button";
 import { Input, Label } from "@pytorch-ph/design-system/input";
 import { AppDialog } from "@pytorch-ph/design-system/dialog";
 import { Textarea } from "@pytorch-ph/design-system/textarea";
+import { SkillPicker } from "@pytorch-ph/domain-client/skills";
 import type { EvidenceItem } from "@pytorch-ph/domain-protocol/career-evidence";
 import { evidenceFormSchema, type EvidenceFormValues } from "@pytorch-ph/domain-protocol/career-evidence";
 import { collectionOriginLabel, parseSkills, verificationTone } from "./tones";
@@ -228,6 +229,7 @@ function AiAssistantPanel({ editor, canWrite }: { editor: EvidenceEditor; canWri
 }
 
 function EvidenceFormFields({ form, values }: { form: UseFormReturn<EvidenceFormValues>; values: EvidenceFormValues }) {
+  const selectedSkills = parseSkills(values.skillsText);
   return (
     <>
       <div>
@@ -279,11 +281,8 @@ function EvidenceFormFields({ form, values }: { form: UseFormReturn<EvidenceForm
         />
       </div>
       <div>
-        <Label htmlFor="evidence-skills">Skills</Label>
-        <Input
-          id="evidence-skills"
-          {...form.register("skillsText")}
-        />
+        <input id="evidence-skills" type="hidden" {...form.register("skillsText")} />
+        <SkillPicker onChange={(skills) => form.setValue("skillsText", skills.join(", "), { shouldDirty: true, shouldValidate: true })} selected={selectedSkills} />
         {form.formState.errors.skillsText && (
           <p className="mt-1 text-xs text-danger">
             {form.formState.errors.skillsText.message}

@@ -224,10 +224,13 @@ async fn computed_view(
         }
         "officer/events" => events::delete::officer_event_list(db, actor).await?,
         "officer/mail-collab" => collab_mail::view::list_drafts(db, actor).await?,
+        "officer/mail-workspace" => collab_mail::view::mail_workspace(db, actor).await?,
         _ if path.starts_with("officer/mail-collab/") => {
             collab_mail::view::draft_view(db, actor, &path["officer/mail-collab/".len()..]).await?
         }
         "member/skill-tally" => skill_taxonomy::skill_tally(db).await?,
+        "member/skills/catalog" => skill_taxonomy::skill_catalog(db).await?,
+        "officer/skills/pending" => skill_taxonomy::pending_candidates(db, actor).await?,
         "officer/skills/raw" => raw_skills_for(db, actor).await?,
         _ => return Ok(None),
     };

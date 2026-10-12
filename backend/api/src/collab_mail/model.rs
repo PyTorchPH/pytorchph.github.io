@@ -41,6 +41,8 @@ pub(crate) struct NewDraft {
     pub(crate) title: String,
     pub(crate) subject: String,
     pub(crate) recipients: Vec<String>,
+    pub(crate) mailbox: String,
+    pub(crate) message_type: String,
     pub(crate) mode: &'static str,
     pub(crate) sections: Vec<NewSection>,
 }
@@ -73,6 +75,9 @@ pub(crate) fn parse_new_draft(input: &Value) -> ApiResult<NewDraft> {
         subject: clean_text(input.get("subject"), MAX_SUBJECT)
             .ok_or_else(|| bad("Give the email a subject"))?,
         recipients,
+        mailbox: clean_text(input.get("mailbox"), 160)
+            .ok_or_else(|| bad("Choose a shared mailbox"))?,
+        message_type: parse_message_type(input.get("messageType"))?,
         mode: if input.get("mode").and_then(Value::as_str) == Some("ai") {
             "ai"
         } else {
@@ -80,6 +85,16 @@ pub(crate) fn parse_new_draft(input: &Value) -> ApiResult<NewDraft> {
         },
         sections,
     })
+}
+
+fn parse_message_type(value: Option<&Value>) -> ApiResult<String> {
+    let value = value.and_then(Value::as_str).unwrap_or("other");
+    match value {
+        "workshop" | "hackathon" | "competition" | "talk" | "learning_lesson" | "other" => {
+            Ok(value.to_owned())
+        }
+        _ => Err(bad("Choose a supported email type")),
+    }
 }
 
 fn parse_section(section: &Value) -> ApiResult<NewSection> {

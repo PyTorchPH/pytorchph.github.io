@@ -40,6 +40,56 @@ pub(crate) async fn list_drafts(db: &SqlitePool, actor: &Viewer) -> ApiResult<Va
     Ok(Value::Array(rows))
 }
 
+/// Role-scoped mailbox shell. Inbound rows are sanitized records ingested by the private mail
+/// service; collaborative drafts are adapted into the same list without exposing UUID entry.
+pub(crate) async fn mail_workspace(db: &SqlitePool, actor: &Viewer) -> ApiResult<Value> {
+    let aliases: Vec<(String, String, i64, i64, i64, i64, i64)> = if actor.role == "admin" {
+        sqlx::query_as(
+            "SELECT alias,label,1,1,1,1,1 FROM mail_aliases WHERE active=1 ORDER BY label",
+        )
+        .fetch_all(db)
+        .await
+        .map_err(internal)?
+    } else {
+        sqlx::query_as("SELECT a.alias,a.label,MAX(g.can_read),MAX(g.can_draft),MAX(g.can_approve),MAX(g.can_send_as),MAX(g.can_manage) FROM mail_aliases a JOIN mail_alias_grants g ON g.alias=a.alias JOIN member_positions p ON p.position_slug=g.position_slug WHERE p.member_id=? AND a.active=1 GROUP BY a.alias,a.label ORDER BY a.label")
+            .bind(&actor.id).fetch_all(db).await.map_err(internal)?
+    };
+    let allowed: Vec<String> = aliases.iter().map(|row| row.0.clone()).collect();
+    let inbound: Vec<(String, String, String, String, String, String, String)> = if allowed
+        .is_empty()
+    {
+        Vec::new()
+    } else if actor.role == "admin" {
+        sqlx::query_as("SELECT id,mailbox_alias,folder,message_type,subject,correspondent_label,received_at FROM mail_workspace_messages WHERE archived=0 ORDER BY received_at DESC LIMIT 200")
+            .fetch_all(db).await.map_err(internal)?
+    } else {
+        sqlx::query_as("SELECT id,mailbox_alias,folder,message_type,subject,correspondent_label,received_at FROM mail_workspace_messages WHERE mailbox_alias IN (SELECT a.alias FROM mail_aliases a JOIN mail_alias_grants g ON g.alias=a.alias JOIN member_positions p ON p.position_slug=g.position_slug WHERE p.member_id=? AND g.can_read=1) AND archived=0 ORDER BY received_at DESC LIMIT 200")
+            .bind(&actor.id).fetch_all(db).await.map_err(internal)?
+    };
+    let drafts = list_drafts(db, actor).await?;
+    let mut items = inbound.into_iter().map(|(id,mailbox,folder,kind,subject,correspondent,at)| json!({"id":id,"mailbox":mailbox,"folder":folder,"messageType":kind,"title":subject,"correspondent":correspondent,"updatedAt":at})).collect::<Vec<_>>();
+    for draft in drafts.as_array().into_iter().flatten() {
+        let id = draft["id"].as_str().unwrap_or("");
+        let meta: Option<(String, String)> =
+            sqlx::query_as("SELECT mailbox_alias,message_type FROM collab_drafts WHERE id=?")
+                .bind(id)
+                .fetch_optional(db)
+                .await
+                .map_err(internal)?;
+        let (mailbox, kind) = meta.unwrap_or_else(|| ("events@pytorch.ph".into(), "other".into()));
+        if allowed.contains(&mailbox) || draft["isCreator"].as_bool() == Some(true) {
+            let mut item = draft.clone();
+            item["mailbox"] = json!(mailbox);
+            item["folder"] = json!("drafts");
+            item["messageType"] = json!(kind);
+            items.push(item);
+        }
+    }
+    Ok(
+        json!({"mailboxes":aliases.into_iter().map(|(alias,label,read,draft,approve,send_as,manage)|json!({"alias":alias,"label":label,"permissions":{"read":read==1,"draft":draft==1,"approve":approve==1,"sendAs":send_as==1,"manage":manage==1}})).collect::<Vec<_>>(),"items":items}),
+    )
+}
+
 pub(crate) async fn draft_view(
     db: &SqlitePool,
     actor: &Viewer,

@@ -9,6 +9,7 @@ import { fetchJson } from "@pytorch-ph/domain-client/transport";
 import type { DraftSection } from "./compose";
 
 export type DraftSummary = { id: string; title: string; stage: string; openTasks: number; myTurn: boolean; isCreator: boolean; updatedAt: string };
+export type MailWorkspace = { mailboxes:Array<{alias:string;label:string;permissions:{read:boolean;draft:boolean;approve:boolean;sendAs:boolean;manage:boolean}}>; items:Array<DraftSummary & {mailbox:string;folder:"inbox"|"sent"|"drafts";messageType:string;correspondent?:string}> };
 export type ViewTag = { id: string; label: string; phrase: string; owner?: string; state: string; sectionOrd?: number };
 export type ViewQuestion = { id: string; prompt: string; answer: string | null };
 export type ViewSection = { id: string; ord: number; owner: string; isMine: boolean; state: string; content: string; contentHash: string; tags: ViewTag[]; questions: ViewQuestion[] };
@@ -23,8 +24,9 @@ const send = <T>(path: string, method: string, body: unknown) =>
   fetchJson<T>(`${BASE}${path}`, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export const listDrafts = () => fetchJson<DraftSummary[]>(BASE, { cache: "no-store" });
+export const fetchMailWorkspace = () => fetchJson<MailWorkspace>("/api/officer/mail-workspace", { cache: "no-store" });
 export const fetchDraft = (id: string) => fetchJson<DraftView>(`${BASE}/${encodeURIComponent(id)}`, { cache: "no-store" });
-export const createDraft = (draft: { title: string; subject: string; recipients: string[]; mode: "ai" | "manual"; sections: DraftSection[] }) => send<{ id: string }>("", "POST", draft);
+export const createDraft = (draft: { title: string; subject: string; recipients: string[]; mailbox: string; messageType: string; mode: "ai" | "manual"; sections: DraftSection[] }) => send<{ id: string }>("", "POST", draft);
 export const editSection = (draft: string, section: string, basedOnHash: string, content: string) => send<{ state: string }>(`/${draft}/sections/${section}`, "PUT", { basedOnHash, content });
 export const confirmSection = (draft: string, section: string, basedOnHash: string) => send(`/${draft}/sections/${section}/confirm`, "POST", { basedOnHash });
 export const setTag = (draft: string, tag: string, phrase: string) => send(`/${draft}/tags/${tag}`, "PUT", { phrase });

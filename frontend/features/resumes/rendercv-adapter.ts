@@ -7,6 +7,14 @@ const schemaUrl = "https://raw.githubusercontent.com/rendercv/rendercv/refs/tags
 
 const renderCvTheme: Record<ResumeTemplateId, string> = {
   classic: "classic",
+  moderncv: "moderncv",
+  engineeringresumes: "engineeringresumes",
+  engineeringclassic: "engineeringclassic",
+  sb2nov: "sb2nov",
+  harvard: "harvard",
+  ember: "ember",
+  ink: "ink",
+  opal: "opal",
   modern: "moderncv",
   compact: "engineeringresumes",
 };

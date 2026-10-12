@@ -22,7 +22,7 @@ use super::{
     request_fields::{is_valid_reason, trimmed_text},
     rubric, sanctions,
 };
-use crate::{ApiError, ApiResult, bad, identity::session::Viewer, internal};
+use crate::{ApiError, ApiResult, bad, identity::session::Viewer, internal, skill_taxonomy};
 use axum::http::StatusCode;
 use serde_json::Value;
 use sqlx::{SqliteConnection, SqlitePool};
@@ -286,6 +286,7 @@ async fn award_rubric_points(
         .ok_or(bad("Published rubric level required"))?;
     mark_claim_approved(conn, officer, claim.id, points, reason, now).await?;
     credit_verified_points(conn, officer, claim, points, now).await?;
+    skill_taxonomy::credit_claim_skills(conn, claim.id, &claim.member_id, &officer.id, now).await?;
     queue_leaderboard_refresh(conn, now).await?;
     Ok(version)
 }

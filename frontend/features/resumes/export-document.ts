@@ -1,11 +1,11 @@
 import type { ResumeProfile, ResumeProfileSection } from "@pytorch-ph/domain-protocol/career-evidence";
-import { resumeTemplates, type ResumeTemplateId } from "@pytorch-ph/domain-protocol/resumes";
+import { renderCvTemplates, resumeTemplates, type ResumeTemplateId } from "@pytorch-ph/domain-protocol/resumes";
 import { awardParagraphRuns, entryTitleRuns, type ResumeTextRun } from "./entry-presentation";
 import { drawPdfParagraphRow, wrapPdfParagraph } from "./render-pdf-paragraph";
 import { renderCvYaml } from "./rendercv-adapter";
 import { renderCvPdfBytes } from "./rendercv-typst";
 
-export { resumeTemplates, type ResumeTemplateId };
+export { renderCvTemplates, resumeTemplates, type ResumeTemplateId };
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character] || character);
