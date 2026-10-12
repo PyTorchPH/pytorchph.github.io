@@ -6,4 +6,5 @@ location: "Quezon City"
 format: "In person"
 summary: "Lightning talks from members, followed by open tables for questions and project help."
 sample: true
+published: false
 ---

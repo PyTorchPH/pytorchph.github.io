@@ -106,6 +106,7 @@ pub(crate) async fn send_draft(
     input: &Value,
 ) -> ApiResult<Value> {
     let mut tx = db.begin().await.map_err(internal)?;
+    advance(&mut tx, draft_id).await?;
     if stage_of(&mut tx, draft_id).await? != "sending" {
         return Err(ApiError(
             StatusCode::CONFLICT,
@@ -189,14 +190,19 @@ async fn is_ready(tx: &mut Tx<'_>, draft_id: &str) -> ApiResult<bool> {
 }
 
 async fn approved(tx: &mut Tx<'_>, draft_id: &str, step: &str) -> ApiResult<bool> {
-    let found: Option<(i64,)> =
-        sqlx::query_as("SELECT 1 FROM collab_approvals WHERE draft_id = ? AND step = ?")
-            .bind(draft_id)
-            .bind(step)
-            .fetch_optional(&mut **tx)
-            .await
-            .map_err(internal)?;
-    Ok(found.is_some())
+    let position = if step == "president" {
+        PRESIDENT
+    } else {
+        SECRETARIAT
+    };
+    let required = if step == "president" {
+        crate::organization::presidency::required_in(tx).await?
+    } else {
+        1
+    };
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(DISTINCT a.approver_id) FROM collab_approvals a JOIN member_positions p ON p.member_id = a.approver_id AND p.position_slug = ? WHERE a.draft_id = ? AND a.step = ?")
+        .bind(position).bind(draft_id).bind(step).fetch_one(&mut **tx).await.map_err(internal)?;
+    Ok(count >= required)
 }
 
 pub(crate) async fn assembled_now(tx: &mut Tx<'_>, draft_id: &str) -> ApiResult<(String, String)> {

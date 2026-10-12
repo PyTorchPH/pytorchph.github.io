@@ -6,4 +6,5 @@ location: "Manila"
 format: "In person"
 summary: "Train a small convolutional network on a public dataset, from loading data to checking accuracy."
 sample: true
+published: false
 ---

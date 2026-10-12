@@ -42,6 +42,19 @@ retain email confirmation and RLS.
 Use `npm run build` and `npm start`. Production never uses local demo authentication.
 No live deployment or data migration is included in this adaptation.
 
+## Officer-managed website content
+
+The current officer portal includes **Website Content** at `/portal/admin/website/`, also linked
+from Event Workflow. Manage branding, About narrative, leadership, events/programs, Campus Labs,
+news/recaps and public footer contacts there. Public pages load approved content from the API and
+refresh it while visible; content publication does not require a site rebuild.
+
+Two equal-authority presidential seats are supported. `PRESIDENT_REQUIRED_APPROVALS=2` requires
+two distinct current presidents by default; explicit `1` enables one-approval mode. Draft edits
+remain private until publication. Logo replacement and binary photo uploads are deferred.
+See the [managed website content plan](docs/plans/2026-10-12-managed-website-content.md) for scope,
+existing integrations, input requirements, configuration, verification and migration recovery.
+
 ## Staging performance and cost efficiency
 
 Assessment: **2026-10-12**, `pytorch-ph-ec2-assessment-2026-10-12`.

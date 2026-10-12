@@ -621,3 +621,12 @@ $hero_kicker: #ffb59e;
   top: 2%;
   bottom: 14%;
 }
+
+// Managed content shares one responsive card layout across all public pages.
+.ph-managed-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 24px; margin: 24px 0; }
+.ph-managed-grid .ph-card { min-width: 0; overflow-wrap: anywhere; }
+.ph-managed-grid p { white-space: pre-wrap; }
+.ph-managed-photo { width: 240px; max-width: 100%; height: 240px; object-fit: cover; border-radius: 16px; margin-bottom: 20px; }
+.ph-island-image { width: 100%; height: auto; margin-bottom: 24px; }
+.ph-footer-contacts { flex: 0 0 100%; display: flex; flex-wrap: wrap; gap: 20px; padding: 16px 0; color: white; }
+.ph-footer-contacts[hidden] { display: none; }

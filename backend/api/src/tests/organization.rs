@@ -316,3 +316,52 @@ async fn the_chart_marks_exactly_the_positions_the_viewer_may_change() {
         ]
     );
 }
+
+#[tokio::test]
+async fn two_presidents_have_equal_authority_and_a_third_seat_is_refused() {
+    let (state, ..) = fixture().await;
+    let first = person(&state.db, "first-president", "officer").await;
+    let second = person(&state.db, "second-president", "member").await;
+    let third = person(&state.db, "third-president", "member").await;
+    let outsider = person(&state.db, "outsider-president", "officer").await;
+    seat(&state.db, &first, "president").await;
+    assert_eq!(
+        status_of(
+            assignments::assign_position(&state.db, &outsider, &second.id, "president").await
+        ),
+        StatusCode::FORBIDDEN
+    );
+    assignments::assign_position(&state.db, &first, &second.id, "president")
+        .await
+        .unwrap();
+    assert_eq!(role_of(&state.db, &second).await, "officer");
+    for actor in [&first, &second] {
+        assert!(
+            authority(&state.db, actor, "president", "engineering_lead")
+                .await
+                .allowed
+        );
+        let chart = chart::org_chart(&state.db, actor).await.unwrap();
+        let president = chart["positions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|p| p["slug"] == "president")
+            .unwrap();
+        assert_eq!(president["maxHolders"], 2);
+        assert_eq!(president["canManage"], true);
+    }
+    assert_eq!(
+        status_of(assignments::assign_position(&state.db, &first, &third.id, "president").await),
+        StatusCode::CONFLICT
+    );
+    assert!(
+        sqlx::query("INSERT INTO member_positions VALUES (?, 'president', 'now')")
+            .bind(&third.id)
+            .execute(&state.db)
+            .await
+            .is_err()
+    );
+    seat(&state.db, &third, "cto").await;
+    assert!(sqlx::query("UPDATE member_positions SET position_slug='president' WHERE member_id=? AND position_slug='cto'").bind(&third.id).execute(&state.db).await.is_err());
+}

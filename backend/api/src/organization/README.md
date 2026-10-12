@@ -17,7 +17,8 @@ the position and hierarchy version that authorized them.
 - Web database: proposals, tickets, handoffs, deliverables, revisions, contribution facts, and signed
   authorization references.
 
-One position has at most one active holder. One user may hold several positions. `is_filled` is
+The `president` position has exactly two available equal-authority seats, displayed as
+President / PyTorch Ambassador. Other single-seat positions have at most one active holder. One user may hold several positions. `is_filled` is
 derived from an active assignment and MUST NOT be stored as an independent boolean.
 
 ## Existing files and target changes
@@ -77,3 +78,15 @@ rankings remain hidden; minors require guardian/member opt-in before appearing.
 Record actor ID, position snapshot, hierarchy/policy version, resource, action, decision, timestamp,
 and correlation ID. The private audit service signs canonical decision metadata. Revocation tests
 must demonstrate that cached capabilities and alias grants stop working within the configured bound.
+
+## Dual presidency and approval quorum
+
+- `PRESIDENT_REQUIRED_APPROVALS` defaults to `2`; only exact values `1` and `2` are accepted. Invalid configuration prevents startup before database initialization.
+- Startup stores the validated policy in the API database; all processes sharing that database MUST use the same setting. Changes take effect on restart.
+- Existing `president` authority applies equally to both holders. A sitting president may appoint another member to the second seat; self-appointment and a third holder are refused. The existing developer-controlled migration bootstrap remains available for the first seat.
+- SQLite insert/update triggers enforce the two-seat cap for invitations, reservations and direct writes. Existing assignments and approvals are preserved by migration `0026_dual_presidency.sql`.
+- Collaborative mail requires the configured number of distinct current presidents for the exact assembled content. Duplicate approvals are idempotent; content changes invalidate prior approvals. Send recomputes authority/quorum, including after holder removal or policy changes.
+- Routed mail `executive` approval requires the configured number of current presidential holders. Vice-presidential executive role membership alone does not supply a presidential vote. Other routed roles retain their one-current-holder approval requirement.
+- `foundation_ambassador` remains a separate existing position; it is not silently elevated to president. No new named individuals or unrelated roles are assigned.
+- Migration review: back up the database before any future deployment. No live migration is performed by this change. Roll back code together with the pre-migration database backup; do not discard a second holder or newer approval rows via an ad-hoc reverse migration. Under default quorum 2, drafts remain blocked until both seats are filled.
+- Reuse: existing SQLx/SQLite transactions and role checks; no new dependency. References: https://www.sqlite.org/lang_createtable.html and https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html.

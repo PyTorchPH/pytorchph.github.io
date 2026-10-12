@@ -38,6 +38,7 @@ mod programs;
 mod reference_data;
 mod schools;
 mod scoring;
+mod site_content;
 mod skill_taxonomy;
 #[cfg(test)]
 mod tests;

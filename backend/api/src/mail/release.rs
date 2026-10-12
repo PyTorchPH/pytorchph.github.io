@@ -77,12 +77,13 @@ async fn ensure_approvals_complete(
     revision: i64,
     content: &Content,
 ) -> ApiResult<()> {
-    let approved: Vec<(String,)> = sqlx::query_as("SELECT a.role FROM mail_approvals a JOIN officer_roles r ON r.member_id=a.approver_id AND r.role=a.role WHERE a.draft_id=? AND a.revision=?")
-        .bind(id).bind(revision).fetch_all(&state.db).await.map_err(internal)?;
-    let complete = content
-        .required_roles
-        .iter()
-        .all(|role| approved.iter().any(|row| &row.0 == role));
+    let required = crate::organization::presidency::required(&state.db).await?;
+    let mut complete = true;
+    for role in &content.required_roles {
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(DISTINCT a.approver_id) FROM mail_approvals a JOIN officer_roles r ON r.member_id=a.approver_id AND r.role=a.role WHERE a.draft_id=? AND a.revision=? AND a.role=? AND (a.role != 'executive' OR EXISTS (SELECT 1 FROM member_positions p WHERE p.member_id=a.approver_id AND p.position_slug='president'))")
+            .bind(id).bind(revision).bind(role).fetch_one(&state.db).await.map_err(internal)?;
+        complete &= count >= if role == "executive" { required } else { 1 };
+    }
     if !complete {
         return Err(bad("Required approvals are incomplete"));
     }
@@ -110,4 +111,83 @@ async fn queue_dispatch(
         .bind(chrono::Utc::now().to_rfc3339()).execute(&mut *tx).await.map_err(internal)?;
     tx.commit().await.map_err(internal)?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod presidential_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn executive_release_requires_distinct_current_presidents_for_the_exact_revision() {
+        let (state, _, first, second) = crate::tests::fixture().await;
+        let db = &state.db;
+        for id in [&first, &second] {
+            sqlx::query("INSERT INTO member_positions VALUES (?, 'president', 'now')")
+                .bind(id)
+                .execute(db)
+                .await
+                .unwrap();
+            sqlx::query("INSERT INTO officer_roles VALUES (?, 'executive')")
+                .bind(id)
+                .execute(db)
+                .await
+                .unwrap();
+        }
+        sqlx::query("INSERT INTO mail_routes VALUES ('quorum-test', '[\"executive\"]', 'executive', ?, 'now')").bind(&first).execute(db).await.unwrap();
+        sqlx::query("INSERT INTO mail_drafts VALUES ('quorum-test', 'quorum-test', ?, 1, 'draft', 'now', 'now')").bind(&first).execute(db).await.unwrap();
+        sqlx::query("INSERT INTO mail_revisions(draft_id, revision, recipients_json, subject, body, content_hash, required_roles_json, sender_role, edited_by, created_at) VALUES ('quorum-test', 1, '[]', 'Subject', 'Body', 'hash', '[\"executive\"]', 'executive', ?, 'now')").bind(&first).execute(db).await.unwrap();
+        let content = Content {
+            recipients: vec!["a@example.test".into()],
+            subject: "Subject".into(),
+            body: "Body".into(),
+            pdf_text: None,
+            required_roles: vec!["executive".into()],
+            sender_role: "executive".into(),
+        };
+        let approve = |id: String| {
+            let db = db.clone();
+            async move {
+                sqlx::query("INSERT OR IGNORE INTO mail_approvals VALUES ('quorum-test', 1, 'executive', ?, 'now')").bind(id).execute(&db).await.unwrap();
+            }
+        };
+        approve(first.clone()).await;
+        approve(first.clone()).await;
+        assert!(
+            ensure_approvals_complete(&state, "quorum-test", 1, &content)
+                .await
+                .is_err()
+        );
+        crate::organization::presidency::configure(db, 1)
+            .await
+            .unwrap();
+        assert!(
+            ensure_approvals_complete(&state, "quorum-test", 1, &content)
+                .await
+                .is_ok()
+        );
+        crate::organization::presidency::configure(db, 2)
+            .await
+            .unwrap();
+        approve(second.clone()).await;
+        assert!(
+            ensure_approvals_complete(&state, "quorum-test", 1, &content)
+                .await
+                .is_ok()
+        );
+        assert!(
+            ensure_approvals_complete(&state, "quorum-test", 2, &content)
+                .await
+                .is_err()
+        );
+        sqlx::query("DELETE FROM member_positions WHERE member_id=? AND position_slug='president'")
+            .bind(&second)
+            .execute(db)
+            .await
+            .unwrap();
+        assert!(
+            ensure_approvals_complete(&state, "quorum-test", 1, &content)
+                .await
+                .is_err()
+        );
+    }
 }

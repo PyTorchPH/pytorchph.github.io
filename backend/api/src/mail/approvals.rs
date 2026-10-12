@@ -46,7 +46,7 @@ pub async fn approve_draft(
             "Approval role not permitted",
         ));
     }
-    sqlx::query("INSERT INTO mail_approvals(draft_id,revision,role,approver_id,created_at) VALUES (?,?,?,?,?) ON CONFLICT(draft_id,revision,role) DO UPDATE SET approver_id=excluded.approver_id,created_at=excluded.created_at")
+    sqlx::query("INSERT INTO mail_approvals(draft_id,revision,role,approver_id,created_at) VALUES (?,?,?,?,?) ON CONFLICT(draft_id,revision,role,approver_id) DO UPDATE SET created_at=excluded.created_at")
         .bind(&id).bind(draft.revision).bind(&input.role).bind(&actor.id).bind(chrono::Utc::now().to_rfc3339())
         .execute(&state.db).await.map_err(internal)?;
     Ok(StatusCode::NO_CONTENT)

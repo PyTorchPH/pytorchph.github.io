@@ -58,6 +58,7 @@ async fn special_read(
     query: Option<&str>,
 ) -> ApiResult<Option<Value>> {
     Ok(match path {
+        "officer/site-content" => Some(crate::site_content::store::draft(db, actor).await?),
         // AI keys and calls stay in the member's extension; the server only lists providers.
         "backend/local-ai/providers" => Some(operations::ai_providers()),
         "member/leaderboard-identity" if query.is_some() => {

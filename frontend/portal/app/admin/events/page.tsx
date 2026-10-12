@@ -11,7 +11,7 @@ import { EventList } from "./event-list";
 // submissions were removed, so this is the only way an event is added.
 export default function EventWorkflowPage() {
   const [section, setSection] = useState<"all" | "workshops" | "hackathons" | "learning" | "create" | "results">("all");
-  return <AppShell><div className="space-y-6">
+  return <AppShell><div className="space-y-6"><a href="/admin/website/" className="text-sm font-semibold text-accent">Manage public event listings and learning programs → Website Content</a>
     <section className="page-hero" data-tour="workflow-heading"><Badge variant="orange">Officers only</Badge><h1 className="mt-3 text-3xl font-extrabold">Event workflow</h1><p className="mt-3 max-w-3xl leading-7 text-muted">Create organization events and record entrants and results. Email drafts are in the Email workspace.</p></section>
     <div aria-label="Event workflow sections"><SegmentedTabs items={[{ value: "all", label: "All events" }, { value: "workshops", label: "Workshops" }, { value: "hackathons", label: "Hackathons" }, { value: "learning", label: "Learning lessons" }, { value: "create", label: "Create event" }, { value: "results", label: "Manage event results" }]} onChange={setSection} value={section} /></div>
     <TabPanel>

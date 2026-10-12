@@ -130,6 +130,9 @@ async fn ensure_manages(tx: &mut Tx<'_>, actor: &Viewer, position: &str) -> ApiR
         return Err(ApiError(StatusCode::NOT_FOUND, "Unknown position"));
     }
     let directly_manages = tree::manages(tx, &actor.id, position).await?;
+    if position == "president" && tree::holds(tx, &actor.id, "president").await? {
+        return Ok(());
+    }
     let Some(parent_position) = tree::parent_of(tx, position).await? else {
         return Err(ApiError(
             StatusCode::FORBIDDEN,
@@ -154,16 +157,20 @@ async fn ensure_manages(tx: &mut Tx<'_>, actor: &Viewer, position: &str) -> ApiR
 }
 
 async fn ensure_seat_free(tx: &mut Tx<'_>, position: &str) -> ApiResult<()> {
-    if tree::seats_of(tx, position).await?.as_deref() != Some("one") {
+    let limit = if position == "president" {
+        2
+    } else if tree::seats_of(tx, position).await?.as_deref() == Some("one") {
+        1
+    } else {
         return Ok(());
-    }
+    };
     let (holders,): (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM member_positions WHERE position_slug = ?")
             .bind(position)
             .fetch_one(&mut **tx)
             .await
             .map_err(internal)?;
-    if holders > 0 {
+    if holders >= limit {
         return Err(ApiError(
             StatusCode::CONFLICT,
             "This position is already filled; remove its holder first",

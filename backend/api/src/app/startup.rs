@@ -18,9 +18,13 @@ type StartupResult<T> = Result<T, Box<dyn std::error::Error>>;
 // background workers start, and only then does the socket open for requests.
 pub(crate) async fn run() -> StartupResult<()> {
     init_tracing();
+    let presidential_required = crate::organization::presidency::parse_required(
+        env::var("PRESIDENT_REQUIRED_APPROVALS").ok().as_deref(),
+    )?;
     let admission_config = Config::from_env();
     let db = open_database(&admission_config).await?;
     prepare_database(&db).await?;
+    crate::organization::presidency::configure(&db, presidential_required).await?;
     let state = build_state(db.clone())?;
     tokio::spawn(jobs::run_job_worker(db));
     let gate = Admission::new(admission_config, state.clone());

@@ -6,4 +6,5 @@ location: "Baguio City"
 format: "In person"
 summary: "Eight sessions on detection and segmentation, with a small project at the end."
 sample: true
+published: false
 ---

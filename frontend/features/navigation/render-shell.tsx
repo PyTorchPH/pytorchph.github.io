@@ -59,6 +59,7 @@ const officerNavItems: NavItem[] = [
   { href: "/admin/dashboard", label: "Command Center", icon: LayoutDashboard },
   { href: "/admin/scoring", label: "Skill comparisons", icon: Scale },
   { href: "/admin/events", label: "Event Workflow", icon: ClipboardList },
+  { href: "/admin/website", label: "Website Content", icon: LayoutDashboard },
   { href: "/admin/organization", label: "Organization", icon: Network },
   { href: "/admin/mail", label: "Email Drafts", icon: Mail },
   { href: "/admin/evidence", label: "Evidence Review", icon: Search },

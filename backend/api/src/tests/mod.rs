@@ -61,9 +61,10 @@ mod profile_package;
 mod scoring;
 mod scoring_quarters;
 mod scoring_scheduler;
+mod site_content;
 mod skill_taxonomy;
 
-async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
+pub(crate) async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
     let db = SqlitePoolOptions::new()
         .max_connections(1)
         .connect("sqlite::memory:")

@@ -1,0 +1,11 @@
+---
+layout: ph
+title: PyTorch Philippines Campus Labs
+permalink: /campus-labs/
+body-class: ph-campus-labs
+hero_title: "PyTorch Philippines Campus Labs"
+hero_lead: "University-based communities across Luzon, Visayas, and Mindanao: connect, learn, collaborate, and build with PyTorch."
+---
+<section class="ph-section"><div class="container"><h2>University communities, nationwide collaboration</h2><p>Campus Labs brings students, educators and researchers together for peer learning, open-source collaboration and practical PyTorch projects. Chapters connect local university initiatives with the wider Philippine community.</p><p>Published chapter information is maintained by community officers.</p></div></section>
+{% assign island_groups = "Luzon,Visayas,Mindanao" | split: "," %}
+{% for island in island_groups %}<section class="ph-section{% cycle '', ' ph-section-grey' %}" aria-labelledby="campus-{{ island | downcase }}"><div class="container"><img class="ph-island-image" src="{{ site.baseurl }}/assets/images/campus-{{ island | downcase }}.svg" alt="{{ island }} Campus Labs illustration" width="960" height="320"><h2 id="campus-{{ island | downcase }}">{{ island }}</h2><div class="ph-managed-grid" data-site-content="chapters-{{ island }}"><p class="ph-empty">Loading published chapters…</p></div></div></section>{% endfor %}

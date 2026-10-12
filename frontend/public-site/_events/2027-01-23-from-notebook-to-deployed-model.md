@@ -6,4 +6,5 @@ location: "Cebu City"
 format: "In person"
 summary: "Export a trained model, serve it behind a small API, and measure how fast it answers."
 sample: true
+published: false
 ---

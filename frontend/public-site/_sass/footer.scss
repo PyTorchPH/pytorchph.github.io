@@ -136,8 +136,15 @@
   position: relative;
   @include desktop {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: rem(24px);
+  }
+
+  .trademark-disclaimer {
+    flex: 0 0 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }
 

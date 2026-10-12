@@ -6,4 +6,5 @@ location: "Iloilo City"
 format: "Hybrid"
 summary: "Student teams compete on one shared dataset, then present what worked and what did not."
 sample: true
+published: false
 ---

@@ -6,4 +6,5 @@ location: "Online"
 format: "Online"
 summary: "A weekly group that works through the official PyTorch tutorials, one chapter at a time."
 sample: true
+published: false
 ---

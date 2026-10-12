@@ -9,6 +9,7 @@
 pub(crate) mod assignments;
 pub(crate) mod authorization;
 pub(crate) mod chart;
+pub(crate) mod presidency;
 pub(crate) mod reservations;
 pub(crate) mod role_sync;
 pub(crate) mod tree;

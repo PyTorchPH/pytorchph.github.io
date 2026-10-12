@@ -52,12 +52,16 @@ jobs:
         working-directory: frontend/public-site
         env:
           JEKYLL_ENV: production
+          PUBLIC_SITE_FACEBOOK_URL: ${{ vars.PUBLIC_SITE_FACEBOOK_URL }}
+          PUBLIC_SITE_LINKEDIN_URL: ${{ vars.PUBLIC_SITE_LINKEDIN_URL }}
+          PUBLIC_SITE_CONTACT_EMAIL: ${{ vars.PUBLIC_SITE_CONTACT_EMAIL }}
           JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci --no-audit --no-fund
           mkdir -p assets/vendor
           cp node_modules/jquery/dist/jquery.min.js node_modules/@popperjs/core/dist/umd/popper.min.js node_modules/anchor-js/anchor.min.js assets/vendor/
           cp node_modules/bootstrap/dist/js/bootstrap.bundle.min.js assets/vendor/bootstrap.min.js
+          node scripts/prepare-site-content.mjs
           node scripts/fetch-pytorch-news.mjs
           bundle exec jekyll build
 

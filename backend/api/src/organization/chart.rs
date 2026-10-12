@@ -46,7 +46,10 @@ pub(crate) async fn org_chart_with_identity(
         .filter(|(_, id, _, _)| id == &viewer.id)
         .map(|(slug, ..)| slug.clone())
         .collect();
-    let managed = managed_by(&rows, &held);
+    let mut managed = managed_by(&rows, &held);
+    if held.contains("president") {
+        managed.insert("president".to_owned());
+    }
     let positions: Vec<Value> = rows
         .iter()
         .map(|(slug, title, department, department_name, rank, seats, parent)| {
@@ -58,6 +61,7 @@ pub(crate) async fn org_chart_with_identity(
             json!({
                 "slug": slug, "title": title, "department": department, "departmentName": department_name,
                 "rank": rank, "seats": seats, "parent": parent, "holders": holders,
+                "maxHolders": if slug == "president" { Some(2) } else if seats == "one" { Some(1) } else { None },
                 "canManage": managed.contains(slug), "heldByViewer": held.contains(slug),
             })
         })

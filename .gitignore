@@ -63,3 +63,7 @@ Thumbs.db
 
 # Local API data and build output
 backend/api/var/
+
+# Generated allowlisted public content defaults (prepare-site-content.mjs).
+/frontend/public-site/assets/site-content-defaults.json
+/frontend/public-site/_data/site_content.json

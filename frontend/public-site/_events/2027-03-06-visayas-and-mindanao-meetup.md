@@ -6,4 +6,5 @@ location: "Cagayan de Oro"
 format: "Hybrid"
 summary: "Members from Visayas and Mindanao share projects and plan the next regional events."
 sample: true
+published: false
 ---

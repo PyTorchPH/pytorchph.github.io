@@ -36,6 +36,7 @@ async fn parts_reach_only_their_owners_and_the_chain_sends_the_exact_approved_em
     let treasurer = officer_at(db, "treasurer", "treasurer").await;
     let secretary = officer_at(db, "secretary", "secretary_general").await;
     let president = officer_at(db, "president", "president").await;
+    let co_president = officer_at(db, "co-president", "president").await;
     let comms = officer_at(db, "comms", "communications_officer").await;
 
     let created = create::create_draft(db, &creator, &json!({
@@ -154,6 +155,19 @@ async fn parts_reach_only_their_owners_and_the_chain_sends_the_exact_approved_em
     chain::approve_step(db, &president, &draft, &json!({"assembledHash": assembled}))
         .await
         .unwrap();
+    assert_eq!(view_of(db, &creator, &draft).await["stage"], "president");
+    chain::approve_step(db, &president, &draft, &json!({"assembledHash": assembled}))
+        .await
+        .unwrap();
+    assert_eq!(view_of(db, &creator, &draft).await["stage"], "president");
+    chain::approve_step(
+        db,
+        &co_president,
+        &draft,
+        &json!({"assembledHash": assembled}),
+    )
+    .await
+    .unwrap();
     assert_eq!(view_of(db, &creator, &draft).await["stage"], "sending");
 
     assert_eq!(
@@ -220,4 +234,48 @@ async fn officers_outside_the_email_cannot_see_or_edit_it_and_vacant_owners_are_
     assert!(create::create_draft(db, &creator, &vacant).await.is_err());
     let bad_tag = json!({"title": "T", "subject": "S", "recipients": ["a@example.test"], "sections": [{"content": "Hello.", "ownerPosition": "treasurer", "tags": [{"label": "date", "phrase": "not in text", "ownerPosition": "treasurer"}]}]});
     assert!(create::create_draft(db, &creator, &bad_tag).await.is_err());
+}
+
+#[tokio::test]
+async fn one_approval_mode_and_revoked_president_are_rechecked_before_send() {
+    let (state, ..) = fixture().await;
+    let db = &state.db;
+    crate::organization::presidency::configure(db, 1)
+        .await
+        .unwrap();
+    let creator = officer_at(db, "creator-single", "head_partnerships_outreach").await;
+    let secretary = officer_at(db, "secretary-single", "secretary_general").await;
+    let president = officer_at(db, "president-single", "president").await;
+    let comms = officer_at(db, "comms-single", "communications_officer").await;
+    let created = create::create_draft(db, &creator, &json!({"title":"T", "subject":"S", "recipients":["a@example.test"], "mode":"manual", "sections":[{"content":"Confirmed content", "ownerPosition":"head_partnerships_outreach"}]})).await.unwrap();
+    let draft = created["id"].as_str().unwrap();
+    let hash = view_of(db, &creator, draft).await["email"]["assembledHash"].clone();
+    chain::approve_step(db, &secretary, draft, &json!({"assembledHash":hash}))
+        .await
+        .unwrap();
+    chain::approve_step(db, &president, draft, &json!({"assembledHash":hash}))
+        .await
+        .unwrap();
+    assert_eq!(view_of(db, &creator, draft).await["stage"], "sending");
+    // Raising the requirement after approval must not let a cached stage bypass the quorum.
+    crate::organization::presidency::configure(db, 2)
+        .await
+        .unwrap();
+    assert_eq!(
+        status(chain::send_draft(db, &comms, draft, &json!({"assembledHash":hash})).await),
+        StatusCode::CONFLICT
+    );
+    crate::organization::presidency::configure(db, 1)
+        .await
+        .unwrap();
+    sqlx::query("DELETE FROM member_positions WHERE member_id=? AND position_slug='president'")
+        .bind(&president.id)
+        .execute(db)
+        .await
+        .unwrap();
+    assert_eq!(
+        status(chain::send_draft(db, &comms, draft, &json!({"assembledHash":hash})).await),
+        StatusCode::CONFLICT
+    );
+    assert_eq!(count(db, "SELECT COUNT(*) FROM collab_deliveries").await, 0);
 }

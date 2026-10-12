@@ -6,4 +6,5 @@ location: "Online"
 format: "Online"
 summary: "Adapt a pretrained model to Tagalog and Cebuano text and compare the results before and after."
 sample: true
+published: false
 ---

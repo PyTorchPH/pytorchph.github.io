@@ -68,6 +68,10 @@ fn platform_routes() -> Router<Arc<AppState>> {
         .route("/jobs/{id}", get(jobs::read_job))
         .route("/leaderboard", get(public::public_leaderboard))
         .route("/public/events", get(public::public_events))
+        .route(
+            "/public/site-content",
+            get(crate::site_content::public_content),
+        )
         .route("/portal/api/{*path}", any(portal::gateway))
         .route("/portal/media/{id}", get(portal::media))
         .route(

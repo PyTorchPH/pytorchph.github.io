@@ -6,4 +6,5 @@ location: "Davao City"
 format: "In person"
 summary: "Teams prototype machine learning tools for local problems in two days, with mentors on hand."
 sample: true
+published: false
 ---

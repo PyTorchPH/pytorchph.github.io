@@ -11,6 +11,7 @@ Ruby 3.4.5 and Node.js are required. Without a local Ruby install, use Docker:
 ```sh
 npm ci
 make vendor
+node scripts/prepare-site-content.mjs
 docker run --rm -p 4000:4000 -v "$PWD:/srv/site" -v ph-jekyll-bundle-345:/usr/local/bundle \
   -w /srv/site ruby:3.4.5 bash -lc "bundle install && bundle exec jekyll serve --host 0.0.0.0"
 ```
@@ -48,3 +49,11 @@ Pages are checked with axe-core against WCAG 2.1 A/AA and at phone width (390px)
 their content; do not use the upstream fixed-height `jumbotron` for new pages. Keep text contrast at 4.5:1 or higher (use
 `$orange` for orange text on light backgrounds and `$orange_on_dark` on dark ones, not the brand `#ee4c2c`; the portal uses the same value as `--accent-rgb`), keep one `h1` per page with headings in order, and
 give every image and icon link a text alternative.
+
+## Officer-managed public content
+
+Use `/portal/admin/website/` (officer access) for branding, About narrative, leadership, upcoming events/programs, Campus Labs chapters and news/recaps. Draft revisions are private; publication requires distinct current presidents according to `PRESIDENT_REQUIRED_APPROVALS` (default 2). Public pages fetch `/public/site-content` at load and every 60 seconds while visible. No Jekyll rebuild is needed for approved content changes.
+
+`node scripts/prepare-site-content.mjs` generates public fallback JSON from the canonical `backend/api/seeds/site-content.json`. It reads only three allowlisted public contact outputs: `PUBLIC_SITE_FACEBOOK_URL`, `PUBLIC_SITE_LINKEDIN_URL`, `PUBLIC_SITE_CONTACT_EMAIL`; `.env` may supply them locally. Empty values are omitted from the footer. GitHub Actions must supply these build values through environment settings; a developer's local `.env` is not available on CI.
+
+The initial fallback retains existing public leadership data and the requested message, with no invented events, chapters or recaps. Samples are retained as unpublished source fixtures. API failure retains the rendered page and records a bounded browser warning. Logo changes remain deferred; unavailable Canva/template/event data is entered by officers later.

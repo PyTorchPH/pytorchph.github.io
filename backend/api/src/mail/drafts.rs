@@ -126,7 +126,7 @@ async fn draft_view(
     draft: CurrentDraft,
 ) -> ApiResult<serde_json::Value> {
     let approvals: Vec<(String,)> =
-        sqlx::query_as("SELECT role FROM mail_approvals WHERE draft_id=? AND revision=?")
+        sqlx::query_as("SELECT DISTINCT role FROM mail_approvals WHERE draft_id=? AND revision=?")
             .bind(&id)
             .bind(draft.revision)
             .fetch_all(&state.db)

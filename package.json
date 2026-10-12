@@ -37,7 +37,8 @@
     "dev:workspace": "node development/local-workspace/start.mjs",
     "test:nationwide": "npm run test:nationwide --workspace @pytorch-ph/portal",
     "build:pages": "node development/pages-demo/build-portal-demo.mjs",
-    "test:pages": "node development/pages-demo/verify.mjs"
+    "test:pages": "node development/pages-demo/verify.mjs",
+    "test:site-content": "node --test tests/node/managed-site-content.test.mjs tests/node/managed-site-editor.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -71,6 +71,7 @@ pub(crate) async fn draft_view(
     Ok(json!({
         "id": draft_id, "title": title, "subject": subject, "mode": mode, "stage": stage,
         "isCreator": is_creator, "myTurn": my_turn, "turnPosition": turn,
+        "presidentialRequiredApprovals": crate::organization::presidency::required(db).await?,
         "outline": outline.into_iter().map(|(ord, owner, state)| json!({"ord": ord, "owner": owner, "state": state})).collect::<Vec<_>>(),
         "sections": sections,
         "tags": tags_for(db, draft_id, &held, &owned_section_ids).await?,
