@@ -1,6 +1,8 @@
 # Generated artifacts (scraped data, media, screenshots, built resumes)
 /out/
 /frontend/portal-static/out/
+/frontend/portal-static/public/vendor/
+/frontend/portal/public/vendor/typst/
 /.cache/
 /var/*
 !/var/README.md

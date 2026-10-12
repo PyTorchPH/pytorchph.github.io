@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { PORTAL_BASE_PATH } from "./portal-base-path.mjs";
@@ -152,6 +152,15 @@ try {
     return Boolean(hero && tabs && hero.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
   assert.ok(tabsFollowHero, "Section tabs must render below the hero");
+  await page.getByRole("button", { name: /Classic/ }).click();
+  const renderCvDownload = page.waitForEvent("download", { timeout: 120_000 });
+  await page.getByRole("button", { name: "RenderCV PDF", exact: true }).click();
+  const downloadedPdf = await renderCvDownload;
+  const downloadedPdfPath = await downloadedPdf.path();
+  assert.ok(downloadedPdfPath, "The browser renderer must create a downloadable PDF");
+  assert.equal(readFileSync(downloadedPdfPath).subarray(0, 5).toString(), "%PDF-", "The RenderCV download must contain PDF bytes");
+  await page.keyboard.press("Escape");
+  checks.push("rendercv-browser-wasm");
   await page.getByRole("button", { name: "Job analytics", exact: true }).click();
   await heading("Job Market Analytics");
   await page.getByRole("button", { name: "Job automation", exact: true }).waitFor();

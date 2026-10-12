@@ -6,6 +6,9 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "prepare:resume-renderer": "node scripts/prepare-resume-renderer.mjs",
+    "predev": "npm run prepare:resume-renderer",
+    "prebuild": "npm run prepare:resume-renderer",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -13,8 +16,9 @@
     "test:capabilities": "tsx --test tests/capabilities.test.ts",
     "test:portal-hosts": "tsx --test tests/portal-hosts.test.ts",
     "test:product": "tsx --test tests/product-gateway.test.ts",
-    "test:resume-evidence": "tsx --test tests/resume-evidence-contract.test.ts tests/profile-package-resume.test.ts",
+    "test:resume-evidence": "tsx --test tests/resume-evidence-contract.test.ts tests/profile-package-resume.test.ts tests/rendercv-adapter.test.ts",
     "example:resume": "tsx scripts/render-resume-example.ts",
+    "example:resume:rendercv": "tsx scripts/render-rendercv-example.ts",
     "test:career:e2e": "node ../../development/pages-demo/verify/career-evidence.e2e.mjs",
     "test:demo:e2e": "node tests/local-demo-workflows.e2e.mjs",
     "test:ui:e2e": "node tests/ui-foundation.e2e.mjs",
@@ -70,7 +74,8 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@electric-sql/pglite": "^0.5.5",
-    "tsx": "^4.20.0"
+    "tsx": "^4.20.0",
+    "yaml": "2.9.1"
   },
   "overrides": {
     "postcss": "^8.5.26"

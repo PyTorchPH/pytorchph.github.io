@@ -19,6 +19,7 @@ import {
   analyzeResumeSource,
   buildResumeSourceProfile,
   buildRenderableResume,
+  parseResumeSourceYaml,
   resumeEvidenceExtractionSystemPrompt,
   resumeHtml,
   resumePdfBytes,
@@ -28,10 +29,10 @@ import {
 
 const v2Path = fileURLToPath(new URL("./fixtures/evidence-resume-example.v2.json", import.meta.url));
 const v1Path = fileURLToPath(new URL("../../contracts/resumes/evidence-backed/template.v1.json", import.meta.url));
-const sourcePath = fileURLToPath(new URL("./fixtures/resume-source-example.v1.json", import.meta.url));
+const sourcePath = fileURLToPath(new URL("./fixtures/resume-source-example.v1.yaml", import.meta.url));
 const v2Example = JSON.parse(readFileSync(v2Path, "utf8"));
 const v1Template = JSON.parse(readFileSync(v1Path, "utf8"));
-const sourceExample = JSON.parse(readFileSync(sourcePath, "utf8"));
+const sourceExample = parseResumeSourceYaml(readFileSync(sourcePath, "utf8"));
 
 test("source injection groups metrics by shared verified test without changing the AST", () => {
   const source = resumeSourceDocumentSchema.parse(sourceExample);

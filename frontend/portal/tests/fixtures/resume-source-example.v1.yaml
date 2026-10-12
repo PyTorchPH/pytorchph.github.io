@@ -1,0 +1,485 @@
+contract: resume-source/v1
+document:
+  id: synthetic-ml-engineer-resume
+  language: en-PH
+  intendedPageCount: 1
+  title: Synthetic evidence-backed ML engineer resume
+person:
+  name:
+    display: Alex Rivera
+    given: Alex
+    family: Rivera
+  contacts:
+    - kind: email
+      value: alex.rivera@example.com
+      visibility: resume
+    - kind: phone
+      value: +63 900 000 0000
+      visibility: resume
+    - kind: location
+      value: Metro Manila, Philippines
+      visibility: resume
+    - kind: website
+      label: Portfolio
+      value: alex-rivera.example
+      url: https://alex-rivera.example
+      visibility: resume
+  profiles:
+    - network: LinkedIn
+      username: alex-rivera
+      url: https://linkedin.example/alex-rivera
+    - network: GitHub
+      username: alex-rivera
+      url: https://github.example/alex-rivera
+    - network: Hugging Face
+      username: alex-rivera
+      url: https://huggingface.example/alex-rivera
+  positioning:
+    headline: Machine Learning Engineer
+    summary: Machine learning engineer building evaluated LLM, retrieval, and real-time inference systems from reproducible experiments through production deployment.
+    targetRoleIds:
+      - ml-engineer
+targets:
+  - id: ml-engineer
+    role: Machine Learning Engineer
+    keywords:
+      - PyTorch
+      - LLM
+      - evaluation
+      - serving
+      - MLOps
+    preferredClassificationCodes:
+      - iso25010.functional_suitability
+      - iso25010.performance_efficiency
+      - iso25010.reliability
+    preferredTestTypes:
+      - integration
+      - load
+      - benchmark
+records:
+  - id: skills-mlops
+    kind: skill_group
+    name: MLOps & Infrastructure
+    skills:
+      - Docker
+      - AWS EC2
+      - Vertex AI
+      - GitHub Actions
+    targetIds:
+      - ml-engineer
+  - id: skills-serving
+    kind: skill_group
+    name: Serving & ML
+    skillIds:
+      - skill-python
+      - skill-pytorch
+      - skill-vllm
+    skills:
+      - SFT/DPO
+      - evaluation design
+    targetIds:
+      - ml-engineer
+  - id: skills-data
+    kind: skill_group
+    name: Services & Data
+    skills:
+      - FastAPI
+      - Pydantic
+      - PostgreSQL
+      - LiveKit
+    targetIds:
+      - ml-engineer
+  - id: experience-ai-engineer
+    kind: experience
+    name: RepCoach
+    role: AI Engineer · Technical Lead
+    organization: Northstar Labs
+    period:
+      start: 2025-05
+      end: Present
+      label: 05/2025 – Present
+    highlights:
+      - Built a real-time voice coaching agent with provider failover and crash-safe transcripts.
+      - Shipped tenant-isolated hybrid retrieval with schema-validated grading and idempotent jobs.
+    claimIds:
+      - claim-test-suite
+      - claim-voice-cost
+    skillIds:
+      - skill-python
+    targetIds:
+      - ml-engineer
+  - id: experience-researcher
+    kind: experience
+    name: Model Evaluation Group
+    role: Machine Learning Researcher
+    organization: Open Systems Lab
+    period:
+      start: 2025-08
+      end: Present
+      label: 08/2025 – Present
+    highlights:
+      - Built a reproducible checkpoint ladder with pre-registered promotion gates.
+    claimIds:
+      - claim-tool-f1
+    targetIds:
+      - ml-engineer
+  - id: project-rust-serving
+    kind: project
+    name: FerrumServe
+    summary: Rust web server and inference gateway evaluated under controlled virtual-user workloads.
+    claimIds:
+      - claim-load-throughput
+    skillIds:
+      - skill-vllm
+    targetIds:
+      - ml-engineer
+    links:
+      - label: Source
+        url: https://github.example/alex-rivera/ferrum-serve
+  - id: project-research-mcp
+    kind: project
+    name: PaperBridge
+    period:
+      label: 08/2026 – Present
+    links:
+      - label: Project
+        url: https://example.com/projects/paperbridge
+    summary: Provenance-first MCP service for retrieving and citing research artifacts.
+    highlights:
+      - Implemented caching, rate limiting, and bounded retry across six synthetic providers.
+    claimIds:
+      - claim-tool-calls
+    targetIds:
+      - ml-engineer
+  - id: project-extractor
+    kind: project
+    name: SchemaLens
+    summary: Hybrid rules and compact-model pipeline for structured extraction from noisy documents.
+    highlights:
+      - Separated deterministic validation from model-produced candidate fields.
+    targetIds:
+      - ml-engineer
+  - id: organization-acm
+    kind: organization
+    name: Association for Computing Machinery Student Chapter
+    role: Academics Director
+    period:
+      label: 08/2024 – 07/2025
+    highlights:
+      - Automated attendance reporting and coordinated applied-ML learning programs.
+  - id: certificate-python
+    kind: certificate
+    name: Python Data Associate
+    issuer: Example Certification Board
+  - id: certificate-agentic
+    kind: certificate
+    name: Agentic AI Builder
+    issuer: Example AI Academy
+  - id: award-government
+    kind: award
+    name: National Civic Technology Hackathon · Top 10 Finalist
+    issuer: Example Digital Government Office
+    period:
+      label: 07/2026
+    highlights:
+      - Built an auditable multi-agency assistance-routing prototype.
+  - id: award-startup
+    kind: award
+    name: AI Startup Bootcamp · Grand Winner
+    issuer: Example Entrepreneurship Network
+    period:
+      label: 06/2025
+  - id: education-current
+    kind: education
+    name: Bachelor of Science in Computer Science
+    organization: Example Institute of Technology
+    period:
+      label: 08/2025 – Present
+  - id: education-ai
+    kind: education
+    name: BS Computer Science · Artificial Intelligence specialization
+    organization: Example University
+    period:
+      label: 08/2024 – 08/2025
+claims:
+  - id: claim-test-suite
+    statement: Maintained 318 passing automated tests across unit, integration, and contract suites.
+    classificationCodes:
+      - iso25010.reliability
+      - iso25010.maintainability
+  - id: claim-voice-cost
+    statement: Reduced modeled voice cost per call from $1.00 to $0.24.
+    classificationCodes:
+      - iso25010.performance_efficiency
+  - id: claim-tool-f1
+    statement: Improved tool-call F1 from 0.62 to 0.76 on a fixed holdout.
+    classificationCodes:
+      - iso25010.functional_suitability
+  - id: claim-load-throughput
+    statement: Sustained 245 requests per second at 108 ms p95 latency with 200 virtual users.
+    classificationCodes:
+      - iso25010.performance_efficiency
+      - iso25010.reliability
+  - id: claim-tool-calls
+    statement: Parsed 20 of 20 held-out tool calls correctly.
+    classificationCodes:
+      - iso25010.functional_suitability
+evidence:
+  - id: evidence-test-suite
+    testType: integration
+    target: RepCoach automated test suite
+    component: API, queues, grading, and tenant isolation
+    method: Executed the versioned test suite in CI from a clean checkout.
+    environmentId: environment-ci
+    workload:
+      suites: 3
+      retries: 0
+    measurements:
+      - id: metric-tests
+        metric: passing_tests
+        value: 318
+        unit: tests
+        aggregation: count
+        scope: complete CI run
+    artifactIds:
+      - artifact-ci-report
+    verification:
+      status: user_verified
+      verifiedBy: sample-owner
+      verifiedAt: 2026-10-10T00:00:00.000Z
+    limitations:
+      - Synthetic fixture; the artifact locator is non-production.
+  - id: evidence-model-eval
+    testType: benchmark
+    target: Tool-use checkpoint
+    component: function-call policy
+    method: Compared baseline and candidate checkpoints on the same frozen holdout.
+    environmentId: environment-eval
+    workload:
+      holdout_records: 500
+      seed: 42
+    measurements:
+      - id: metric-f1-before
+        metric: tool_call_f1_before
+        value: 0.62
+        unit: ratio
+        aggregation: macro_f1
+        scope: frozen holdout
+      - id: metric-f1-after
+        metric: tool_call_f1_after
+        value: 0.76
+        unit: ratio
+        aggregation: macro_f1
+        scope: frozen holdout
+      - id: metric-tool-calls
+        metric: correct_tool_calls
+        value: 20
+        unit: calls
+        aggregation: count
+        scope: held-out tool-call subset
+    artifactIds:
+      - artifact-eval-report
+    verification:
+      status: user_verified
+      verifiedBy: sample-owner
+      verifiedAt: 2026-10-10T00:00:00.000Z
+    limitations:
+      - Results apply only to the frozen synthetic holdout.
+  - id: evidence-rust-load
+    testType: load
+    target: FerrumServe HTTP inference gateway
+    component: Rust web server
+    method: Applied a stepped virtual-user load and summarized the stable measurement window.
+    environmentId: environment-load
+    workload:
+      virtual_users: 200
+      duration_seconds: 600
+      protocol: HTTP/1.1
+    measurements:
+      - id: metric-rps
+        metric: throughput
+        value: 245
+        unit: requests_per_second
+        aggregation: mean
+        scope: stable 10-minute window
+      - id: metric-p95
+        metric: latency_p95
+        value: 108
+        unit: milliseconds
+        aggregation: p95
+        scope: successful requests
+    artifactIds:
+      - artifact-load-report
+      - artifact-load-source
+    verification:
+      status: user_verified
+      verifiedBy: sample-owner
+      verifiedAt: 2026-10-10T00:00:00.000Z
+    limitations:
+      - Single synthetic host; results are not production capacity guarantees.
+  - id: evidence-voice-cost
+    testType: benchmark
+    target: Voice-provider cost model
+    method: Compared projected provider prices for a fixed synthetic call duration.
+    workload:
+      call_minutes: 10
+    measurements:
+      - id: metric-cost-before
+        metric: cost_before
+        value: 1
+        unit: USD_per_call
+        aggregation: modeled
+        scope: 10-minute call
+      - id: metric-cost-after
+        metric: cost_after
+        value: 0.24
+        unit: USD_per_call
+        aggregation: modeled
+        scope: 10-minute call
+    artifactIds:
+      - artifact-cost-sheet
+    verification:
+      status: unverified
+      verifiedBy: sample-owner
+    limitations:
+      - Projection only; no production billing data was observed.
+claimEvidenceLinks:
+  - claimId: claim-test-suite
+    evidenceId: evidence-test-suite
+    measurementIds:
+      - metric-tests
+    relationship: supports
+  - claimId: claim-voice-cost
+    evidenceId: evidence-voice-cost
+    measurementIds:
+      - metric-cost-before
+      - metric-cost-after
+    relationship: supports
+  - claimId: claim-tool-f1
+    evidenceId: evidence-model-eval
+    measurementIds:
+      - metric-f1-before
+      - metric-f1-after
+    relationship: supports
+  - claimId: claim-load-throughput
+    evidenceId: evidence-rust-load
+    measurementIds:
+      - metric-rps
+      - metric-p95
+    relationship: supports
+  - claimId: claim-tool-calls
+    evidenceId: evidence-model-eval
+    measurementIds:
+      - metric-tool-calls
+    relationship: supports
+environments:
+  - id: environment-ci
+    deployment: GitHub Actions
+    details:
+      os: ubuntu
+      node: "24"
+  - id: environment-eval
+    deployment: isolated evaluation runner
+    details:
+      gpu: synthetic
+      seed: 42
+  - id: environment-load
+    deployment: local controlled host
+    details:
+      cpu_cores: 8
+      memory_gib: 16
+artifacts:
+  - id: artifact-ci-report
+    type: report
+    locator: fixture://reports/ci-summary.json
+  - id: artifact-eval-report
+    type: raw_result
+    locator: fixture://reports/model-eval.json
+  - id: artifact-load-report
+    type: report
+    locator: fixture://reports/rust-load-test.json
+  - id: artifact-load-source
+    type: source
+    locator: fixture://source/load-test.js
+  - id: artifact-cost-sheet
+    type: report
+    locator: fixture://reports/projected-costs.csv
+skills:
+  - id: skill-python
+    name: Python
+    aliases:
+      - CPython
+    category: language
+  - id: skill-pytorch
+    name: PyTorch
+    aliases: []
+    category: machine_learning
+  - id: skill-vllm
+    name: vLLM
+    aliases: []
+    category: serving
+sources:
+  - id: source-reference-layout
+    kind: pdf
+    locator: private-reference://single-page-ml-resume
+  - id: source-synthetic-evidence
+    kind: artifact
+    locator: fixture://resume-source-example
+fieldProvenance:
+  - path: person.positioning
+    sourceIds:
+      - source-reference-layout
+    confidence: 1
+    status: confirmed
+    notes:
+      - Synthetic wording follows the reference hierarchy, not its personal data.
+  - path: presentationHints
+    sourceIds:
+      - source-reference-layout
+    confidence: 0.95
+    status: confirmed
+    notes:
+      - Single-page target, compact density, grouped skills.
+  - path: records
+    sourceIds:
+      - source-synthetic-evidence
+    confidence: 1
+    status: confirmed
+    notes: []
+presentationHints:
+  sectionOrder:
+    - skill_group
+    - experience
+    - project
+    - organization
+    - certificate
+    - award
+    - education
+  sectionLabels:
+    experience: Professional Experience
+    organization: Organisations
+  sectionLayouts:
+    skill_group:
+      mode: columns
+      columns: 3
+    certificate:
+      mode: columns
+      columns: 2
+    award:
+      mode: compact_list
+  density: dense
+  pageGoal: 1
+  showProfileLabels: true
+generationPolicy:
+  neverInventMissingFacts: true
+  quantitativeClaimsRequireEvidence: true
+  preserveSourceWording: false
+  requireHumanReviewBeforeExport: true
+metadata:
+  createdAt: 2026-10-10T00:00:00.000Z
+  updatedAt: 2026-10-10T00:00:00.000Z
+  schemaBasis:
+    - JSON Resume 1.0.0 vocabulary
+    - evidence-backed-resume/v2
+    - JSON Schema 2020-12 semantics
+extensions: {}

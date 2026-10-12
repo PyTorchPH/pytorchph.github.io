@@ -30,6 +30,7 @@
     "test:boundaries": "node --test tests/node/workspace-boundaries.test.mjs tests/node/logic-doc-contracts.test.mjs tests/node/observability-project.test.mjs tests/node/production-preview.test.mjs",
     "test:grades": "npm run test --workspace @pytorch-ph/academic-records",
     "example:resume": "npm run example:resume --workspace @pytorch-ph/portal",
+    "example:resume:rendercv": "npm run example:resume:rendercv --workspace @pytorch-ph/portal",
     "grades:login": "npm run login --workspace @pytorch-ph/academic-records --",
     "grades:scrape": "npm run scrape --workspace @pytorch-ph/academic-records --",
     "grades:inject": "npm run inject --workspace @pytorch-ph/academic-records --",

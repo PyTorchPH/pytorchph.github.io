@@ -2,6 +2,8 @@ import type { ResumeProfile, ResumeProfileSection } from "@pytorch-ph/domain-pro
 import { resumeTemplates, type ResumeTemplateId } from "@pytorch-ph/domain-protocol/resumes";
 import { awardParagraphRuns, entryTitleRuns, type ResumeTextRun } from "./entry-presentation";
 import { drawPdfParagraphRow, wrapPdfParagraph } from "./render-pdf-paragraph";
+import { renderCvYaml } from "./rendercv-adapter";
+import { renderCvPdfBytes } from "./rendercv-typst";
 
 export { resumeTemplates, type ResumeTemplateId };
 
@@ -77,6 +79,20 @@ function exportName(templateId: ResumeTemplateId, extension: string, demo = fals
 
 export function downloadHtml(profile: ResumeProfile, templateId: ResumeTemplateId, demo = false) {
   download(new Blob([resumeHtml(profile, templateId)], { type: "text/html;charset=utf-8" }), exportName(templateId, "html", demo));
+}
+
+export function downloadRenderCvYaml(profile: ResumeProfile, templateId: ResumeTemplateId, demo = false) {
+  download(
+    new Blob([renderCvYaml(profile, templateId)], { type: "application/yaml;charset=utf-8" }),
+    exportName(templateId, "rendercv.yaml", demo),
+  );
+}
+
+export async function downloadRenderCvPdf(profile: ResumeProfile, templateId: ResumeTemplateId, demo = false) {
+  download(
+    new Blob([await renderCvPdfBytes(profile, templateId)], { type: "application/pdf" }),
+    exportName(templateId, "pdf", demo),
+  );
 }
 
 export async function downloadDocx(profile: ResumeProfile, templateId: ResumeTemplateId, demo = false) {

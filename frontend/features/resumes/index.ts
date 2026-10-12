@@ -4,5 +4,8 @@ export * from "./build-source-resume";
 export * from "./analyze-source-resume";
 export * from "./export-document";
 export * from "./render-pdf";
+export * from "./rendercv-adapter";
+export * from "./rendercv-typst";
 export * from "./resume-evidence-prompt";
 export * from "./resume-source-prompt";
+export * from "./yaml-contracts";

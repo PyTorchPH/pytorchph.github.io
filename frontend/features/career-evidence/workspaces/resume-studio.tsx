@@ -22,9 +22,8 @@ import { AppDialog } from "@pytorch-ph/design-system/dialog";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { useProfilePackage } from "@pytorch-ph/domain-client/member-profile";
 import {
-  downloadDocx,
-  downloadHtml,
-  downloadPdf,
+  downloadRenderCvPdf,
+  downloadRenderCvYaml,
   resumePdfPageCount,
   resumeTemplates,
   resumeFromProfilePackage,
@@ -183,7 +182,7 @@ function ResumeDialog({ template, templateId, profile, pageCount, exporter, demo
         <ResumePreview templateId={templateId} />
         <aside className="space-y-4">
           <PdfFitPanel pageCount={pageCount} />
-          <ExportPanel demo={demo} exporter={exporter} pageCount={pageCount} profile={profile} templateId={templateId} />
+          <ExportPanel demo={demo} exporter={exporter} profile={profile} templateId={templateId} />
           <Link
           className="focus-ring flex items-center justify-between rounded-xl border border-accent/30 bg-accentSoft p-4 text-sm font-semibold text-accent"
             href="/career/evidence"
@@ -239,42 +238,32 @@ const pageFitText = (pageCount: number | null) =>
       ? "Measurement unavailable"
       : `${pageCount}-page PDF generated`;
 
-type ExportPanelProps = { profile: ResumeProfile; templateId: ResumeTemplateId; pageCount: number | null; exporter: ExportRunner; demo: boolean };
+type ExportPanelProps = { profile: ResumeProfile; templateId: ResumeTemplateId; exporter: ExportRunner; demo: boolean };
 
-function ExportPanel({ profile, templateId, pageCount, exporter, demo }: ExportPanelProps) {
+function ExportPanel({ profile, templateId, exporter, demo }: ExportPanelProps) {
   const { busy, run } = exporter;
   return (
     <div className="rounded-xl border border-border p-4">
-      <p className="font-semibold">Export this result</p>
+      <p className="font-semibold">RenderCV export</p>
+      <p className="mt-1 text-sm text-muted">
+        Gumagawa ang browser ng RenderCV PDF gamit ang JavaScript at Typst WebAssembly. Maaari ring i-download ang canonical RenderCV v2.8 YAML.
+      </p>
       <div className="mt-4 grid gap-2">
         <Button
           disabled={Boolean(busy)}
-          onClick={() =>
-            run("HTML", () => downloadHtml(profile, templateId, demo))
-          }
-          variant="secondary"
+          onClick={() => run("RenderCV PDF", () => downloadRenderCvPdf(profile, templateId, demo))}
         >
           <Download size={15} />
-          HTML
+          {busy || "RenderCV PDF"}
         </Button>
         <Button
           disabled={Boolean(busy)}
           onClick={() =>
-            run("DOCX", () => downloadDocx(profile, templateId, demo))
-          }
-          variant="secondary"
-        >
-          <Download size={15} />
-          Editable DOCX
-        </Button>
-        <Button
-          disabled={Boolean(busy) || pageCount === null}
-          onClick={() =>
-            run("PDF", () => downloadPdf(profile, templateId, demo))
+            run("RenderCV YAML", () => downloadRenderCvYaml(profile, templateId, demo))
           }
         >
           <Download size={15} />
-          {busy || "PDF"}
+          RenderCV YAML
         </Button>
       </div>
     </div>

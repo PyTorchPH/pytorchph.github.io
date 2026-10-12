@@ -1,6 +1,10 @@
 # Compact resume presentation
 
-Scope: deterministic `resume-source/v1` injection and HTML/PDF/DOCX presentation; source schemas and verification rules remain unchanged.
+Scope: `portfolio-evidence/v2` YAML evidence, deterministic `resume-source/v1` YAML projection, RenderCV YAML, and browser PDF rendering.
+
+`C:\Users\jbalb\Desktop\Projects\portfolio-evidence.yaml` is the canonical local evidence contract (`portfolio-evidence/v2`). `resume-source/v1` is its renderer-neutral, person-and-target projection. The deterministic injector remains the authority for evidence verification, target filtering, qualifiers, section order, and omission of unsupported quantitative claims.
+
+`rendercv-adapter.ts` maps the validated `ResumeProfile` to the official RenderCV v2.8 YAML schema. `rendercv-typst.ts` maps the same profile to the vendored RenderCV v2.8 Typst template and compiles PDF in the browser with Typst WebAssembly. Python and the RenderCV CLI are compatibility oracles only; users do not need them. The existing jsPDF renderer remains the lightweight preview and page-fit path.
 
 - Keep measurable claims and measurement references separate in the source AST.
 - Combine highlights within their owning record into one semicolon-separated bullet.

@@ -41,7 +41,9 @@ The injector derives a `ResumeProfile`; the analyzer derives a separate report, 
 mutates the career source of truth.
 
 The model borrows common section vocabulary from JSON Resume while retaining the stricter v2
-evidence graph. The synthetic fixture `frontend/portal/tests/fixtures/resume-source-example.v1.json`
-uses the section hierarchy of a private one-page reference resume without copying its identity or
-contact data. `npm run example:resume` emits the source, analysis, projected profile, HTML, and PDF
-under `out/resume-example/`.
+evidence graph. The canonical synthetic fixture is
+`frontend/portal/tests/fixtures/resume-source-example.v1.yaml`; the adjacent JSON file remains only
+for the client-bundled demo until Next.js can load YAML as a static module. It uses the section
+hierarchy of a private one-page reference resume without copying identity or contact data.
+`npm run example:resume` emits the source YAML, analysis, projected profile, HTML, and PDF under
+`out/resume-example/`.
