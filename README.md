@@ -44,6 +44,9 @@ No live deployment or data migration is included in this adaptation.
 
 ## Officer-managed website content
 
+Officers can also use the [local CLI and MCP server](docs/OFFICER-CLI-MCP.md) for agent access,
+officer read views, website drafts and presidential approvals using the existing API permissions.
+
 The current officer portal includes **Website Content** at `/portal/admin/website/`, also linked
 from Event Workflow. Manage branding, About narrative, leadership, events/programs, Campus Labs,
 news/recaps and public footer contacts there. Public pages load approved content from the API and
