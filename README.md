@@ -86,6 +86,35 @@ stored locally in `../portfolio-evidence-artifacts/2026-10-12/ec2/assessment-evi
 and the parent Projects `portfolio-evidence.json`. Evidence maps to ISO/IEC/IEEE 29119
 test processes/documentation; full conformance and certification are unverified.
 
+### Cons and security trade-offs
+
+- **Availability / application-layer denial of service:** higher public-GET loads
+  produced extensive timeouts on the shared Lightsail host. This demonstrates overload
+  susceptibility, not a measured distributed DDoS attack or complete DDoS protection assessment.
+  Application-layer rate limits, bot controls and origin protection remain unverified.
+- **Disposable-email registration:** the operator reports temporary email addresses
+  can obtain website access. Email ownership verification alone does not establish a
+  durable identity; disposable accounts can enable repeat registrations and abuse.
+  This assessment did not test registration bypass, access privileges or disposable-domain filtering.
+- **SMS OTP cost:** the operator reports SMS OTP is omitted because messaging costs
+  are prohibitive. Email verification and MFA configuration were not audited here.
+  SMS OTP is not a DDoS defense; email verification, authenticator-based MFA or passkeys
+  are separate identity controls to evaluate without per-message SMS charges.
+- **Spamhaus integration:** the operator reports no Spamhaus subscription/integration.
+  [Spamhaus blocklists](https://www.spamhaus.org/blocklists/) provide IP/domain reputation
+  data; they do not replace DDoS traffic mitigation or comprehensively identify disposable
+  email providers. Licensing depends on the service and usage; a paid subscription is
+  not inherently required for every anti-abuse control.
+- **AWS baseline vs application protection:**
+  [AWS Shield Standard](https://docs.aws.amazon.com/decision-guides/latest/waf-or-shield/waf-or-shield.html)
+  provides baseline network/transport DDoS protection at no additional cost. That baseline
+  does not establish protection against this application's expensive HTTP requests.
+  Deployment-specific coverage and mitigations were not audited in these tests.
+
+These are measured limitations and explicitly attributed operator reports, not newly
+verified exploits. Prioritize bounded per-IP/account rate limits, registration controls,
+monitoring and recovery checks before spending on a reputation service.
+
 ## Layout
 
 | Path | Purpose |
