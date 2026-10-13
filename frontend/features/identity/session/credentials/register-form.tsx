@@ -72,6 +72,7 @@ function RegistrationForm({ error, hidden, onError, onCodeSent }: RegistrationFo
   return (
     <form
       className={`space-y-4 ${hidden ? "hidden" : ""}`}
+      method="post"
       onSubmit={form.handleSubmit(async ({ email: submittedEmail, name, username, password }) => {
         onError("");
         try {

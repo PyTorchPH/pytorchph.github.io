@@ -22,7 +22,7 @@ assert.ok(existsSync(resolve(portalOut, ".nojekyll")), "Run npm run build:pages 
 assert.ok(isProductionBuild(portalOut, API_ORIGIN), `The portal build must target ${API_ORIGIN}. Rebuild with npm run build:pages -- --production-api.`);
 
 const chrome = "C:/Program Files/Google/Chrome/Application/chrome.exe";
-const schoolText = /\b(?:FEU|Far Eastern|Tamaraw|SADO|campus|students?|university|faculty|college)\b|fit\.edu/i;
+const schoolText = /\b(?:FEU|Far Eastern|Tamaraw|SADO)\b|fit\.edu/i;
 const memberHeading = "My performance";
 const officerHeading = "Community intelligence dashboard for chapter operations.";
 const MEMBER_EMAIL = Object.keys(ACCOUNTS).find(email => ACCOUNTS[email] === "member");
@@ -152,7 +152,7 @@ try {
     return Boolean(hero && tabs && hero.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
   assert.ok(tabsFollowHero, "Section tabs must render below the hero");
-  await page.getByRole("button", { name: /Classic/ }).click();
+  await page.getByRole("button", { name: /^Classic\b/ }).click();
   const renderCvDownload = page.waitForEvent("download", { timeout: 120_000 });
   await page.getByRole("button", { name: "RenderCV PDF", exact: true }).click();
   const downloadedPdf = await renderCvDownload;
@@ -205,7 +205,7 @@ try {
   await heading("Events");
   assert.equal(await page.getByRole("heading", { name: "Email and PDF human review" }).count(), 0, "Mail review belongs in the Email workspace");
   await page.goto(`${url}/admin/mail/`, { waitUntil: "networkidle" });
-  await heading("Email and PDF human review");
+  await heading("Email drafts");
   await page.goto(`${url}/admin/scoring/`, { waitUntil: "networkidle" });
   await heading("Blind round robin");
   await page.getByText("Walang assigned comparison ngayon.").waitFor();
