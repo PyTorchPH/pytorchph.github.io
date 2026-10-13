@@ -323,7 +323,7 @@ async fn reserve_organization_mailbox(
 
 fn verification_url(origin: &str, email: &str, token: &str) -> ApiResult<String> {
     let mut url = url::Url::parse(origin).map_err(internal)?;
-    url.set_path("/register/");
+    url.set_path("/portal/register/");
     url.set_query(None);
     let fragment = url::form_urlencoded::Serializer::new(String::new())
         .append_pair("email", email)
