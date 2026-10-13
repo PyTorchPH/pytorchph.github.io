@@ -35,6 +35,15 @@ mod writes;
 pub(crate) use feedback::feedback_rows;
 pub use media::media;
 
+pub(crate) async fn owned_achievement_source(
+    db: &sqlx::SqlitePool,
+    member: &str,
+) -> crate::ApiResult<serde_json::Value> {
+    store::stored(db, member, "/api/product/career-evidence")
+        .await?
+        .ok_or(crate::bad("No server-owned achievement records"))
+}
+
 use crate::{
     ApiError, ApiResult, AppState, check_origin,
     identity::session::{self, Viewer},
@@ -64,7 +73,7 @@ pub async fn gateway(
     body: Bytes,
 ) -> ApiResult<Response> {
     let actor = session::viewer(&state, &headers).await?;
-    ensure_portal_access(&actor, &path)?;
+    ensure_portal_access(&state.db, &actor, &path).await?;
     if photo::is_photo_path(&path) {
         if method != Method::GET {
             check_origin(&state, &headers)?;
@@ -90,14 +99,36 @@ pub async fn gateway(
     Ok(reply(status, result))
 }
 
-fn ensure_portal_access(actor: &Viewer, path: &str) -> ApiResult<()> {
+async fn ensure_portal_access(db: &sqlx::SqlitePool, actor: &Viewer, path: &str) -> ApiResult<()> {
     if actor.role == "pending" {
         return Err(ApiError(StatusCode::FORBIDDEN, "Member approval required"));
     }
     if is_officer_path(path) && !is_officer(&actor.role) {
         return Err(ApiError(StatusCode::FORBIDDEN, "Officer access required"));
     }
+    if !is_onboarding_path(path) {
+        let onboarding_required: i64 =
+            sqlx::query_scalar("SELECT onboarding_required FROM members WHERE id=?")
+                .bind(&actor.id)
+                .fetch_one(db)
+                .await
+                .map_err(crate::internal)?;
+        let complete: Option<i64> =
+            sqlx::query_scalar("SELECT 1 FROM member_profiles WHERE member_id=?")
+                .bind(&actor.id)
+                .fetch_optional(db)
+                .await
+                .map_err(crate::internal)?;
+        if onboarding_required == 1 && complete.is_none() {
+            return Err(ApiError(StatusCode::FORBIDDEN, "Onboarding required"));
+        }
+    }
     Ok(())
+}
+
+#[inline]
+fn is_onboarding_path(path: &str) -> bool {
+    matches!(path, "member/profile" | "member/profile-package")
 }
 
 fn log_saved_action(path: &str, actor: &Viewer) {

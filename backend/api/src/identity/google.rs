@@ -60,7 +60,25 @@ pub async fn google_login(
     let email = claims.email.to_ascii_lowercase();
     link_member(&state, &claims, &email).await?;
     let viewer = load_viewer(&state.db, &email).await?;
+    ensure_organization_mailbox(&state, &viewer).await?;
     issue_session(&state, viewer).await
+}
+
+async fn ensure_organization_mailbox(state: &AppState, viewer: &Viewer) -> ApiResult<()> {
+    let Some(client) = state.identity_client.as_deref() else {
+        return Ok(());
+    };
+    let member_id = Uuid::parse_str(&viewer.id).map_err(internal)?;
+    client
+        .provision_mailbox(member_id, &viewer.display_name)
+        .await
+        .map(|_| ())
+        .map_err(|_| {
+            ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Organization email unavailable",
+            )
+        })
 }
 
 /// Mental model: header says RS256 + which key → fetch that key → signature, audience and
@@ -178,7 +196,7 @@ async fn create_member(
 ) -> ApiResult<()> {
     let id = Uuid::new_v4().to_string();
     let role = initial_role(state, email);
-    sqlx::query("INSERT INTO members(id, google_sub, email, display_name, public_handle, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(google_sub) DO UPDATE SET email = excluded.email, display_name = excluded.display_name")
+    sqlx::query("INSERT INTO members(id, google_sub, email, display_name, public_handle, role, created_at, onboarding_required) VALUES (?, ?, ?, ?, ?, ?, ?, 1) ON CONFLICT(google_sub) DO UPDATE SET email = excluded.email, display_name = excluded.display_name")
         .bind(&id).bind(&claims.sub).bind(email).bind(display_name)
         .bind(format!("Member-{}", &id[..8])).bind(role).bind(chrono::Utc::now().to_rfc3339())
         .execute(&state.db).await.map_err(internal)?;

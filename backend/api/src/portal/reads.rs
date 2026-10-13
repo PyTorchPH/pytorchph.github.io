@@ -58,6 +58,8 @@ async fn special_read(
     query: Option<&str>,
 ) -> ApiResult<Option<Value>> {
     Ok(match path {
+        "member/ai-consent" => Some(crate::ai_privacy::consent_read(db, actor).await?),
+        "member/ai-policy" => Some(crate::ai_privacy::policy()),
         "officer/site-content" => Some(crate::site_content::store::draft(db, actor).await?),
         "officer/campus-chapters" => Some(crate::site_content::campus::view(db, actor).await?),
         // AI keys and calls stay in the member's extension; the server only lists providers.

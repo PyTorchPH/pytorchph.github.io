@@ -18,7 +18,8 @@ test('official SDK stdio client discovers tools, matches CLI results and surface
     const tools=await client.listTools();assert.deepEqual(tools.tools.map(tool=>tool.name).sort(),['identity','officer_read','website_approve','website_get_draft','website_save_draft']);
     const identity=await client.callTool({name:'identity',arguments:{}});assert.equal(identity.structuredContent.result.role,'officer');
     const cli=await runCli(['identity'],env);assert.equal(cli.status,0);assert.deepEqual(JSON.parse(cli.output),identity.structuredContent.result);
-    const events=await client.callTool({name:'officer_read',arguments:{view:'events'}});assert.equal(events.structuredContent.result[0].id,'event-1');
+    assert.equal(identity.structuredContent.result.id,undefined);assert.equal(identity.structuredContent.result.display_name,undefined);
+    const events=await client.callTool({name:'officer_read',arguments:{view:'events'}});assert.deepEqual(events.structuredContent.result,{view:'events',count:8});assert.ok(!JSON.stringify(events).includes('event-1'));
     const disabled=await client.callTool({name:'website_approve',arguments:{revision:1,confirm:true}});assert.equal(disabled.isError,true);assert.equal(f.state.writes,0);
     f.state.role='member';const forbidden=await client.callTool({name:'website_get_draft',arguments:{}});assert.equal(forbidden.isError,true);
     f.state.role='officer';f.state.expired=true;const expired=await client.callTool({name:'identity',arguments:{}});assert.equal(expired.isError,true);
@@ -30,11 +31,11 @@ test('CLI JSON draft save and approval use the same write guards and server outc
   const f=await fixture();const env={...process.env,...f.env,PORTAL_SESSION_COOKIE:cookie};
   try {
     const disabled=await runCli(['website-approve','--revision','1','--confirm'],env);assert.equal(disabled.status,1);assert.equal(f.state.writes,0);
-    const notPresident=await runCli(['website-approve','--revision','1','--confirm','--write'],env);assert.equal(notPresident.status,1);assert.match(notPresident.errors,/permission required/);
-    const draft=await runCli(['website-draft'],env);assert.equal(draft.status,0);
+    const notPresident=await runCli(['website-approve','--revision','1','--confirm','--write','--human-raw'],env);assert.equal(notPresident.status,1);assert.match(notPresident.errors,/permission required/);
+    const draft=await runCli(['website-draft','--human-raw'],env);assert.equal(draft.status,0);
     const file=resolve(f.directory,'draft.json');await writeFile(file,draft.output);
-    const saved=await runCli(['website-save','--file',file,'--write'],env);assert.equal(saved.status,0);assert.equal(JSON.parse(saved.output).revision,2);
-    f.state.canApprove=true;const approved=await runCli(['website-approve','--revision','2','--confirm','--write'],env);assert.equal(approved.status,0);assert.equal(JSON.parse(approved.output).approvals,1);
+    const saved=await runCli(['website-save','--file',file,'--write','--human-raw'],env);assert.equal(saved.status,0);assert.equal(JSON.parse(saved.output).revision,2);
+    f.state.canApprove=true;const approved=await runCli(['website-approve','--revision','2','--confirm','--write','--human-raw'],env);assert.equal(approved.status,0);assert.equal(JSON.parse(approved.output).approvals,1);
   }finally{await f.close();}
 });
 

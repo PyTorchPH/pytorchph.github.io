@@ -36,7 +36,7 @@ test('server role and expired-session responses stay authoritative; member login
 });
 
 test('writes require opt-in, exact revision and confirmation; API rejects non-presidents and stale drafts',async()=>{
-  const f=await fixture();const client=new PortalClient({...f.config,sessionCookie:cookie},{log:()=>{}});const commands=commandCatalog(client);
+  const f=await fixture();const client=new PortalClient({...f.config,sessionCookie:cookie},{log:()=>{}});const commands=commandCatalog(client,{humanRaw:true});
   try {
     const input={revision:1,document:{branding:{tagline:'Updated'}}};
     await assert.rejects(executeCommand(commands,'website_save_draft',input),error=>error.status===403);assert.equal(f.state.writes,0);

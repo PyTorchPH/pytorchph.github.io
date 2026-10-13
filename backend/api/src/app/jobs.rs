@@ -52,6 +52,9 @@ pub(crate) async fn run_job_worker(db: SqlitePool) {
             error!(error = %error, "worker.job_failed");
         }
         if tokio::time::Instant::now() >= next_comparison_run {
+            if let Err(error) = crate::ai_privacy::purge_expired(&db).await {
+                error!(component="ai_privacy",operation="purge",error=%error,"worker.ai_privacy_purge_failed");
+            }
             if let Err(error) = scoring::scheduler::schedule_all(&db).await {
                 error!(component="scoring",operation="schedule_all",error=%error,"worker.comparison_schedule_failed");
             }

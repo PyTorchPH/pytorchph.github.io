@@ -1,9 +1,10 @@
 // Local AI: the member's provider key lives only in chrome.storage.local and is sent only to
 // the provider they chose. The portal can ask for a completion or the status, never the key.
+import { approvedRequest, type ApprovedAiRequest } from "./ai-privacy.js";
 
 export type LocalAIConfig = { provider: string; model: string; apiKey?: string; baseUrl?: string; apiVersion?: string; project?: string; region?: string };
 export type LocalAIStatus = { configured: boolean; provider: string; model: string; baseUrl: string; apiKeyPresent: boolean; apiVersion: string; project: string; region: string; permissionNeeded: string | null };
-export type CompletionRequest = { system?: string; prompt: string; maxTokens?: number; json?: boolean };
+export type CompletionRequest = { system?: string; prompt?: string; maxTokens?: number; json?: boolean; ticket?: {id:string;proof:string} };
 
 type StoredConfig = Required<Pick<LocalAIConfig, "provider" | "model">> & { apiKey: string; baseUrl: string; apiVersion: string; project: string; region: string };
 
@@ -98,7 +99,7 @@ export async function aiClear(): Promise<void> {
 
 type HttpCall = { url: string; headers: Record<string, string>; body: unknown; read: (payload: Record<string, unknown>) => string };
 
-function openAiCall(config: StoredConfig, base: string, request: CompletionRequest, maxTokens: number): HttpCall {
+function openAiCall(config: StoredConfig, base: string, request: ApprovedAiRequest, maxTokens: number): HttpCall {
   const messages = [...(request.system ? [{ role: "system", content: request.system }] : []), { role: "user", content: request.prompt }];
   return {
     url: `${base}/chat/completions`,
@@ -108,7 +109,7 @@ function openAiCall(config: StoredConfig, base: string, request: CompletionReque
   };
 }
 
-function buildCall(config: StoredConfig, request: CompletionRequest): HttpCall {
+function buildCall(config: StoredConfig, request: ApprovedAiRequest): HttpCall {
   const maxTokens = Math.min(Math.max(Math.round(request.maxTokens || DEFAULT_MAX_TOKENS), 1), 8192);
   switch (config.provider) {
     case "google":
@@ -146,7 +147,8 @@ function buildCall(config: StoredConfig, request: CompletionRequest): HttpCall {
   }
 }
 
-export async function aiComplete(request: CompletionRequest): Promise<string> {
+export async function aiComplete(input: CompletionRequest): Promise<string> {
+  const request=await approvedRequest(input);
   const config = await readStored();
   if (!config) throw new LocalAIError("Set up your AI connection in the portal's Settings first.");
   if (typeof request?.prompt !== "string" || !request.prompt.trim()) throw new LocalAIError("The AI request is empty.");

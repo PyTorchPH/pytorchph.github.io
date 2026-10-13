@@ -38,6 +38,18 @@ pub(crate) async fn dispatch_write(
             StatusCode::OK,
             crate::site_content::campus::save(db, actor, &input).await?,
         ),
+        ("PUT", "member/ai-consent") => (
+            StatusCode::OK,
+            crate::ai_privacy::save_consent(state, actor, &input).await?,
+        ),
+        ("POST", "member/ai-projection") | ("POST", "officer/ai-projection") => (
+            StatusCode::OK,
+            crate::ai_privacy::project(state, actor, &input).await?,
+        ),
+        ("POST", "member/ai-result-context") => (
+            StatusCode::OK,
+            crate::ai_privacy::resolve(state, actor, &input).await?,
+        ),
         ("PUT", "officer/site-content") => (
             StatusCode::OK,
             crate::site_content::store::save(db, actor, &input).await?,

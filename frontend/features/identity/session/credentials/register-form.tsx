@@ -29,9 +29,11 @@ const CODE_LENGTH = 8;
 export function RegisterForm() {
   const [error, setError] = useState("");
   const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationToken, setVerificationToken] = useState("");
+  useVerificationLink(setVerificationEmail, setVerificationToken);
   return (
     <AuthShell sub="Create account" title="Join PyTorch PH.">
-      {verificationEmail && <VerificationCodeForm email={verificationEmail} onError={setError} />}
+      {verificationEmail && <VerificationCodeForm email={verificationEmail} linkToken={verificationToken} onError={setError} />}
       <RegistrationForm error={error} hidden={Boolean(verificationEmail)} onError={setError} onCodeSent={setVerificationEmail} />
       {error && verificationEmail && <p className="mt-3 text-sm text-accent" role="alert">{error}</p>}
       {!verificationEmail && <Link className="focus-ring mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-border py-3 text-sm font-semibold text-ink hover:border-accent hover:text-accent" href="/login">Continue with Google</Link>}
@@ -42,22 +44,42 @@ export function RegisterForm() {
   );
 }
 
-function VerificationCodeForm({ email, onError }: { email: string; onError: (message: string) => void }) {
+function VerificationCodeForm({ email, linkToken, onError }: { email: string; linkToken: string; onError: (message: string) => void }) {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
-  return <form className="mb-6 space-y-4" onSubmit={async (event) => {
-    event.preventDefault(); onError(""); setVerifying(true);
+  useEffect(() => {
+    if (!linkToken) return;
+    void verify(linkToken);
+  }, [linkToken]);
+  async function verify(credential: string) {
+    onError(""); setVerifying(true);
     try {
-      await officialAuth("/auth/email/verify", { email, code });
+      await officialAuth("/auth/email/verify", { email, code: credential });
+      window.history.replaceState(null, "", window.location.pathname);
       router.replace("/onboarding/"); router.refresh();
     } catch (reason) { onError(reason instanceof Error ? reason.message : "Verification failed."); }
     finally { setVerifying(false); }
+  }
+  return <form className="mb-6 space-y-4" onSubmit={async (event) => {
+    event.preventDefault(); await verify(code);
   }}>
-    <p className="text-sm text-muted">Enter the 8-digit code sent to {email}. The code expires in 10 minutes.</p>
+    <p className="text-sm text-muted">{linkToken && verifying ? "Verifying your secure link…" : `Enter the 8-digit code sent to ${email}. The code expires in 10 minutes.`}</p>
     <Field autoComplete="one-time-code" icon={Lock} inputMode="numeric" maxLength={CODE_LENGTH} pattern="[0-9]{8}" placeholder="Verification code" required value={code} onChange={(event) => setCode(event.target.value)} />
     <button className="focus-ring w-full rounded-lg bg-accent py-3 text-white disabled:opacity-55" disabled={verifying || !isCompleteCode(code)} type="submit">{verifying ? "Verifying…" : "Verify email and enter"}</button>
   </form>;
+}
+
+function useVerificationLink(setEmail: (value: string) => void, setToken: (value: string) => void) {
+  useEffect(() => {
+    const parameters = new URLSearchParams(window.location.hash.slice(1));
+    const email = parameters.get("email")?.trim();
+    const token = parameters.get("token")?.trim();
+    if (email && token) {
+      setEmail(email);
+      setToken(token);
+    }
+  }, [setEmail, setToken]);
 }
 
 const isCompleteCode = (code: string) => code.length === CODE_LENGTH;

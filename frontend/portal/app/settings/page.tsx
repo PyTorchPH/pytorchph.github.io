@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AccountBinding } from "@pytorch-ph/domain-client/career-evidence";
 import { CompleteProfile } from "@pytorch-ph/domain-client/member-profile";
-import { PRIVACY_QUERY_KEY, savePrivacySettings, usePrivacySettings } from "@pytorch-ph/domain-client/privacy-feedback";
+import { AiPrivacyControls, PRIVACY_QUERY_KEY, savePrivacySettings, usePrivacySettings } from "@pytorch-ph/domain-client/privacy-feedback";
 import { useProfilePackage } from "@pytorch-ph/domain-client/member-profile";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,9 +21,9 @@ import { LocalAIConnection } from "../../components/local-ai-connection";
 import type { LeaderboardIdentitySettings } from "@pytorch-ph/domain-protocol/leaderboards";
 import type { MemberPrivacySettings } from "@pytorch-ph/domain-protocol/privacy-feedback";
 import { OrganizationPhotoSettings } from "./organization-photo-settings";
-import { PublicRoleVisibilitySettings } from "./public-role-visibility";
 import { ProfileConsentSettings } from "./profile-consents";
 import { PrivateProfileSettings } from "./private-profile-settings";
+import { PublicRoleVisibilitySettings } from "./public-role-visibility";
 
 type Mode = LeaderboardIdentitySettings["mode"];
 
@@ -84,6 +84,7 @@ export default function SettingsPage() {
       <h3 className="mb-2 mt-6 text-sm font-semibold">Privacy</h3>
       <ProfileConsentSettings />
       <PublicRoleVisibilitySettings />
+      <AiPrivacyControls />
       <Button className="mt-4 w-full sm:w-auto" disabled={query.isLoading || !privacy || mutation.isPending || !username || (mode === "real_name" && !consent)} onClick={() => mutation.mutate()} type="button">{mutation.isPending ? "Saving…" : "Save leaderboard and privacy"}</Button>
     </Card>
     </>}

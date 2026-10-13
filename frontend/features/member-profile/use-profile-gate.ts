@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ProfileStatus } from "@pytorch-ph/domain-protocol/identity";
 import { PROFILE_QUERY_KEY, fetchProfile } from "./api";
 
-const EXEMPT_PREFIXES = ["/onboarding", "/settings"];
+const EXEMPT_PREFIXES = ["/onboarding"];
 const PROFILE_STALE_MS = 5 * 60 * 1000;
 
 export function useMemberProfile() {
@@ -20,7 +20,7 @@ export function useMemberProfile() {
 }
 
 // Mental model: an unfinished profile has no portal navigation or protected page body;
-// exempt profile/settings routes remain available so the member can finish or sign out.
+// only onboarding remains available; sign-out uses the auth endpoint outside the portal gate.
 export function useProfileGate(pathname: string): { navigationReady: boolean; incomplete: boolean; blocked: boolean } {
   const router = useRouter();
   const { data } = useMemberProfile();

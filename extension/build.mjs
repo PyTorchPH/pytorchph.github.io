@@ -11,6 +11,7 @@ const PACKAGE_FILES = [
   "portal-bridge.js",
   "source-collector.js",
   "local-ai.js",
+  "ai-privacy.js",
   "popup.js",
   ...ICON_SIZES.map((size) => `icons/icon-${size}.png`),
 ];

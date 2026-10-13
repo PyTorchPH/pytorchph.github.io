@@ -90,6 +90,7 @@ async fn prepare_database(db: &SqlitePool) -> StartupResult<()> {
 
 fn build_state(db: SqlitePool) -> StartupResult<Arc<AppState>> {
     Ok(Arc::new(AppState {
+        ai_privacy_key: crate::ai_privacy::key::PrivacyKey::from_env()?,
         db,
         identity_client: configured_identity_client()?,
         google_client_id: env::var("GOOGLE_CLIENT_ID")?,

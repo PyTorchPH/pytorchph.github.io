@@ -143,7 +143,11 @@ pub fn priority(method: &Method, path: &str) -> u8 {
     if is_bypass(method, path) {
         return BYPASS;
     }
-    if path.starts_with("/auth/") {
+    if path.starts_with("/auth/")
+        || path == "/public/ai-projection/verify"
+        || path.ends_with("/ai-projection")
+        || path.ends_with("/ai-result-context")
+    {
         return AUTH;
     }
     if is_heavy(path) {

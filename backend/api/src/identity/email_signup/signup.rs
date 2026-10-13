@@ -4,8 +4,9 @@
 //!   start_signup                 POST /auth/email/start
 //!   ├─ is_valid_registration     password, name and username bounds
 //!   ├─ email_already_registered  existing members get the same generic reply
-//!   ├─ store_pending_signup      hashed password + hashed code, valid for 10 minutes
-//!   └─ deliver_or_withdraw       sends the code; withdraws the pending row if delivery fails
+//!   ├─ reserve_organization_mailbox unique default address through the private identity service
+//!   ├─ store_pending_signup      hashed password + hashed code/link, valid for 10 minutes
+//!   └─ deliver_verification      sends the link, fallback code and assigned address
 //!   verify_signup                POST /auth/email/verify
 //!   ├─ is_rejected_code          too many attempts, expired, or not matching
 //!   ├─ record_failed_attempt
@@ -79,14 +80,26 @@ pub async fn start_signup(
     if email_already_registered(&state.db, &email).await? {
         return Ok(generic_sent());
     }
-    let relay = state
-        .mail_relay
-        .as_ref()
-        .ok_or(verification_unavailable())?;
+    if state.identity_client.is_none() && state.mail_relay.is_none() {
+        return Err(verification_unavailable());
+    }
     let _slot = claim_hashing_slot(&state)?;
+    let member_id = pending_or_new_member_id(&state.db, &email).await?;
+    let mailbox = reserve_organization_mailbox(&state, member_id, &input.name).await?;
     let code = new_verification_code();
-    store_pending_signup(&state, &email, input, &code).await?;
-    deliver_or_withdraw(&state, relay, &email, &code).await?;
+    let token = new_link_token();
+    let verification_url = verification_url(&state.allowed_origin, &email, &token)?;
+    store_pending_signup(&state, &email, input, member_id, &mailbox, &code, &token).await?;
+    deliver_verification(
+        &state,
+        state.mail_relay.as_ref(),
+        member_id,
+        &email,
+        &code,
+        &mailbox,
+        &verification_url,
+    )
+    .await?;
     tracing::info!(
         event = "auth.verification_code_sent",
         component = "auth",
@@ -124,35 +137,56 @@ async fn store_pending_signup(
     state: &AppState,
     email: &str,
     input: SignupStart,
+    member_id: Uuid,
+    organization_email: &str,
     code: &str,
+    token: &str,
 ) -> ApiResult<()> {
     let password = input.password;
     let hash = tokio::task::spawn_blocking(move || password_hash(&password))
         .await
         .map_err(internal)??;
     let digest = code_hash(&state.email_code_secret, email, code);
+    let link_digest = code_hash(&state.email_code_secret, email, token);
     let now = Utc::now();
-    sqlx::query("INSERT INTO pending_email_signups(email,display_name,public_handle,password_hash,code_hash,expires_at,sent_at,attempts) VALUES (?,?,?,?,?,?,?,0) ON CONFLICT(email) DO UPDATE SET display_name=excluded.display_name,public_handle=excluded.public_handle,password_hash=excluded.password_hash,code_hash=excluded.code_hash,expires_at=excluded.expires_at,sent_at=excluded.sent_at,attempts=0")
+    sqlx::query("INSERT INTO pending_email_signups(email,display_name,public_handle,password_hash,code_hash,expires_at,sent_at,attempts,member_id,organization_email,link_token_hash) VALUES (?,?,?,?,?,?,?,0,?,?,?) ON CONFLICT(email) DO UPDATE SET display_name=excluded.display_name,public_handle=excluded.public_handle,password_hash=excluded.password_hash,code_hash=excluded.code_hash,expires_at=excluded.expires_at,sent_at=excluded.sent_at,attempts=0,member_id=excluded.member_id,organization_email=excluded.organization_email,link_token_hash=excluded.link_token_hash")
         .bind(email).bind(input.name.trim()).bind(&input.username).bind(hash).bind(digest)
         .bind((now + Duration::minutes(CODE_LIFETIME_MINUTES)).to_rfc3339()).bind(now.to_rfc3339())
+        .bind(member_id.to_string()).bind(organization_email).bind(link_digest)
         .execute(&state.db).await.map_err(internal)?;
     Ok(())
 }
 
-async fn deliver_or_withdraw(
+async fn deliver_verification(
     state: &AppState,
-    relay: &RelayConfig,
+    relay: Option<&RelayConfig>,
+    member_id: Uuid,
     email: &str,
     code: &str,
+    organization_email: &str,
+    verification_url: &str,
 ) -> ApiResult<()> {
-    let Err(error) = relay.send_code(&state.http, email, code).await else {
+    let delivery = if let Some(client) = state.identity_client.as_deref() {
+        client
+            .send_verification_mail(member_id, email, code, organization_email, verification_url)
+            .await
+            .map_err(|_| "identity_mail_failure")
+    } else if let Some(relay) = relay {
+        relay
+            .send_verification(
+                &state.http,
+                email,
+                code,
+                organization_email,
+                verification_url,
+            )
+            .await
+    } else {
+        Err("mail_transport_unavailable")
+    };
+    let Err(error) = delivery else {
         return Ok(());
     };
-    sqlx::query("DELETE FROM pending_email_signups WHERE email=?")
-        .bind(email)
-        .execute(&state.db)
-        .await
-        .map_err(internal)?;
     tracing::error!(event = "auth.email_delivery_failed", component = "auth", operation = "signup_start", outcome = "failure", error = %error, "Verification mail delivery failed");
     Err(verification_unavailable())
 }
@@ -167,11 +201,11 @@ pub async fn verify_signup(
     check_origin(&state, &headers)?;
     let email = normalize_email(&input.email).ok_or(invalid_code())?;
     enforce_rate_limit(&state.db, "verify", &email, VERIFICATIONS_PER_EMAIL).await?;
-    if !is_eight_digit_code(&input.code) {
+    if !is_eight_digit_code(&input.code) && !is_link_token(&input.code) {
         return Err(invalid_code());
     }
     let mut tx = state.db.begin().await.map_err(internal)?;
-    let pending = sqlx::query("SELECT display_name,public_handle,password_hash,code_hash,expires_at,attempts FROM pending_email_signups WHERE email=?")
+    let pending = sqlx::query("SELECT display_name,public_handle,password_hash,code_hash,link_token_hash,member_id,expires_at,attempts FROM pending_email_signups WHERE email=?")
         .bind(&email).fetch_optional(&mut *tx).await.map_err(internal)?
         .ok_or(invalid_code())?;
     if is_rejected_code(&state, &pending, &email, &input.code) {
@@ -188,7 +222,11 @@ pub async fn verify_signup(
 #[inline]
 fn is_rejected_code(state: &AppState, pending: &SqliteRow, email: &str, code: &str) -> bool {
     let expected = code_hash(&state.email_code_secret, email, code);
-    let stored: String = pending.get("code_hash");
+    let stored: String = if is_eight_digit_code(code) {
+        pending.get("code_hash")
+    } else {
+        pending.get("link_token_hash")
+    };
     let expires: String = pending.get("expires_at");
     let attempts: i64 = pending.get("attempts");
     attempts >= MAX_CODE_ATTEMPTS
@@ -210,11 +248,11 @@ async fn create_email_member(
     pending: &SqliteRow,
     email: &str,
 ) -> ApiResult<Viewer> {
-    let id = Uuid::new_v4().to_string();
+    let id: String = pending.get("member_id");
     let name: String = pending.get("display_name");
     let handle: String = pending.get("public_handle");
     let hash: String = pending.get("password_hash");
-    sqlx::query("INSERT INTO members(id,google_sub,email,display_name,public_handle,role,created_at) VALUES (?,?,?,?,?,'member',?)")
+    sqlx::query("INSERT INTO members(id,google_sub,email,display_name,public_handle,role,created_at,onboarding_required) VALUES (?,?,?,?,?,'member',?,1)")
         .bind(&id).bind(format!("email:{id}")).bind(email).bind(&name).bind(&handle).bind(Utc::now().to_rfc3339())
         .execute(&mut **tx).await.map_err(|_| ApiError(StatusCode::CONFLICT, "Account or username already exists"))?;
     sqlx::query(
@@ -241,6 +279,58 @@ async fn create_email_member(
 #[inline]
 fn new_verification_code() -> String {
     format!("{:08}", Uuid::new_v4().as_u128() % 100_000_000)
+}
+
+#[inline]
+fn new_link_token() -> String {
+    format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple())
+}
+
+#[inline]
+fn is_link_token(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+async fn pending_or_new_member_id(db: &SqlitePool, email: &str) -> ApiResult<Uuid> {
+    let existing: Option<String> = sqlx::query_scalar(
+        "SELECT member_id FROM pending_email_signups WHERE email=? AND member_id IS NOT NULL",
+    )
+    .bind(email)
+    .fetch_optional(db)
+    .await
+    .map_err(internal)?;
+    existing
+        .map(|value| Uuid::parse_str(&value).map_err(internal))
+        .transpose()
+        .map(|value| value.unwrap_or_else(Uuid::new_v4))
+}
+
+async fn reserve_organization_mailbox(
+    state: &AppState,
+    member_id: Uuid,
+    display_name: &str,
+) -> ApiResult<String> {
+    let client = state
+        .identity_client
+        .as_deref()
+        .ok_or_else(verification_unavailable)?;
+    client
+        .provision_mailbox(member_id, display_name)
+        .await
+        .map(|mailbox| mailbox.address)
+        .map_err(|_| verification_unavailable())
+}
+
+fn verification_url(origin: &str, email: &str, token: &str) -> ApiResult<String> {
+    let mut url = url::Url::parse(origin).map_err(internal)?;
+    url.set_path("/register/");
+    url.set_query(None);
+    let fragment = url::form_urlencoded::Serializer::new(String::new())
+        .append_pair("email", email)
+        .append_pair("token", token)
+        .finish();
+    url.set_fragment(Some(&fragment));
+    Ok(url.to_string())
 }
 
 #[inline]

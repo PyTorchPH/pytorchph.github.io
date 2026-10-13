@@ -14,5 +14,5 @@ export { useEvidenceExtension } from "./use-evidence-extension";
 export { collectEvidenceFromExtension, collectOwnProfile, type CollectedPayload } from "./collect";
 export { verifyIdentity, type VerifiedIdentity } from "./identity";
 export { captureVisibleTab } from "./capture";
-export { aiClear, aiComplete, aiConfigure, aiStatus, type LocalAIConfig, type LocalAIStatus } from "./local-ai";
+export { aiClear, aiComplete, aiProjectedCompletion, aiConfigure, aiStatus, type LocalAIConfig, type LocalAIStatus } from "./local-ai";
 export { ExtensionCapabilityOverlay } from "./capability-overlay";

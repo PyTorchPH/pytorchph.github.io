@@ -64,6 +64,10 @@ fn cors_layer(allowed_origin: &str) -> Result<CorsLayer, Box<dyn std::error::Err
 fn platform_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/health", get(public::health))
+        .route(
+            "/public/ai-projection/verify",
+            post(crate::ai_privacy::verify_ticket),
+        )
         .route("/queue/{id}", get(admission::queue_status))
         .route("/jobs/{id}", get(jobs::read_job))
         .route("/leaderboard", get(public::public_leaderboard))

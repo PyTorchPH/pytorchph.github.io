@@ -3,7 +3,7 @@
 //! Module map (caller-first):
 //!   RelayConfig::from_env     MAIL_RELAY_URL + MAIL_RELAY_TOKEN, both or neither
 //!   └─ is_safe_relay_url      https, default port, no credentials, query or fragment
-//!   RelayConfig::send_code    posts the code, then requires {"accepted": true}
+//!   RelayConfig::send_verification posts the link, fallback code and organization email
 //!   └─ read_bounded_body      reads at most 4 KiB of the relay's reply
 use serde::Deserialize;
 use std::env;
@@ -41,17 +41,19 @@ impl RelayConfig {
 
     /// Mental model: a relay transport error, a non-2xx status, an oversized or malformed
     /// reply, or an explicit refusal all count as "not delivered".
-    pub(super) async fn send_code(
+    pub(super) async fn send_verification(
         &self,
         http: &reqwest::Client,
         to: &str,
         code: &str,
+        organization_email: &str,
+        verification_url: &str,
     ) -> Result<(), &'static str> {
         let response = http.post(self.url.clone()).bearer_auth(&self.token)
             .json(&serde_json::json!({
                 "to": to,
-                "subject": "PyTorch PH verification code",
-                "text": format!("Your PyTorch PH verification code is {code}. It expires in 10 minutes. If you did not request this, ignore this email."),
+                "subject": "Verify your PyTorch PH account",
+                "text": format!("Verify your PyTorch PH account within 10 minutes: {verification_url}\n\nYour fallback verification code is {code}.\n\nYour reserved organization email is {organization_email}. Your personal email remains your portal login. If you did not request this, ignore this email."),
             }))
             .send().await.map_err(|_| "relay_transport_failure")?;
         if !response.status().is_success() {
@@ -71,7 +73,7 @@ impl RelayConfig {
 fn is_safe_relay_url(url: &url::Url) -> bool {
     url.scheme() == "https"
         && url.host().is_some()
-        && !url.port().is_some_and(|port| port != 443)
+        && url.port().is_none_or(|port| port == 443)
         && url.username().is_empty()
         && url.password().is_none()
         && url.query().is_none()
@@ -118,7 +120,13 @@ mod relay_tests {
         };
         assert!(
             relay
-                .send_code(&reqwest::Client::new(), "member@example.test", "12345678")
+                .send_verification(
+                    &reqwest::Client::new(),
+                    "member@example.test",
+                    "12345678",
+                    "mexample@pytorch.ph",
+                    "https://pytorch.ph/register/#token=test",
+                )
                 .await
                 .is_ok()
         );
@@ -139,7 +147,13 @@ mod relay_tests {
         };
         assert_eq!(
             relay
-                .send_code(&reqwest::Client::new(), "member@example.test", "12345678")
+                .send_verification(
+                    &reqwest::Client::new(),
+                    "member@example.test",
+                    "12345678",
+                    "mexample@pytorch.ph",
+                    "https://pytorch.ph/register/#token=test",
+                )
                 .await,
             Err("relay_not_accepted")
         );

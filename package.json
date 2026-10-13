@@ -22,6 +22,7 @@
     "officer": "node development/officer-tools/cli.mjs",
     "mcp:officer": "node development/officer-tools/server.mjs",
     "test:officer-tools": "npm run test --workspace @pytorch-ph/officer-tools",
+    "test:ai-privacy": "node --test tests/node/ai-privacy-egress.test.mjs",
     "setup": "npm ci --ignore-scripts --no-audit --no-fund",
     "dev": "node development/local-workspace/start-website.mjs",
     "dev:portal": "npm run dev --workspace @pytorch-ph/portal -- --hostname 127.0.0.1 --port 3100",

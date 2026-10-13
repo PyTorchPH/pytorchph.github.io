@@ -1,5 +1,13 @@
 # Officer CLI and MCP
 
+AI privacy update: CLI/MCP defaults return backend-reviewed, purpose-consented projections. Identity is pseudonymous; officer views expose counts with small-group suppression. Raw skill/mail/website workflows have no reviewed AI policy and fail closed. Existing manual website CLI commands now require `--human-raw` as well as their write/confirmation flags; use that mode only outside an AI/agent context. MCP never enables human raw mode. See the [deterministic AI privacy plan](plans/2026-10-13-ai-privacy.md).
+
+Enable your own officer AI purpose explicitly from the privacy controls or human CLI:
+
+```sh
+node development/officer-tools/cli.mjs ai-consent --purpose officer_assistant --enable --write --confirm
+```
+
 Local Node.js CLI and MCP stdio server for the existing officer API. The server runs on the officer's computer; Lightsail runs only the existing API. Current server roles and presidential approval quorum remain authoritative.
 
 ## Setup and sign in

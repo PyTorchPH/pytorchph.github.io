@@ -4,6 +4,7 @@ use sqlx::SqlitePool;
 use std::sync::Arc;
 
 pub(crate) struct AppState {
+    pub(crate) ai_privacy_key: Option<crate::ai_privacy::key::PrivacyKey>,
     pub(crate) db: SqlitePool,
     pub(crate) identity_client: Option<Arc<IdentityClient>>,
     pub(crate) google_client_id: String,

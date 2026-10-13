@@ -164,10 +164,13 @@ async fn email_signup_requires_the_current_code_and_creates_one_member() {
     let (state, headers, _, _) = fixture().await;
     let email = "new@example.test";
     let code = "12345678";
-    sqlx::query("INSERT INTO pending_email_signups(email,display_name,public_handle,password_hash,code_hash,expires_at,sent_at) VALUES (?,?,?,?,?,?,?)")
+    let pending_member = Uuid::new_v4().to_string();
+    sqlx::query("INSERT INTO pending_email_signups(email,display_name,public_handle,password_hash,code_hash,link_token_hash,member_id,organization_email,expires_at,sent_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
         .bind(email).bind("New Member").bind("new_member")
         .bind(email_signup::password_hash("strong-password").unwrap())
         .bind(email_signup::code_hash(&state.email_code_secret, email, code))
+        .bind(email_signup::code_hash(&state.email_code_secret, email, &"a".repeat(64)))
+        .bind(&pending_member).bind("nmember@pytorch.ph")
         .bind((chrono::Utc::now() + chrono::Duration::minutes(10)).to_rfc3339())
         .bind(chrono::Utc::now().to_rfc3339()).execute(&state.db).await.unwrap();
     let wrong = email_signup::verify_signup(

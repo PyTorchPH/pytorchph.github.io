@@ -7,12 +7,13 @@ import { privateInput } from './private-input.mjs';
 
 // Mental model: CLI options select the same command catalog exposed by MCP; credentials never become arguments/results.
 async function main() {
-  const {values,positionals}=parseArgs({allowPositionals:true,options:{email:{type:'string'},file:{type:'string'},revision:{type:'string'},write:{type:'boolean'},confirm:{type:'boolean'},'password-stdin':{type:'boolean'},'session-stdin':{type:'boolean'}}});
+  const {values,positionals}=parseArgs({allowPositionals:true,options:{email:{type:'string'},file:{type:'string'},purpose:{type:'string'},enable:{type:'boolean'},disable:{type:'boolean'},revision:{type:'string'},write:{type:'boolean'},confirm:{type:'boolean'},'human-raw':{type:'boolean'},'password-stdin':{type:'boolean'},'session-stdin':{type:'boolean'}}});
   const [action,argument]=positionals;
-  if(!action || action==='help')return {commands:['login --email EMAIL [--password-stdin]','import-session [--session-stdin]','logout','identity','read VIEW','website-draft','website-save --file FILE --write','website-approve --revision N --write --confirm'],views:['events','organization','demographics','evidence','appeals','skills_pending','skills_raw','mail_collab'],note:'Login requires an existing approved officer account. Writes use the live API and existing presidential quorum.'};
+  if(!action || action==='help')return {commands:['login --email EMAIL [--password-stdin]','import-session [--session-stdin]','logout','identity','read VIEW','ai-consent --purpose PURPOSE --enable|--disable --write --confirm','website-draft --human-raw','website-save --file FILE --human-raw --write','website-approve --revision N --human-raw --write --confirm'],views:['events','organization','demographics','evidence','appeals'],note:'Default views require purpose consent and return approved AI projections. Human CLI mode exposes authorized raw data; never enable it for agents. Writes retain existing API permissions and presidential quorum.'};
   const config=configuration();if(values.write)config.enableWrites=true;
-  const client=new PortalClient(config);const catalog=commandCatalog(client);
+  const client=new PortalClient(config);const catalog=commandCatalog(client,{humanRaw:values['human-raw']===true});
   switch(action) {
+    case 'ai-consent':if(!values.write || !values.confirm || Boolean(values.enable)===Boolean(values.disable) || !['learning_recommendations','officer_assistant'].includes(values.purpose))throw new Error('Purpose consent requires --write --confirm and exactly one of --enable/--disable');await client.identity();return client.request('/portal/api/member/ai-consent',{method:'PUT',body:{purpose:values.purpose,granted:values.enable===true}});
     case 'login':if(!values.email)throw new Error('--email is required');return client.login(values.email,await privateInput('Password: ',{stdin:values['password-stdin']}));
     case 'import-session':return client.importSession(await privateInput('Session cookie: ',{stdin:values['session-stdin']}));
     case 'logout':return client.logout();

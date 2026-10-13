@@ -2,6 +2,43 @@
 use super::*;
 
 #[tokio::test]
+async fn newly_verified_member_is_limited_to_onboarding_until_profile_exists() {
+    let (state, base_headers, _, _) = fixture().await;
+    let member_id = Uuid::new_v4().to_string();
+    sqlx::query("INSERT INTO members(id,google_sub,email,display_name,public_handle,role,created_at,onboarding_required) VALUES (?,?,?,?,?,'member',?,1)")
+        .bind(&member_id).bind(format!("email:{member_id}")).bind("onboarding@example.test")
+        .bind("Onboarding Member").bind("onboarding_member").bind(chrono::Utc::now().to_rfc3339())
+        .execute(&state.db).await.unwrap();
+    let headers = member_session(&state, &base_headers, &member_id, &"e".repeat(64)).await;
+
+    let blocked = portal::gateway(
+        State(state.clone()),
+        Path("product/dashboard".to_owned()),
+        OriginalUri("/portal/api/product/dashboard".parse().unwrap()),
+        Method::GET,
+        headers.clone(),
+        Bytes::new(),
+    )
+    .await;
+    assert!(matches!(
+        blocked,
+        Err(ApiError(StatusCode::FORBIDDEN, "Onboarding required"))
+    ));
+
+    let allowed = portal::gateway(
+        State(state),
+        Path("member/profile".to_owned()),
+        OriginalUri("/portal/api/member/profile".parse().unwrap()),
+        Method::GET,
+        headers,
+        Bytes::new(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(allowed.status(), StatusCode::OK);
+}
+
+#[tokio::test]
 async fn portal_gateway_persists_private_settings_and_rejects_cross_role_access() {
     let (state, officer_headers, _, member_id) = fixture().await;
     let settings = serde_json::json!({"hideGoogleIdentity":true,"hideRealName":false,"deviceCacheEnabled":true,"anonymousRanking":false,"automaticErrorReports":true});

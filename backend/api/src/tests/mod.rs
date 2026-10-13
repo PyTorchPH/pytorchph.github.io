@@ -43,8 +43,10 @@ use std::{sync::Arc, time::Duration};
 use uuid::Uuid;
 
 mod admission_queue;
+mod ai_privacy;
 mod collab_mail;
 mod event_deletion;
+mod event_permissions;
 mod event_results;
 mod evidence;
 mod feedback;
@@ -58,13 +60,12 @@ mod officer;
 mod organization;
 mod portal_gateway;
 mod profile_package;
+mod public_directory;
+mod public_events;
 mod scoring;
 mod scoring_quarters;
 mod scoring_scheduler;
 mod site_content;
-mod public_directory;
-mod public_events;
-mod event_permissions;
 mod skill_taxonomy;
 
 pub(crate) async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
@@ -101,6 +102,7 @@ pub(crate) async fn fixture() -> (Arc<AppState>, HeaderMap, String, String) {
         .await
         .unwrap();
     let state = Arc::new(AppState {
+        ai_privacy_key: None,
         db,
         identity_client: None,
         google_client_id: "test".into(),

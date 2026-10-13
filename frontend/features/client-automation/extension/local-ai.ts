@@ -8,6 +8,8 @@
 
 import { sendExtensionCommand, type CommandResult } from "./bridge";
 import { emitOperational, extensionSupports, probeExtension } from "./status";
+import { fetchJson } from "@pytorch-ph/domain-client/transport";
+import type { AiProjectionEnvelope, AiProjectionTicket, AiPurpose } from "@pytorch-ph/domain-protocol/privacy-feedback";
 
 export type LocalAIConfig = { provider: string; model: string; apiKey?: string; baseUrl?: string; apiVersion?: string; project?: string; region?: string };
 export type LocalAIStatus = { configured: boolean; provider: string; model: string; baseUrl: string; apiKeyPresent: boolean; apiVersion: string; project: string; region: string; permissionNeeded: string | null };
@@ -40,10 +42,20 @@ export async function aiClear(): Promise<void> {
 
 /** Runs one completion through the member's own provider, called from the extension. */
 export async function aiComplete(request: { system?: string; prompt: string; maxTokens?: number; json?: boolean }): Promise<string> {
+  if (request.prompt!=="Reply with the single word READY." || request.system || request.maxTokens!==10 || request.json) throw new Error("This AI workflow has no reviewed privacy policy. Use the manual workflow until a policy is available.");
   const result = await localAICommand("ai_complete", { request }, AI_COMPLETE_TIMEOUT_MS);
   if (typeof result.text !== "string") throw new Error("The AI provider returned an empty answer.");
   emitOperational("local_ai.completed", "succeeded");
   return result.text;
+}
+
+export async function aiProjectedCompletion(purpose: AiPurpose, omitFields: string[] = []): Promise<{ text: string; envelope: AiProjectionEnvelope }> {
+  const envelope=await fetchJson<AiProjectionEnvelope>("/api/member/ai-projection",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({purpose,omitFields})});
+  const result=await localAICommand("ai_complete",{request:{ticket:envelope.ticket} satisfies {ticket:AiProjectionTicket}},AI_COMPLETE_TIMEOUT_MS);
+  if(typeof result.text!=="string")throw new Error("The AI provider returned an empty answer.");
+  await fetchJson("/api/member/ai-result-context",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({requestId:envelope.ticket.id})});
+  emitOperational("local_ai.projected_completed","succeeded");
+  return {text:result.text,envelope};
 }
 
 // Mental model: check support, stringify the payload, send, and turn a refused reply into an Error.

@@ -20,6 +20,7 @@
 //!   reference_data  shared seed versioning and keyword search for the directories above
 //!   seed         demo fixtures and sample members
 //!   skill_taxonomy  client-compiled normalized skills (Technology dept) and the community tally
+mod ai_privacy;
 mod app;
 mod collab_mail;
 mod companies;

@@ -17,7 +17,7 @@ import { meritBlocks, upskillRadar } from "./evidence-charts";
 import type { MembershipStatus } from "@pytorch-ph/domain-protocol/privacy-feedback";
 import type { ProductViewData } from "@pytorch-ph/domain-protocol/career-evidence";
 import { toast } from "sonner";
-import { aiComplete, aiStatus as localAIStatus } from "@pytorch-ph/domain-client/client-automation";
+import { aiProjectedCompletion, aiStatus as localAIStatus } from "@pytorch-ph/domain-client/client-automation";
 
 type VerifiedAccount = { provider: "github" | "linkedin" | "facebook"; handle: string; profileUrl: string };
 const PROVIDER_ICONS = { github: { icon: Github, label: "GitHub" }, linkedin: { icon: Linkedin, label: "LinkedIn" }, facebook: { icon: Facebook, label: "Facebook" } } as const;
@@ -51,18 +51,11 @@ function ProfileContent() {
     mutationFn: async () => {
       const verified = (evidence.data?.evidence?.items || []).filter((item) => item.verificationState === "source_matched" || item.verificationState === "user_verified");
       if (!verified.length) throw new Error("No verified evidence is available for UpSkill planning.");
-      const cited = verified.map((item) => ({ id: item.id, title: item.title, description: item.description, skills: item.skills }));
-      // The member's own AI provider, called by their extension; nothing goes through our server.
-      const reply = await aiComplete({
-        system: "You are a career coach for a PyTorch community member. Use only the evidence provided and cite evidence ids. Answer with JSON only.",
-        prompt: `Evidence:
-${JSON.stringify(cited)}
-
-Return {"summary": string, "recommendations": [{"focusSkill": string, "rationale": string, "nextStep": string, "evidenceIds": string[]}], "warnings": string[]} with 2-4 recommendations.`,
-        json: true,
-        maxTokens: 1200,
-      });
-      return parseUpskillPlan(reply);
+      const result = await aiProjectedCompletion("learning_recommendations");
+      const plan = parseUpskillPlan(result.text);
+      const allowed = new Set((result.envelope.projection.achievements as Array<{reference:string}>).map(item=>item.reference));
+      if(plan.recommendations.some(item=>item.evidenceIds.some(id=>!allowed.has(id))))throw new Error("The AI cited an unknown achievement alias.");
+      return plan;
     },
     onSuccess: setUpskillPlan,
     onError: (error) => toast.error(error instanceof Error ? error.message : "UpSkill planning failed."),

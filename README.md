@@ -44,6 +44,8 @@ No live deployment or data migration is included in this adaptation.
 
 ## Officer-managed website content
 
+AI privacy: [deterministic projection plan](docs/plans/2026-10-13-ai-privacy.md). Recommendation/agent consent is separate from achievement visibility; unsupported personal-data AI workflows are blocked. This local change requires a later backend key configuration, migration and updated extension rollout.
+
 Officers can also use the [local CLI and MCP server](docs/OFFICER-CLI-MCP.md) for agent access,
 officer read views, website drafts and presidential approvals using the existing API permissions.
 

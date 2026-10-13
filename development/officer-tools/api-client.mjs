@@ -34,6 +34,14 @@ export class PortalClient {
     return identity;
   }
 
+  async aiView(view) {
+    await this.identity();
+    const envelope=await this.request('/portal/api/officer/ai-projection',{method:'POST',body:{purpose:'officer_assistant',view}});
+    if(envelope.queued)throw new PortalError(503,'AI projections cannot use deferred admission');
+    const verified=await this.request('/public/ai-projection/verify',{method:'POST',body:envelope.ticket,authenticate:false,remember:false});
+    return verified.projection;
+  }
+
   async logout() {
     try {await this.request('/auth/signout',{method:'POST'});}
     finally{this.cookie=undefined;await this.store.clear();}
@@ -42,7 +50,7 @@ export class PortalClient {
 
   // Mental model: bind credentials to one origin → bounded request → renew cookie → return data; log metadata only.
   async request(path,{method='GET',body,authenticate=true,remember=true}={}) {
-    if(!/^\/(auth\/(me|password|signout)|portal\/api\/officer\/[a-z0-9/-]+)$/.test(path))throw new Error('Request path is outside the officer allowlist');
+    if(!/^\/(auth\/(me|password|signout)|public\/ai-projection\/verify|portal\/api\/member\/ai-consent|portal\/api\/officer\/[a-z0-9/-]+)$/.test(path))throw new Error('Request path is outside the officer allowlist');
     const encoded=body===undefined ? undefined : JSON.stringify(body);
     if(encoded && Buffer.byteLength(encoded)>128*1024)throw new PortalError(413);
     if(authenticate && !this.cookie && !this.externalCookie)this.cookie=await this.store.read();

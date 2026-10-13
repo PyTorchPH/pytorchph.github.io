@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@pytorch-ph/design-system/button";
 import { fetchJson } from "@pytorch-ph/domain-client/transport";
+import { AiPrivacyControls } from "./render-ai-privacy";
 import type { MemberPrivacySettings } from "@pytorch-ph/domain-protocol/privacy-feedback";
 
 // Anonymous ranking and hiding the real name follow the leaderboard display mode, so they are
@@ -46,6 +47,7 @@ export function PrivacyToggles({ value, onChange }: { value: MemberPrivacySettin
       <input checked={Boolean(value[key])} className="mt-1 accent-accent" onChange={(event) => onChange({ ...value, [key]: event.target.checked })} type="checkbox" />
       <span><span className="block font-semibold">{label}</span><span className="mt-1 block text-xs leading-5 text-muted">{detail}</span></span>
     </label>)}
+    <AiPrivacyControls />
   </div>;
 }
 

@@ -22,6 +22,8 @@ pub(crate) enum NamePurpose {
     OrganizationChart,
     LeaderboardPhoto,
     PublicRoleProfile,
+    MailboxProvisioning,
+    VerificationMail,
 }
 
 impl NamePurpose {
@@ -31,6 +33,8 @@ impl NamePurpose {
             Self::OrganizationChart => "organization_chart",
             Self::LeaderboardPhoto => "leaderboard_photo",
             Self::PublicRoleProfile => "public_role_profile",
+            Self::MailboxProvisioning => "mailbox_provisioning",
+            Self::VerificationMail => "verification_mail",
         }
     }
 }
@@ -39,6 +43,12 @@ impl NamePurpose {
 #[serde(rename_all = "camelCase")]
 struct NameReply {
     display_name: String,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct OrganizationMailbox {
+    pub(crate) address: String,
 }
 
 #[derive(Clone, Deserialize)]
@@ -85,6 +95,73 @@ pub(crate) enum IdentityError {
 }
 
 impl IdentityClient {
+    pub(crate) async fn send_verification_mail(
+        &self,
+        member_id: Uuid,
+        to: &str,
+        code: &str,
+        organization_email: &str,
+        verification_url: &str,
+    ) -> Result<(), IdentityError> {
+        let response = self
+            .photo_request_with_purpose(
+                Method::POST,
+                member_id,
+                member_id,
+                "verification-mail",
+                Some((
+                    serde_json::json!({
+                        "to": to,
+                        "code": code,
+                        "organizationEmail": organization_email,
+                        "verificationUrl": verification_url,
+                    })
+                    .to_string()
+                    .into_bytes(),
+                    "application/json",
+                )),
+                NamePurpose::VerificationMail,
+            )
+            .await?;
+        if response.status() == StatusCode::ACCEPTED {
+            Ok(())
+        } else {
+            Err(IdentityError::Unavailable)
+        }
+    }
+
+    pub(crate) async fn provision_mailbox(
+        &self,
+        member_id: Uuid,
+        display_name: &str,
+    ) -> Result<OrganizationMailbox, IdentityError> {
+        let response = self
+            .photo_request_with_purpose(
+                Method::POST,
+                member_id,
+                member_id,
+                "organization-mailbox",
+                Some((
+                    serde_json::json!({"displayName": display_name})
+                        .to_string()
+                        .into_bytes(),
+                    "application/json",
+                )),
+                NamePurpose::MailboxProvisioning,
+            )
+            .await?;
+        if response.status() != StatusCode::OK {
+            return Err(IdentityError::Unavailable);
+        }
+        let bytes = bounded_response_bytes(response, 4096).await?;
+        let mailbox: OrganizationMailbox =
+            serde_json::from_slice(&bytes).map_err(|_| IdentityError::Unavailable)?;
+        if !mailbox.address.ends_with("@pytorch.ph") || mailbox.address.len() > 75 {
+            return Err(IdentityError::Unavailable);
+        }
+        Ok(mailbox)
+    }
+
     pub(crate) async fn public_role_visibility(
         &self,
         member_id: Uuid,

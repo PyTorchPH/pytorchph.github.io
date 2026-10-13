@@ -143,10 +143,10 @@ fn is_valid_reconciliation(input: &ReconcileInput) -> bool {
     is_delivery_outcome(&input.status)
         && input.reason.trim().len() >= MIN_REASON_LENGTH
         && input.reason.len() <= MAX_REASON_LENGTH
-        && !input
+        && input
             .external_message_id
             .as_ref()
-            .is_some_and(|id| id.len() > MAX_MESSAGE_ID_LENGTH)
+            .is_none_or(|id| id.len() <= MAX_MESSAGE_ID_LENGTH)
         && names_sent_message(&input.status, input.external_message_id.as_deref())
 }
 
