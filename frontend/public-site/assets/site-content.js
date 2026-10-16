@@ -15,12 +15,20 @@
   function displayDate(value) { return date(value)?.toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric",timeZone:"Asia/Manila"}) ?? ""; }
   let latestEvents=[];
   function selectedEventSeries() { return document.querySelector("[data-event-series][aria-selected='true']")?.dataset.eventSeries ?? ""; }
+  function isUpcomingSchedule(row, today) {
+    const end = /^\d{4}-\d{2}$/.test(row.startsAt) ? new Date(Number(row.startsAt.slice(0,4)), Number(row.startsAt.slice(5,7)), 0, 23, 59, 59, 999) : /^\d{4}-\d{2}-\d{2}$/.test(row.startsAt) ? new Date(Number(row.startsAt.slice(0,4)), Number(row.startsAt.slice(5,7))-1, Number(row.startsAt.slice(8,10)), 23, 59, 59, 999) : date(row.startsAt);
+    return !end || end >= today;
+  }
+  function scheduleDateLabel(row) {
+    const label = row.scheduleLabel || (row.dateStatus === "coming_soon" ? "Coming Soon" : displayDate(row.startsAt));
+    return row.dateStatus === "tentative" ? "Tentative · " + label : label;
+  }
   function renderEvents(rows) {
     latestEvents=rows;
     const today=new Date(); today.setHours(0,0,0,0);
     const series=selectedEventSeries();
-    const upcoming=rows.filter(row=>(!series||row.series===series)&&(!date(row.startsAt)||date(row.startsAt)>=today)).sort((a,b)=>(date(a.startsAt)?.getTime() ?? Infinity)-(date(b.startsAt)?.getTime() ?? Infinity));
-    replace("events",upcoming.map(row=>{const node=card(row.title); if(row.isDemo)node.append(element("p","Demo/Test event — sample data","ph-demo-label")); node.id=`event-${row.id}`; const photo=image(row.photoUrl,row.title);if(photo)node.prepend(photo);paragraph(node,"Date",row.scheduleLabel||row.dateStatus==="coming_soon" ? row.scheduleLabel||"Coming Soon" : row.dateStatus==="tentative" ? `Tentative${row.startsAt ? ` · ${displayDate(row.startsAt)}` : ""}` : displayDate(row.startsAt)); paragraph(node,"",row.description);paragraph(node,"Series",row.series); paragraph(node,"Modules",row.modules||row.topic); paragraph(node,"Type",row.eventType); paragraph(node,"Venue / platform",row.venue); const url=safeUrl(row.registrationUrl); if(url){const link=element("a","Registration details","ph-profile-link");link.href=url;link.rel="noopener noreferrer";node.append(link);}return node;}),"No upcoming events match this learning series.");
+    const upcoming=rows.filter(row=>(!series||row.series===series)&&isUpcomingSchedule(row,today)).sort((a,b)=>(date(a.startsAt)?.getTime() ?? Infinity)-(date(b.startsAt)?.getTime() ?? Infinity));
+    replace("events",upcoming.map(row=>{const node=card(row.title); if(row.isDemo)node.append(element("p","Demo/Test event — sample data","ph-demo-label")); node.id=`event-${row.id}`; const photo=image(row.photoUrl,row.title);if(photo)node.prepend(photo);paragraph(node,"Date",scheduleDateLabel(row)); paragraph(node,"",row.description);paragraph(node,"Series",row.series); paragraph(node,"Modules",row.modules||row.topic); paragraph(node,"Type",row.eventType); paragraph(node,"Venue / platform",row.venue); const url=safeUrl(row.registrationUrl); if(url){const link=element("a","Registration details","ph-profile-link");link.href=url;link.rel="noopener noreferrer";node.append(link);}return node;}),"No upcoming events match this learning series.");
   }
   function setupEventTabs() { document.querySelectorAll("[data-event-series]").forEach(button=>button.addEventListener("click",()=>{document.querySelectorAll("[data-event-series]").forEach(item=>item.setAttribute("aria-selected",String(item===button)));renderEvents(latestEvents);})); }
   function renderLeadership(rows) {

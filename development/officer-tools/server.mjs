@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 export function createOfficerServer(client) {
   const server=new McpServer({name:'pytorch-ph-officer',version:'0.1.0'});
   for(const [name,command] of Object.entries(commandCatalog(client))) {
-    server.registerTool(name,{description:command.description,inputSchema:command.schema,annotations:{readOnlyHint:command.readOnly,destructiveHint:!command.readOnly,idempotentHint:command.readOnly,openWorldHint:false}},async input=>{
+    server.registerTool(name,{description:command.description,inputSchema:command.schema,annotations:{readOnlyHint:command.readOnly,destructiveHint:command.destructive ?? !command.readOnly,idempotentHint:command.idempotent ?? command.readOnly,openWorldHint:false}},async input=>{
       try {const result=await command.run(input);return {content:[{type:'text',text:JSON.stringify(result)}],structuredContent:{result}};}
       catch(error){client.log({event:'officer_tools.command.failed',at:new Date().toISOString(),component:'officer_tools',operation:name,status:error instanceof PortalError ? error.status : 0});return {isError:true,content:[{type:'text',text:error instanceof PortalError ? error.message : 'Officer command failed validation or execution'}]};}
     });

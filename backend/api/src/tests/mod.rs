@@ -144,7 +144,7 @@ async fn member_session(
     headers
 }
 
-async fn portal_call(
+pub(crate) async fn portal_call(
     state: &Arc<AppState>,
     headers: &HeaderMap,
     method: Method,

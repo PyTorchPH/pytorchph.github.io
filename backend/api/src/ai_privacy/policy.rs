@@ -17,7 +17,7 @@ pub(crate) struct ProjectionInput {
 }
 
 pub(crate) fn policy() -> Value {
-    json!({"version":POLICY_VERSION,"default":"deny","purposes":["learning_recommendations","officer_assistant"],"trainingEnabled":false,"fields":{
+    json!({"version":POLICY_VERSION,"default":"deny","purposes":["learning_recommendations","officer_assistant"],"trainingEnabled":false,"publicOfficerViews":{"event_schedules":{"fields":["id","title","startsAt","dateStatus","scheduleLabel","series","modules"],"source":"published_learning_schedules","excludes":["member_id","email","created_by","private_drafts"]}},"fields":{
         "member_id":{"sensitive_data":true,"transform":"pseudonymize"},
         "name":{"sensitive_data":true,"transform":"omit"},
         "email":{"sensitive_data":true,"transform":"omit"},

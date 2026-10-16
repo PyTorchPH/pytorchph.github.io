@@ -133,6 +133,9 @@ async fn officer_view(
     key: &key::PrivacyKey,
     view: &str,
 ) -> ApiResult<Value> {
+    if let Some(cursor) = view.strip_prefix("event_schedules/") {
+        return crate::events::schedules::list(&state.db, cursor).await;
+    }
     let query = match view {
         "identity" => {
             return Ok(
@@ -154,4 +157,25 @@ async fn officer_view(
     } else {
         json!({"view":view,"suppressed":true})
     })
+}
+
+/// Consent is checked inside the same transaction that inserts the public schedule.
+pub(crate) async fn officer_consent_in(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    member: &str,
+) -> ApiResult<()> {
+    let allowed: Option<i64> = sqlx::query_scalar("SELECT revision FROM ai_privacy_consents WHERE member_id=? AND purpose='officer_assistant' AND granted=1")
+        .bind(member).fetch_optional(&mut **tx).await.map_err(internal)?;
+    if allowed.is_none() {
+        tracing::warn!(
+            component = "ai_privacy",
+            operation = "schedule_write",
+            "ai_privacy.schedule_consent_denied"
+        );
+        return Err(ApiError(
+            StatusCode::FORBIDDEN,
+            "Current officer-assistant consent required",
+        ));
+    }
+    Ok(())
 }

@@ -16,6 +16,7 @@ mod publication_access;
 mod reads;
 mod records;
 mod results;
+pub(crate) mod schedules;
 
 pub(crate) use create::EventSkillTag;
 #[cfg(test)]

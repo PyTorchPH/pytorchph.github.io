@@ -19,7 +19,7 @@ type ProgramRow = (
     String,
 );
 
-/// Public events are canonical event records; CMS drafts and legacy curriculum rows are excluded.
+/// Public scored events and authorized learning schedules; CMS drafts remain excluded.
 pub(crate) async fn canonical_public(db: &SqlitePool) -> ApiResult<Vec<Value>> {
     type Row = (
         String,
@@ -38,12 +38,30 @@ pub(crate) async fn canonical_public(db: &SqlitePool) -> ApiResult<Vec<Value>> {
     let rows: Vec<Row> = sqlx::query_as(
         "SELECT e.id,e.title,e.category,e.starts_at,e.parent_id,e.published_at,p.is_demo,p.topic,p.venue,p.registration_url,p.series,p.description FROM events e JOIN event_publication p ON p.event_id=e.id WHERE p.is_public=1 ORDER BY e.starts_at ASC,e.id ASC LIMIT 100"
     ).fetch_all(db).await.map_err(internal)?;
-    Ok(rows.into_iter().map(|(id,title,category,starts_at,parent_id,published_at,is_demo,topic,venue,registration_url,series,description)| {
+    let mut events: Vec<Value> = rows.into_iter().map(|(id,title,category,starts_at,parent_id,published_at,is_demo,topic,venue,registration_url,series,description)| {
         json!({"id":id,"title":title,"category":category,"eventType":category,
             "startsAt":starts_at,"parentId":parent_id,"publishedAt":published_at,
             "isDemo":is_demo,"topic":topic,"description":description,"venue":venue,"registrationUrl":registration_url,
             "series":series,"dateStatus":"confirmed","scheduleLabel":"","modules":"","photoUrl":null})
-    }).collect())
+    }).collect();
+    let mut ids: HashSet<String> = events
+        .iter()
+        .filter_map(|row| row["id"].as_str().map(str::to_owned))
+        .collect();
+    for mut schedule in crate::events::schedules::public_rows(db, "", 100).await? {
+        if ids.insert(schedule["id"].as_str().unwrap_or("").to_owned()) {
+            schedule["eventType"] = json!("training");
+            schedule["topic"] = schedule["modules"].clone();
+            events.push(schedule);
+        }
+    }
+    events.sort_by(|a, b| {
+        a["startsAt"]
+            .as_str()
+            .cmp(&b["startsAt"].as_str())
+            .then(a["id"].as_str().cmp(&b["id"].as_str()))
+    });
+    Ok(events)
 }
 
 // Mental model: normalize old event rows, then append only missing canonical curriculum entries.
@@ -61,7 +79,7 @@ pub(super) async fn merge(db: &SqlitePool, document: &mut Value) -> ApiResult<()
         }
     }
     let rows: Vec<ProgramRow> = sqlx::query_as(
-        "SELECT id,title,event_type,topic,starts_at,date_status,schedule_label,venue,registration_url,series,modules,photo_url FROM featured_learning_events WHERE active=1 ORDER BY sort_order,id",
+        "SELECT id,title,event_type,topic,starts_at,date_status,schedule_label,venue,registration_url,series,modules,photo_url FROM featured_learning_events WHERE active=1 ORDER BY sort_order,id LIMIT 100",
     )
     .fetch_all(db)
     .await

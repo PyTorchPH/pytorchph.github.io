@@ -15,7 +15,7 @@ test('official SDK stdio client discovers tools, matches CLI results and surface
   const client=new Client({name:'isolated-officer-integration',version:'0.1.0'});let logs='';
   try {
     await client.connect(transport);transport.stderr?.on('data',chunk=>logs+=chunk);
-    const tools=await client.listTools();assert.deepEqual(tools.tools.map(tool=>tool.name).sort(),['identity','officer_read','website_approve','website_get_draft','website_save_draft']);
+    const tools=await client.listTools();assert.deepEqual(tools.tools.map(tool=>tool.name).sort(),['event_schedule_create','event_schedule_list','identity','officer_read','website_approve','website_get_draft','website_save_draft']);
     const identity=await client.callTool({name:'identity',arguments:{}});assert.equal(identity.structuredContent.result.role,'officer');
     const cli=await runCli(['identity'],env);assert.equal(cli.status,0);assert.deepEqual(JSON.parse(cli.output),identity.structuredContent.result);
     assert.equal(identity.structuredContent.result.id,undefined);assert.equal(identity.structuredContent.result.display_name,undefined);

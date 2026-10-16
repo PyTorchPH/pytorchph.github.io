@@ -34,6 +34,10 @@ pub(crate) async fn dispatch_write(
 ) -> ApiResult<(StatusCode, Value)> {
     let db = &state.db;
     Ok(match (method, path) {
+        ("POST", "officer/event-schedules") => (
+            StatusCode::OK,
+            events::schedules::create(state, actor, input).await?,
+        ),
         ("PUT", "officer/campus-chapters") => (
             StatusCode::OK,
             crate::site_content::campus::save(db, actor, &input).await?,

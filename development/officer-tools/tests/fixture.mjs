@@ -11,7 +11,7 @@ export const password='isolated-test-password';
 
 export async function fixture() {
   const directory=await mkdtemp(join(tmpdir(),'pytorch-officer-tools-'));
-  const state={role:'officer',expired:false,writes:0,canApprove:false,revision:1,approvals:0,redirect:false,large:false,aiConsent:true,projection:null,cliFlow:null};
+  const state={role:'officer',expired:false,writes:0,canApprove:false,revision:1,approvals:0,redirect:false,large:false,aiConsent:true,projection:null,cliFlow:null,schedules:[],canPublish:true};
   const server=createServer(async(request,response)=>{
     const send=(status,data)=>{response.writeHead(status,{'Content-Type':'application/json'});response.end(JSON.stringify(data));};
     const chunks=[];for await(const chunk of request)chunks.push(chunk);
@@ -47,8 +47,16 @@ export async function fixture() {
     }
     if(request.url==='/portal/api/officer/ai-projection'){
       if(!state.aiConsent)return send(403,{error:'AI consent required'});
-      state.projection=body.view==='identity' ? {role:'officer',subjectAlias:'p_k1_opaque-actor'} : {view:body.view,count:8};
+      state.projection=body.view.startsWith('event_schedules/') ? {view:'event_schedules',events:state.schedules,nextCursor:null} : body.view==='identity' ? {role:'officer',subjectAlias:'p_k1_opaque-actor'} : {view:body.view,count:8};
       return send(200,{projection:state.projection,ticket:{id:'11111111-1111-4111-8111-111111111111',proof:'b'.repeat(64)}});
+    }
+    if(request.url==='/portal/api/officer/event-schedules'){
+      if(!state.aiConsent || !state.canPublish)return send(403,{error:'Consent and publication grant required'});
+      const {confirm,...event}=body;if(confirm!==true)return send(400,{error:'Confirmation required'});
+      const existing=state.schedules.find(row=>row.id===event.id);
+      if(existing && JSON.stringify(existing)!==JSON.stringify(event))return send(409,{error:'Different content'});
+      if(!existing){state.schedules.push(event);state.writes++;}
+      return send(200,{created:!existing,event:existing ?? event});
     }
     if(request.method==='GET'){
       if(request.url==='/portal/api/officer/site-content')return send(200,{revision:state.revision,document:{branding:{tagline:'Fixture'}},approvals:state.approvals,requiredApprovals:2,canApprove:state.canApprove});
