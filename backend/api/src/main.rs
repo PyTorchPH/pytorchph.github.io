@@ -32,6 +32,7 @@ mod identity;
 mod leaderboard;
 mod mail;
 mod member_profile;
+mod migration_compat;
 mod officer;
 mod organization;
 mod portal;

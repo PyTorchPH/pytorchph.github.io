@@ -1,8 +1,8 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 const root=new URL("../../../",import.meta.url);
 try { process.loadEnvFile(fileURLToPath(new URL(".env",root))); } catch(error) { if(error.code!=="ENOENT") throw error; }
-const data=JSON.parse(await readFile(new URL("backend/api/seeds/site-content.json",root),"utf8"));
+const data={leadership:[],events:[],chapters:[],articles:[]};
 // Live directories/events have one backend source; never resurrect manual seed profiles on failure.
 for(const collection of ["leadership","chapters","events"])data[collection]=[];
 const contacts={};

@@ -46,7 +46,7 @@ Back up the database before any future deployment. Roll back application code to
 - Officer editor: `/portal/admin/website/`; Event Workflow links to the same tool.
 - Authenticated routes: `GET/PUT /portal/api/officer/site-content`, `POST /portal/api/officer/site-content/approve`.
 - Public route: `GET /public/site-content`; public pages refresh approved data every 60 seconds while visible and when returning to the tab.
-- Canonical bootstrap: `backend/api/seeds/site-content.json`; generated Jekyll/browser defaults are build artifacts, not hand-maintained homepage content. Existing public leadership records are preserved.
+- Canonical bootstrap: `backend/api/src/tests/fixtures/site-content.json (synthetic test data only)`; generated Jekyll/browser defaults are build artifacts, not hand-maintained homepage content. Existing public leadership records are preserved.
 - Migrations: `0026_dual_presidency.sql` and `0027_managed_site_content.sql`; changes remain local and require backup review before deployment.
 - Contacts: `.env.example` documents the three public settings. GitHub Actions reads matching repository variables; this implementation does not modify GitHub settings.
 - Photo support uses approved existing asset paths or HTTPS image URLs. Binary uploads, exact Campus Labs-template styling and logo replacement remain deferred until the approved assets/storage requirements are available.

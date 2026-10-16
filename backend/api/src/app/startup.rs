@@ -64,7 +64,7 @@ async fn open_database(config: &Config) -> StartupResult<SqlitePool> {
 
 // Schema, recovered queues, and optional seed data.
 async fn prepare_database(db: &SqlitePool) -> StartupResult<()> {
-    sqlx::migrate!().run(db).await?;
+    crate::migration_compat::run(db).await?;
     // Reference directories: each reloads only when its bundled seed changed.
     crate::schools::load_school_directory(db)
         .await

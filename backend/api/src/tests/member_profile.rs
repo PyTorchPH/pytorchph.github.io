@@ -52,7 +52,9 @@ async fn consenting_profile(db: &sqlx::SqlitePool, gender: &str) {
 #[tokio::test]
 async fn reserved_email_claims_its_officer_seat_on_first_sign_in() {
     let (state, _, _, _) = fixture().await;
-    let id = add_member(&state.db, "reserved-3@example.test", "member").await;
+    sqlx::query("INSERT INTO position_reservations(email,position_slug) VALUES ('reserved-officer@example.test','cto')")
+        .execute(&state.db).await.unwrap();
+    let id = add_member(&state.db, "reserved-officer@example.test", "member").await;
     let viewer = session::Viewer {
         id: id.clone(),
         display_name: "John".into(),
@@ -66,7 +68,7 @@ async fn reserved_email_claims_its_officer_seat_on_first_sign_in() {
     assert_eq!(
         count(
             &state.db,
-            "SELECT COUNT(*) FROM position_reservations WHERE email='reserved-3@example.test'"
+            "SELECT COUNT(*) FROM position_reservations WHERE email='reserved-officer@example.test'"
         )
         .await,
         0

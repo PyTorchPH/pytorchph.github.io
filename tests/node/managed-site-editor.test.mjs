@@ -10,7 +10,7 @@ import { servePages } from "../../development/pages-demo/verify/serve-pages.mjs"
 test("built officer editor saves drafts, shows pending approval and handles stale writes",async()=>{
   const root=resolve(import.meta.dirname,"../..");
   const site=await servePages({portalOut:resolve(root,"frontend/portal-static/out"),siteOut:resolve(root,"frontend/public-site/_site")});
-  const document=JSON.parse(await readFile(resolve(root,"backend/api/seeds/site-content.json"),"utf8"));
+  const document=JSON.parse(await readFile(resolve(root,"backend/api/src/tests/fixtures/site-content.json"),"utf8"));
   document.articles=[{id:"isolated-recap",title:"Isolated recap",kind:"recap",publishedAt:"2026-10-12",eventDate:"2026-10-12",venue:"Test platform",speakers:"",topics:"",highlights:"",takeaways:"",acknowledgments:"",photoUrl:"",eventId:""}];
   const originalEvents=structuredClone(document.events);
   let view={revision:1,publishedRevision:1,document,approvals:0,requiredApprovals:2,canApprove:true};

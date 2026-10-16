@@ -4,7 +4,7 @@ use crate::site_content::{model, store};
 use serde_json::json;
 
 fn seed() -> serde_json::Value {
-    serde_json::from_str(include_str!("../../seeds/site-content.json")).unwrap()
+    serde_json::from_str(include_str!("fixtures/site-content.json")).unwrap()
 }
 
 #[test]

@@ -8,7 +8,7 @@ import { createServer } from "node:http";
 // This exercises the actual runtime renderer with isolated published API data, never a live API.
 test("published community content renders safely, sorts real events and refreshes without a rebuild", async () => {
   const source=await readFile(new URL("../../frontend/public-site/assets/site-content.js",import.meta.url),"utf8");
-  const baseline=JSON.parse(await readFile(new URL("../../backend/api/seeds/site-content.json",import.meta.url),"utf8"));
+  const baseline=JSON.parse(await readFile(new URL("../../backend/api/src/tests/fixtures/site-content.json",import.meta.url),"utf8"));
   let revision=2;
   const document=structuredClone(baseline);
   document.events=[
