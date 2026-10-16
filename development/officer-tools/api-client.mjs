@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { SessionStore,validateCookie } from './session-store.mjs';
 
-const messages={400:'Input validation failed',401:'Login required or session expired',403:'Officer or presidential permission required',404:'Feature is unavailable on this API release',409:'Draft changed; reload its revision before retrying',413:'Input exceeds the API byte limit',429:'Rate limited; retry later',503:'API temporarily unavailable'};
+const messages={410:'Browser login expired or consumed',428:'Browser approval pending',400:'Input validation failed',401:'Login required or session expired',403:'Officer or presidential permission required',404:'Feature is unavailable on this API release',409:'Draft changed; reload its revision before retrying',413:'Input exceeds the API byte limit',429:'Rate limited; retry later',503:'API temporarily unavailable'};
 
 export class PortalError extends Error {
   constructor(status,message=messages[status] ?? 'Portal request failed') {super(message);this.status=status;}
@@ -50,7 +50,7 @@ export class PortalClient {
 
   // Mental model: bind credentials to one origin → bounded request → renew cookie → return data; log metadata only.
   async request(path,{method='GET',body,authenticate=true,remember=true}={}) {
-    if(!/^\/(auth\/(me|password|signout)|public\/ai-projection\/verify|portal\/api\/member\/ai-consent|portal\/api\/officer\/[a-z0-9/-]+)$/.test(path))throw new Error('Request path is outside the officer allowlist');
+    if(!/^\/(auth\/(me|password|signout|cli\/(?:start|poll))|public\/ai-projection\/verify|portal\/api\/member\/ai-consent|portal\/api\/officer\/[a-z0-9/-]+)$/.test(path))throw new Error('Request path is outside the officer allowlist');
     const encoded=body===undefined ? undefined : JSON.stringify(body);
     if(encoded && Buffer.byteLength(encoded)>128*1024)throw new PortalError(413);
     if(authenticate && !this.cookie && !this.externalCookie)this.cookie=await this.store.read();

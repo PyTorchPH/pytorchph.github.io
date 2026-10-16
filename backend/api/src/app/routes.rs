@@ -96,6 +96,12 @@ fn platform_routes() -> Router<Arc<AppState>> {
 fn identity_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/auth/google", post(session::google_login))
+        .route("/auth/cli/start", post(crate::identity::cli_login::start))
+        .route(
+            "/auth/cli/approve",
+            post(crate::identity::cli_login::approve),
+        )
+        .route("/auth/cli/poll", post(crate::identity::cli_login::poll))
         .route("/auth/email/start", post(email_signup::start_signup))
         .route("/auth/email/verify", post(email_signup::verify_signup))
         .route("/auth/password", post(email_signup::password_login))
