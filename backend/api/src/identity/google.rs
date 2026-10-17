@@ -10,7 +10,7 @@
 //!   └─ load_viewer            reads back the member to start a session
 use crate::{
     ApiError, ApiResult, AppState, check_origin,
-    identity::session::{Viewer, issue_session},
+    identity::{login_mailbox::issue_login_session, session::Viewer},
     internal,
 };
 use axum::{
@@ -57,28 +57,17 @@ pub async fn google_login(
 ) -> ApiResult<Response> {
     check_origin(&state, &headers)?;
     let claims = verify_google(&state, &payload.id_token).await?;
-    let email = claims.email.to_ascii_lowercase();
-    link_member(&state, &claims, &email).await?;
-    let viewer = load_viewer(&state.db, &email).await?;
-    ensure_organization_mailbox(&state, &viewer).await?;
-    issue_session(&state, viewer).await
+    complete_verified_google_login(&state, &claims).await
 }
 
-async fn ensure_organization_mailbox(state: &AppState, viewer: &Viewer) -> ApiResult<()> {
-    let Some(client) = state.identity_client.as_deref() else {
-        return Ok(());
-    };
-    let member_id = Uuid::parse_str(&viewer.id).map_err(internal)?;
-    client
-        .provision_mailbox(member_id, &viewer.display_name)
-        .await
-        .map(|_| ())
-        .map_err(|_| {
-            ApiError(
-                StatusCode::SERVICE_UNAVAILABLE,
-                "Organization email unavailable",
-            )
-        })
+async fn complete_verified_google_login(
+    state: &AppState,
+    claims: &GoogleClaims,
+) -> ApiResult<Response> {
+    let email = claims.email.to_ascii_lowercase();
+    link_member(state, claims, &email).await?;
+    let viewer = load_viewer(&state.db, &email).await?;
+    issue_login_session(state, viewer).await
 }
 
 /// Mental model: header says RS256 + which key → fetch that key → signature, audience and
@@ -254,4 +243,77 @@ fn display_name_for(claims: &GoogleClaims, email: &str) -> String {
 #[inline]
 fn invalid_token() -> ApiError {
     ApiError(StatusCode::UNAUTHORIZED, "Invalid Google token")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::identity::identity_client::IdentityClient;
+
+    #[tokio::test]
+    async fn verified_new_google_email_creates_one_member_despite_mailbox_outage() {
+        let (mut state, _, _, _) = crate::tests::fixture().await;
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let base = format!("http://{}/", listener.local_addr().unwrap());
+        let app = axum::Router::new().fallback(|| async { StatusCode::SERVICE_UNAVAILABLE });
+        let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        Arc::get_mut(&mut state).unwrap().identity_client =
+            Some(Arc::new(IdentityClient::test_loopback(&base)));
+        let claims = GoogleClaims {
+            sub: "synthetic-google-sub".into(),
+            email: "new-google@example.test".into(),
+            email_verified: true,
+            name: Some("Synthetic Member".into()),
+        };
+        // This private phase accepts already verified claims; the public handler still verifies JWTs.
+        for _ in 0..2 {
+            let response = complete_verified_google_login(&state, &claims)
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+            assert_eq!(
+                response.headers()["x-organization-mailbox-status"],
+                "pending"
+            );
+            assert!(response.headers().get("set-cookie").is_some());
+        }
+        let (count, role): (i64, String) =
+            sqlx::query_as("SELECT count(*), role FROM members WHERE email=? GROUP BY role")
+                .bind(&claims.email)
+                .fetch_one(&state.db)
+                .await
+                .unwrap();
+        assert_eq!(count, 1);
+        assert_eq!(role, "member");
+        server.abort();
+    }
+
+    #[tokio::test]
+    async fn invalid_google_token_never_creates_member_or_session() {
+        let (state, _, _, _) = crate::tests::fixture().await;
+        let mut headers = HeaderMap::new();
+        headers.insert("origin", "https://pytorch.ph".parse().unwrap());
+        let before: (i64, i64) = sqlx::query_as(
+            "SELECT (SELECT count(*) FROM members), (SELECT count(*) FROM sessions)",
+        )
+        .fetch_one(&state.db)
+        .await
+        .unwrap();
+        let result = google_login(
+            State(state.clone()),
+            headers,
+            Json(Login {
+                id_token: "invalid".into(),
+            }),
+        )
+        .await;
+        assert!(matches!(result, Err(ApiError(StatusCode::UNAUTHORIZED, _))));
+        let after: (i64, i64) = sqlx::query_as(
+            "SELECT (SELECT count(*) FROM members), (SELECT count(*) FROM sessions)",
+        )
+        .fetch_one(&state.db)
+        .await
+        .unwrap();
+        assert_eq!(before, after);
+    }
 }

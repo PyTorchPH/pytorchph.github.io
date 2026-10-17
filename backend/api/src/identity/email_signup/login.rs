@@ -10,7 +10,7 @@ use super::credentials::{
 };
 use crate::{
     ApiError, ApiResult, AppState, check_origin,
-    identity::session::{Viewer, issue_session},
+    identity::{login_mailbox::issue_login_session, session::Viewer},
     internal,
 };
 use axum::{
@@ -67,26 +67,8 @@ pub async fn password_login(
         display_name: credentials.get("display_name"),
         role: credentials.get("role"),
     };
-    ensure_organization_mailbox(&state, &viewer).await?;
     tracing::info!(event = "auth.password_accepted", component = "auth", operation = "password_login", outcome = "success", member_id = %viewer.id, "Password accepted");
-    issue_session(&state, viewer).await
-}
-
-async fn ensure_organization_mailbox(state: &AppState, viewer: &Viewer) -> ApiResult<()> {
-    let Some(client) = state.identity_client.as_deref() else {
-        return Ok(());
-    };
-    let member_id = uuid::Uuid::parse_str(&viewer.id).map_err(internal)?;
-    client
-        .provision_mailbox(member_id, &viewer.display_name)
-        .await
-        .map(|_| ())
-        .map_err(|_| {
-            ApiError(
-                StatusCode::SERVICE_UNAVAILABLE,
-                "Organization email unavailable",
-            )
-        })
+    issue_login_session(&state, viewer).await
 }
 
 #[inline]

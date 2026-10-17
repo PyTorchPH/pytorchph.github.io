@@ -95,6 +95,16 @@ pub(crate) enum IdentityError {
 }
 
 impl IdentityClient {
+    #[cfg(test)]
+    pub(crate) fn test_loopback(base: &str) -> Self {
+        let base = Url::parse(base).unwrap();
+        assert_eq!(base.host_str(), Some("127.0.0.1"));
+        Self {
+            http: Client::new(),
+            base,
+        }
+    }
+
     pub(crate) async fn send_verification_mail(
         &self,
         member_id: Uuid,

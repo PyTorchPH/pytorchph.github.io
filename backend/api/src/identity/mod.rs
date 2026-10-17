@@ -5,5 +5,6 @@ pub(crate) mod cli_login;
 pub(crate) mod email_signup;
 pub(crate) mod google;
 pub(crate) mod identity_client;
+pub(crate) mod login_mailbox;
 pub(crate) mod membership;
 pub(crate) mod session;

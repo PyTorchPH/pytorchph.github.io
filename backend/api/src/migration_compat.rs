@@ -5,6 +5,11 @@ use sqlx::{
     migrate::{MigrateError, Migrator},
 };
 const APPROVED: &[(i64, &str)] = &[
+    // Historical Windows deployment: SQL is identical; only CRLF differs from CI LF.
+    (
+        26,
+        "9ee70a82b77206c5026e2bf21927a7ea3d10a850900ae54b53ed836590b58e56051bd7b95fbbe03100bdc89b9a8b0f32",
+    ),
     (
         11,
         "20db2cf459d74085f5eba3117b5f02d2a595f63927fdbf306e47680c472e9945ffc357d84bbad46a44c5bead1b9889a8",
