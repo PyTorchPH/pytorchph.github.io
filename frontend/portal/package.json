@@ -36,7 +36,9 @@
     "test:community": "tsx --test tests/community-demo.test.ts tests/peer-summary.test.ts tests/event-sources.test.ts tests/public-jobs.test.ts",
     "test:profile": "tsx --test tests/member-profile-search.test.ts tests/profile-evidence-charts.test.ts tests/skill-compiler.test.ts tests/collab-mail-compose.test.ts",
     "test:photo": "tsx --test tests/organization-photo.test.ts",
-    "test:photo:e2e": "node ../../development/pages-demo/verify/organization-photo.e2e.mjs"
+    "test:photo:e2e": "node ../../development/pages-demo/verify/organization-photo.e2e.mjs",
+    "test:auth": "tsx --test tests/registration-error.test.ts",
+    "test:auth:e2e": "node ../../development/pages-demo/verify/registration-service.e2e.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

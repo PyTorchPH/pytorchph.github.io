@@ -21,6 +21,16 @@ struct RelayAck {
 }
 
 impl RelayConfig {
+    #[cfg(test)]
+    pub(super) fn test_loopback(base: &str) -> Self {
+        let url = url::Url::parse(base).unwrap();
+        assert_eq!(url.host_str(), Some("127.0.0.1"));
+        Self {
+            url,
+            token: "private-test-token".into(),
+        }
+    }
+
     pub fn from_env() -> Result<Option<Self>, Box<dyn std::error::Error>> {
         let (Ok(raw_url), Ok(token)) = (env::var("MAIL_RELAY_URL"), env::var("MAIL_RELAY_TOKEN"))
         else {

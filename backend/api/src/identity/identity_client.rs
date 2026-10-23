@@ -1,11 +1,15 @@
 //! Private mTLS identity client used only when explicitly configured; deployment/import remain staged.
 #![allow(dead_code)]
 
+#[cfg(test)]
+mod contracts;
+mod diagnostics;
+
 use reqwest::{Certificate, Client, Identity, Method, StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use std::{
     error::Error,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 use url::Host;
 use uuid::Uuid;
@@ -640,10 +644,12 @@ impl IdentityClient {
             .duration_since(UNIX_EPOCH)
             .map_err(|_| IdentityError::Unavailable)?
             .as_secs();
+        let operation = diagnostics::Operation::for_request(&method, endpoint);
+        let request_id = Uuid::new_v4();
         let mut request = self
             .http
             .request(method, url)
-            .header("x-request-id", Uuid::new_v4().to_string())
+            .header("x-request-id", request_id.to_string())
             .header("x-viewer-id", viewer_id.to_string())
             .header("x-name-purpose", purpose.code())
             .header("x-request-timestamp", timestamp.to_string());
@@ -651,7 +657,12 @@ impl IdentityClient {
             request = request.header("content-type", media_type);
             request = request.body(body);
         }
-        request.send().await.map_err(|_| IdentityError::Unavailable)
+        let started = Instant::now();
+        let response = request.send().await;
+        if let Some(operation) = operation {
+            operation.record(request_id, started.elapsed(), &response);
+        }
+        response.map_err(|_| IdentityError::Unavailable)
     }
 
     /// PEM material must come from secret files outside the repository and never reach the browser.

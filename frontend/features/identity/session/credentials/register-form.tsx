@@ -22,6 +22,7 @@ import { AuthShell } from "../render-shell";
 import { emailSchema, passwordRules, registerSchema, type RegisterValues } from "@pytorch-ph/domain-protocol/identity";
 import { ErrorBanner, Field, FieldError } from "./field";
 import { hasAuthApi, isStaticDemo, officialAuth } from "./official-auth";
+import { registrationErrorMessage } from "./registration/error";
 
 const CODE_LENGTH = 8;
 
@@ -101,7 +102,7 @@ function RegistrationForm({ error, hidden, onError, onCodeSent }: RegistrationFo
           await startEmailSignup({ email: submittedEmail, name, username, password });
           onCodeSent(submittedEmail);
         } catch (reason) {
-          onError(reason instanceof Error ? reason.message : "Registration failed.");
+          onError(registrationErrorMessage(reason));
         }
       })}
     >

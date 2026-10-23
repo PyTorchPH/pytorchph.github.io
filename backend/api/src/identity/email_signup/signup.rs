@@ -3,6 +3,7 @@
 //! Module map (caller-first):
 //!   start_signup                 POST /auth/email/start
 //!   ├─ is_valid_registration     password, name and username bounds
+//!   ├─ ensure_configured         required mailbox service before account lookup
 //!   ├─ email_already_registered  existing members get the same generic reply
 //!   ├─ reserve_organization_mailbox unique default address through the private identity service
 //!   ├─ store_pending_signup      hashed password + hashed code/link, valid for 10 minutes
@@ -11,12 +12,13 @@
 //!   ├─ is_rejected_code          too many attempts, expired, or not matching
 //!   ├─ record_failed_attempt
 //!   └─ create_email_member       member + credentials, pending row removed
+mod delivery;
+
 use super::credentials::{
     claim_hashing_slot, code_hash, enforce_rate_limit, is_eight_digit_code, normalize_email,
     password_hash,
 };
 use super::password_policy::{PASSWORD_POLICY, meets_password_policy};
-use super::relay::RelayConfig;
 use crate::{
     ApiError, ApiResult, AppState, check_origin,
     identity::session::{Viewer, issue_session},
@@ -29,6 +31,7 @@ use axum::{
     response::Response,
 };
 use chrono::{Duration, Utc};
+use delivery::{deliver_verification, ensure_configured, reserve_organization_mailbox};
 use serde::Deserialize;
 use sqlx::{Row, Sqlite, SqlitePool, Transaction, sqlite::SqliteRow};
 use std::sync::Arc;
@@ -77,11 +80,9 @@ pub async fn start_signup(
     }
     enforce_rate_limit(&state.db, "signup_global", "all", SIGNUPS_PER_WINDOW).await?;
     enforce_rate_limit(&state.db, "signup", &email, SIGNUPS_PER_EMAIL).await?;
+    ensure_configured(&state)?;
     if email_already_registered(&state.db, &email).await? {
         return Ok(generic_sent());
-    }
-    if state.identity_client.is_none() && state.mail_relay.is_none() {
-        return Err(verification_unavailable());
     }
     let _slot = claim_hashing_slot(&state)?;
     let member_id = pending_or_new_member_id(&state.db, &email).await?;
@@ -105,7 +106,7 @@ pub async fn start_signup(
         component = "auth",
         operation = "signup_start",
         outcome = "success",
-        "Verification mail accepted by relay"
+        "Verification mail accepted by configured transport"
     );
     Ok(generic_sent())
 }
@@ -155,40 +156,6 @@ async fn store_pending_signup(
         .bind(member_id.to_string()).bind(organization_email).bind(link_digest)
         .execute(&state.db).await.map_err(internal)?;
     Ok(())
-}
-
-async fn deliver_verification(
-    state: &AppState,
-    relay: Option<&RelayConfig>,
-    member_id: Uuid,
-    email: &str,
-    code: &str,
-    organization_email: &str,
-    verification_url: &str,
-) -> ApiResult<()> {
-    let delivery = if let Some(client) = state.identity_client.as_deref() {
-        client
-            .send_verification_mail(member_id, email, code, organization_email, verification_url)
-            .await
-            .map_err(|_| "identity_mail_failure")
-    } else if let Some(relay) = relay {
-        relay
-            .send_verification(
-                &state.http,
-                email,
-                code,
-                organization_email,
-                verification_url,
-            )
-            .await
-    } else {
-        Err("mail_transport_unavailable")
-    };
-    let Err(error) = delivery else {
-        return Ok(());
-    };
-    tracing::error!(event = "auth.email_delivery_failed", component = "auth", operation = "signup_start", outcome = "failure", error = %error, "Verification mail delivery failed");
-    Err(verification_unavailable())
 }
 
 /// Mental model: the code is checked inside one transaction; a wrong, stale or over-tried code
@@ -303,22 +270,6 @@ async fn pending_or_new_member_id(db: &SqlitePool, email: &str) -> ApiResult<Uui
         .map(|value| Uuid::parse_str(&value).map_err(internal))
         .transpose()
         .map(|value| value.unwrap_or_else(Uuid::new_v4))
-}
-
-async fn reserve_organization_mailbox(
-    state: &AppState,
-    member_id: Uuid,
-    display_name: &str,
-) -> ApiResult<String> {
-    let client = state
-        .identity_client
-        .as_deref()
-        .ok_or_else(verification_unavailable)?;
-    client
-        .provision_mailbox(member_id, display_name)
-        .await
-        .map(|mailbox| mailbox.address)
-        .map_err(|_| verification_unavailable())
 }
 
 fn verification_url(origin: &str, email: &str, token: &str) -> ApiResult<String> {
