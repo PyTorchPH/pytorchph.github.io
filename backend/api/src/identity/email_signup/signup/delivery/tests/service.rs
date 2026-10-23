@@ -1,7 +1,7 @@
 //! Real loopback requests exercise signup dependency and fallback contracts without live mail.
 use super::*;
 use crate::identity::identity_client::IdentityClient;
-use axum::{Router, http::HeaderMap, routing::post};
+use axum::{Router, extract::Path, http::HeaderMap, routing::post};
 use std::sync::{
     Arc,
     atomic::{AtomicUsize, Ordering},
@@ -99,10 +99,13 @@ impl DeliveryFixture {
         let app = Router::new()
             .route(
                 "/v1/identities/{member_id}/organization-mailbox",
-                post(move || async move {
+                post(move |Path(owner): Path<Uuid>| async move {
                     (
                         mailbox_status,
-                        Json(serde_json::json!({"address":"new_member@pytorch.ph"})),
+                        Json(serde_json::json!({
+                            "memberId":owner.to_string(), "localPart":"new_member",
+                            "address":"new_member@pytorch.ph", "status":"pending_credentials"
+                        })),
                     )
                 }),
             )

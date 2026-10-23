@@ -95,9 +95,16 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let base = format!("http://{}/", listener.local_addr().unwrap());
         let path = format!("/v1/identities/{member_id}/organization-mailbox");
+        let mailbox_reply = serde_json::json!({
+            "memberId":member_id, "localPart":"fictional",
+            "address":"fictional@pytorch.ph", "status":"pending_credentials"
+        });
         let app = Router::new().route(
             &path,
-            post(|| async { Json(serde_json::json!({"address":"fictional@pytorch.ph"})) }),
+            post(move || {
+                let reply = mailbox_reply.clone();
+                async move { Json(reply) }
+            }),
         );
         let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
         Arc::get_mut(&mut state).unwrap().identity_client =

@@ -4,7 +4,9 @@
 #[cfg(test)]
 mod contracts;
 mod diagnostics;
+mod mailbox;
 
+use mailbox::OrganizationMailbox;
 use reqwest::{Certificate, Client, Identity, Method, StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -47,12 +49,6 @@ impl NamePurpose {
 #[serde(rename_all = "camelCase")]
 struct NameReply {
     display_name: String,
-}
-
-#[derive(Clone, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct OrganizationMailbox {
-    pub(crate) address: String,
 }
 
 #[derive(Clone, Deserialize)]
@@ -168,12 +164,7 @@ impl IdentityClient {
             return Err(IdentityError::Unavailable);
         }
         let bytes = bounded_response_bytes(response, 4096).await?;
-        let mailbox: OrganizationMailbox =
-            serde_json::from_slice(&bytes).map_err(|_| IdentityError::Unavailable)?;
-        if !mailbox.address.ends_with("@pytorch.ph") || mailbox.address.len() > 75 {
-            return Err(IdentityError::Unavailable);
-        }
-        Ok(mailbox)
+        mailbox::decode_reply(&bytes, member_id)
     }
 
     pub(crate) async fn public_role_visibility(

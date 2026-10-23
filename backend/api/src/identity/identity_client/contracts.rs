@@ -99,7 +99,10 @@ async fn verification_mail_requires_202_and_mailbox_requires_valid_organization_
             post(|Path(owner): Path<Uuid>, headers: HeaderMap| async move {
                 assert_eq!(headers["x-viewer-id"], owner.to_string());
                 assert_eq!(headers["x-name-purpose"], "mailbox_provisioning");
-                Json(serde_json::json!({"address":"synthetic@pytorch.ph"}))
+                Json(serde_json::json!({
+                    "memberId":owner.to_string(), "localPart":"synthetic",
+                    "address":"synthetic@pytorch.ph", "status":"pending_credentials"
+                }))
             }),
         );
     let (client, server) = mock_identity(router).await;
@@ -124,8 +127,14 @@ async fn verification_mail_requires_202_and_mailbox_requires_valid_organization_
     );
     server.abort();
 
-    let invalid = Router::new()
-        .fallback(|| async { Json(serde_json::json!({"address":"synthetic@example.test"})) });
+    let invalid_reply = serde_json::json!({
+        "memberId":member_id.to_string(), "localPart":"synthetic",
+        "address":"synthetic@example.test", "status":"pending_credentials"
+    });
+    let invalid = Router::new().fallback(move || {
+        let reply = invalid_reply.clone();
+        async move { Json(reply) }
+    });
     let (client, server) = mock_identity(invalid).await;
     assert!(matches!(
         client
