@@ -1,0 +1,165 @@
+.ph-people-intro {
+  #team,
+  #ambassadors,
+  #departments {
+    scroll-margin-top: rem(120px);
+  }
+}
+
+.ph-people {
+  display: grid;
+  gap: rem(32px);
+  margin: rem(24px) 0 rem(40px);
+}
+
+.ph-person {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #dedee2;
+  border-radius: rem(8px);
+  background: $white;
+  box-shadow: 0 rem(4px) rem(16px) rgba(0, 0, 0, 0.06);
+  overflow-wrap: anywhere;
+}
+
+.ph-person-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: rem(24px);
+  padding: rem(24px);
+  border-top: rem(4px) solid $orange_on_dark;
+  color: $white;
+  background: linear-gradient(120deg, #262626, #3b3b3d);
+
+  @include desktop {
+    flex-direction: row;
+    align-items: center;
+    gap: rem(32px);
+    padding: rem(32px);
+  }
+}
+
+.ph-person-portrait {
+  flex: 0 0 auto;
+  width: 160px;
+  height: 160px;
+  max-width: 100%;
+}
+
+.ph-person-photo,
+.ph-person-placeholder {
+  display: block;
+  box-sizing: border-box;
+  width: 160px;
+  height: 160px;
+  max-width: 100%;
+  border: 3px solid $white;
+}
+
+.ph-person-photo {
+  object-fit: cover;
+}
+
+.ph-person-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: rem(12px);
+  color: $white;
+  background: #505054;
+  font-size: rem(40px);
+  font-weight: 600;
+  text-align: center;
+}
+
+.ph-person-intro {
+  min-width: 0;
+}
+
+.ph-person .ph-person-eyebrow {
+  margin: 0 0 rem(8px);
+  color: $orange_on_dark;
+  font-size: rem(14px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.ph-person .ph-person-name {
+  margin: 0 0 rem(12px);
+  color: $white;
+  font-size: rem(30px);
+  line-height: 1.2;
+
+  @include desktop {
+    font-size: rem(40px);
+  }
+}
+
+.ph-person-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: rem(8px) rem(12px);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+
+  li {
+    max-width: 100%;
+    padding: rem(4px) rem(10px);
+    border: 1px solid #77777c;
+    border-radius: rem(4px);
+    color: $white;
+    font-size: rem(16px);
+    line-height: 1.5;
+  }
+}
+
+.ph-person .ph-person-meta {
+  margin: rem(12px) 0 0;
+  color: #e0e0e3;
+  font-size: rem(16px);
+  line-height: 1.5;
+}
+
+.ph-person-body {
+  padding: rem(24px);
+
+  @include desktop {
+    padding: rem(28px) rem(32px);
+  }
+}
+
+.ph-person .ph-person-bio {
+  max-width: 46rem;
+  margin: 0;
+  color: $dark_grey;
+  font-size: rem(18px);
+  line-height: rem(30px);
+  white-space: pre-line;
+}
+
+.ph-person-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: rem(12px) rem(24px);
+  padding: 0;
+  margin: rem(20px) 0 0;
+  list-style: none;
+
+  a {
+    display: inline-block;
+    padding: rem(4px) 0;
+    color: $orange;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  a:focus-visible {
+    outline: 3px solid $orange;
+    outline-offset: 4px;
+  }
+}

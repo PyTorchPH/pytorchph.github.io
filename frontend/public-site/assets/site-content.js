@@ -4,6 +4,7 @@
   const script = document.currentScript;
   const api = script.dataset.api;
   const defaultsUrl = script.dataset.defaults;
+  let renderPeople;
   const targets = name => [...document.querySelectorAll(`[data-site-content="${name}"]`)];
   function element(tag, text, className) { const node=document.createElement(tag); if(text) node.textContent=text; if(className) node.className=className; return node; }
   function safeUrl(value) { if(!value) return ""; try { const url=new URL(value,/^\/public\/organization-photos\/[a-f0-9]{64}$/.test(value) ? api : location.origin); return url.protocol==="https:" || (value.startsWith("/assets/") && !value.startsWith("//")) ? url.href : ""; } catch { return ""; } }
@@ -32,7 +33,7 @@
   }
   function setupEventTabs() { document.querySelectorAll("[data-event-series]").forEach(button=>button.addEventListener("click",()=>{document.querySelectorAll("[data-event-series]").forEach(item=>item.setAttribute("aria-selected",String(item===button)));renderEvents(latestEvents);})); }
   function renderLeadership(rows) {
-    for(const group of ["ambassador","core","department"]) replace(`leadership-${group}`,rows.filter(row=>row.group===group).map(row=>{const node=card(row.name); const photo=image(row.photoUrl,row.name); if(photo)node.prepend(photo);paragraph(node,"",row.title);paragraph(node,"",row.affiliation);paragraph(node,"Department",row.department);return node;}),"Leadership details will be added by the community officers.");
+    renderPeople?.(targets("people"), rows, { api, scope: document });
   }
   function renderChapters(rows) { for(const island of ["Luzon","Visayas","Mindanao"]) replace(`chapters-${island}`,rows.filter(row=>row.island===island).map(row=>{const node=card(row.university);const photo=image(row.photoUrl,row.chapter);if(photo)node.prepend(photo);paragraph(node,"Chapter",row.chapter);paragraph(node,"Lead",row.leadName);paragraph(node,"Status",row.status);return node;}),"No participating chapters published yet."); }
   function article(row) { const node=card(row.title);node.id=`article-${row.id}`;const photo=image(row.photoUrl,row.title);if(photo)node.prepend(photo);paragraph(node,"Published",displayDate(row.publishedAt)); for(const [label,key] of [["Event date","eventDate"],["Venue / platform","venue"],["Speakers","speakers"],["Topics","topics"],["Highlights","highlights"],["Takeaways","takeaways"],["Acknowledgments","acknowledgments"]]) paragraph(node,label,key==="eventDate" ? displayDate(row[key]) : row[key]);return node; }
@@ -41,6 +42,21 @@
   function render(document, officialNews) { renderLeadership(document.leadership);replace("campus-leads",document.leadership.filter(row=>row.position==="campus_labs_lead").map(row=>{const node=card(row.name);const photo=image(row.photoUrl,row.name);if(photo)node.prepend(photo);paragraph(node,"",row.title);return node;}),"No Campus Labs lead currently listed.");renderEvents(document.events);renderChapters(document.chapters);renderArticles(document.articles);renderOfficialNews(officialNews); }
   let baseline;
   async function refresh() { try {const response=await fetch(api,{credentials:"omit",cache:"no-store",signal:AbortSignal.timeout(8000)});if(!response.ok)throw Error(`HTTP ${response.status}`);const value=await response.json();render(value.document,value.officialPytorchNews);document.documentElement.dataset.siteContentRevision=String(value.revision);document.documentElement.dataset.siteContentStatus="published";}catch(error){document.documentElement.dataset.siteContentStatus="fallback";console.warn("site_content.refresh_failed",{message:String(error)});} }
-  async function start() { try {setupEventTabs();const response=await fetch(defaultsUrl,{credentials:"omit"});if(!response.ok)throw Error(`HTTP ${response.status}`);baseline=await response.json();render(baseline);await refresh();setInterval(()=>{if(!document.hidden)void refresh();},60000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)void refresh();});}catch(error){console.warn("site_content.defaults_failed",{message:String(error)});} }
+  async function start() {
+    try {
+      if (targets("people").length) ({ renderPeople } = await import("./people/view.mjs"));
+      setupEventTabs();
+      const response=await fetch(defaultsUrl,{credentials:"omit"});
+      if(!response.ok)throw Error(`HTTP ${response.status}`);
+      baseline=await response.json();
+      // Bundled content cannot publish people; only the current API directory owns the roster.
+      render({ ...baseline, leadership: [] });
+      await refresh();
+      setInterval(()=>{if(!document.hidden)void refresh();},60000);
+      document.addEventListener("visibilitychange",()=>{if(!document.hidden)void refresh();});
+    } catch(error) {
+      console.warn("site_content.defaults_failed",{message:String(error)});
+    }
+  }
   void start();
 })();

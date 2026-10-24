@@ -1,0 +1,11 @@
+<template id="community-people-details">
+  {% assign people = site.members | sort: "name" %}
+  {% for person in people %}
+  <div data-person-name="{{ person.name | escape }}"{% if person.person_key %} data-person-key="{{ person.person_key | escape }}"{% endif %}>
+    <p data-person-bio>{{ person.content | markdownify | strip_html | strip | escape }}</p>
+    {% if person.link_github %}<a data-person-link="GitHub" href="{{ person.link_github | escape }}">GitHub</a>{% endif %}
+    {% if person.link_linkedin %}<a data-person-link="LinkedIn" href="{{ person.link_linkedin | escape }}">LinkedIn</a>{% endif %}
+    {% if person.link_homepage %}<a data-person-link="Website" href="{{ person.link_homepage | escape }}">Website</a>{% endif %}
+  </div>
+  {% endfor %}
+</template>

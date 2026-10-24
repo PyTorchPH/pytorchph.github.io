@@ -100,7 +100,7 @@ try {
 
   // A failed sign-in never reveals whether the email exists, and offers sign-up with that email.
   await signIn("first.timer@example.test", "Wrong#Pass9");
-  await page.getByText("Invalid email or password").waitFor();
+  await page.getByText("Hindi tama ang email o password (401). Subukan ulit o gumawa ng account kung wala ka pa.", { exact: true }).waitFor();
   const createLink = page.getByRole("link", { name: /Create one with this email/ });
   assert.match(await createLink.getAttribute("href"), /register\/?\?email=first\.timer%40example\.test/);
   checks.push("failed-sign-in-create-account-hint");

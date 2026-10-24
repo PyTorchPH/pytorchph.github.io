@@ -1,1 +1,20 @@
-<section class="ph-section ph-section-grey" aria-labelledby="about-heading"><div class="container"><h2 id="about-heading">About PyTorch Philippines</h2><div class="ph-managed-grid">{% for item in site.data.community_identity.about %}<article class="ph-card"><h3>{{ item.heading | escape }}</h3>{% if item.text %}<p>{{ item.text | escape }}</p>{% endif %}</article>{% endfor %}</div><h2 id="ambassadors" class="ph-subheading">Ambassadors</h2><div class="ph-managed-grid" data-site-content="leadership-ambassador"></div><h2 id="team" class="ph-subheading">Core Team</h2><div class="ph-managed-grid" data-site-content="leadership-core"></div><h2 id="departments" class="ph-subheading">Departments</h2><div class="ph-managed-grid" data-site-content="leadership-department"></div><p>We are an independent community-led user group. See <a href="https://pytorch.org/">pytorch.org</a> for official PyTorch information.</p></div></section>
+<section class="ph-section ph-section-grey" aria-labelledby="about-heading">
+  <div class="container">
+    <h2 id="about-heading">About PyTorch Philippines</h2>
+    <div class="ph-managed-grid">
+      {% for item in site.data.community_identity.about %}
+      <article class="ph-card">
+        <h3>{{ item.heading | escape }}</h3>
+        {% if item.text %}<p>{{ item.text | escape }}</p>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    <div class="ph-people-intro">
+      <h2 id="team" class="ph-subheading">Our people</h2>
+      <p>Meet the <span id="ambassadors">ambassadors</span>, core team, and <span id="departments">departments</span> supporting our community. Each person appears once, with their current published roles.</p>
+    </div>
+    <div class="ph-people" data-site-content="people" aria-live="polite"></div>
+    {% include ph/people/details.html %}
+    <p>We are an independent community-led user group. See <a href="https://pytorch.org/">pytorch.org</a> for official PyTorch information.</p>
+  </div>
+</section>

@@ -236,11 +236,6 @@
   line-height: rem(20px);
 }
 
-// Team cards reuse the pytorch.kr maintainer card; center the two-person grid.
-.ph-team .row {
-  justify-content: flex-start;
-}
-
 // Accessibility: a skip link for keyboard users and visible focus for interactive elements.
 .ph-skip-link {
   position: absolute;
@@ -470,68 +465,6 @@ $hero_kicker: #ffb59e;
   }
 }
 
-.ph-hero-profile .ph-hero-content {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: rem(24px) rem(40px);
-
-  h1 {
-    max-width: none;
-    font-size: rem(30px);
-
-    @include desktop {
-      font-size: rem(48px);
-    }
-  }
-}
-
-.ph-hero-photo {
-  width: rem(132px);
-  height: rem(132px);
-  object-fit: cover;
-  border: 3px solid $white;
-
-  @include desktop {
-    width: rem(200px);
-    height: rem(200px);
-  }
-}
-
-.ph-profile {
-  .ph-profile-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: rem(12px);
-    padding: 0;
-    margin: rem(24px) 0 0;
-    list-style: none;
-  }
-
-  .ph-profile-body {
-    max-width: 46rem;
-    font-size: rem(18px);
-    line-height: rem(30px);
-    color: $dark_grey;
-  }
-}
-
-// Team cards link to profile pages; keep the whole card readable on small screens.
-.ph-team .maintainer {
-  .member-info h4 {
-    letter-spacing: 1px;
-    overflow-wrap: anywhere;
-  }
-
-  a.ph-profile-link {
-    display: inline-block;
-    margin-top: rem(8px);
-    font-size: rem(15px);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-}
-
 // Orange links sit on dark bands in the footer; use the lighter orange there for contrast.
 .docs-tutorials-resources a,
 .site-footer a:hover,
@@ -583,13 +516,6 @@ $hero_kicker: #ffb59e;
   }
 }
 
-// Team photos stay in color: the upstream hover-to-color effect never triggers on touch screens.
-.ph-team .maintainer a img {
-  -webkit-filter: none;
-  filter: none;
-  height: auto;
-}
-
 .ph-article {
   max-width: 46rem;
   font-size: rem(18px);
@@ -634,3 +560,5 @@ $hero_kicker: #ffb59e;
 .ph-island-image { width: 100%; height: auto; margin-bottom: 24px; }
 .ph-footer-contacts { flex: 0 0 100%; display: flex; flex-wrap: wrap; gap: 20px; padding: 16px 0; color: white; }
 .ph-footer-contacts[hidden] { display: none; }
+
+@import "ph/people";

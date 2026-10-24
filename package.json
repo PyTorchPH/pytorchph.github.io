@@ -44,7 +44,9 @@
     "test:nationwide": "npm run test:nationwide --workspace @pytorch-ph/portal",
     "build:pages": "node development/pages-demo/build-portal-demo.mjs",
     "test:pages": "node development/pages-demo/verify.mjs",
-    "test:site-content": "node --test tests/node/managed-site-content.test.mjs tests/node/managed-site-editor.test.mjs"
+    "test:site-content": "node --test tests/node/managed-site-content.test.mjs tests/node/managed-site-editor.test.mjs",
+    "test:about": "node --test tests/node/about/model.test.mjs tests/node/about/runtime.test.mjs",
+    "test:about:built": "node tests/node/about/browser.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

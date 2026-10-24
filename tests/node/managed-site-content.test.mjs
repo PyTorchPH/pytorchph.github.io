@@ -4,11 +4,13 @@ import { chromium } from "playwright";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
+import { peopleModuleSources } from "./about/assets.mjs";
 
 // This exercises the actual runtime renderer with isolated published API data, never a live API.
 test("published community content renders safely, sorts real events and refreshes without a rebuild", async () => {
   const source=await readFile(new URL("../../frontend/public-site/assets/site-content.js",import.meta.url),"utf8");
   const baseline=JSON.parse(await readFile(new URL("../../backend/api/src/tests/fixtures/site-content.json",import.meta.url),"utf8"));
+  const peopleModules=await peopleModuleSources();
   let revision=2;
   const document=structuredClone(baseline);
   document.events=[
@@ -18,10 +20,12 @@ test("published community content renders safely, sorts real events and refreshe
   ];
   document.articles=[{id:"recap",title:"Recorded event",kind:"recap",publishedAt:"2026-10-12",eventDate:"2026-10-01",venue:"Online",speakers:"A speaker",topics:"PyTorch",highlights:"<script>window.xss=1</script>",takeaways:"A learning outcome",acknowledgments:"Organizers",photoUrl:""}];
   document.chapters=[{id:"chapter",university:"A verified test institution",chapter:"Local chapter",island:"Luzon",status:"active",photoUrl:""}];
-  const targets=["leadership-ambassador","leadership-core","leadership-department","events","news","recaps","chapters-Luzon","chapters-Visayas","chapters-Mindanao"];
+  const targets=["people","leadership-ambassador","leadership-core","leadership-department","events","news","recaps","chapters-Luzon","chapters-Visayas","chapters-Mindanao"];
   const server=createServer((request,response)=>{
     const name=request.url;
     if(name==="/renderer.js"){response.setHeader("Content-Type","application/javascript");response.end(source);}
+    else if(peopleModules.has(name)){response.setHeader("Content-Type","text/javascript");response.end(peopleModules.get(name));}
+    else if(name.startsWith("/people/")||name.startsWith("/assets/people/")){response.writeHead(404);response.end("Not found");}
     else if(name==="/defaults.json"||name==="/public/site-content"){response.setHeader("Content-Type","application/json");response.end(JSON.stringify(name==="/defaults.json" ? baseline : {schemaVersion:3,revision,document,officialPytorchNews:[]}));}
     else {response.setHeader("Content-Type","text/html");response.end(`<!doctype html><html><body><h1 id="static-tagline">Static community identity</h1>${targets.map(key=>`<div data-site-content="${key}"></div>`).join("")}<script src="/renderer.js" data-api="/public/site-content" data-defaults="/defaults.json"></script></body></html>`);}
   });

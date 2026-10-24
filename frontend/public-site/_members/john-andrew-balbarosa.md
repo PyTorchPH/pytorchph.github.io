@@ -11,4 +11,4 @@ hero_lead: "Maintainer and Campus Labs Lead, PyTorch Philippines · Technology A
 hero_image: /assets/images/maintainers/john-andrew-balbarosa.jpg
 ---
 
-John Andrew Balbarosa is a maintainer of PyTorch Philippines and the Campus Labs Lead of the Technology Arm of PyTorch Philippines. He created the community website and member portal.
+John Andrew Balbarosa created the community website and member portal for PyTorch Philippines.
