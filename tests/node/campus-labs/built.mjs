@@ -78,8 +78,10 @@ for (const page of ["campus-labs/index.html", "about/index.html"]) checkCards(pa
     assert.ok(group, `campus-labs: ${island} has no Campus Lab in the data but no "No Campus Lab yet" group`);
     const groupInvites = [...group[3].matchAll(/<a\b([^>]*)>/g)].filter(link => classList(link[1]).includes("ph-lead-invite"));
     assert.equal(groupInvites.length, 1, `campus-labs: ${island} must have its own invite card`);
+    assert.match(groupInvites[0][1], /(?:^|\s)href="#start"/, `campus-labs: ${island} invite must link to the "Start a Campus Lab" steps`);
   }
   assert.equal(invites, emptyIslands.length, "campus-labs: one invite card per island group without a Campus Lab");
+  assert.match(html, /\sid="start"/, 'campus-labs: the invite target #start is missing');
 }
 
 // Controlled fixture: one-word, spaced, markup-like, and entity-like names; markup in a
