@@ -1,20 +1,52 @@
-<section class="ph-section ph-section-grey" aria-labelledby="about-heading">
+{%- assign ambassadors = site.data.ambassadors -%}
+<section class="ph-section" aria-labelledby="about-heading">
   <div class="container">
     <h2 id="about-heading">About PyTorch Philippines</h2>
-    <div class="ph-managed-grid">
-      {% for item in site.data.community_identity.about %}
-      <article class="ph-card">
+    <p class="ph-lede">PyTorch Philippines is an independent, community-led user group for anyone in the country who learns, teaches, researches, or builds with PyTorch.</p>
+    <div class="ph-about-grid">
+      {%- for item in site.data.community_identity.about %}
+      <article class="ph-about-item">
         <h3>{{ item.heading | escape }}</h3>
-        {% if item.text %}<p>{{ item.text | escape }}</p>{% endif %}
+        {%- if item.text and item.text != "" %}<p>{{ item.text | escape }}</p>{% endif %}
       </article>
-      {% endfor %}
+      {%- endfor %}
     </div>
+  </div>
+</section>
+
+<section class="ph-section ph-section-grey" id="ambassadors" aria-labelledby="ambassadors-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="ambassadors-heading">PyTorch Foundation Ambassadors</h2>
+        <p>The <a href="{{ ambassadors.directory_url }}">PyTorch Foundation Ambassador Program</a> recognizes community leaders who educate, advocate for, and build with PyTorch. Ambassadors organize events, create educational content, mentor new users, and contribute to open source.</p>
+      </div>
+    </div>
+    <div class="ph-ambassador-grid">
+      {%- for person in ambassadors.people %}
+      <article class="ph-card ph-ambassador">
+        <p class="ph-card-meta">{{ person.location | escape }}</p>
+        <h3>{{ person.name | escape }}</h3>
+        <p>{{ person.summary | escape }}</p>
+        <ul class="ph-person-links">
+          {%- if person.github %}<li><a href="{{ person.github }}" rel="noopener noreferrer">GitHub<span class="ph-visually-hidden"> profile of {{ person.name | escape }}</span></a></li>{% endif %}
+          {%- if person.linkedin %}<li><a href="{{ person.linkedin }}" rel="noopener noreferrer">LinkedIn<span class="ph-visually-hidden"> profile of {{ person.name | escape }}</span></a></li>{% endif %}
+        </ul>
+      </article>
+      {%- endfor %}
+    </div>
+    <p class="ph-source">Ambassadors located in the Philippines, as listed in the <a href="{{ ambassadors.directory_url }}">official ambassador directory</a> on {{ ambassadors.checked | date: "%B %-d, %Y" }}. Interested in becoming one? Read the <a href="{{ ambassadors.application_url }}">application process</a>.</p>
+  </div>
+</section>
+
+<section class="ph-section" aria-labelledby="team">
+  <div class="container">
     <div class="ph-people-intro">
-      <h2 id="team" class="ph-subheading">Our people</h2>
-      <p>Meet the <span id="ambassadors">ambassadors</span>, core team, and <span id="departments">departments</span> supporting our community. Each person appears once, with their current published roles.</p>
+      <h2 id="team">Our team</h2>
+      <p>The officers and <span id="departments">departments</span> who run PyTorch Philippines. Each person appears once, with their current roles.</p>
     </div>
     <div class="ph-people" data-site-content="people" aria-live="polite"></div>
     {% include ph/people/details.html %}
-    <p>We are an independent community-led user group. See <a href="https://pytorch.org/">pytorch.org</a> for official PyTorch information.</p>
+    <p class="ph-source">PyTorch Philippines is an independent, community-led user group. For official PyTorch information, see <a href="https://pytorch.org/">pytorch.org</a>. Everyone in our community spaces follows the <a href="{{ site.baseurl }}/code-of-conduct/">Code of Conduct</a>.</p>
   </div>
 </section>

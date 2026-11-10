@@ -1,0 +1,19 @@
+# PyTorch Foundation Ambassadors located in the Philippines, as listed in the official directory.
+# Source of truth: https://pytorch.org/programs/ambassadors/ (data:
+# https://github.com/pytorch-fdn/ambassador-program/blob/main/doc/ambassadors.json).
+# Copy names, locations, and links exactly from that source; summaries paraphrase the official bios.
+# Re-check the directory before editing and update `checked`.
+checked: 2026-11-10
+directory_url: https://pytorch.org/programs/ambassadors/
+application_url: https://pytorch.org/programs/ambassadors/application-process/
+people:
+  - name: Alpha Romer Coma
+    location: Philippines
+    summary: Machine learning engineer focused on AI accelerators and edge inference with ExecuTorch.
+    github: https://github.com/alpharomercoma
+    linkedin: https://www.linkedin.com/in/alpharomercoma
+  - name: Giorgio Armani Magno
+    location: Pasay City, Philippines
+    summary: Data scientist and data science instructor.
+    github: https://github.com/ggiorgioarmanim
+    linkedin: https://www.linkedin.com/in/giorgioarmanimagno

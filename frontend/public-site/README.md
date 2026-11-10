@@ -21,27 +21,36 @@ Open http://localhost:4000. `/portal/` links resolve only in the deployed site o
 
 ## Content
 
-The navigation follows one order: Community, News & Blog, Learn, About. The home page is the Community
-page: one page read from top to bottom, with a section per event type (`/community/` redirects to
-it). News and blog posts live on `/news/`.
+The navigation follows one order: Community, News, Learn, Campus Labs, About, Member Portal. Every
+dropdown link must point at a page or an `id` that exists on it. The home page is the Community page
+(`/community/` redirects to it): what we do, upcoming programs, the island groups, news, and ways to get
+involved. Community news, event recaps, and the PyTorch blog feed live on `/news/`.
+
+Empty states point to a next step. Lists loaded from the API sit in a wrapper with
+`data-hide-when-empty`, and a `data-show-when-all-empty="name …"` note replaces a group of empty lists
+(see `assets/site-content.js`).
 
 | To change | Edit |
 |---|---|
 | Navigation | `_data/navigation.yml` |
-| Event types (workshops, hackathons, ...) | `_data/event_groups.yml` |
-| An event | add `_events/<date>-<name>.md` (fields in `_events/README.md`); delete the `sample: true` placeholder events once real ones exist |
+| Events and learning programs | the officer portal (`/portal/admin/website/`); see `_events/README.md` |
 | Blog post | add `_posts/YYYY-MM-DD-title.md`; use category `community` or `research` to also list it under News |
-| Learning materials and open-source projects | `_data/learn.yml` |
+| Learning path, materials, and open-source projects | `_data/learn.yml` (path stages match the program series names) |
+| PyTorch Foundation Ambassadors on `/about/#ambassadors` | `_data/ambassadors.yml`, copied from the [official directory](https://pytorch.org/programs/ambassadors/); update `checked` |
 | Sample code | `_includes/sample_code/*.py` |
 | People bios and social links | `_members/<first-last>.md`: `name`, optional `person_key` (`member:<64-hex token suffix from leadership.id>`), `link_github`, `link_linkedin`, `link_homepage`; the body is the bio. These enrich matching API-published people on `/about/`, not individual profile pages. |
 | Page hero | front matter `hero_kicker` (a short Filipino phrase), `hero_kicker_meaning`, `hero_title`, `hero_lead`, `hero_actions`; layout `ph` or `ph_article` |
 | Hero artwork | `node scripts/generate-archipelago.mjs` rewrites `assets/images/ph-network.svg` from the Natural Earth outline in `scripts/data/` |
 | Section layouts | `_includes/ph/*_section.html` |
-| PyTorch Philippines styles | `_sass/ph.scss`; people cards live in `_sass/ph/people.scss` (upstream styles stay unchanged where possible) |
+| PyTorch Philippines styles | `_sass/ph.scss`; page sections in `_sass/ph/sections.scss`; people cards in `_sass/ph/people.scss` (upstream styles stay unchanged where possible) |
 
 PyTorch news comes from the official pytorch.org blog feed (`scripts/fetch-pytorch-news.mjs`), refreshed on
-every deploy and daily. Get Started and the install selector come from `pytorch/pytorch.github.io`;
-refresh them from upstream when PyTorch releases a new version.
+every deploy and daily. The install selector (`published_versions.json`, `releases.json`,
+`assets/quick-start-module.js`) comes from the `site` branch of `pytorch/pytorch.github.io`; refresh it
+when PyTorch releases a new version. The supported Python and OS versions in `_includes/quick_start_local.html`
+and `_get_started/installation/*.md` are written for PyTorch 2.15 (checked against the PyPI wheels);
+update them with each release. The PyTorch 2.x and Previous Versions pages redirect to pytorch.org,
+which keeps them current.
 
 ### Shared people directory
 
@@ -54,8 +63,12 @@ roles, or restore a withheld or removed photo. Keep bios independent of changing
 There are no individual person pages: the `members` collection uses `output: false` and has no redirect
 defaults, preserving its original biographies for About metadata. Three declarative compatibility stubs in
 `redirects/people/` use the existing `jekyll-redirect-from` plugin: `/about/john-andrew-balbarosa/`,
-`/about/alpha-romer-coma/`, and `/about/giorgio-armani/` all redirect to `/about/#team`. The stubs are excluded
-from the sitemap. The `#ambassadors` and `#departments` anchors remain in the shared directory intro.
+`/about/alpha-romer-coma/`, and `/about/giorgio-armani/`. The first redirects to `/about/#team`; the two
+PyTorch Foundation Ambassadors redirect to `/about/#ambassadors`. The stubs are excluded from the sitemap.
+
+The `#ambassadors` section is separate from the API-owned team directory. It lists only people the
+PyTorch Foundation's ambassador directory places in the Philippines, as text with links to their public
+profiles and no portraits, and cites the directory with the date it was checked.
 
 ## Accessibility
 

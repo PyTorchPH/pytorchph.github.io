@@ -1,38 +1,31 @@
+{%- comment -%}
+  Desktop menu. A section is active on its own page and on the pages that belong to it
+  (Get Started belongs to Learn; the Code of Conduct and the home page belong to Community).
+{%- endcomment -%}
+{%- assign section_key = current[1] -%}
+{%- if page.url == "/" or section_key == "code-of-conduct" -%}{%- assign section_key = "community" -%}{%- endif -%}
+{%- if section_key == "get-started" -%}{%- assign section_key = "learn" -%}{%- endif -%}
+{%- if section_key == "blog" -%}{%- assign section_key = "news" -%}{%- endif -%}
 <nav class="main-menu" aria-label="Main">
   <ul>
-    {% for item in site.data.navigation.main_menu %}
-      <li class="main-menu-item {% if item.key and (current[1] == item.key or (item.key == 'news' and page.url contains '/blog') or (item.key == 'community' and page.url == '/')) %}active{% endif %}{% if item.has_dropdown %} {{ item.key }}-dropdown ph-dropdown{% endif %}">
-        {% if item.has_dropdown %}
-          <a href="{% if item.url %}{{ site.baseurl }}{{ item.url }}{% else %}#{% endif %}" aria-haspopup="true" class="{% if item.key and current[1] == item.key or item.key == 'community' and page.url == '/' %}with-down-orange-arrow{% else %}with-down-arrow{% endif %}">{{ item.title }}</a>
+    {%- for item in site.data.navigation.main_menu %}
+      {%- if item.url contains '://' %}{% assign item_url = item.url %}{% else %}{% assign item_url = site.baseurl | append: item.url %}{% endif %}
+      <li class="main-menu-item{% if section_key == item.key %} active{% endif %}{% if item.has_dropdown %} {{ item.key }}-dropdown ph-dropdown{% endif %}">
+        {%- if item.has_dropdown %}
+          <a href="{{ item_url }}" class="{% if section_key == item.key %}with-down-orange-arrow{% else %}with-down-arrow{% endif %}"{% if page.url == item.url %} aria-current="page"{% endif %}>{{ item.title }}</a>
           <div class="{{ item.key }}-dropdown-menu dropdown-menu ph-dropdown-menu">
-            {% for dropdown_item in item.dropdown_items %}
-              {% if dropdown_item.url_type == "baseurl" %}
-                {% assign final_url = site.baseurl | append: dropdown_item.url %}
-              {% else %}
-                {% assign final_url = dropdown_item.url %}
-              {% endif %}
-              <a href="{{ final_url }}" class="nav-dropdown-item"{% if dropdown_item.target %} target="{{ dropdown_item.target }}"{% endif %}>
-                <div class="dropdown-title">
-                  {{ dropdown_item.title }}
-                  {% if dropdown_item.external %}
-                    <i class="fa fa-external-link" style="margin-left: 6px; font-size: 10px;"></i>
-                  {% endif %}
-                </div>
+            {%- for dropdown_item in item.dropdown_items %}
+              {%- if dropdown_item.url_type == "baseurl" %}{% assign final_url = site.baseurl | append: dropdown_item.url %}{% else %}{% assign final_url = dropdown_item.url %}{% endif %}
+              <a href="{{ final_url }}" class="nav-dropdown-item">
+                <span class="dropdown-title">{{ dropdown_item.title }}{% if dropdown_item.external %}<span class="ph-external-icon" aria-hidden="true"></span><span class="ph-visually-hidden"> (external site)</span>{% endif %}</span>
               </a>
-            {% endfor %}
+            {%- endfor %}
           </div>
-        {% else %}
-          {% if item.url_type == "baseurl" %}
-            {% assign final_url = site.baseurl | append: item.url %}
-          {% elsif item.url_type == "external_urls" %}
-            {% assign final_url = site.external_urls[item.url_key] %}
-          {% else %}
-            {% assign final_url = item.url %}
-          {% endif %}
-          <a href="{{ final_url }}"{% if item.target %} target="{{ item.target }}"{% endif %}>{{ item.title }}</a>
-        {% endif %}
+        {%- else %}
+          <a href="{{ item_url }}"{% if page.url == item.url %} aria-current="page"{% endif %}>{{ item.title }}</a>
+        {%- endif %}
       </li>
-    {% endfor %}
+    {%- endfor %}
   </ul>
 </nav>
 

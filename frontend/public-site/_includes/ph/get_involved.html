@@ -1,0 +1,31 @@
+{%- assign contacts = site.data.public_contacts -%}
+<section class="ph-section ph-section-grey" id="get-involved" aria-labelledby="get-involved-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="get-involved-heading">Get involved</h2>
+        <p>There is a place for you whether you are writing your first training loop or shipping models to production.</p>
+      </div>
+    </div>
+    <div class="ph-involve-grid">
+      <article class="ph-card">
+        <h3><a class="ph-card-link" href="{{ site.baseurl }}/portal/register/">Become a member</a></h3>
+        <p>Create a member account to keep a record of your participation and use the member portal.</p>
+      </article>
+      <article class="ph-card">
+        <h3><a class="ph-card-link" href="{{ site.baseurl }}/campus-labs/#start">Start a Campus Lab</a></h3>
+        <p>Bring PyTorch Philippines to your university with fellow students and faculty.</p>
+      </article>
+      {%- if contacts.email %}
+      <article class="ph-card">
+        <h3><a class="ph-card-link" href="mailto:{{ contacts.email | escape }}?subject=Session%20proposal">Share what you know</a></h3>
+        <p>Propose a talk, workshop, or study session for the community.</p>
+      </article>
+      {%- endif %}
+      <article class="ph-card">
+        <h3><a class="ph-card-link" href="{{ site.external_urls.repo_org }}">Contribute on GitHub</a></h3>
+        <p>Improve this website and our community files on GitHub.</p>
+      </article>
+    </div>
+  </div>
+</section>

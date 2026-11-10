@@ -1,90 +1,75 @@
 {%- comment -%}
-  News and blog: community news and research from our posts (category "community" or "research"),
-  the latest blog posts, then the
-  latest official PyTorch news from the pytorch.org feed fetched at build time (_data/pytorch_news.json).
+  News: community updates (officer-published news and event recaps from the API, plus blog posts in
+  the "community" or "research" categories), then the latest official PyTorch news from the
+  pytorch.org feed (built into _data/pytorch_news.json and refreshed from the API at runtime).
+  Empty community lists hide themselves; one shared message replaces them all.
 {%- endcomment -%}
 {%- assign pytorch_news = site.data.pytorch_news | default: empty -%}
 {%- assign community_posts = site.categories.community | default: empty -%}
 {%- assign research_posts = site.categories.research | default: empty -%}
-<section class="ph-section ph-section-grey" aria-labelledby="news-heading">
+{%- assign has_posts = false -%}{%- if site.posts.size > 0 -%}{%- assign has_posts = true -%}{%- endif -%}
+{%- assign contacts = site.data.public_contacts -%}
+<section class="ph-section" id="community-updates" aria-labelledby="community-updates-heading">
   <div class="container">
-    <div class="ph-section-header{% if include.full %} ph-visually-hidden{% endif %}">
-      <div>
-        <h2 id="news-heading">News &amp; Blog</h2>
-        <p>Community updates and stories, new research and findings, and the latest from the PyTorch project.</p>
-      </div>
-      {%- unless include.full %}
-      <a href="{{ site.baseurl }}/news/" class="btn btn-lg with-right-arrow module-button">All news</a>
-      {%- endunless %}
+    <h2 id="community-updates-heading">Community updates</h2>
+
+    <div data-hide-when-empty hidden>
+      <h3 class="ph-subheading">Announcements</h3>
+      <div class="ph-managed-grid" data-site-content="news"></div>
+    </div>
+    <div data-hide-when-empty hidden>
+      <h3 class="ph-subheading">Event recaps</h3>
+      <div class="ph-managed-grid" data-site-content="recaps"></div>
     </div>
 
-    <h3 id="published-community-news">Published community news</h3>
-    <div class="ph-managed-grid" data-site-content="news"></div>
-    <h3 id="past-events-recap">Past Events Recap</h3>
-    <div class="ph-managed-grid" data-site-content="recaps"></div>
-    <div class="row ph-card-grid">
-      <div class="col-md-6">
-        <h3 class="ph-subheading" id="community-news">Community news</h3>
-        {%- for post in community_posts limit: 3 %}
-        <article class="ph-card mb-3">
-          <span class="ph-card-meta"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time></span>
-          <h4><a class="ph-card-link" href="{{ post.url | relative_url }}">{{ post.title }}</a></h4>
-        </article>
-        {%- else %}
-        <p class="ph-empty">No community news yet.</p>
-        {%- endfor %}
-      </div>
-      <div class="col-md-6">
-        <h3 class="ph-subheading" id="research">Research &amp; findings</h3>
-        {%- for post in research_posts limit: 3 %}
-        <article class="ph-card mb-3">
-          <span class="ph-card-meta"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time></span>
-          <h4><a class="ph-card-link" href="{{ post.url | relative_url }}">{{ post.title }}</a></h4>
-        </article>
-        {%- else %}
-        <p class="ph-empty">No research posts yet. Share your PyTorch work with the community through the <a href="{{ site.baseurl }}/portal/">member portal</a>.</p>
-        {%- endfor %}
-      </div>
-    </div>
-
-    <h3 class="ph-subheading" id="blog">From the blog</h3>
-    {%- assign recent_posts = site.posts | sort: "date" | reverse %}
-    <div class="row ph-card-grid">
-      {%- for post in recent_posts limit: 6 %}
-      <div class="col-md-4">
-        <article class="ph-card">
-          <span class="ph-card-meta"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time></span>
-          <h4><a class="ph-card-link" href="{{ post.url | relative_url }}">{{ post.title }}</a></h4>
-          <p>{{ post.excerpt | strip_html | strip | truncatewords: 25 }}</p>
-        </article>
-      </div>
-      {%- else %}
-      <div class="col-12">
-        <p class="ph-empty">No posts yet. Community stories, event recaps, and tutorials will appear here.</p>
-      </div>
+    {%- if community_posts.size > 0 or research_posts.size > 0 %}
+    <h3 class="ph-subheading" id="research">Stories and research</h3>
+    <div class="ph-managed-grid">
+      {%- assign stories = community_posts | concat: research_posts | sort: "date" | reverse %}
+      {%- for post in stories limit: 6 %}
+      <article class="ph-card">
+        <p class="ph-card-meta"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time></p>
+        <h3><a class="ph-card-link" href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
+        <p>{{ post.excerpt | strip_html | strip | truncatewords: 25 }}</p>
+      </article>
       {%- endfor %}
     </div>
-    {%- if recent_posts.size > 6 %}
-    <p><a href="{{ site.baseurl }}/blog/" class="with-right-arrow">All blog posts</a></p>
     {%- endif %}
 
-    <h3 class="ph-subheading" id="pytorch-news">PyTorch news</h3>
-    {%- if include.full %}{% assign news_limit = 6 %}{% else %}{% assign news_limit = 3 %}{% endif %}
-    <div class="row ph-card-grid" data-site-content="pytorch-news">
-      {%- for item in pytorch_news limit: news_limit %}
-      <div class="col-md-4">
-        <article class="ph-card">
-          <span class="ph-card-meta"><time datetime="{{ item.date }}">{{ item.date | date: "%B %-d, %Y" }}</time>{% if item.categories.size > 0 %} · {{ item.categories | join: ", " }}{% endif %}</span>
-          <h4><a class="ph-card-link" href="{{ item.url }}">{{ item.title }}</a></h4>
-          <p>{{ item.excerpt }}</p>
-        </article>
+    {%- unless has_posts %}
+    <div class="ph-callout" data-show-when-all-empty="news recaps">
+      <p>Announcements and event recaps from PyTorch Philippines will be posted here.</p>
+      <p>Ran a PyTorch session, wrote a tutorial, or published research you want the community to see?
+        {%- if contacts.email %} Email <a href="mailto:{{ contacts.email | escape }}?subject=Community%20update">{{ contacts.email | escape }}</a> to share it with the community.
+        {%- else %} Share it with the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
+    </div>
+    {%- endunless %}
+
+    {%- if has_posts %}
+    <p><a href="{{ site.baseurl }}/blog/" class="with-right-arrow">All blog posts</a></p>
+    {%- endif %}
+  </div>
+</section>
+
+<section class="ph-section ph-section-grey" id="pytorch-news" aria-labelledby="pytorch-news-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="pytorch-news-heading">PyTorch news</h2>
+        <p>The latest posts from the official PyTorch blog, updated daily.</p>
       </div>
+      <a href="https://pytorch.org/blog/" class="btn btn-lg with-right-arrow module-button">PyTorch blog</a>
+    </div>
+    <div class="ph-managed-grid" data-site-content="pytorch-news">
+      {%- for item in pytorch_news limit: 6 %}
+      <article class="ph-card">
+        <p class="ph-card-meta"><time datetime="{{ item.date }}">{{ item.date | date: "%B %-d, %Y" }}</time>{% if item.categories.size > 0 %} · {{ item.categories | join: " · " }}{% endif %}</p>
+        <h3><a class="ph-card-link" href="{{ item.url }}">{{ item.title }}</a></h3>
+        <p>{{ item.excerpt }}</p>
+      </article>
       {%- else %}
-      <div class="col-12">
-        <p class="ph-empty">Latest PyTorch news is available on the <a href="https://pytorch.org/blog/">PyTorch blog</a>.</p>
-      </div>
+      <p class="ph-empty">Read the latest PyTorch news on the <a href="https://pytorch.org/blog/">PyTorch blog</a>.</p>
       {%- endfor %}
     </div>
-    <p>Source: <a href="https://pytorch.org/blog/">pytorch.org/blog</a></p>
   </div>
 </section>

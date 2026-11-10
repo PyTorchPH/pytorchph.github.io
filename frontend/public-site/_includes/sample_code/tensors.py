@@ -7,6 +7,7 @@ print(x + y)          # element-wise addition
 print(x @ y)          # matrix multiplication
 print(x.mean(), x.shape)
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-x = x.to(device)      # move to a GPU when one is available
+# Use a GPU or other accelerator (CUDA, Apple MPS, ...) when one is available.
+device = torch.accelerator.current_accelerator() if torch.accelerator.is_available() else "cpu"
+x = x.to(device)
 print(x.device)

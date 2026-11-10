@@ -61,9 +61,10 @@ async function verifyBuiltAbout(browser, origin, artifacts, device, viewport) {
     state.failure = false;
     state.rows = publishedLeadership();
     state.revision++;
-    for (const slug of ["john-andrew-balbarosa", "alpha-romer-coma", "giorgio-armani"]) {
+    // Legacy profile URLs land on the matching About section: the team, or the PyTorch Foundation ambassadors.
+    for (const [slug, hash] of [["john-andrew-balbarosa", "#team"], ["alpha-romer-coma", "#ambassadors"], ["giorgio-armani", "#ambassadors"]]) {
       await page.goto(`${origin}/about/${slug}/`, { waitUntil: "domcontentloaded" });
-      await page.waitForURL(url => url.pathname === "/about/" && url.hash === "#team");
+      await page.waitForURL(url => url.pathname === "/about/" && url.hash === hash);
       await expectRevision(page, state.revision);
       await assertPeople(page);
       await assertPageStructure(page);

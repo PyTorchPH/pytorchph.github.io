@@ -1,6 +1,6 @@
-{% assign display_title = page.hero_title | default: page.title | default: site.title %}
-{% assign display_lead = page.hero_lead %}
-{% if page.body-class == "ph-home" %}{% assign display_title = site.data.community_identity.tagline | default: site.title %}{% endif %}
+{% assign display_title = include.title | default: page.hero_title | default: page.title | default: site.title %}
+{% assign display_lead = include.lead | default: page.hero_lead %}
+{% if page.body-class == "ph-home" and include.title == nil %}{% assign display_title = site.data.community_identity.tagline | default: site.title %}{% endif %}
 {% if page.body-class == "ph-home" or page.body-class == "ph-about" %}{% assign display_lead = site.data.community_identity.description %}{% endif %}
 {%- comment -%}
   Page hero. It sizes to its content, so long headings never collide with the header on small screens.
@@ -33,9 +33,7 @@
   {%- if page.hero_wave %}
   <div class="ph-hero-wave" aria-hidden="true">
     <svg viewBox="0 0 1200 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
-      <path d="M0,50L60,45C120,40 240,30 360,35C480,40 600,60 720,70C840,80 960,80 1080,75C1140,72.5 1170,67.5 1185,65L1200,62.5L1200,200L0,200Z" fill="#ffffff" fill-opacity="0.3"></path>
-      <path d="M0,20L80,25C160,30 320,40 480,50C640,60 800,70 960,65C1040,62.5 1120,52.5 1160,47.5L1200,42.5L1200,200L0,200Z" fill="#ffffff" fill-opacity="0.5"></path>
-      <path d="M0,90L50,88C100,86 200,82 300,85C400,88 500,95 600,92C700,89 800,77 900,82C1000,87 1100,93 1150,96L1200,100L1200,200L0,200Z" fill="#ffffff" fill-opacity="1"></path>
+      <path d="M0,95C220,70 420,62 640,80C860,98 1040,104 1200,88L1200,120L0,120Z" fill="#ffffff"></path>
     </svg>
   </div>
   {%- endif %}

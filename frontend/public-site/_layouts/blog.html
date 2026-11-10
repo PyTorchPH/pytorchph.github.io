@@ -2,55 +2,36 @@
 <html lang="{{ site.lang }}">
 {% include head.html %}
 
-<body class="{{ page.body-class }}">
+<body class="ph-page {{ page.body-class }}">
   {% include header.html %}
-    <main id="main-content" tabindex="-1">
+  <main id="main-content" tabindex="-1">
+    {%- assign posts = paginator.posts %}
+    {% include ph/hero.html title="Blog" lead="Tutorials, event recaps, and stories from the PyTorch Philippines community." %}
 
-  <div class="main-background blog-background"></div>
-
-  {% assign posts = paginator.posts %}
-  {% assign display_post_categories = site.posts | map: 'categories' | join: ',' | replace: '-', ' ' | split: ',' | uniq | sort %}
-  {% assign current_page = page.url | downcase | remove: ".html" | split: '/'  %}
-  {% assign post_categories = site.posts | map: 'categories' | join: ',' | split: ',' | uniq | sort %}
-
-  <div class="jumbotron jumbotron-fluid">
-    <div class="container">
-      <h1>Blog</h1>
-      <p class="lead">News, tutorials, event recaps, and stories from the PyTorch Philippines community.</p>
-    </div>
-  </div>
-
-  <div class="main-content-wrapper">
-    <div class="main-content">
+    <section class="ph-section">
       <div class="container">
-        <div class="row blog-vertical">
-
-          {% for post in posts %}
-            <div class="vertical-blog-container">
-              <div class="col-md-4">
-                <p class="blog-date">{{ post.date | date: '%B %d, %Y' }}</p>
-                <h4>
-                  <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
-                </h4>
-                <p>{{ post.content | strip_html | strip | truncatewords: 50 | escape }}</p>
-                <!-- <img src="{{ post.image }}" class="img-fluid"> -->
-              </div>
-              <a href="{{ site.baseurl }}{{ post.url }}" class="btn">
-                Read more →
-              </a>
-            </div>
-          {% endfor %}
+        {%- if posts.size > 0 %}
+        <div class="ph-managed-grid">
+          {%- for post in posts %}
+          <article class="ph-card">
+            <p class="ph-card-meta"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time></p>
+            <h2 class="h3"><a class="ph-card-link" href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
+            <p>{{ post.content | strip_html | strip | truncatewords: 40 | escape }}</p>
+          </article>
+          {%- endfor %}
         </div>
-
+        {%- if paginator.total_pages > 1 %}
         {% include pagination_buttons.html %}
+        {%- endif %}
+        {%- else %}
+        <div class="ph-callout">
+          <p>No blog posts yet.</p>
+          <p>Community announcements and the latest PyTorch news are on the <a href="{{ site.baseurl }}/news/">News</a> page.</p>
+        </div>
+        {%- endif %}
       </div>
-    </div>
-  </div>
-
-  {% include quick_start_module.html %}
-
-    </main>
+    </section>
+  </main>
   {% include footer.html %}
-
 </body>
 </html>

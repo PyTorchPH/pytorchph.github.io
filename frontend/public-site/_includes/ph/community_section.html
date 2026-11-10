@@ -1,23 +1,27 @@
-<section class="ph-section" id="events" aria-labelledby="events-heading">
+{%- comment -%}
+  Upcoming events and learning programs, published by officers and loaded by site-content.js.
+  The series filter only lists series with upcoming sessions; past sessions appear below when
+  there are any.
+{%- endcomment -%}
+<section class="ph-section ph-section-grey" id="events" aria-labelledby="events-heading">
   <div class="container">
-    <h2 id="events-heading">Upcoming events &amp; learning programs</h2>
-    <p>Discover community training and learning opportunities. Unconfirmed schedules are labeled Tentative or Coming Soon.</p>
-    <div class="ph-content-tabs" role="tablist" aria-label="Learning series">
-      <button type="button" role="tab" aria-selected="true" data-event-series="">All programs</button>
-      <button type="button" role="tab" aria-selected="false" data-event-series="PyTorch Fundamentals">Fundamentals</button>
-      <button type="button" role="tab" aria-selected="false" data-event-series="PyTorch Techniques and Ecosystem Tools">Techniques &amp; tools</button>
-      <button type="button" role="tab" aria-selected="false" data-event-series="PyTorch Advanced Architectures and Deployment">Advanced &amp; deployment</button>
+    <div class="ph-section-header">
+      <div>
+        <h2 id="events-heading">Upcoming programs</h2>
+        <p>Community training sessions and learning programs. Schedules that are not final yet are marked Tentative.</p>
+      </div>
     </div>
-    <div class="ph-managed-grid" data-site-content="events"><p class="ph-empty">Loading published community events…</p></div>
-    <noscript>JavaScript is needed to load the latest published event listings.</noscript>
-  </div>
-</section>
-<section class="ph-section ph-section-grey">
-  <div class="container">
-    <h2>Community news</h2>
-    <div class="ph-managed-grid" data-site-content="news"></div>
-    <h2>Past Events Recap</h2>
-    <div class="ph-managed-grid" data-site-content="recaps"></div>
-    <p><a href="{{ site.baseurl }}/news/">All news &amp; recaps</a> · <a href="{{ site.baseurl }}/campus-labs/">PyTorch Philippines Campus Labs</a></p>
+    <div class="ph-filter" role="group" aria-label="Filter by learning series" data-event-filters hidden>
+      <button type="button" aria-pressed="true" data-event-series="">All programs</button>
+      <button type="button" aria-pressed="false" data-event-series="PyTorch Fundamentals">Fundamentals</button>
+      <button type="button" aria-pressed="false" data-event-series="PyTorch Techniques and Ecosystem Tools">Techniques &amp; ecosystem tools</button>
+      <button type="button" aria-pressed="false" data-event-series="PyTorch Advanced Architectures and Deployment">Advanced architectures &amp; deployment</button>
+    </div>
+    <div class="ph-managed-grid ph-event-grid" data-site-content="events" aria-live="polite"><p class="ph-empty">Loading published programs…</p></div>
+    <noscript><p>JavaScript is needed to load the latest published programs. Follow our community pages for announcements.</p></noscript>
+    <div class="ph-past" data-hide-when-empty hidden>
+      <h3 class="ph-past-heading">Past sessions</h3>
+      <ul class="ph-past-list" data-site-content="events-past"></ul>
+    </div>
   </div>
 </section>

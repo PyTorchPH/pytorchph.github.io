@@ -6,7 +6,7 @@ featured-img: "assets/images/featured-img-pytorch-2.png"
 background-class: get-started-background
 body-class: get-started
 order: 2
-published: true
+published: false
 ---
 
 ## Overview

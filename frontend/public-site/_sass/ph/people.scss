@@ -10,6 +10,11 @@
   display: grid;
   gap: rem(32px);
   margin: rem(24px) 0 rem(40px);
+
+  // Two profiles per row on wide screens; one profile never stretches across the whole page.
+  @include full-nav-menu-desktop {
+    grid-template-columns: repeat(auto-fill, minmax(rem(460px), 1fr));
+  }
 }
 
 .ph-person {

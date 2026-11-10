@@ -8,12 +8,12 @@ PyTorch can be installed and used on macOS. Depending on your system and GPU cap
 
 ### macOS Version
 
-PyTorch is supported on macOS 10.15 (Catalina) or above.
+PyTorch 2.15 supports Macs with Apple silicon running macOS 14 (Sonoma) or newer. Prebuilt packages for Intel-based Macs are no longer published.
 
 ### Python
 {: #mac-python}
 
-It is recommended that you use Python 3.9 - 3.12.
+PyTorch 2.15 supports Python 3.11 to 3.15.
 You can install Python either through [Homebrew](https://brew.sh/) or
 the [Python website](https://www.python.org/downloads/mac-osx/).
 

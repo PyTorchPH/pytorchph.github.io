@@ -1,0 +1,775 @@
+// Sections shared by the home, Campus Labs, About, News, and Learn pages.
+// Brand rules: PyTorch orange (#ee4c2c) fills buttons and marks; text uses $orange on light
+// backgrounds and $orange_on_dark on dark ones for AA contrast.
+
+$ph_rule: #d9dadf;
+$ph_muted: #5f6064; // 6.3:1 on white, 5.7:1 on $light_grey
+
+// Interactive elements that are buttons in markup but keep the upstream icon-only look.
+button.main-menu-open-button,
+button.main-menu-close-button {
+  border: 0;
+  padding: 0;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+// Touch targets: the upstream icons are 25 × 7 and 24 × 24; give both a 44 × 44 hit area.
+button.main-menu-open-button {
+  width: 44px;
+  height: 44px;
+  top: 2px;
+  right: -10px;
+}
+
+button.main-menu-close-button {
+  width: 44px;
+  height: 44px;
+  top: 0;
+  right: -10px;
+}
+
+.ph-external-icon {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 6px;
+  background: url($baseurl + "/assets/images/external-link-icon.svg") no-repeat center / contain;
+  vertical-align: baseline;
+  opacity: 0.75;
+}
+
+.nav-dropdown-item .dropdown-title {
+  display: block;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Section header and shared typography
+// ---------------------------------------------------------------------------------------------
+.ph-section {
+  h2 {
+    font-size: rem(30px);
+    line-height: 1.2;
+    letter-spacing: -0.2px;
+    margin-bottom: rem(12px);
+
+    @include desktop {
+      font-size: rem(36px);
+    }
+  }
+
+  .ph-lede {
+    max-width: 44rem;
+    font-size: rem(18px);
+    line-height: rem(30px);
+    color: $ph_muted;
+  }
+}
+
+.ph-section-header .module-button {
+  margin: 0;
+}
+
+.ph-empty {
+  color: $ph_muted;
+}
+
+.ph-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: rem(12px);
+  margin-top: rem(28px);
+
+  .btn {
+    margin: 0;
+  }
+}
+
+// Buttons on the dark nationwide band.
+.btn.ph-btn-light,
+.btn.ph-btn-outline {
+  border-radius: 0;
+  padding: rem(9px) rem(36px) rem(9px) rem(16px);
+  background-position: right rem(14px) center;
+  font-size: rem(18px);
+}
+
+.btn.ph-btn-light {
+  background-color: $white;
+  color: $not_quite_black;
+}
+
+.btn.ph-btn-outline {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: $white;
+  background-image: url($baseurl + "/assets/images/chevron-right-white.svg");
+
+  &:hover,
+  &:focus-visible {
+    border-color: $white;
+    color: $white;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Home: what we do (one column per verb of the tagline)
+// ---------------------------------------------------------------------------------------------
+.ph-pillars {
+  padding: rem(56px) 0 rem(40px);
+}
+
+.ph-pillar-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(32px);
+
+  @media (min-width: 576px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include full-nav-menu-desktop {
+    grid-template-columns: repeat(4, 1fr);
+    gap: rem(40px);
+  }
+}
+
+.ph-pillar {
+  padding-top: rem(20px);
+  border-top: 2px solid $not_quite_black;
+
+  h3 {
+    margin: 0 0 rem(12px);
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: rem(30px);
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    color: $not_quite_black;
+  }
+
+  p {
+    color: $ph_muted;
+    font-size: rem(17px);
+    line-height: rem(27px);
+    margin-bottom: rem(14px);
+  }
+
+  a {
+    color: $orange;
+    font-size: rem(16px);
+    background-position: right center;
+    padding-right: rem(20px);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Upcoming programs
+// ---------------------------------------------------------------------------------------------
+.ph-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: rem(8px);
+  margin: 0 0 rem(8px);
+
+  &[hidden] {
+    display: none;
+  }
+
+  button {
+    border: 1px solid $not_quite_black;
+    border-radius: 0;
+    background: transparent;
+    color: $not_quite_black;
+    padding: rem(7px) rem(14px);
+    font: inherit;
+    font-size: rem(15px);
+    cursor: pointer;
+
+    &[hidden] {
+      display: none;
+    }
+
+    &:hover {
+      border-color: $orange;
+      color: $orange;
+    }
+
+    &[aria-pressed="true"] {
+      border-color: $not_quite_black;
+      background: $not_quite_black;
+      color: $white;
+    }
+  }
+}
+
+.ph-event-grid {
+  margin-top: rem(16px);
+}
+
+.ph-card.ph-event {
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid $pytorch_orange;
+
+  h3 {
+    margin-bottom: rem(6px);
+  }
+
+  .ph-event-when {
+    margin: 0 0 rem(10px);
+    font-size: rem(15px);
+    font-weight: 600;
+    color: $orange;
+  }
+
+  .ph-event-series {
+    font-size: rem(15px);
+    color: $ph_muted;
+    margin-bottom: rem(12px);
+  }
+
+  .ph-event-modules {
+    list-style: none;
+    margin: rem(4px) 0 rem(16px);
+    padding: 0;
+
+    li {
+      position: relative;
+      padding-left: rem(16px);
+      font-size: rem(15px);
+      line-height: rem(22px);
+      color: $slate;
+
+      & + li {
+        margin-top: rem(6px);
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: rem(9px);
+        width: 6px;
+        height: 6px;
+        background: $pytorch_orange;
+      }
+    }
+  }
+
+  .ph-event-facts {
+    margin-top: auto;
+    padding-top: rem(12px);
+    border-top: 1px solid $ph_rule;
+    font-size: rem(14px);
+    color: $ph_muted;
+  }
+}
+
+.ph-status {
+  display: inline-block;
+  margin-right: rem(4px);
+  padding: 0 rem(6px);
+  border: 1px solid currentColor;
+  font-size: rem(12px);
+  font-weight: 600;
+  line-height: rem(20px);
+  letter-spacing: 0.3px;
+  vertical-align: 1px;
+}
+
+.ph-past {
+  margin-top: rem(40px);
+
+  &[hidden] {
+    display: none;
+  }
+
+  .ph-past-heading {
+    font-size: rem(18px);
+    margin-bottom: rem(12px);
+  }
+}
+
+.ph-past-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid $ph_rule;
+
+  li {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: rem(2px) rem(24px);
+    padding: rem(12px) 0;
+    border-bottom: 1px solid $ph_rule;
+    font-size: rem(15px);
+
+    @include desktop {
+      grid-template-columns: rem(190px) rem(260px) 1fr;
+    }
+  }
+
+  .ph-past-date {
+    color: $ph_muted;
+  }
+
+  .ph-past-title {
+    font-weight: 600;
+    color: $slate;
+  }
+
+  .ph-past-detail {
+    color: $ph_muted;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// The archipelago: the community's map, with the three island groups labeled at their hubs
+// ---------------------------------------------------------------------------------------------
+.ph-nationwide {
+  padding: rem(64px) 0;
+  background-color: $not_quite_black;
+  color: $white;
+
+  h2 {
+    color: $white;
+    font-size: rem(30px);
+    line-height: 1.2;
+    margin-bottom: rem(16px);
+
+    @include desktop {
+      font-size: rem(38px);
+    }
+  }
+
+  p {
+    color: #e3e3e3;
+    font-size: rem(18px);
+    line-height: rem(30px);
+    max-width: 34rem;
+  }
+}
+
+.ph-nationwide-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(32px);
+  align-items: center;
+
+  @include desktop {
+    grid-template-columns: 7fr 5fr;
+    gap: rem(48px);
+  }
+}
+
+.ph-archipelago {
+  position: relative;
+  width: 100%;
+  max-width: rem(300px);
+  margin: 0 auto;
+
+  @include desktop {
+    max-width: rem(380px);
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+.ph-archipelago-label {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  transform: translate(calc(-100% - 16px), -50%);
+  padding: rem(2px) rem(10px);
+  background: rgba(38, 38, 38, 0.82);
+  border: 1px solid rgba(238, 76, 44, 0.65);
+  color: $white;
+  font-family: Montserrat, "Open Sans", sans-serif;
+  font-size: rem(14px);
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+
+  @include desktop {
+    font-size: rem(16px);
+  }
+}
+
+.ph-archipelago-count:empty {
+  display: none;
+}
+
+.ph-archipelago-count {
+  color: $orange_on_dark;
+}
+
+// Light version of the map, used on the Campus Labs page.
+.ph-archipelago-light .ph-archipelago-label {
+  background: rgba(255, 255, 255, 0.92);
+  color: $slate;
+  border-color: $pytorch_orange;
+
+  .ph-archipelago-count {
+    color: $orange;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Get involved and other link-card grids
+// ---------------------------------------------------------------------------------------------
+.ph-involve-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(24px);
+
+  @media (min-width: 576px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include full-nav-menu-desktop {
+    grid-template-columns: repeat(auto-fit, minmax(rem(220px), 1fr));
+  }
+
+  .ph-card h3 {
+    font-size: rem(20px);
+  }
+
+  .ph-card-link {
+    padding-right: rem(20px);
+    background: url($baseurl + "/assets/images/chevron-right-orange.svg") no-repeat right center / rem(8px) rem(14px);
+  }
+}
+
+[data-hide-when-empty][hidden],
+[data-show-when-all-empty][hidden] {
+  display: none;
+}
+
+// A short note that stands in for an empty list and says what to do next.
+.ph-callout {
+  max-width: 46rem;
+  margin: rem(8px) 0 0;
+  padding: rem(20px) rem(24px);
+  border-left: 3px solid $pytorch_orange;
+  background: $light_grey;
+
+  .ph-section-grey & {
+    background: $white;
+  }
+
+  p {
+    margin: 0;
+    color: $slate;
+    font-size: rem(17px);
+    line-height: rem(28px);
+
+    & + p {
+      margin-top: rem(8px);
+      color: $ph_muted;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// About
+// ---------------------------------------------------------------------------------------------
+.ph-about-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(28px) rem(40px);
+  margin-top: rem(36px);
+
+  @include desktop {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include full-nav-menu-desktop {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.ph-about-item {
+  padding-top: rem(16px);
+  border-top: 2px solid $not_quite_black;
+
+  h3 {
+    font-size: rem(20px);
+    line-height: 1.3;
+    margin-bottom: rem(10px);
+    color: $slate;
+  }
+
+  p {
+    margin: 0;
+    color: $ph_muted;
+    font-size: rem(16px);
+    line-height: rem(26px);
+  }
+}
+
+.ph-ambassador-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(24px);
+
+  @include desktop {
+    grid-template-columns: repeat(2, minmax(0, 26rem));
+  }
+
+  .ph-person-links {
+    display: flex;
+    gap: rem(16px);
+    list-style: none;
+    margin: rem(16px) 0 0;
+    padding: 0;
+
+    a {
+      color: $orange;
+    }
+  }
+}
+
+.ph-source {
+  margin-top: rem(24px);
+  color: $ph_muted;
+  font-size: rem(15px);
+  line-height: rem(24px);
+  max-width: 48rem;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Campus Labs
+// ---------------------------------------------------------------------------------------------
+.ph-campus-map-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(40px);
+
+  @include desktop {
+    grid-template-columns: minmax(0, 1fr) rem(300px);
+    align-items: start;
+  }
+
+  .ph-archipelago {
+    max-width: rem(260px);
+
+    @include desktop {
+      max-width: 100%;
+    }
+  }
+}
+
+.ph-island {
+  margin-top: rem(32px);
+
+  &[hidden] {
+    display: none;
+  }
+
+  h3 {
+    font-size: rem(22px);
+    margin-bottom: 0;
+  }
+}
+
+// Numbered steps: used only where the content is an actual sequence.
+.ph-steps {
+  counter-reset: ph-step;
+  list-style: none;
+  margin: rem(32px) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(28px);
+
+  @include desktop {
+    grid-template-columns: repeat(2, 1fr);
+    gap: rem(32px) rem(48px);
+  }
+
+  @include full-nav-menu-desktop {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  li {
+    counter-increment: ph-step;
+    position: relative;
+    padding-top: rem(56px);
+
+    &::before {
+      content: counter(ph-step);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: rem(40px);
+      height: rem(40px);
+      border: 2px solid $pytorch_orange;
+      color: $orange;
+      font-family: Montserrat, "Open Sans", sans-serif;
+      font-size: rem(18px);
+      font-weight: 600;
+      line-height: rem(36px);
+      text-align: center;
+    }
+  }
+
+  h3 {
+    font-size: rem(19px);
+    margin-bottom: rem(8px);
+  }
+
+  p {
+    color: $ph_muted;
+    font-size: rem(16px);
+    line-height: rem(26px);
+    margin: 0;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Learn
+// ---------------------------------------------------------------------------------------------
+.ph-path {
+  list-style: none;
+  counter-reset: ph-stage;
+  margin: rem(32px) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(24px);
+
+  @include full-nav-menu-desktop {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.ph-path-stage {
+  counter-increment: ph-stage;
+  position: relative;
+  padding: rem(24px) rem(28px) rem(28px);
+  background: $light_grey;
+  border-top: 3px solid $pytorch_orange;
+
+  &::before {
+    content: "Stage " counter(ph-stage);
+    display: block;
+    margin-bottom: rem(8px);
+    color: $orange;
+    font-size: rem(15px);
+    font-weight: 600;
+  }
+
+  h3 {
+    font-size: rem(21px);
+    line-height: 1.3;
+    margin-bottom: rem(10px);
+  }
+
+  > p {
+    color: $ph_muted;
+    font-size: rem(16px);
+    line-height: rem(26px);
+  }
+
+  ul {
+    margin: rem(16px) 0 0;
+    padding: rem(16px) 0 0;
+    border-top: 1px solid $ph_rule;
+    list-style: none;
+  }
+
+  li + li {
+    margin-top: rem(8px);
+  }
+
+  a {
+    color: $slate;
+    font-size: rem(16px);
+
+    &:hover,
+    &:focus-visible {
+      color: $orange;
+    }
+  }
+}
+
+.ph-samples {
+  display: grid;
+  gap: rem(32px);
+  margin-top: rem(32px);
+}
+
+.ph-sample {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(16px);
+
+  @include desktop {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: rem(40px);
+    align-items: start;
+  }
+
+  h3 {
+    font-size: rem(22px);
+    margin-bottom: rem(8px);
+  }
+
+  p {
+    color: $ph_muted;
+    font-size: rem(16px);
+    line-height: rem(26px);
+  }
+
+  .ph-code {
+    border-left: 3px solid $pytorch_orange;
+  }
+}
+
+// The install selector draws a rule with .title-block::before { position: absolute; left: 0 }. Upstream
+// relied on Bootstrap 4 columns being position: relative; Bootstrap 5 columns are not, so the rule
+// escaped to the left edge of the page as a stray vertical line.
+.quick-starts .title-block,
+.quick-start-module .title-block {
+  position: relative;
+}
+
+// Mobile menu: sub-links stay light even inside the active section (upstream colors every link in
+// the active item orange, which fails contrast on the dark menu), and the external icon is inverted.
+.mobile-main-menu .main-menu ul li.active .ph-mobile-submenu li a,
+.mobile-main-menu .main-menu .ph-mobile-submenu li a {
+  color: #d6d6d6;
+
+  &:hover,
+  &:focus-visible {
+    color: $orange_on_dark;
+  }
+}
+
+.mobile-main-menu .main-menu ul li.active > a {
+  color: $orange_on_dark;
+}
+
+.mobile-main-menu .ph-external-icon {
+  filter: invert(1);
+}
+
+// Contrast fixes (axe color-contrast): inline code in running text and highlighted code comments.
+.ph-section p code {
+  color: $slate;
+  background-color: rgba(38, 38, 38, 0.06);
+  padding: 0 rem(4px);
+}
+
+.highlight {
+  .c,
+  .c1,
+  .cm,
+  .cs,
+  .cp {
+    color: $ph_muted;
+  }
+}

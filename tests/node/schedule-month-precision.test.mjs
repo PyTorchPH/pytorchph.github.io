@@ -30,6 +30,6 @@ test("month-only schedules remain visible through the month and display no inven
     await page.getByRole("heading", { name:"Example exact-day session" }).waitFor();
     await page.clock.setFixedTime(new Date("2099-03-02T12:00:00Z"));
     await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-    await page.getByText("No upcoming events match this learning series.", { exact: true }).waitFor();
+    await page.getByText("No upcoming programs are published right now.", { exact: false }).waitFor();
   } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }
 });

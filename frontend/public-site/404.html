@@ -7,10 +7,18 @@ body-class: ph-404
 hero_kicker: "Naku!"
 hero_kicker_meaning: "Oh no!"
 hero_title: "Page not found"
-hero_lead: "The page you are looking for is not here."
+hero_lead: "The page you are looking for is not here. It may have moved when the site was reorganized."
 hero_actions:
   - label: "Back to the home page"
     url: "/"
 ---
 
-If you think something should be here, you can [open an issue]({{ site.external_urls.repo_www }}/issues) on GitHub.
+<p>Try one of these instead:</p>
+<ul>
+  <li><a href="{{ site.baseurl }}/#events">Upcoming programs</a></li>
+  <li><a href="{{ site.baseurl }}/learn/">Learn PyTorch</a> and <a href="{{ site.baseurl }}/get-started/locally/">install it</a></li>
+  <li><a href="{{ site.baseurl }}/campus-labs/">Campus Labs</a></li>
+  <li><a href="{{ site.baseurl }}/news/">News</a></li>
+  <li><a href="{{ site.baseurl }}/about/">About PyTorch Philippines</a></li>
+</ul>
+<p>If you followed a link on this site, please <a href="{{ site.external_urls.repo_www }}/issues">report the broken link on GitHub</a>.</p>

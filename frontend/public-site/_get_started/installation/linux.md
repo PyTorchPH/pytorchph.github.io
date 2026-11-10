@@ -8,24 +8,21 @@ PyTorch can be installed and used on various Linux distributions. Depending on y
 
 ### Supported Linux Distributions
 
-PyTorch is supported on Linux distributions that use [glibc](https://www.gnu.org/software/libc/) >= v2.17, which include the following:
+Prebuilt PyTorch 2.15 packages target Linux distributions that use [glibc](https://www.gnu.org/software/libc/) 2.28 or newer (the `manylinux_2_28` standard), on x86-64 and ARM64 (aarch64). Examples include:
 
-* [Arch Linux](https://www.archlinux.org/download/), minimum version 2012-07-15
-* [CentOS](https://www.centos.org/download/), minimum version 7.3-1611
-* [Debian](https://www.debian.org/distrib/), minimum version 8.0
-* [Fedora](https://getfedora.org/), minimum version 24
-* [Mint](https://linuxmint.com/download.php), minimum version 14
-* [OpenSUSE](https://software.opensuse.org/), minimum version 42.1
-* [PCLinuxOS](https://www.pclinuxos.com/), minimum version 2014.7
-* [Slackware](http://www.slackware.com/getslack/), minimum version 14.2
-* [Ubuntu](https://www.ubuntu.com/download/desktop), minimum version 13.04
+* [Ubuntu](https://ubuntu.com/download/desktop) 20.04 or newer
+* [Debian](https://www.debian.org/distrib/) 10 or newer
+* [Fedora](https://fedoraproject.org/) 29 or newer
+* Red Hat Enterprise Linux, Rocky Linux, or AlmaLinux 8 or newer
 
-> The install instructions here will generally apply to all supported Linux distributions. An example difference is that your distribution may support `yum` instead of `apt`. The specific examples shown were run on an Ubuntu 18.04 machine.
+Check your glibc version with `ldd --version`.
+
+> The install instructions here will generally apply to all supported Linux distributions. An example difference is that your distribution may support `yum` instead of `apt`. The examples use `apt` on Ubuntu.
 
 ### Python
 {: #linux-python}
 
-Python 3.9-3.12 is generally installed by default on any of our supported Linux distributions, which meets our recommendation.
+PyTorch 2.15 supports Python 3.11 to 3.15. Check your version with `python3 --version`. If your distribution ships an older Python, install a newer one with your package manager or a tool such as [uv](https://docs.astral.sh/uv/).
 
 > Tip: By default, you will have to use the command `python3` to run Python. If you want to use just the command `python`, instead of `python3`, you can symlink `python` to the `python3` binary.
 

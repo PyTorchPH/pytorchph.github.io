@@ -1,0 +1,34 @@
+{%- assign pytorch_news = site.data.pytorch_news | default: empty -%}
+<section class="ph-section" aria-labelledby="home-news-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="home-news-heading">News</h2>
+        <p>Updates from our community and the latest from the PyTorch project.</p>
+      </div>
+      <a href="{{ site.baseurl }}/news/" class="btn btn-lg with-right-arrow module-button">All news</a>
+    </div>
+
+    <div data-hide-when-empty hidden>
+      <h3 class="ph-subheading">Community news</h3>
+      <div class="ph-managed-grid" data-site-content="news"></div>
+    </div>
+    <div data-hide-when-empty hidden>
+      <h3 class="ph-subheading">Event recaps</h3>
+      <div class="ph-managed-grid" data-site-content="recaps"></div>
+    </div>
+
+    <h3 class="ph-subheading">From the PyTorch blog</h3>
+    <div class="ph-managed-grid" data-site-content="pytorch-news" data-limit="3">
+      {%- for item in pytorch_news limit: 3 %}
+      <article class="ph-card">
+        <p class="ph-card-meta"><time datetime="{{ item.date }}">{{ item.date | date: "%B %-d, %Y" }}</time>{% if item.categories.size > 0 %} · {{ item.categories | join: " · " }}{% endif %}</p>
+        <h3><a class="ph-card-link" href="{{ item.url }}">{{ item.title }}</a></h3>
+        <p>{{ item.excerpt }}</p>
+      </article>
+      {%- else %}
+      <p class="ph-empty">Read the latest PyTorch news on the <a href="https://pytorch.org/blog/">PyTorch blog</a>.</p>
+      {%- endfor %}
+    </div>
+  </div>
+</section>

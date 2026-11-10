@@ -1,17 +1,59 @@
-# Learning materials, sample code, and open-source projects for the Learn page.
+# Learn page content. Every link points at an official or project-maintained page; check that each
+# still resolves (and is not a deprecation notice) when you edit this file.
+
+# Three stages that match the series names of our learning programs.
+path:
+  - stage: PyTorch Fundamentals
+    summary: Tensors, autograd, datasets and data loaders, and building, training, and saving your first neural networks.
+    resources:
+      - title: Learn the Basics
+        url: https://docs.pytorch.org/tutorials/beginner/basics/intro.html
+      - title: Introduction to PyTorch (YouTube series)
+        url: https://docs.pytorch.org/tutorials/beginner/introyt.html
+      - title: Saving and loading models
+        url: https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html
+  - stage: PyTorch Techniques and Ecosystem Tools
+    summary: Transfer learning and computer vision with TorchVision, text models with Hugging Face, hyperparameter tuning, and faster training.
+    resources:
+      - title: Transfer learning for computer vision
+        url: https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+      - title: Hugging Face Transformers documentation
+        url: https://huggingface.co/docs/transformers/index
+      - title: Hyperparameter tuning with Ray Tune
+        url: https://docs.pytorch.org/tutorials/beginner/hyperparameter_tuning_tutorial.html
+      - title: Performance tuning guide
+        url: https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html
+  - stage: PyTorch Advanced Architectures and Deployment
+    summary: Custom architectures, compiling and exporting models, distributed training, and running models on servers and edge devices.
+    resources:
+      - title: Introduction to torch.compile
+        url: https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html
+      - title: torch.export tutorial
+        url: https://docs.pytorch.org/tutorials/intermediate/torch_export_tutorial.html
+      - title: Getting started with Distributed Data Parallel
+        url: https://docs.pytorch.org/tutorials/intermediate/ddp_tutorial.html
+      - title: ExecuTorch for edge devices
+        url: https://docs.pytorch.org/executorch/stable/index.html
+
+# A structured course whose three courses carry the same names as the stages above.
+course:
+  title: PyTorch for Deep Learning Professional Certificate
+  provider: DeepLearning.AI
+  url: https://www.deeplearning.ai/courses/pytorch-for-deep-learning-professional-certificate/
+
 materials:
   - title: Learn the Basics
     summary: The official step-by-step introduction to tensors, datasets, models, training, and saving.
     url: https://docs.pytorch.org/tutorials/beginner/basics/intro.html
-  - title: Introduction to PyTorch (video series)
-    summary: The official YouTube series that walks through PyTorch fundamentals with notebooks.
+  - title: Introduction to PyTorch (YouTube series)
+    summary: The official video series that walks through PyTorch fundamentals with notebooks.
     url: https://docs.pytorch.org/tutorials/beginner/introyt.html
   - title: PyTorch Tutorials
     summary: Official tutorials for vision, text, audio, reinforcement learning, and deployment.
     url: https://docs.pytorch.org/tutorials/
   - title: PyTorch Recipes
     summary: Short, focused examples for specific tasks such as saving models or profiling code.
-    url: https://docs.pytorch.org/tutorials/recipes/recipes_index.html
+    url: https://docs.pytorch.org/tutorials/recipes_index.html
   - title: PyTorch Documentation
     summary: The complete API reference for torch and its domain libraries.
     url: https://docs.pytorch.org/docs/stable/index.html
@@ -37,4 +79,7 @@ projects:
     url: https://github.com/huggingface/pytorch-image-models
   - title: Captum
     summary: Model interpretability and understanding for PyTorch.
-    url: https://github.com/pytorch/captum
+    url: https://github.com/meta-pytorch/captum
+  - title: ExecuTorch
+    summary: Run PyTorch models on mobile, embedded, and edge devices.
+    url: https://github.com/pytorch/executorch

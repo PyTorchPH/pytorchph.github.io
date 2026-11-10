@@ -1,12 +1,104 @@
 ---
 layout: ph
-title: PyTorch Philippines Campus Labs
+title: Campus Labs
 permalink: /campus-labs/
 body-class: ph-campus-labs
-hero_title: "PyTorch Philippines Campus Labs"
-hero_lead: "University-based communities across Luzon, Visayas, and Mindanao: connect, learn, collaborate, and build with PyTorch."
+hero_kicker: "Tara, sali na!"
+hero_kicker_meaning: "Come on, join us!"
+hero_title: "Campus Labs"
+hero_lead: "University chapters of PyTorch Philippines, where students and faculty learn PyTorch together, build practical projects, and connect with the nationwide community."
+hero_actions:
+  - label: "Start a Campus Lab"
+    url: "/campus-labs/#start"
 ---
-<section class="ph-section"><div class="container"><h2>University communities, nationwide collaboration</h2><p>Campus Labs brings students, educators and researchers together for peer learning, open-source collaboration and practical PyTorch projects. Chapters connect local university initiatives with the wider Philippine community.</p><p>Published chapter information is maintained by community officers.</p></div></section>
-{% assign island_groups = "Luzon,Visayas,Mindanao" | split: "," %}
-<section class="ph-section"><div class="container"><h2>Campus Labs leadership</h2><div class="ph-managed-grid" data-site-content="campus-leads"><p class="ph-empty">No Campus Labs lead currently listed.</p></div></div></section>
-{% for island in island_groups %}<section class="ph-section{% cycle '', ' ph-section-grey' %}" aria-labelledby="campus-{{ island | downcase }}"><div class="container"><img class="ph-island-image" src="{{ site.baseurl }}/assets/images/campus-{{ island | downcase }}.svg" alt="{{ island }} Campus Labs illustration" width="960" height="320"><h2 id="campus-{{ island | downcase }}">{{ island }}</h2><div class="ph-managed-grid" data-site-content="chapters-{{ island }}"><p class="ph-empty">Loading published chapters…</p></div></div></section>{% endfor %}
+{%- assign contacts = site.data.public_contacts -%}
+{%- assign island_groups = "Luzon,Visayas,Mindanao" | split: "," -%}
+
+<section class="ph-section" aria-labelledby="campus-what-heading">
+  <div class="container">
+    <h2 id="campus-what-heading">What a Campus Lab does</h2>
+    <p class="ph-lede">A Campus Lab is a university-based group that brings classmates, educators, and researchers together around PyTorch, and links them to the rest of PyTorch Philippines.</p>
+    <div class="ph-about-grid">
+      <article class="ph-about-item">
+        <h3>Study together</h3>
+        <p>Work through the <a href="{{ site.baseurl }}/learn/#path">learning path</a> as a group, from tensors and training loops to ecosystem tools and deployment.</p>
+      </article>
+      <article class="ph-about-item">
+        <h3>Build hands-on</h3>
+        <p>Run workshops where members train real models, and turn class ideas into projects that work.</p>
+      </article>
+      <article class="ph-about-item">
+        <h3>Share in the open</h3>
+        <p>Publish code, notebooks, and write-ups so other students can learn from them and build on them.</p>
+      </article>
+      <article class="ph-about-item">
+        <h3>Connect nationwide</h3>
+        <p>Join community programs and meet PyTorch users from other universities across Luzon, Visayas, and Mindanao.</p>
+      </article>
+      <article class="ph-about-item">
+        <h3>Grow your track record</h3>
+        <p>Members can record their participation and build a résumé in the <a href="{{ site.baseurl }}/portal/">member portal</a>.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="ph-section ph-section-grey" id="chapters" aria-labelledby="chapters-heading">
+  <div class="container">
+    <div class="ph-campus-map-grid">
+      <div>
+        <h2 id="chapters-heading">Chapters</h2>
+        <p class="ph-lede">Published Campus Labs chapters, by island group.</p>
+
+        <div class="ph-callout" data-show-when-all-empty="chapters-Luzon chapters-Visayas chapters-Mindanao">
+          <p>No Campus Labs chapters are published yet.</p>
+          <p>Be the first at your university: see <a href="#start">how to start a Campus Lab</a> below.</p>
+        </div>
+
+        {%- for island in island_groups %}
+        <div class="ph-island" data-hide-when-empty hidden>
+          <h3 id="campus-{{ island | downcase }}">{{ island }}</h3>
+          <div class="ph-managed-grid" data-site-content="chapters-{{ island }}"></div>
+        </div>
+        {%- endfor %}
+
+        <div class="ph-island" data-hide-when-empty hidden>
+          <h3>Campus Labs leadership</h3>
+          <div class="ph-managed-grid" data-site-content="campus-leads"></div>
+        </div>
+      </div>
+      <div class="ph-archipelago-light">
+        {% include ph/archipelago.html counts=true %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ph-section" id="start" aria-labelledby="start-heading">
+  <div class="container">
+    <h2 id="start-heading">Start a Campus Lab</h2>
+    <p class="ph-lede">Any university in the Philippines can have a Campus Lab. You need a few people who want to learn PyTorch together.</p>
+    <ol class="ph-steps">
+      <li>
+        <h3>Create a member account</h3>
+        <p><a href="{{ site.baseurl }}/portal/register/">Register in the member portal</a>. Ask your co-organizers to register too.</p>
+      </li>
+      <li>
+        <h3>Form an organizing team</h3>
+        <p>Gather a few students who will run sessions with you, and a faculty adviser if your university requires one for student groups.</p>
+      </li>
+      <li>
+        <h3>Tell us about your plans</h3>
+        {%- if contacts.email %}
+        <p>Email <a href="mailto:{{ contacts.email | escape }}?subject=Campus%20Lab%20proposal">{{ contacts.email | escape }}</a> with your university, your organizing team, and the sessions you want to run.</p>
+        {%- else %}
+        <p>Contact the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a> with your university, your organizing team, and the sessions you want to run.</p>
+        {%- endif %}
+      </li>
+      <li>
+        <h3>Run your first session</h3>
+        <p>Start with the first stage of the <a href="{{ site.baseurl }}/learn/#path">learning path</a> and the <a href="{{ site.baseurl }}/learn/#sample-code">sample code</a>. Everyone follows the <a href="{{ site.baseurl }}/code-of-conduct/">Code of Conduct</a>.</p>
+      </li>
+    </ol>
+  </div>
+</section>

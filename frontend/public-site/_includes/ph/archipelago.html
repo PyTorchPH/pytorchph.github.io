@@ -1,0 +1,12 @@
+{%- comment -%}
+  The archipelago network (assets/images/ph-network.svg) with the three island groups labeled at the
+  hubs the generator marks: Manila (Luzon), Cebu (Visayas), Davao (Mindanao). Positions are the hub
+  coordinates as percentages of the 600 × 977 viewBox. With include.counts, each label also shows
+  the number of published Campus Labs chapters for that island group (filled in by site-content.js).
+{%- endcomment -%}
+<figure class="ph-archipelago" aria-hidden="true">
+  <img src="{{ site.baseurl }}/assets/images/ph-network.svg" alt="" width="600" height="977" loading="lazy">
+  <span class="ph-archipelago-label" style="--x: 42.3%; --y: 40%;">Luzon{% if include.counts %} <span class="ph-archipelago-count" data-chapter-count="Luzon"></span>{% endif %}</span>
+  <span class="ph-archipelago-label" style="--x: 70.2%; --y: 65.8%;">Visayas{% if include.counts %} <span class="ph-archipelago-count" data-chapter-count="Visayas"></span>{% endif %}</span>
+  <span class="ph-archipelago-label" style="--x: 86.6%; --y: 85.4%;">Mindanao{% if include.counts %} <span class="ph-archipelago-count" data-chapter-count="Mindanao"></span>{% endif %}</span>
+</figure>

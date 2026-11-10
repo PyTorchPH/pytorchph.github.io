@@ -1,58 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ site.lang }}">
   {% include head.html %}
-  <body class="{{ page.body-class }}">
+  <body class="ph-page {{ page.body-class }}">
     {% include header.html %}
     <main id="main-content" tabindex="-1">
 
-    <div class="main-background {{ page.background-class }}"></div>
-
-    {% assign items = site.get_started | where: "published",true | sort: "order"
-    %}
-
-    <div class="jumbotron jumbotron-fluid on-dark-background">
-      <div class="container">
-        <h1>Get Started</h1>
-
-        <p class="lead">
-          Select preferences and run the command to install PyTorch locally, or
-          get started quickly with one of the supported cloud platforms.
-        </p>
-      </div>
-    </div>
+    {%- assign items = site.get_started | where: "published", true | sort: "order" %}
+    {% include ph/hero.html title="Get started" lead="Choose your preferences and run the command to install PyTorch locally, or start right away on a supported cloud platform." %}
 
     <div class="main-content-wrapper">
       <div class="main-content">
         <div class="container-fluid nav-menu-wrapper">
           <div class="container">
-            <nav class="navbar navbar-expand-lg navbar-light main-content-menu">
+            <nav class="navbar navbar-expand-lg navbar-light main-content-menu" aria-label="Get started">
               <ul class="navbar-nav">
-                {% for item in items %}
+                {%- for item in items %}
                 <li class="nav-item nav-select">
-                  <a
-                    class="nav-link get-started-nav-link"
-                    data-id="{{ item.slug }}"
-                    href="{{ site.baseurl }}{{ item.permalink }}"
-                    >{{ item.title }}</a
-                  >
+                  <a class="nav-link get-started-nav-link" data-id="{{ item.slug }}" href="{{ site.baseurl }}{{ item.permalink }}"{% if item.url == page.url %} aria-current="page"{% endif %}>{{ item.title }}</a>
                 </li>
-                {% endfor %}
+                {%- endfor %}
               </ul>
             </nav>
           </div>
         </div>
 
         <div class="container">
-          {% if page.get-started-locally == true %} {% include
-          get_started_locally.html %} {% elsif page.order == 2 %} {% include
-          pytorch.html %} {% elsif page.get-started-via-cloud == true %} {%
-          include get_started_via_cloud.html %} {% else %}
-
-          <div class="article-wrapper" data-id="{{ item.slug }}">
+          {%- if page.get-started-locally == true %}
+            {% include get_started_locally.html %}
+          {%- elsif page.get-started-via-cloud == true %}
+            {% include get_started_via_cloud.html %}
+          {%- else %}
+          <div class="article-wrapper" data-id="{{ page.slug }}">
             <article class="pytorch-article">{{ content }}</article>
           </div>
-
-          {% endif %}
+          {%- endif %}
         </div>
       </div>
     </div>

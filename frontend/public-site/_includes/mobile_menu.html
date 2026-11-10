@@ -1,52 +1,37 @@
-<div class="mobile-main-menu">
+{%- assign section_key = current[1] -%}
+{%- if page.url == "/" or section_key == "code-of-conduct" -%}{%- assign section_key = "community" -%}{%- endif -%}
+{%- if section_key == "get-started" -%}{%- assign section_key = "learn" -%}{%- endif -%}
+{%- if section_key == "blog" -%}{%- assign section_key = "news" -%}{%- endif -%}
+<div class="mobile-main-menu" id="ph-mobile-menu" role="dialog" aria-modal="true" aria-label="Menu">
   <div class="container-fluid">
     <div class="container">
       <div class="mobile-main-menu-header-container">
-        <a class="header-logo" href="{{ site.url }}{{ site.baseurl }}" aria-label="PyTorch"></a>
-        <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        <a class="header-logo" href="{{ site.baseurl }}/" aria-label="PyTorch Philippines home"></a>
+        <button type="button" class="main-menu-close-button" data-behavior="close-mobile-menu" aria-label="Close menu"></button>
       </div>
     </div>
   </div>
 
   <div class="mobile-main-menu-links-container">
-
     <nav class="main-menu" aria-label="Main">
       <ul>
-        {% for item in site.data.navigation.main_menu %}
-          <li class="main-menu-item {% if item.key and (current[1] == item.key or (item.key == 'news' and page.url contains '/blog')) %}active{% endif %}{% if item.has_dropdown %} {{ item.key }}-mobile-dropdown{% endif %}">
-            {% if item.has_dropdown %}
-              <a href="{% if item.url %}{{ site.baseurl }}{{ item.url }}{% else %}#{% endif %}" class="{{ item.key }}-mobile-toggle">{{ item.title }}</a>
-              <ul class="{{ item.key }}-mobile-menu ph-mobile-submenu">
-                {% for dropdown_item in item.dropdown_items %}
-                  {% if dropdown_item.url_type == "baseurl" %}
-                    {% assign final_url = site.baseurl | append: dropdown_item.url %}
-                  {% else %}
-                    {% assign final_url = dropdown_item.url %}
-                  {% endif %}
-                  <li>
-                    <a href="{{ final_url }}"{% if dropdown_item.target %} target="{{ dropdown_item.target }}"{% endif %}>
-                      {{ dropdown_item.title }}
-                      {% if dropdown_item.external %}
-                        <i class="fa fa-external-link" style="margin-left: 6px; font-size: 10px;"></i>
-                      {% endif %}
-                    </a>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              {% if item.url_type == "baseurl" %}
-                {% assign final_url = site.baseurl | append: item.url %}
-              {% elsif item.url_type == "external_urls" %}
-                {% assign final_url = site.external_urls[item.url_key] %}
-              {% else %}
-                {% assign final_url = item.url %}
-              {% endif %}
-              <a href="{{ final_url }}"{% if item.target %} target="{{ item.target }}"{% endif %}>{{ item.title }}</a>
-            {% endif %}
+        {%- for item in site.data.navigation.main_menu %}
+          {%- if item.url contains '://' %}{% assign item_url = item.url %}{% else %}{% assign item_url = site.baseurl | append: item.url %}{% endif %}
+          <li class="main-menu-item{% if section_key == item.key %} active{% endif %}">
+            <a href="{{ item_url }}">{{ item.title }}</a>
+            {%- if item.has_dropdown %}
+            <ul class="ph-mobile-submenu">
+              {%- for dropdown_item in item.dropdown_items %}
+                {%- if dropdown_item.url_type == "baseurl" %}{% assign final_url = site.baseurl | append: dropdown_item.url %}{% else %}{% assign final_url = dropdown_item.url %}{% endif %}
+                {%- unless dropdown_item.url == item.url %}
+                <li><a href="{{ final_url }}">{{ dropdown_item.title }}{% if dropdown_item.external %}<span class="ph-external-icon" aria-hidden="true"></span><span class="ph-visually-hidden"> (external site)</span>{% endif %}</a></li>
+                {%- endunless %}
+              {%- endfor %}
+            </ul>
+            {%- endif %}
           </li>
-        {% endfor %}
+        {%- endfor %}
       </ul>
     </nav>
-
   </div>
 </div>

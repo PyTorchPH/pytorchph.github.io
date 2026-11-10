@@ -8,17 +8,14 @@ PyTorch can be installed and used on various Windows distributions. Depending on
 
 ### Supported Windows Distributions
 
-PyTorch is supported on the following Windows distributions:
-
-* [Windows](https://www.microsoft.com/en-us/windows) 7 and greater; [Windows 10](https://www.microsoft.com/en-us/software-download/windows10ISO) or greater recommended.
-* [Windows Server 2008](https://docs.microsoft.com/en-us/windows-server/windows-server) r2 and greater
+Prebuilt PyTorch 2.15 packages are built for 64-bit (x86-64) Windows. Use [Windows](https://www.microsoft.com/en-us/windows) 10 or newer.
 
 > The install instructions here will generally apply to all supported Windows distributions. The specific examples shown will be run on a Windows 10 Enterprise machine
 
 ### Python
 {: #windows-python}
 
-Currently, PyTorch on Windows only supports Python 3.9-3.12; Python 2.x is not supported.
+PyTorch 2.15 on Windows supports 64-bit Python 3.11 to 3.15.
 
 As it is not installed by default on Windows, there are multiple ways to install Python:
 

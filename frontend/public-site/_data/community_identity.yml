@@ -4,14 +4,29 @@ description: >-
   students, industry and government professionals, startups, and developers
   across Luzon, Visayas, and Mindanao to learn, collaborate, innovate, and build
   with PyTorch.
+# The About page narrative. Keep statements verifiable: no statistics without a cited source.
 about:
-  - heading: Open Source Powers AI Innovation
-    text: ""
-  - heading: The Opportunity for the Philippines
-    text: ""
-  - heading: Why PyTorch Philippines?
-    text: ""
-  - heading: What Success Looks Like?
-    text: ""
-  - heading: Everyone Has a Role
-    text: ""
+  - heading: Open source powers AI innovation
+    text: >-
+      PyTorch is an open-source deep learning framework hosted by the PyTorch Foundation, part of the
+      Linux Foundation. Its code, documentation, and tutorials are open to everyone, so a student in
+      Davao can learn from and build on the same tools that research labs and companies use.
+  - heading: The opportunity for the Philippines
+    text: >-
+      Filipino students, researchers, and engineers can use these open tools to work on problems that
+      matter here, in our languages, industries, and communities, and take part in the global PyTorch
+      ecosystem as contributors, not only as users.
+  - heading: Why a nationwide community
+    text: >-
+      Learning alone is hard. A community that spans Luzon, Visayas, and Mindanao puts study
+      programs, mentors, and collaborators within reach wherever you are, online and in person.
+  - heading: What success looks like
+    text: >-
+      Members who move from their first tensor to models they can explain, deploy, and share.
+      Campus Labs active in all three island groups. More Filipino contributions to PyTorch and its
+      ecosystem.
+  - heading: Everyone has a role
+    text: >-
+      Students, educators, researchers, engineers, startups, and government professionals all have
+      something to teach and something to learn. Attend a session, mentor, give a talk, start a
+      Campus Lab, or contribute code and learning materials.
