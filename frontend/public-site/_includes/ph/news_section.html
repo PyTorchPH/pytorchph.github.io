@@ -63,9 +63,9 @@
     <div class="ph-managed-grid" data-site-content="pytorch-news">
       {%- for item in pytorch_news limit: 6 %}
       <article class="ph-card">
-        <p class="ph-card-meta"><time datetime="{{ item.date }}">{{ item.date | date: "%B %-d, %Y" }}</time>{% if item.categories.size > 0 %} · {{ item.categories | join: " · " }}{% endif %}</p>
-        <h3><a class="ph-card-link" href="{{ item.url }}">{{ item.title }}</a></h3>
-        <p>{{ item.excerpt }}</p>
+        <p class="ph-card-meta"><time datetime="{{ item.date | escape }}">{{ item.date | date: "%B %-d, %Y" }}</time>{% if item.categories.size > 0 %} · {{ item.categories | join: " · " | escape }}{% endif %}</p>
+        <h3><a class="ph-card-link" href="{{ item.url | escape }}">{{ item.title | escape }}</a></h3>
+        <p>{{ item.excerpt | escape }}</p>
       </article>
       {%- else %}
       <p class="ph-empty">Read the latest PyTorch news on the <a href="https://pytorch.org/blog/">PyTorch blog</a>.</p>

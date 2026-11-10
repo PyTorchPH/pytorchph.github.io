@@ -25,7 +25,24 @@ var mobileMenu = {
     });
 
     $(document).on("keydown", function(e) {
-      if (e.key === "Escape" && $menu.hasClass("open")) mobileMenu.close();
+      if (!$menu.hasClass("open")) return;
+      if (e.key === "Escape") {
+        mobileMenu.close();
+        return;
+      }
+      // The open menu is a modal dialog: keep Tab and Shift+Tab inside it.
+      if (e.key === "Tab") {
+        var $focusable = $menu.find("a[href], button").filter(":visible");
+        var first = $focusable.get(0);
+        var last = $focusable.get($focusable.length - 1);
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     });
   },
 

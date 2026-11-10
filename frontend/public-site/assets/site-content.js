@@ -149,8 +149,9 @@
 
   // The pytorch.org feed appends "The post … appeared first on PyTorch." to every excerpt.
   function cleanExcerpt(value) { return String(value ?? "").replace(/\s*The post [\s\S]*? appeared first on PyTorch\.?\s*$/, "").trim(); }
+  // An empty or missing feed keeps the copy built into the page from _data/pytorch_news.json.
   function renderOfficialNews(rows) {
-    if (!Array.isArray(rows)) return;
+    if (!Array.isArray(rows) || !rows.length) return;
     const nodes = rows.map(row => {
       const node = element("article", null, "ph-card");
       const meta = [displayDate(row.publishedAt), ...(Array.isArray(row.categories) ? row.categories : [])].filter(Boolean).join(" · ");
@@ -165,7 +166,6 @@
     targets("pytorch-news").forEach(target => {
       const limit = Number(target.dataset.limit) || nodes.length;
       target.replaceChildren(...nodes.slice(0, limit).map(node => node.cloneNode(true)));
-      if (!nodes.length) target.append(element("p", "Latest PyTorch news is temporarily unavailable. Visit pytorch.org/blog for the source feed.", "ph-empty"));
     });
   }
 
