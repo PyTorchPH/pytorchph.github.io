@@ -79,6 +79,26 @@
   function seriesButtons() { return [...document.querySelectorAll("[data-event-series]")]; }
   function selectedEventSeries() { return document.querySelector("[data-event-series][aria-pressed='true']")?.dataset.eventSeries ?? ""; }
   function selectSeries(series) { seriesButtons().forEach(button => button.setAttribute("aria-pressed", String(button.dataset.eventSeries === series))); }
+  function seriesLabel(series) { return series.replace(/^PyTorch\s+/, ""); }
+
+  // One button per published series that still has upcoming sessions, in order of the next session.
+  // Buttons are rebuilt only when that list changes, so a focused button survives a refresh.
+  function syncSeriesButtons(activeSeries) {
+    const key = JSON.stringify([...activeSeries]);
+    const selected = selectedEventSeries();
+    document.querySelectorAll("[data-event-filters]").forEach(group => {
+      if (group.dataset.series === key) return;
+      group.dataset.series = key;
+      group.querySelectorAll("[data-event-series]").forEach(button => { if (button.dataset.eventSeries) button.remove(); });
+      for (const series of activeSeries) {
+        const button = element("button", seriesLabel(series));
+        button.type = "button";
+        button.dataset.eventSeries = series;
+        button.setAttribute("aria-pressed", String(series === selected));
+        group.append(button);
+      }
+    });
+  }
 
   function renderEvents(rows) {
     latestEvents = Array.isArray(rows) ? rows : [];
@@ -87,7 +107,7 @@
     // Offer a series filter only for series that still have upcoming sessions.
     const activeSeries = new Set(upcoming.map(row => row.series).filter(Boolean));
     const showFilters = activeSeries.size >= 2;
-    seriesButtons().forEach(button => { if (button.dataset.eventSeries) button.hidden = !activeSeries.has(button.dataset.eventSeries); });
+    syncSeriesButtons(activeSeries);
     document.querySelectorAll("[data-event-filters]").forEach(group => { group.hidden = !showFilters; });
     // A hidden or emptied filter must never keep excluding published events.
     if (!showFilters || (selectedEventSeries() && !activeSeries.has(selectedEventSeries()))) selectSeries("");
@@ -113,7 +133,12 @@
   }
 
   function setupEventFilters() {
-    seriesButtons().forEach(button => button.addEventListener("click", () => { selectSeries(button.dataset.eventSeries); renderEvents(latestEvents); }));
+    document.querySelectorAll("[data-event-filters]").forEach(group => group.addEventListener("click", event => {
+      const button = event.target.closest("[data-event-series]");
+      if (!button) return;
+      selectSeries(button.dataset.eventSeries);
+      renderEvents(latestEvents);
+    }));
   }
 
   function renderChapters(rows) {

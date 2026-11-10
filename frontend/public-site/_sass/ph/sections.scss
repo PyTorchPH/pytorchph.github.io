@@ -778,3 +778,9 @@ button.main-menu-close-button {
 section[tabindex="-1"]:focus {
   outline: none;
 }
+
+// Compatibility anchors for links to sections that were merged.
+.ph-anchor {
+  display: block;
+  scroll-margin-top: rem(110px);
+}

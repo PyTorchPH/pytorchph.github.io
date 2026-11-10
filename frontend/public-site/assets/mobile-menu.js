@@ -59,7 +59,10 @@ var mobileMenu = {
   listenForResize: function() {
     $(window).on("resize.ForMobileMenu", function() {
       if ($(this).width() >= 1100) {
+        // The desktop menu takes over; move focus out of the hidden dialog to the visible logo link.
+        var focusInMenu = $.contains($(".mobile-main-menu")[0], document.activeElement);
         mobileMenu.close(false);
+        if (focusInMenu) $(".header-container .header-logo").trigger("focus");
       }
     });
   },

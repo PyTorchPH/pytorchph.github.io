@@ -9,8 +9,6 @@ import { chromium } from "playwright";
 const FILTER_MARKUP = `
   <div role="group" data-event-filters hidden>
     <button type="button" aria-pressed="true" data-event-series="">All programs</button>
-    <button type="button" aria-pressed="false" data-event-series="Series A">A</button>
-    <button type="button" aria-pressed="false" data-event-series="Series B">B</button>
   </div>
   <div data-site-content="events"></div>
   <div class="past" data-hide-when-empty hidden><ul data-site-content="events-past"></ul></div>`;
@@ -51,7 +49,9 @@ test("a selected series is cleared when the filter hides, so no published event 
   ] };
   const { page, errors } = await rendererPage(t, state);
   assert.equal(await page.locator("[data-event-filters]").isVisible(), true);
-  await page.getByRole("button", { name: "A", exact: true }).click();
+  // Buttons come from the published series (the "PyTorch " prefix is dropped), ordered by next session.
+  assert.deepEqual(await page.locator("[data-event-filters] button").allTextContents(), ["All programs", "Series A", "Series B"]);
+  await page.getByRole("button", { name: "Series A", exact: true }).click();
   assert.deepEqual(await titles(page), ["Series A session"]);
 
   // Series B is withdrawn: one series remains, so the filter hides and must stop filtering.
@@ -83,5 +83,25 @@ test("past sessions list recent exact dates and timestamps, never months or old 
   state.revision = 2;
   await refresh(page, 2);
   assert.equal(await page.locator(".past").isVisible(), false);
+  assert.deepEqual(errors, []);
+});
+
+test("officers can publish any series name and visitors can filter by it", async t => {
+  const state = { revision: 1, events: [
+    { id: "fund", title: "Fundamentals session", series: "PyTorch Fundamentals", startsAt: "2099-07-01", dateStatus: "confirmed" },
+    { id: "custom", title: "Reading group session", series: "Paper Reading Circle", startsAt: "2099-07-02", dateStatus: "confirmed" },
+  ] };
+  const { page, errors } = await rendererPage(t, state);
+  assert.deepEqual(await page.locator("[data-event-filters] button").allTextContents(), ["All programs", "Fundamentals", "Paper Reading Circle"]);
+  await page.getByRole("button", { name: "Paper Reading Circle", exact: true }).click();
+  assert.deepEqual(await titles(page), ["Reading group session"]);
+  assert.equal(await page.getByRole("button", { name: "Paper Reading Circle", exact: true }).getAttribute("aria-pressed"), "true");
+
+  // An unchanged refresh keeps the selection and the focused button.
+  await page.getByRole("button", { name: "Paper Reading Circle", exact: true }).focus();
+  state.revision = 2;
+  await refresh(page, 2);
+  assert.deepEqual(await titles(page), ["Reading group session"]);
+  assert.equal(await page.evaluate(() => document.activeElement?.textContent), "Paper Reading Circle");
   assert.deepEqual(errors, []);
 });

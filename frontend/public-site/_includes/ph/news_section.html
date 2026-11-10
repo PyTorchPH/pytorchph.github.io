@@ -11,6 +11,8 @@
 {%- assign contacts = site.data.public_contacts -%}
 <section class="ph-section" id="community-updates" aria-labelledby="community-updates-heading">
   <div class="container">
+    {%- comment -%} Earlier versions of this page had these anchors; keep them as landing points. {%- endcomment %}
+    <span id="community-news" class="ph-anchor"></span><span id="published-community-news" class="ph-anchor"></span><span id="past-events-recap" class="ph-anchor"></span><span id="blog" class="ph-anchor"></span>{% if community_posts.size == 0 and research_posts.size == 0 %}<span id="research" class="ph-anchor"></span>{% endif %}
     <h2 id="community-updates-heading">Community updates</h2>
 
     <div data-hide-when-empty hidden>

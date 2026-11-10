@@ -1,6 +1,6 @@
 {%- comment -%}
   Upcoming events and learning programs, published by officers and loaded by site-content.js.
-  The series filter only lists series with upcoming sessions; past sessions appear below when
+  site-content.js adds one filter button per series with upcoming sessions; past sessions appear below when
   there are any.
 {%- endcomment -%}
 <section class="ph-section ph-section-grey" id="events" aria-labelledby="events-heading">
@@ -13,9 +13,6 @@
     </div>
     <div class="ph-filter" role="group" aria-label="Filter by learning series" data-event-filters hidden>
       <button type="button" aria-pressed="true" data-event-series="">All programs</button>
-      <button type="button" aria-pressed="false" data-event-series="PyTorch Fundamentals">Fundamentals</button>
-      <button type="button" aria-pressed="false" data-event-series="PyTorch Techniques and Ecosystem Tools">Techniques &amp; ecosystem tools</button>
-      <button type="button" aria-pressed="false" data-event-series="PyTorch Advanced Architectures and Deployment">Advanced architectures &amp; deployment</button>
     </div>
     <div class="ph-managed-grid ph-event-grid" data-site-content="events" aria-live="polite"><p class="ph-empty">Loading published programs…</p></div>
     <noscript><p>JavaScript is needed to load the latest published programs. Follow our community pages for announcements.</p></noscript>
