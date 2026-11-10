@@ -19,22 +19,25 @@ function read(page) {
   return readFileSync(file, "utf8");
 }
 
-// Every card, parsed one at a time: any <article> whose class list contains "ph-lead", whatever
-// the attribute or class order, so no card can be skipped because its markup changed.
-const classList = attributes => (/\bclass="([^"]*)"/.exec(attributes)?.[1] ?? "").split(/\s+/).filter(Boolean);
+// Every card, parsed one at a time: any <article> whose class attribute (a real attribute, not
+// data-class) contains the token "ph-lead", whatever the attribute or class order. Each card is
+// read only up to its own </article>, and every badge on the page must sit inside a recognized
+// card or the "start the first one" invite link.
+const classList = attributes => (/(?:^|\s)class="([^"]*)"/.exec(attributes)?.[1] ?? "").split(/\s+/).filter(Boolean);
+const BADGE = /<span\b[^>]*\sclass="[^"]*\bph-lead-badge\b[^"]*"[^>]*>([^<]*)<\/span>/g;
 function cards(html, page) {
-  const articles = [...html.matchAll(/<article\b([^>]*)>/g)];
-  const starts = articles.filter(article => classList(article[1]).includes("ph-lead"));
-  // Every badge on the page belongs to a card that was found.
-  assert.equal((html.match(/class="[^"]*\bph-lead-badge\b/g) ?? []).length, starts.length + (html.match(/ph-lead-invite/g) ?? []).length, `${page}: a badge outside a recognized card`);
-  return starts.map((start, index) => {
-    const next = articles.find(article => article.index > start.index);
-    const body = html.slice(start.index, next ? next.index : html.length);
-    const badge = /<span\b[^>]*\bclass="[^"]*\bph-lead-badge\b[^"]*"[^>]*>([^<]*)<\/span>/.exec(body);
-    const name = /<h4\b[^>]*\bclass="[^"]*\bph-lead-name\b[^"]*"[^>]*>([^<]*)<\/h4>/.exec(body);
-    assert.ok(badge, `${page}: card ${index + 1} has no badge`);
+  const found = [...html.matchAll(/<article\b([^>]*)>([\s\S]*?)<\/article>/g)]
+    .filter(article => classList(article[1]).includes("ph-lead"));
+  const invites = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].filter(link => classList(link[1]).includes("ph-lead-invite"));
+  const badgesInside = [...found, ...invites].reduce((total, element) => total + [...element[2].matchAll(BADGE)].length, 0);
+  assert.equal([...html.matchAll(BADGE)].length, badgesInside, `${page}: a badge outside a recognized card`);
+  return found.map((article, index) => {
+    const body = article[2];
+    const badges = [...body.matchAll(BADGE)];
+    const name = /<h4\b[^>]*\sclass="[^"]*\bph-lead-name\b[^"]*"[^>]*>([^<]*)<\/h4>/.exec(body);
+    assert.equal(badges.length, 1, `${page}: card ${index + 1} must have exactly one badge`);
     assert.ok(name, `${page}: card ${index + 1} has no name`);
-    return { classes: classList(start[1]).join(" "), attributes: start[1], badge: badge[1], name: name[1], body };
+    return { classes: classList(article[1]).join(" "), attributes: article[1], badge: badges[0][1], name: name[1], body };
   });
 }
 
