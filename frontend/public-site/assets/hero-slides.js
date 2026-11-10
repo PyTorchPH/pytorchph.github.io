@@ -54,7 +54,11 @@
     image.src = url;
   });
   // The pinned first photo counts as shown once it has loaded (the same request as the page's).
-  load(slides[0].dataset[variant()]).then(ok => { if (ok) hasImage.add(slides[0]); });
+  load(slides[0].dataset[variant()]).then(ok => {
+    if (!ok) return;
+    hasImage.add(slides[0]);
+    if (ready && !rotation.includes(slides[0])) rotation = slides.filter(slide => hasImage.has(slide)); // a preparation finished first
+  });
   // Loads every photo at the size the screen uses, then sets each loaded one as its slide's
   // background. Until then the slides keep the photos they show, so crossing the breakpoint never
   // blanks the photo on screen (the stylesheet only places the first photo before this runs).
