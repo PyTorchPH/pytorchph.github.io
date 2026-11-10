@@ -53,11 +53,20 @@
     image.onerror = () => resolve(false);
     image.src = url;
   });
+  // The rotation is every photo that has loaded at some size: one that failed at the current size
+  // stays if it still shows another size, and one that never loaded (the first included) is left out.
+  // Both a finished preparation and a late first photo come through here.
+  const refresh = () => {
+    rotation = slides.filter(slide => hasImage.has(slide));
+    if (rotation.length && !rotation.includes(active())) show(rotation[0]);
+    root.classList.toggle("is-playing", rotation.length > 1);
+    schedule();
+  };
   // The pinned first photo counts as shown once it has loaded (the same request as the page's).
   load(slides[0].dataset[variant()]).then(ok => {
     if (!ok) return;
     hasImage.add(slides[0]);
-    if (ready && !rotation.includes(slides[0])) rotation = slides.filter(slide => hasImage.has(slide)); // a preparation finished first
+    if (ready) refresh(); // a preparation finished first
   });
   // Loads every photo at the size the screen uses, then sets each loaded one as its slide's
   // background. Until then the slides keep the photos they show, so crossing the breakpoint never
@@ -71,13 +80,8 @@
     const loaded = await usable[key];
     if (run !== generation) return; // a later preparation takes over
     slides.forEach((slide, index) => { if (loaded[index]) place(slide, key); });
-    // A photo that failed at this size stays if it still shows another size; one that never
-    // loaded (the first photo included) is left out.
-    rotation = slides.filter(slide => hasImage.has(slide));
-    if (rotation.length && !rotation.includes(active())) show(rotation[0]);
-    root.classList.toggle("is-playing", rotation.length > 1);
     ready = true;
-    schedule();
+    refresh();
   };
 
   function start() {
