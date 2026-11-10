@@ -8,11 +8,13 @@
 {%- endcomment -%}
 {%- assign campus_source = include.items | default: site.data.campus_labs.chapters -%}
 {%- assign name_suffixes = "jr,sr,ii,iii,iv" | split: "," -%}
+{%- assign campus_title = site.data.campus_labs.title | default: "Campus Labs Lead" -%}
 {%- assign campus_items = campus_source | where: "island", include.island | sort: "university" -%}
 {%- for item in campus_items %}
 {%- capture card_attrs %} data-static-chapter="{{ item.university | escape }}" data-aliases="{{ item.aliases | join: '|' | escape }}" data-island="{{ item.island | escape }}"{% endcapture %}
 {%- capture university_block %}
     <p class="ph-lead-school">{{ item.university | escape }}</p>
+    {%- if item.note %}<p class="ph-lead-note">{{ item.note | escape }}</p>{% endif %}
     {%- if item.city %}<p class="ph-lead-place">{{ item.city | escape }}</p>{% endif %}
     {%- if item.url %}<p class="ph-lead-link"><a href="{{ item.url | escape }}" rel="noopener noreferrer">Chapter page<span class="ph-visually-hidden">: {{ item.chapter | default: item.university | escape }} on GitHub</span></a></p>{% endif %}
 {%- endcapture %}
@@ -28,7 +30,7 @@
   <span class="ph-lead-badge" aria-hidden="true">{{ lead_initials | upcase | escape }}</span>
   <div class="ph-lead-body">
     <h4 class="ph-lead-name">{{ lead.name | escape }}</h4>
-    <p class="ph-lead-role">{{ lead.role | escape }}</p>
+    <p class="ph-lead-role">{{ lead.role | default: campus_title | escape }}{% if lead.batch %} <span class="ph-lead-batch">Batch {{ lead.batch | escape }}</span>{% endif %}</p>
     {{ university_block }}
   </div>
 </article>

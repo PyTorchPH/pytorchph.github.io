@@ -49,8 +49,8 @@ hero_actions:
   <div class="container">
     <div class="ph-campus-map-grid">
       <div>
-        <h2 id="chapters-heading">Campus Labs leads and universities</h2>
-        <p class="ph-lede">Campus Labs leads who have been announced or have a public profile, and the universities they come from, by island group.</p>
+        <h2 id="chapters-heading">Campus Labs Leads</h2>
+        <p class="ph-lede">The Campus Labs Leads announced by PyTorch Philippines and their universities, by island group.</p>
 
         {%- if campus_count == 0 %}
         <div class="ph-callout" data-show-when-all-empty="chapters-Luzon chapters-Visayas chapters-Mindanao">
@@ -67,7 +67,7 @@ hero_actions:
         </div>
 
         {%- if campus_count > 0 %}
-        <p class="ph-source">Compiled from the chapters' own public pages, the leads' public profiles, and PyTorch Philippines announcements (checked {{ campus.checked | date: "%B %-d, %Y" }}). Titles are shown as each source gives them. The list is not complete yet. Is your Campus Lab missing or out of date? {% if contacts.email %}Email <a href="mailto:{{ contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
+        <p class="ph-source">As announced by PyTorch Philippines in its Campus Labs posters, Batch 1 and Batch 2. Is something out of date? {% if contacts.email %}Email <a href="mailto:{{ contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
         {%- endif %}
       </div>
       <div class="ph-archipelago-light">

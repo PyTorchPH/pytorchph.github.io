@@ -41,7 +41,8 @@
         {%- endif %}
         <div class="ph-ambassador-body">
           <h3>{{ person.name | escape }}</h3>
-          <p class="ph-ambassador-meta">PyTorch Foundation Ambassador<span aria-hidden="true"> · </span><span class="ph-visually-hidden">, </span>{{ person.location | escape }}</p>
+          {%- assign term = site.data.ambassador_terms[person.id] %}
+          <p class="ph-ambassador-meta">PyTorch Foundation Ambassador{% if term %}, {{ term | escape }}{% endif %}<span aria-hidden="true"> · </span><span class="ph-visually-hidden">, </span>{{ person.location | escape }}</p>
           {%- for paragraph in person.bio %}
           <p>{{ paragraph | escape }}</p>
           {%- endfor %}
@@ -76,8 +77,8 @@
   <div class="container">
     <div class="ph-section-header">
       <div>
-        <h2 id="campus-leads-heading">Campus Labs leads</h2>
-        <p>Campus Labs are the university communities of PyTorch Philippines. These are the Campus Labs leads who have been announced or have a public profile, and the universities they come from.</p>
+        <h2 id="campus-leads-heading">Campus Labs Leads</h2>
+        <p>Campus Labs are the university communities of PyTorch Philippines. These are the Campus Labs Leads announced by PyTorch Philippines and their universities.</p>
       </div>
       <a href="{{ site.baseurl }}/campus-labs/" class="btn btn-lg with-right-arrow module-button">About Campus Labs</a>
     </div>
@@ -86,7 +87,7 @@
     <p class="ph-empty" data-show-when-all-empty="chapters-Luzon chapters-Visayas chapters-Mindanao">No Campus Labs are listed yet. See <a href="{{ site.baseurl }}/campus-labs/#start">how to start one</a>.</p>
     {%- endif %}
     {%- if campus_count > 0 %}
-    <p class="ph-source">Compiled from the chapters' own public pages, the leads' public profiles, and PyTorch Philippines announcements (checked {{ campus.checked | date: "%B %-d, %Y" }}). Titles are shown as each source gives them. The list is not complete yet. Is your Campus Lab missing or out of date? {% if site.data.public_contacts.email %}Email <a href="mailto:{{ site.data.public_contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ site.data.public_contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
+    <p class="ph-source">As announced by PyTorch Philippines in its Campus Labs posters, Batch 1 and Batch 2. Is something out of date? {% if site.data.public_contacts.email %}Email <a href="mailto:{{ site.data.public_contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ site.data.public_contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
     {%- endif %}
   </div>
 </section>

@@ -741,6 +741,37 @@ button.main-menu-close-button {
   }
 }
 
+// Batch tag beside the title, and a short recognition note under the university.
+.ph-lead-batch {
+  display: inline-block;
+  margin-left: rem(6px);
+  padding: 0 rem(6px);
+  border: 1px solid $ph_rule;
+  color: $ph_muted;
+  font-size: rem(13px);
+  font-weight: 600;
+  line-height: rem(20px);
+  vertical-align: 1px;
+}
+
+.ph-lead-note {
+  .ph-lead-body & {
+    margin-top: rem(6px);
+    color: $slate;
+    font-size: rem(14px);
+
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-right: rem(8px);
+      background: $pytorch_orange;
+      vertical-align: 2px;
+    }
+  }
+}
+
 // "Start the first one" card for an island group without a Campus Lab.
 a.ph-lead-invite {
   text-decoration: none;
