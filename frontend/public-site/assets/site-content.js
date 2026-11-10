@@ -82,21 +82,27 @@
   function seriesLabel(series) { return series.replace(/^PyTorch\s+/, ""); }
 
   // One button per published series that still has upcoming sessions, in order of the next session.
-  // Buttons are rebuilt only when that list changes, so a focused button survives a refresh.
+  // Existing buttons are kept (and reordered), so focus and selection survive a refresh; a focused
+  // button whose series was withdrawn hands focus to "All programs".
   function syncSeriesButtons(activeSeries) {
     const key = JSON.stringify([...activeSeries]);
-    const selected = selectedEventSeries();
     document.querySelectorAll("[data-event-filters]").forEach(group => {
       if (group.dataset.series === key) return;
       group.dataset.series = key;
-      group.querySelectorAll("[data-event-series]").forEach(button => { if (button.dataset.eventSeries) button.remove(); });
+      const focused = group.contains(document.activeElement) ? document.activeElement : null;
+      const existing = new Map([...group.querySelectorAll("[data-event-series]")].filter(button => button.dataset.eventSeries).map(button => [button.dataset.eventSeries, button]));
+      for (const [series, button] of existing) if (!activeSeries.has(series)) button.remove();
       for (const series of activeSeries) {
-        const button = element("button", seriesLabel(series));
-        button.type = "button";
-        button.dataset.eventSeries = series;
-        button.setAttribute("aria-pressed", String(series === selected));
+        let button = existing.get(series);
+        if (!button) {
+          button = element("button", seriesLabel(series));
+          button.type = "button";
+          button.dataset.eventSeries = series;
+          button.setAttribute("aria-pressed", "false");
+        }
         group.append(button);
       }
+      if (focused && document.activeElement !== focused) (focused.isConnected ? focused : group.querySelector('[data-event-series=""]'))?.focus();
     });
   }
 
@@ -107,11 +113,21 @@
     // Offer a series filter only for series that still have upcoming sessions.
     const activeSeries = new Set(upcoming.map(row => row.series).filter(Boolean));
     const showFilters = activeSeries.size >= 2;
+    const previous = selectedEventSeries();
     syncSeriesButtons(activeSeries);
-    document.querySelectorAll("[data-event-filters]").forEach(group => { group.hidden = !showFilters; });
-    // A hidden or emptied filter must never keep excluding published events.
-    if (!showFilters || (selectedEventSeries() && !activeSeries.has(selectedEventSeries()))) selectSeries("");
-    const series = selectedEventSeries();
+    document.querySelectorAll("[data-event-filters]").forEach(group => {
+      // Hiding the filter must not leave keyboard focus on a hidden button.
+      if (!showFilters && group.contains(document.activeElement)) {
+        const list = document.querySelector('[data-site-content="events"]');
+        list?.setAttribute("tabindex", "-1");
+        list?.focus({ preventScroll: true });
+      }
+      group.hidden = !showFilters;
+    });
+    // A hidden filter or a withdrawn series must never keep excluding published events, and exactly
+    // one button is always marked as selected.
+    const series = showFilters && activeSeries.has(previous) ? previous : "";
+    selectSeries(series);
     const shown = upcoming.filter(row => !series || row.series === series);
     replace("events", shown.map(eventCard), series ? "No upcoming events match this learning series." : "No upcoming programs are published right now. New sessions are announced here and on our community pages.");
     renderPastSessions(today);

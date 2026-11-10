@@ -784,3 +784,7 @@ section[tabindex="-1"]:focus {
   display: block;
   scroll-margin-top: rem(110px);
 }
+
+[data-site-content][tabindex="-1"]:focus {
+  outline: none;
+}

@@ -105,3 +105,33 @@ test("officers can publish any series name and visitors can filter by it", async
   assert.equal(await page.evaluate(() => document.activeElement?.textContent), "Paper Reading Circle");
   assert.deepEqual(errors, []);
 });
+
+test("changing the series list keeps the focused button and selection, and a withdrawn selection falls back to All", async t => {
+  const state = { revision: 1, events: [
+    { id: "a", title: "Series A session", series: "Series A", startsAt: "2099-07-10", dateStatus: "confirmed" },
+    { id: "b", title: "Series B session", series: "Series B", startsAt: "2099-07-11", dateStatus: "confirmed" },
+    { id: "c", title: "Series C session", series: "Series C", startsAt: "2099-07-12", dateStatus: "confirmed" },
+  ] };
+  const { page, errors } = await rendererPage(t, state);
+  const pressed = () => page.locator('[data-event-filters] [aria-pressed="true"]').allTextContents();
+  await page.getByRole("button", { name: "Series B", exact: true }).click();
+  await page.getByRole("button", { name: "Series B", exact: true }).focus();
+
+  // A new series with an earlier session is published: buttons reorder, focus and selection stay on B.
+  state.events.push({ id: "d", title: "Series D session", series: "Series D", startsAt: "2099-07-01", dateStatus: "confirmed" });
+  state.revision = 2;
+  await refresh(page, 2);
+  assert.deepEqual(await page.locator("[data-event-filters] button").allTextContents(), ["All programs", "Series D", "Series A", "Series B", "Series C"]);
+  assert.equal(await page.evaluate(() => document.activeElement?.textContent), "Series B");
+  assert.deepEqual(await pressed(), ["Series B"]);
+  assert.deepEqual(await titles(page), ["Series B session"]);
+
+  // Series B is withdrawn while three series remain: All programs is selected and focused, every event shows.
+  state.events = state.events.filter(row => row.id !== "b");
+  state.revision = 3;
+  await refresh(page, 3);
+  assert.deepEqual(await pressed(), ["All programs"]);
+  assert.equal(await page.evaluate(() => document.activeElement?.textContent), "All programs");
+  assert.deepEqual(await titles(page), ["Series D session", "Series A session", "Series C session"]);
+  assert.deepEqual(errors, []);
+});
