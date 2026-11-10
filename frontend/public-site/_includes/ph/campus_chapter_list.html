@@ -15,9 +15,10 @@
 {%- endcapture %}
 {%- if item.leads and item.leads.size > 0 %}
 {%- for lead in item.leads %}
-{%- assign name_parts = lead.name | split: " " %}
+{%- assign name_parts = lead.name | strip | split: " " %}
+{%- capture lead_initials %}{{ name_parts.first | slice: 0 }}{% if name_parts.size > 1 %}{{ name_parts.last | slice: 0 }}{% endif %}{% endcapture %}
 <article class="ph-lead"{{ card_attrs }}>
-  <span class="ph-lead-badge" aria-hidden="true">{{ name_parts.first | slice: 0 }}{{ name_parts.last | slice: 0 }}</span>
+  <span class="ph-lead-badge" aria-hidden="true">{{ lead_initials | upcase | escape }}</span>
   <div class="ph-lead-body">
     <h4 class="ph-lead-name">{{ lead.name | escape }}</h4>
     <p class="ph-lead-role">{{ lead.role | escape }}</p>

@@ -182,8 +182,10 @@
   }
   function renderChapters(rows) {
     const published = new Set(rows.map(row => universityKey(row.university)).filter(Boolean));
+    const canonical = new Map();
     document.querySelectorAll("[data-static-chapter]").forEach(node => {
       const names = [node.dataset.staticChapter, ...(node.dataset.aliases ?? "").split("|")].map(universityKey).filter(Boolean);
+      names.forEach(name => canonical.set(name, names[0]));
       node.hidden = names.some(name => published.has(name));
     });
     for (const island of ["Luzon", "Visayas", "Mindanao"]) {
@@ -192,7 +194,8 @@
       const listed = new Set(listedNodes.map(node => universityKey(node.dataset.staticChapter))).size;
       const own = rows.filter(row => row.island === island);
       replace(`chapters-${island}`, own.map(chapterCard), listed ? "" : "No participating chapters published yet.");
-      const count = new Set(own.map(row => universityKey(row.university)).filter(Boolean)).size + listed;
+      // Published names that are aliases of a listed university count as that university.
+      const count = new Set(own.map(row => canonical.get(universityKey(row.university)) ?? universityKey(row.university)).filter(Boolean)).size + listed;
       document.querySelectorAll(`[data-chapter-count="${island}"]`).forEach(node => { node.textContent = count ? `· ${count}` : ""; });
       document.querySelectorAll(`[data-island-count="${island}"]`).forEach(node => { node.textContent = count ? `${count} ${count === 1 ? "university" : "universities"}` : ""; });
     }
