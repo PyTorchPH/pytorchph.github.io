@@ -5,10 +5,13 @@
 {%- comment -%}
   Page hero. It sizes to its content, so long headings never collide with the header on small screens.
   Front matter: hero_kicker (a short Filipino phrase), hero_kicker_meaning (its English meaning, for
-  screen readers and hover), hero_title, hero_lead, hero_actions [{label, url}], hero_wave, hero_image.
+  screen readers and hover), hero_title, hero_lead, hero_actions [{label, url}], hero_wave, hero_image,
+  hero_photo (a key in _data/photo_credits.yml: a background photo, credited in the footer).
 {%- endcomment -%}
-<section class="ph-hero{% if page.hero_image %} ph-hero-profile{% endif %}{% if page.hero_wave %} ph-hero-with-wave{% endif %}" aria-labelledby="hero-heading">
+<section class="ph-hero{% if page.hero_image %} ph-hero-profile{% endif %}{% if page.hero_wave %} ph-hero-with-wave{% endif %}{% if page.hero_photo %} ph-hero-backdrop ph-hero-backdrop-{{ page.hero_photo | replace: "_", "-" }}{% endif %}" aria-labelledby="hero-heading">
+  {%- unless page.hero_photo %}
   <div class="ph-hero-art" aria-hidden="true"></div>
+  {%- endunless %}
   <div class="container ph-hero-content">
     {%- if page.hero_image %}
     <img class="ph-hero-photo" src="{{ page.hero_image | relative_url }}" alt="{{ display_title | escape }}" width="480" height="480">

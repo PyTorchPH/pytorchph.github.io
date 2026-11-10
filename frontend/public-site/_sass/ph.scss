@@ -428,6 +428,28 @@ $hero_kicker: #ffb59e;
   }
 }
 
+// A background photo of a Philippine place (front matter hero_photo; credits in
+// _data/photo_credits.yml). The files are already black and white. The overlay is darkest behind the
+// text on the left and lets the photo show on the right.
+.ph-hero.ph-hero-backdrop-manila-post-office {
+  background-color: #262626;
+  background-image: linear-gradient(rgba(26, 26, 26, 0.74), rgba(26, 26, 26, 0.74)), url($baseurl + "/assets/images/manila-post-office-night-1000.jpg");
+  background-blend-mode: normal;
+  background-position: 30% 40%;
+
+  @include desktop {
+    background-image:
+      linear-gradient(90deg, rgba(26, 26, 26, 0.84) 0%, rgba(26, 26, 26, 0.76) 45%, rgba(26, 26, 26, 0.4) 80%, rgba(26, 26, 26, 0.32) 100%),
+      url($baseurl + "/assets/images/manila-post-office-night.jpg");
+    background-position: center 34%;
+  }
+
+  // On very wide screens the photo is scaled up; keep the roofline in view.
+  @media (min-width: 1800px) {
+    background-position: center 18%;
+  }
+}
+
 // The Philippine archipelago as a connected network (scripts/generate-archipelago.mjs).
 .ph-hero-art {
   position: absolute;

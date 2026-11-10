@@ -47,7 +47,8 @@
     "test:site-content": "node --test tests/node/managed-site-content.test.mjs tests/node/managed-site-editor.test.mjs tests/node/schedule-month-precision.test.mjs tests/node/site-content-events.test.mjs",
     "test:about": "node --test tests/node/about/model.test.mjs tests/node/about/runtime.test.mjs",
     "test:about:built": "node tests/node/about/browser.mjs",
-    "test:campus:built": "node tests/node/campus-labs/built.mjs"
+    "test:campus:built": "node tests/node/campus-labs/built.mjs",
+    "test:hero-photo:built": "node tests/node/hero-photo/built.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

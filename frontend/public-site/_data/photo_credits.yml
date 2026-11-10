@@ -1,0 +1,18 @@
+# Photos used on the site that were not made by PyTorch Philippines, with what their license asks
+# for. Each entry is credited in the footer of every page that shows it (see _includes/footer.html).
+#
+# manila_post_office: the home page hero background (front matter `hero_photo: manila_post_office`).
+#   Source checked 2026-11-10 on Wikimedia Commons: "Self-photographed" by Junwiki21 on
+#   2018-12-04, licensed CC BY-SA 4.0. The building is tagged {{PD-Philippines-FoP work}} there.
+#   Original file SHA-1 f18a4ac27609e8851792ab1918fc5c14c0e951f9 (4144 × 2748).
+#   Our copies (assets/images/manila-post-office-night.jpg, 2000 px wide, and
+#   manila-post-office-night-1000.jpg) keep 12–88% of the original's height, are converted to
+#   black and white, and carry no metadata. As adaptations, they are shared under CC BY-SA 4.0 too.
+manila_post_office:
+  title: "Manila Central Post Office at night from across the Pasig River"
+  author: Junwiki21
+  author_url: "https://commons.wikimedia.org/wiki/User:Junwiki21"
+  source_url: "https://commons.wikimedia.org/wiki/File:Manila_Central_Post_Office_at_night_from_across_the_Pasig_River.jpg"
+  license: CC BY-SA 4.0
+  license_url: "https://creativecommons.org/licenses/by-sa/4.0/"
+  changes: "cropped, resized, and converted to black and white"
