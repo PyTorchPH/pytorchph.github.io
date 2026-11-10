@@ -20,10 +20,13 @@
 #                  Leads" (2026), read through a search index because LinkedIn requires sign-in:
 #                  https://www.linkedin.com/posts/pytorch-philippines_pytorchphilippines-pytorchph-pytorchcampuslabs-activity-7468199885024964609-YHpX
 #                  Confirm spellings with the people named.
-#   batch2-2026    PyTorch Philippines Campus Labs announcement graphics, Batch 2 (partial: 14
-#                  graphics), provided by the PyTorch Foundation Ambassador for the Philippines on
-#                  2026-11-10. Each graphic gives a name and a university, but no title, so these
-#                  entries use the role "Campus Labs, Batch 2" until the official title is confirmed.
+#   batch1-2026    PyTorch Philippines Campus Labs announcement graphics, Batch 1 (10 graphics),
+#   batch2-2026    and Batch 2 (partial: 16 graphics), provided by the PyTorch Foundation Ambassador
+#                  for the Philippines on 2026-11-10. Each graphic gives a name and a university but
+#                  no title. Names follow the graphic unless noted. People without a title from
+#                  another source use the role "Campus Labs, Batch 1" or "Campus Labs, Batch 2"
+#                  until the official title is confirmed. Batch 1 leads named in fireside-2026 keep
+#                  that announcement's title, "Campus Labs Lead".
 checked: 2026-11-10
 chapters:
   - university: Bulacan State University
@@ -35,9 +38,11 @@ chapters:
     sources:
       - fireside-2026
       - lead-profile https://github.com/letsellahvate/letsellahvate ("Campus Labs Lead Data Scientist")
+      - batch1-2026 (the graphic spells the surname "Bernardo"; her own LinkedIn,
+        linkedin.com/in/ellah-benerado-7849b2249, and fireside-2026 spell "Benerado". Confirm with her.)
 
   - university: FEU Institute of Technology
-    aliases: [FEU Tech, FEU Institute of Technology Manila]
+    aliases: [FEU Tech, FEU Institute of Technology Manila, Far Eastern University - Institute of Technology, FEU-IT]
     island: Luzon
     chapter: PyTorch FEU Tech Chapter
     url: https://github.com/PyTorch-FEU-Tech-Chapter
@@ -48,26 +53,29 @@ chapters:
       - chapter-page https://github.com/PyTorch-FEU-Tech-Chapter
       - lead-profile https://github.com/JohnAndrewBalbarosa/JohnAndrewBalbarosa
       - fireside-2026 (spells the name "Aldrew"; the published team roster says Andrew)
+      - batch1-2026 ("John Andrew Balbarosa, Far Eastern University - Institute of Technology")
 
   - university: Graystone Institute of the Philippines
     aliases: [Graystone Institute]
     island: Luzon # the campus is not named; TESDA lists the institute's sites in Pangasinan (Dagupan City, San Jacinto)
     leads:
-      - name: Mile Ruth Cabalde
+      - name: Mile Ruth Kobe Cabalde
         role: Campus Labs Lead
     sources:
       - fireside-2026
       - lead-profile https://ph.linkedin.com/in/mile-ruth-cabalde-38707b201 (lists the school and PyTorch)
+      - batch1-2026 ("Mile Ruth Kobe Cabalde, Graystone Institute of the Philippines")
 
   - university: National University
     aliases: [NU, NU Manila, National University Manila]
     city: Manila
     island: Luzon
     leads:
-      - name: Renz Viloria
+      - name: Renz Jerik Viloria
         role: Campus Labs Lead
     sources:
-      - fireside-2026 (only source)
+      - fireside-2026
+      - batch1-2026 ("Renz Jerik Viloria, National University - Manila")
 
   - university: Pampanga State University
     aliases: [PamSU, PSU, Don Honorio Ventura State University, DHVSU]
@@ -90,7 +98,8 @@ chapters:
       - name: John Carl Santos
         role: Campus Labs Lead
     sources:
-      - fireside-2026 (only source)
+      - fireside-2026
+      - batch1-2026 ("John Carl Santos, Philippine Christian University- Manila")
 
   - university: Polytechnic University of the Philippines
     aliases: [PUP, PUP Manila, Polytechnic University of the Philippines Manila]
@@ -102,16 +111,18 @@ chapters:
     sources:
       - fireside-2026
       - lead-profile https://jpcurada.dev/impact ("PyTorch Philippines Data Science Lead")
+      - batch1-2026 ("John Paul Curada, Polytechnic University of the Philippines - Manila")
 
   - university: Technological Institute of the Philippines
-    aliases: [TIP, TIP Manila, T.I.P.]
+    aliases: [TIP, TIP Manila, T.I.P., TIP-MNL, Technological Institute of the Philippines - Manila]
     city: Manila
     island: Luzon
     leads:
-      - name: Alvin Dellomas
+      - name: Alvin Paduganao Dellomas
         role: Campus Lead Data Scientist
     sources:
       - lead-profile https://github.com/Alvin187187/Alvin187187 ("Pytorch Campus Lead Data Scientist"; "a student from TIP-Manila")
+      - batch2-2026 ("Alvin Paduganao Dellomas, Technological Institute of the Philippines - Manila (TIP-MNL)")
 
   - university: Mindanao State University, Main Campus
     aliases: [MSU Main Campus, MSU Main, Mindanao State University Main Campus, MSU Marawi, MSU-Marawi, Mindanao State University Main Campus - Marawi]
@@ -238,7 +249,53 @@ chapters:
     sources:
       - batch2-2026 ("Mapúa University (MU)")
 
-# Pending confirmation (not shown on the site): add once a public source names the university.
-#   Hannah Hontiveros, "Lead Data Scientist Ambassador, PyTorch Campus Labs Philippines"
-#   (https://github.com/snowflower204/port-app, src/AhnrosPages.js). The same page lists MSU-IIT
-#   student roles, but does not say which university her Campus Labs role belongs to.
+
+  - university: Universidad de Dagupan
+    aliases: [UdD]
+    city: Dagupan City, Pangasinan
+    island: Luzon
+    leads:
+      - name: Julius De Leon
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("Universidad de Dagupan")
+
+  - university: Southwestern University PHINMA
+    aliases: [SWU PHINMA, SWU, Southwestern University]
+    city: Cebu City
+    island: Visayas
+    leads:
+      - name: Yurii Onein Yankin
+        role: Campus Labs, Batch 1
+    sources:
+      - batch1-2026 ("Southwestern University PHINMA")
+
+  - university: Cebu Technological University
+    aliases: [CTU]
+    island: Visayas # the graphic names no campus; every CTU campus is in Cebu
+    leads:
+      - name: Julian Gen Carticiano
+        role: Campus Labs, Batch 1
+    sources:
+      - batch1-2026 ("Cebu Technological University")
+
+  - university: STI College Gensan
+    aliases: [STI College General Santos, STI Gensan, STI General Santos]
+    city: General Santos City
+    island: Mindanao
+    leads:
+      - name: Rolando Ferrer Jr.
+        role: Campus Labs, Batch 1
+    sources:
+      - batch1-2026 ("STI College Gensan")
+
+  - university: Mindanao State University–Iligan Institute of Technology
+    aliases: [MSU-IIT, MSU IIT, Mindanao State University Iligan Institute of Technology, Mindanao State University- Iligan Institute of Technology]
+    city: Iligan City, Lanao del Norte
+    island: Mindanao
+    leads:
+      - name: Hannah Hontiveros
+        role: Lead Data Scientist Ambassador
+    sources:
+      - batch1-2026 ("Hannah Hontiveros, Mindanao State University- Iligan Institute of Technology")
+      - lead-profile https://github.com/snowflower204/port-app (src/AhnrosPages.js "Lead Data Scientist Ambassador, PyTorch Campus Labs Philippines")
