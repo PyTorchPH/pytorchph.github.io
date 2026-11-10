@@ -136,11 +136,15 @@ test("changing the series list keeps the focused button and selection, and a wit
   assert.deepEqual(errors, []);
 });
 
+const totals = page => page.evaluate(() => ["data-campus-total-universities", "data-campus-total-universities-label", "data-campus-total-people", "data-campus-total-people-label", 'data-island-total="Luzon"']
+  .map(attribute => document.querySelector(`[${attribute}]`).textContent));
+
 test("a university listed in the page gives way to the same university published by officers", async t => {
   const source = await readFile(new URL("../../frontend/public-site/assets/site-content.js", import.meta.url), "utf8");
   const state = { revision: 1, chapters: [] };
   const markup = `
     <span data-chapter-count="Luzon"></span><span data-chapter-count="Visayas"></span>
+    <p><b data-campus-total-universities>0</b> <i data-campus-total-universities-label></i> <b data-campus-total-people>0</b> <i data-campus-total-people-label></i> <span data-island-total="Luzon"></span></p>
     <div data-site-content="chapters-Luzon"></div>
     <ul><li data-static-chapter="Example State University" data-aliases="ESU|Example State" data-island="Luzon">Example State University</li>
         <li data-static-chapter="Second Example College–North Campus" data-aliases="" data-island="Luzon">Second Example College</li>
@@ -165,6 +169,7 @@ test("a university listed in the page gives way to the same university published
   assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 4");
   assert.equal(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), "");
   assert.match(await page.locator('[data-site-content="chapters-Visayas"]').textContent(), /No participating chapters/);
+  assert.deepEqual(await totals(page), ["4", "universities", "4", "people", "4"]);
 
   state.chapters = [{ id: "c1", university: "example state university", chapter: "Published chapter", island: "Luzon", status: "active", leadName: "A published lead" }];
   state.revision = 2;
@@ -172,6 +177,8 @@ test("a university listed in the page gives way to the same university published
   assert.deepEqual(await page.locator("[data-static-chapter]:visible").allTextContents(), ["Second Example College", "St. Mary's Example Institute", "Example Co-Op College"]);
   assert.match(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), /Published chapter/);
   assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 4");
+  // The total counts the university once and the published lead in place of the listed one.
+  assert.deepEqual(await totals(page), ["4", "universities", "4", "people", "4"]);
   // A published chapter renders as the same person-first card: the lead, their role, then the
   // university, all under the island heading (h4, never h3).
   const card = page.locator('[data-site-content="chapters-Luzon"] article.ph-lead');
@@ -200,6 +207,8 @@ test("a university listed in the page gives way to the same university published
   // A chapter without a named lead shows the university and says the lead is not announced.
   assert.match(await page.locator('[data-site-content="chapters-Luzon"] article.ph-lead-pending').first().textContent(), /Lead not announced yet/);
   assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 4");
+  // Four universities, but no named lead among the published chapters: nobody is counted as a person.
+  assert.deepEqual(await totals(page), ["4", "universities", "0", "people", "4"]);
   state.chapters = [];
   state.revision = 4;
   await refresh(page, 4);

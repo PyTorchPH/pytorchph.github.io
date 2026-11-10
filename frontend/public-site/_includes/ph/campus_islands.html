@@ -11,6 +11,18 @@
 {%- assign show_callouts = include.callouts -%}
 {%- assign add_anchors = include.anchors -%}
 {%- assign campus_count = campus.chapters | size -%}
+{%- comment -%} Total across all island groups; site-content.js keeps it current when officers publish chapters. {%- endcomment -%}
+{%- assign people_count = 0 -%}
+{%- for item in campus.chapters %}{% assign people_count = people_count | plus: item.leads.size %}{% endfor -%}
+<p class="ph-campus-total" data-campus-total{% if campus_count == 0 %} hidden{% endif %}>
+  <span class="ph-campus-total-figure"><strong data-campus-total-universities>{{ campus_count }}</strong> <span data-campus-total-universities-label>{% if campus_count == 1 %}university{% else %}universities{% endif %}</span></span>
+  <span class="ph-campus-total-figure"><strong data-campus-total-people>{{ people_count }}</strong> <span data-campus-total-people-label>{% if people_count == 1 %}person{% else %}people{% endif %}</span></span>
+  <span class="ph-campus-total-split">across
+    {%- for island in island_groups %}
+    {%- assign in_island = campus.chapters | where: "island", island %}
+    {%- if forloop.last %} and{% endif %} {% if island == "Visayas" %}the Visayas{% else %}{{ island }}{% endif %} (<span data-island-total="{{ island }}">{{ in_island | size }}</span>){% unless forloop.last %},{% endunless %}
+    {%- endfor %}</span>
+</p>
 {%- for island in island_groups %}
 {%- assign in_island = campus.chapters | where: "island", island %}
 {%- assign island_count = in_island | size %}

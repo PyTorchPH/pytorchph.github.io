@@ -195,6 +195,8 @@
       names.forEach(name => canonical.set(name, names[0]));
       node.hidden = names.some(name => published.has(name));
     });
+    let totalUniversities = 0;
+    let totalPeople = 0;
     for (const island of ["Luzon", "Visayas", "Mindanao"]) {
       const listedNodes = [...document.querySelectorAll(`[data-static-chapter][data-island="${island}"]:not([hidden])`)];
       // A university with two leads has two cards; it still counts once.
@@ -205,7 +207,16 @@
       const count = new Set(own.map(row => canonical.get(universityKey(row.university)) ?? universityKey(row.university)).filter(Boolean)).size + listed;
       document.querySelectorAll(`[data-chapter-count="${island}"]`).forEach(node => { node.textContent = count ? `· ${count}` : ""; });
       document.querySelectorAll(`[data-island-count="${island}"]`).forEach(node => { node.textContent = count ? `${count} ${count === 1 ? "university" : "universities"}` : ""; });
+      document.querySelectorAll(`[data-island-total="${island}"]`).forEach(node => { node.textContent = String(count); });
+      totalUniversities += count;
+      totalPeople += listedNodes.length + own.filter(row => row.leadName).length;
     }
+    // The total across all island groups: universities count once each, people once per card.
+    document.querySelectorAll("[data-campus-total]").forEach(node => { node.hidden = totalUniversities === 0; });
+    document.querySelectorAll("[data-campus-total-universities]").forEach(node => { node.textContent = String(totalUniversities); });
+    document.querySelectorAll("[data-campus-total-universities-label]").forEach(node => { node.textContent = totalUniversities === 1 ? "university" : "universities"; });
+    document.querySelectorAll("[data-campus-total-people]").forEach(node => { node.textContent = String(totalPeople); });
+    document.querySelectorAll("[data-campus-total-people-label]").forEach(node => { node.textContent = totalPeople === 1 ? "person" : "people"; });
   }
 
   function article(row) {

@@ -627,6 +627,35 @@ button.main-menu-close-button {
   }
 }
 
+// Total across all island groups, above the first island heading.
+.ph-campus-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: rem(6px) rem(24px);
+  margin: 0 0 rem(28px);
+  color: $ph_muted;
+  font-size: rem(16px);
+
+  &[hidden] {
+    display: none;
+  }
+
+  .ph-campus-total-figure strong {
+    margin-right: rem(2px);
+    color: $slate;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: rem(30px);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .ph-campus-total-split [data-island-total] {
+    color: $slate;
+    font-weight: 600;
+  }
+}
+
 .ph-lead-grid {
   display: grid;
   grid-template-columns: 1fr;

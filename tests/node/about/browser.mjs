@@ -25,7 +25,7 @@ async function main() {
     await browser?.close();
     await server.close();
   }
-  console.log(JSON.stringify({ event: "about.pages.browser_verified", outcome: "success", checks: ["no-team-directory", "no-static-resurrection", "ambassador-portraits", "campus-labs-portraits", "three-legacy-redirects", "single-h1", "no-horizontal-overflow"], artifacts: artifactDirectory }));
+  console.log(JSON.stringify({ event: "about.pages.browser_verified", outcome: "success", checks: ["no-team-directory", "no-static-resurrection", "ambassador-portraits", "campus-labs-portraits", "campus-labs-total", "three-legacy-redirects", "single-h1", "no-horizontal-overflow"], artifacts: artifactDirectory }));
 }
 
 // The About page has no team directory (removed at the site owner's request): even when the API
@@ -68,6 +68,9 @@ async function assertAbout(page) {
   assert.deepEqual(names, ["Alpha Romer Coma", "Giorgio Armani Magno"]);
   assert.equal(await page.locator(".ph-ambassador-photo").count(), 2);
   assert.equal(await page.locator("#campus-labs-leads article.ph-lead").count(), 26);
+  // The total across island groups sits above them: every university and every person, once.
+  assert.equal((await page.locator("#campus-labs-leads [data-campus-total]").textContent()).replace(/\s+/g, " ").trim(),
+    "26 universities 26 people across Luzon (19), the Visayas (3), and Mindanao (4)");
   // Every portrait loads (lazy images are scrolled into view first).
   for (const selector of [".ph-ambassador-photo", "#campus-labs-leads .ph-lead-photo"]) {
     const images = page.locator(selector);
