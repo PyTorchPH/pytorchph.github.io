@@ -19,17 +19,22 @@ function read(page) {
   return readFileSync(file, "utf8");
 }
 
-// Every card, parsed one at a time: no card can be skipped because its markup changed.
+// Every card, parsed one at a time: any <article> whose class list contains "ph-lead", whatever
+// the attribute or class order, so no card can be skipped because its markup changed.
+const classList = attributes => (/\bclass="([^"]*)"/.exec(attributes)?.[1] ?? "").split(/\s+/).filter(Boolean);
 function cards(html, page) {
-  const starts = [...html.matchAll(/<article class="(ph-lead[^"]*)"([^>]*)>/g)];
+  const articles = [...html.matchAll(/<article\b([^>]*)>/g)];
+  const starts = articles.filter(article => classList(article[1]).includes("ph-lead"));
+  // Every badge on the page belongs to a card that was found.
+  assert.equal((html.match(/class="[^"]*\bph-lead-badge\b/g) ?? []).length, starts.length + (html.match(/ph-lead-invite/g) ?? []).length, `${page}: a badge outside a recognized card`);
   return starts.map((start, index) => {
-    const end = index + 1 < starts.length ? starts[index + 1].index : html.length;
-    const body = html.slice(start.index, end);
-    const badge = /<span class="ph-lead-badge" aria-hidden="true">([^<]*)<\/span>/.exec(body);
-    const name = /<h4 class="ph-lead-name">([^<]*)<\/h4>/.exec(body);
+    const next = articles.find(article => article.index > start.index);
+    const body = html.slice(start.index, next ? next.index : html.length);
+    const badge = /<span\b[^>]*\bclass="[^"]*\bph-lead-badge\b[^"]*"[^>]*>([^<]*)<\/span>/.exec(body);
+    const name = /<h4\b[^>]*\bclass="[^"]*\bph-lead-name\b[^"]*"[^>]*>([^<]*)<\/h4>/.exec(body);
     assert.ok(badge, `${page}: card ${index + 1} has no badge`);
     assert.ok(name, `${page}: card ${index + 1} has no name`);
-    return { classes: start[1], attributes: start[2], badge: badge[1], name: name[1], body };
+    return { classes: classList(start[1]).join(" "), attributes: start[1], badge: badge[1], name: name[1], body };
   });
 }
 
