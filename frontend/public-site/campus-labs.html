@@ -14,6 +14,7 @@ hero_actions:
 {%- assign contacts = site.data.public_contacts -%}
 {%- assign island_groups = "Luzon,Visayas,Mindanao" | split: "," -%}
 {%- assign campus = site.data.campus_labs -%}
+{%- assign campus_count = campus.chapters | size -%}
 
 <section class="ph-section" aria-labelledby="campus-what-heading">
   <div class="container">
@@ -51,7 +52,7 @@ hero_actions:
         <h2 id="chapters-heading">Campus Labs leads and universities</h2>
         <p class="ph-lede">Campus Labs leads who have been announced or have a public profile, and the universities they come from, by island group.</p>
 
-        {%- if campus.chapters.size == 0 %}
+        {%- if campus_count == 0 %}
         <div class="ph-callout" data-show-when-all-empty="chapters-Luzon chapters-Visayas chapters-Mindanao">
           <p>No Campus Labs chapters are published yet.</p>
           <p>Be the first at your university: see <a href="#start">how to start a Campus Lab</a> below.</p>
@@ -65,7 +66,7 @@ hero_actions:
           <div class="ph-managed-grid" data-site-content="campus-leads"></div>
         </div>
 
-        {%- if campus.chapters.size > 0 %}
+        {%- if campus_count > 0 %}
         <p class="ph-source">Compiled from the chapters' own public pages, the leads' public profiles, and PyTorch Philippines announcements (checked {{ campus.checked | date: "%B %-d, %Y" }}). Titles are shown as each source gives them. The list is not complete yet. Is your Campus Lab missing or out of date? {% if contacts.email %}Email <a href="mailto:{{ contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
         {%- endif %}
       </div>

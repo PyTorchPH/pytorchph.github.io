@@ -47,7 +47,7 @@ chapters:
 
   - university: Graystone Institute of the Philippines
     aliases: [Graystone Institute]
-    island: Luzon # campus not stated in the source; a Pangasinan branch is on public record (TESDA)
+    island: Luzon # the campus is not named, but every campus on public record (TESDA: Dagupan City, San Jacinto, San Fabian, Alaminos) is in Pangasinan
     leads:
       - name: Mile Ruth Cabalde
         role: Campus Labs Lead
@@ -116,11 +116,7 @@ chapters:
     sources:
       - chapter-page https://github.com/PyTorch-MSU-Main-Campus-Lab
 
-  - university: Mindanao State University–Iligan Institute of Technology
-    aliases: [MSU-IIT, MSU IIT, Mindanao State University Iligan Institute of Technology]
-    island: Mindanao
-    leads:
-      - name: Hannah Hontiveros
-        role: Lead Data Scientist Ambassador
-    sources:
-      - lead-profile https://github.com/snowflower204/port-app (src/AhnrosPages.js "Lead Data Scientist Ambassador, PyTorch Campus Labs Philippines"; the school is inferred from her MSU-IIT student roles on the same page, so confirm it)
+# Pending confirmation (not shown on the site): add once a public source names the university.
+#   Hannah Hontiveros, "Lead Data Scientist Ambassador, PyTorch Campus Labs Philippines"
+#   (https://github.com/snowflower204/port-app, src/AhnrosPages.js). The same page lists MSU-IIT
+#   student roles, but does not say which university her Campus Labs role belongs to.

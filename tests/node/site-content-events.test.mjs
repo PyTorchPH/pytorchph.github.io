@@ -143,7 +143,8 @@ test("a university listed in the page gives way to the same university published
     <span data-chapter-count="Luzon"></span><span data-chapter-count="Visayas"></span>
     <div data-site-content="chapters-Luzon"></div>
     <ul><li data-static-chapter="Example State University" data-aliases="ESU|Example State" data-island="Luzon">Example State University</li>
-        <li data-static-chapter="Second Example College–North Campus" data-aliases="" data-island="Luzon">Second Example College</li></ul>
+        <li data-static-chapter="Second Example College–North Campus" data-aliases="" data-island="Luzon">Second Example College</li>
+        <li data-static-chapter="St. Mary's Example Institute" data-aliases="" data-island="Luzon">St. Mary's Example Institute</li></ul>
     <div data-site-content="chapters-Visayas"></div>`;
   const server = createServer((request, response) => {
     if (request.url === "/renderer.js") { response.setHeader("Content-Type", "application/javascript; charset=utf-8"); response.end(source); }
@@ -159,32 +160,34 @@ test("a university listed in the page gives way to the same university published
   await page.goto(`http://127.0.0.1:${server.address().port}`);
   await page.waitForFunction(() => document.documentElement.dataset.siteContentRevision === "1");
   // Nothing published: both listed universities show, are counted, and no empty message appears beside them.
-  assert.equal(await page.locator("[data-static-chapter]:visible").count(), 2);
-  assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 2");
+  assert.equal(await page.locator("[data-static-chapter]:visible").count(), 3);
+  assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 3");
   assert.equal(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), "");
   assert.match(await page.locator('[data-site-content="chapters-Visayas"]').textContent(), /No participating chapters/);
 
   state.chapters = [{ id: "c1", university: "example state university", chapter: "Published chapter", island: "Luzon", status: "active", leadName: "A published lead" }];
   state.revision = 2;
   await refresh(page, 2);
-  assert.deepEqual(await page.locator("[data-static-chapter]:visible").allTextContents(), ["Second Example College"]);
+  assert.deepEqual(await page.locator("[data-static-chapter]:visible").allTextContents(), ["Second Example College", "St. Mary's Example Institute"]);
   assert.match(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), /Published chapter/);
-  assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 2");
+  assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 3");
   assert.equal(await page.locator('[data-site-content="chapters-Luzon"] h4').textContent(), "example state university");
   assert.equal(await page.locator('[data-site-content="chapters-Luzon"] h3').count(), 0);
 
-  // Officers may use an alias or different punctuation; a withdrawn chapter brings the listed entry back.
+  // Officers may use an alias, different dashes, or drop punctuation inside a word ("St Marys");
+  // a withdrawn chapter brings the listed entry back.
   state.chapters = [
     { id: "c1", university: "ESU", chapter: "Published chapter", island: "Luzon", status: "active" },
     { id: "c2", university: "Second Example College - North Campus", chapter: "Other chapter", island: "Luzon", status: "active" },
+    { id: "c3", university: "St Marys Example Institute", chapter: "Third chapter", island: "Luzon", status: "active" },
   ];
   state.revision = 3;
   await refresh(page, 3);
   assert.equal(await page.locator("[data-static-chapter]:visible").count(), 0);
-  assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 2");
+  assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 3");
   state.chapters = [];
   state.revision = 4;
   await refresh(page, 4);
-  assert.equal(await page.locator("[data-static-chapter]:visible").count(), 2);
+  assert.equal(await page.locator("[data-static-chapter]:visible").count(), 3);
   assert.equal(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), "");
 });

@@ -4,12 +4,19 @@
 // assets/images/ambassadors/. The directory decides who is listed: nobody is added or kept by hand.
 //
 // Nothing on disk changes until the directory and every portrait have been downloaded and checked.
-// A failed fetch, a malformed directory, or a bad portrait keeps the committed snapshot as it is.
-// The script file list (flow):
-//   main            fetch directory → validate → stage people + portraits in memory → commit to disk
-//   └─ fetchLimited fetch one allowlisted URL, no redirects, with a byte limit
-//   └─ portrait     validate and download one official portrait
-import { mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+// A failed fetch, a malformed directory, a bad portrait, or a failed write keeps the committed
+// snapshot as it is. The portrait directory belongs to this script: it is replaced as a whole.
+//
+// An empty result never replaces a snapshot that lists people unless AMBASSADORS_ALLOW_EMPTY=1 is
+// set: a changed country field upstream must not read as "no ambassadors in the Philippines".
+//
+// Flow:
+//   main            fetch directory → validate → stage people + portraits in memory → commit
+//   ├─ fetchLimited fetch one allowlisted URL, no redirects, with a byte limit
+//   ├─ portrait     validate and download one official portrait
+//   └─ commit       write a complete snapshot into a private temporary directory, swap it in,
+//                   and restore the previous portraits if the swap fails
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const SOURCE_HOST = "raw.githubusercontent.com";
@@ -19,7 +26,6 @@ const COUNTRY = "Philippines";
 const MIN_DIRECTORY_ENTRIES = 10; // a healthy directory lists dozens of ambassadors
 const MAX_DIRECTORY_BYTES = 5_000_000;
 const MAX_PHOTO_BYTES = 2_000_000;
-const MANAGED_PHOTO = /^[a-z0-9-]+\.(jpg|png)$/;
 const root = resolve(import.meta.dirname, "..");
 const dataFile = resolve(root, "_data/ambassadors_directory.json");
 const photoDirectory = resolve(root, "assets/images/ambassadors");
@@ -96,24 +102,45 @@ async function main() {
   }
   people.sort((a, b) => a.name.localeCompare(b.name, "en"));
 
-  // Commit: write new files beside the old ones, swap them in, then drop portraits no longer listed.
-  mkdirSync(photoDirectory, { recursive: true });
-  const checked = new Date().toISOString().slice(0, 10); // every successful run is a fresh check
-  const staged = [...portraits.map(photo => [resolve(photoDirectory, photo.name), photo.bytes]), [dataFile, `${JSON.stringify({ source: DIRECTORY_URL, checked, people }, null, 2)}\n`]];
-  for (const [path, content] of staged) writeFileSync(`${path}.tmp`, content);
-  for (const [path] of staged) renameSync(`${path}.tmp`, path);
-  const kept = new Set(portraits.map(photo => photo.name));
-  for (const file of readdirSync(photoDirectory)) {
-    if (MANAGED_PHOTO.test(file) && !kept.has(file)) rmSync(resolve(photoDirectory, file));
+  let previous = [];
+  try { previous = JSON.parse(readFileSync(dataFile, "utf8")).people ?? []; } catch { /* no snapshot yet */ }
+  if (!people.length && previous.length && process.env.AMBASSADORS_ALLOW_EMPTY !== "1") {
+    throw new Error(`directory lists nobody in ${COUNTRY} but the snapshot lists ${previous.length}; set AMBASSADORS_ALLOW_EMPTY=1 to accept`);
   }
+  const checked = new Date().toISOString().slice(0, 10); // every successful run is a fresh check
+  commit(portraits, `${JSON.stringify({ source: DIRECTORY_URL, checked, people }, null, 2)}\n`);
   console.log(JSON.stringify({ event: "site.ambassadors.written", outcome: "success", people: people.length }));
+}
+
+// The complete new snapshot is written into a directory only this run knows (mkdtemp creates it
+// exclusively), then swapped in with renames on the same filesystem.
+function commit(portraits, json) {
+  const staging = mkdtempSync(resolve(root, ".ambassadors-"));
+  const stagedPhotos = resolve(staging, "photos");
+  const stagedData = resolve(staging, "directory.json");
+  const previousPhotos = resolve(staging, "previous-photos");
+  let movedPrevious = false;
+  let installedPhotos = false;
+  try {
+    mkdirSync(stagedPhotos);
+    for (const photo of portraits) writeFileSync(resolve(stagedPhotos, photo.name), photo.bytes, { flag: "wx" });
+    writeFileSync(stagedData, json, { flag: "wx" });
+    if (existsSync(photoDirectory)) { renameSync(photoDirectory, previousPhotos); movedPrevious = true; }
+    renameSync(stagedPhotos, photoDirectory);
+    installedPhotos = true;
+    renameSync(stagedData, dataFile);
+  } catch (error) {
+    // Put the previous portraits back so the old data file still matches what is on disk.
+    if (installedPhotos) rmSync(photoDirectory, { recursive: true, force: true });
+    if (movedPrevious) renameSync(previousPhotos, photoDirectory);
+    throw error;
+  } finally {
+    rmSync(staging, { recursive: true, force: true });
+  }
 }
 
 try {
   await main();
 } catch (error) {
-  for (const directory of [photoDirectory, resolve(root, "_data")]) {
-    try { for (const file of readdirSync(directory)) if (file.endsWith(".tmp")) rmSync(resolve(directory, file)); } catch { /* nothing staged */ }
-  }
   console.warn(JSON.stringify({ event: "site.ambassadors.fetch_failed", outcome: "kept_snapshot", reason: error instanceof Error ? error.message : String(error) }));
 }

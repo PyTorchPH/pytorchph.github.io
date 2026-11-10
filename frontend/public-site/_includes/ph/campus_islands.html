@@ -8,16 +8,18 @@
 {%- assign island_groups = "Luzon,Visayas,Mindanao" | split: "," -%}
 {%- assign show_callouts = include.callouts -%}
 {%- assign add_anchors = include.anchors -%}
+{%- assign campus_count = campus.chapters | size -%}
 {%- for island in island_groups %}
 {%- assign in_island = campus.chapters | where: "island", island %}
-<div class="ph-island"{% if in_island.size == 0 %} data-hide-when-empty hidden{% endif %}>
+{%- assign island_count = in_island | size %}
+<div class="ph-island"{% if island_count == 0 %} data-hide-when-empty hidden{% endif %}>
   <h3 class="ph-island-heading"{% if add_anchors %} id="campus-{{ island | downcase }}"{% endif %}>{{ island }}</h3>
   <div class="ph-managed-grid ph-chapter-grid" data-site-content="chapters-{{ island }}"></div>
-  {%- if in_island.size > 0 %}
+  {%- if island_count > 0 %}
   {% include ph/campus_chapter_list.html island=island %}
   {%- endif %}
 </div>
-{%- if show_callouts and in_island.size == 0 and campus.chapters.size > 0 %}
+{%- if show_callouts and island_count == 0 and campus_count > 0 %}
 <div class="ph-callout ph-island" data-show-when-all-empty="chapters-{{ island }}">
   <p>No Campus Lab in {% if island == "Visayas" %}the Visayas{% else %}{{ island }}{% endif %} yet.</p>
   <p>Be the first: see <a href="#start">how to start a Campus Lab</a> below.</p>

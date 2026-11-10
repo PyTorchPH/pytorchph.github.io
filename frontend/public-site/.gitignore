@@ -6,3 +6,4 @@ assets/vendor/
 node_modules/
 vendor/
 _data/pytorch_news.json
+.ambassadors-*/

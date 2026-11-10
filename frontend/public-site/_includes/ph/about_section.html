@@ -1,6 +1,7 @@
 {%- assign identity = site.data.community_identity -%}
 {%- assign ambassadors = site.data.ambassadors_directory -%}
 {%- assign campus = site.data.campus_labs -%}
+{%- assign campus_count = campus.chapters | size -%}
 <section class="ph-section" aria-labelledby="about-heading">
   <div class="container">
     <h2 id="about-heading">About PyTorch Philippines</h2>
@@ -71,7 +72,6 @@
   </div>
 </section>
 
-{%- if campus.chapters.size > 0 %}
 <section class="ph-section ph-section-grey" id="campus-labs-leads" aria-labelledby="campus-leads-heading">
   <div class="container">
     <div class="ph-section-header">
@@ -82,7 +82,11 @@
       <a href="{{ site.baseurl }}/campus-labs/" class="btn btn-lg with-right-arrow module-button">About Campus Labs</a>
     </div>
     {% include ph/campus_islands.html %}
+    {%- if campus_count == 0 %}
+    <p class="ph-empty" data-show-when-all-empty="chapters-Luzon chapters-Visayas chapters-Mindanao">No Campus Labs are listed yet. See <a href="{{ site.baseurl }}/campus-labs/#start">how to start one</a>.</p>
+    {%- endif %}
+    {%- if campus_count > 0 %}
     <p class="ph-source">Compiled from the chapters' own public pages, the leads' public profiles, and PyTorch Philippines announcements (checked {{ campus.checked | date: "%B %-d, %Y" }}). Titles are shown as each source gives them. The list is not complete yet. Is your Campus Lab missing or out of date? {% if site.data.public_contacts.email %}Email <a href="mailto:{{ site.data.public_contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ site.data.public_contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
+    {%- endif %}
   </div>
 </section>
-{%- endif %}
