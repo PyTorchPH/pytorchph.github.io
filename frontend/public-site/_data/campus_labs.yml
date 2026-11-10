@@ -6,8 +6,9 @@
 #     and a university.
 #   - "National University Manila becomes the first-ever PyTorch Philippines Campus Labs recognized
 #     student organization", headed by Renz Jeric Viloria, "PyTorch Philippines Campus Labs Lead".
-#     That is the title shown for every lead (`title` below). The lead's own poster spells his name
-#     "Renz Jerik Viloria", which is used here.
+#     This is the only poster that gives a title, so only Renz has `role`; everyone else is shown as
+#     "Campus Labs" with their batch. His own poster spells his name "Renz Jerik Viloria", which is
+#     used here.
 #
 # Rules for entries:
 #   - `university` and `name` are the poster text. Only spacing around hyphens is made consistent
@@ -19,7 +20,6 @@
 #
 # Entries give way to chapters officers publish in the portal (/portal/admin/website/) for the same
 # university.
-title: Campus Labs Lead
 checked: 2026-11-10
 chapters:
   # Batch 1
@@ -82,9 +82,10 @@ chapters:
   - university: National University - Manila
     aliases: [National University, NU, NU Manila, National University Manila]
     island: Luzon
-    note: First recognized Campus Labs student organization
+    note: First-ever PyTorch Philippines Campus Labs recognized student organization
     leads:
       - name: Renz Jerik Viloria
+        role: Campus Labs Lead
         batch: 1
 
   - university: Graystone Institute of the Philippines

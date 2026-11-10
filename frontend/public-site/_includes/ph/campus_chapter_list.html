@@ -8,7 +8,8 @@
 {%- endcomment -%}
 {%- assign campus_source = include.items | default: site.data.campus_labs.chapters -%}
 {%- assign name_suffixes = "jr,sr,ii,iii,iv" | split: "," -%}
-{%- assign campus_title = site.data.campus_labs.title | default: "Campus Labs Lead" -%}
+{%- comment -%} The posters give a title only where `role` is set; everyone else is "Campus Labs". {%- endcomment -%}
+{%- assign campus_title = "Campus Labs" -%}
 {%- assign campus_items = campus_source | where: "island", include.island | sort: "university" -%}
 {%- for item in campus_items %}
 {%- capture card_attrs %} data-static-chapter="{{ item.university | escape }}" data-aliases="{{ item.aliases | join: '|' | escape }}" data-island="{{ item.island | escape }}"{% endcapture %}
