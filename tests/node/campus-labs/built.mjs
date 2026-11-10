@@ -64,18 +64,22 @@ function checkCards(page) {
 }
 
 for (const page of ["campus-labs/index.html", "about/index.html"]) checkCards(page);
-// On the Campus Labs page, every island group without a Campus Lab ("No Campus Lab yet") has its
-// own invite card, and the page has at least one such group today.
+// On the Campus Labs page, every island group with no entry in _data/campus_labs.yml (derived from
+// the data, not from the rendered page) has its own group with exactly one invite card.
 {
+  const data = readFileSync(resolve(site, "../_data/campus_labs.yml"), "utf8");
+  const listedIslands = new Set([...data.matchAll(/^\s+island:\s*(Luzon|Visayas|Mindanao)\b/gm)].map(match => match[1]));
+  const emptyIslands = ["Luzon", "Visayas", "Mindanao"].filter(island => !listedIslands.has(island));
   const { html, invites } = checkCards("campus-labs/index.html");
-  const emptyGroups = [...html.matchAll(/<div\b([^>]*)>\s*<h3\b[^>]*>[\s\S]*?<\/h3>\s*<div class="ph-lead-grid">([\s\S]*?)<\/div>\s*<\/div>/g)]
-    .filter(group => classList(group[1]).includes("ph-island") && /No Campus Lab yet/.test(group[0]));
-  assert.ok(emptyGroups.length > 0, "campus-labs: expected at least one island group without a Campus Lab");
-  for (const group of emptyGroups) {
-    const groupInvites = [...group[2].matchAll(/<a\b([^>]*)>/g)].filter(link => classList(link[1]).includes("ph-lead-invite"));
-    assert.equal(groupInvites.length, 1, "campus-labs: an island group without a Campus Lab must have its own invite card");
+  const groups = [...html.matchAll(/<div\b([^>]*)>\s*<h3\b[^>]*>\s*<span>(Luzon|Visayas|Mindanao)<\/span>[\s\S]*?<\/h3>\s*<div class="ph-lead-grid">([\s\S]*?)<\/div>\s*<\/div>/g)]
+    .filter(group => classList(group[1]).includes("ph-island"));
+  for (const island of emptyIslands) {
+    const group = groups.find(candidate => candidate[2] === island && /No Campus Lab yet/.test(candidate[0]));
+    assert.ok(group, `campus-labs: ${island} has no Campus Lab in the data but no "No Campus Lab yet" group`);
+    const groupInvites = [...group[3].matchAll(/<a\b([^>]*)>/g)].filter(link => classList(link[1]).includes("ph-lead-invite"));
+    assert.equal(groupInvites.length, 1, `campus-labs: ${island} must have its own invite card`);
   }
-  assert.equal(invites, emptyGroups.length, "campus-labs: one invite card per empty island group");
+  assert.equal(invites, emptyIslands.length, "campus-labs: one invite card per island group without a Campus Lab");
 }
 
 // Controlled fixture: one-word, spaced, markup-like, and entity-like names; markup in a
