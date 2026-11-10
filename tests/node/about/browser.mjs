@@ -70,7 +70,7 @@ async function assertAbout(page) {
   assert.equal(await page.locator("#campus-labs-leads article.ph-lead").count(), 26);
   // The total across island groups sits above them: every university and every person, once.
   assert.equal((await page.locator("#campus-labs-leads [data-campus-total]").textContent()).replace(/\s+/g, " ").trim(),
-    "26 universities 26 people across Luzon (19), the Visayas (3), and Mindanao (4)");
+    "26 universities and 26 people across Luzon (19), the Visayas (3), and Mindanao (4)");
   // Every portrait loads (lazy images are scrolled into view first).
   for (const selector of [".ph-ambassador-photo", "#campus-labs-leads .ph-lead-photo"]) {
     const images = page.locator(selector);

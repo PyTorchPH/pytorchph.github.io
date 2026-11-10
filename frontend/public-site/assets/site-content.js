@@ -209,7 +209,7 @@
       document.querySelectorAll(`[data-island-count="${island}"]`).forEach(node => { node.textContent = count ? `${count} ${count === 1 ? "university" : "universities"}` : ""; });
       document.querySelectorAll(`[data-island-total="${island}"]`).forEach(node => { node.textContent = String(count); });
       totalUniversities += count;
-      totalPeople += listedNodes.length + own.filter(row => row.leadName).length;
+      totalPeople += listedNodes.filter(node => !node.classList.contains("ph-lead-pending")).length + own.filter(row => row.leadName).length;
     }
     // The total across all island groups: universities count once each, people once per card.
     document.querySelectorAll("[data-campus-total]").forEach(node => { node.hidden = totalUniversities === 0; });

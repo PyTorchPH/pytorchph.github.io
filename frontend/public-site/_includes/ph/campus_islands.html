@@ -16,7 +16,7 @@
 {%- for item in campus.chapters %}{% assign people_count = people_count | plus: item.leads.size %}{% endfor -%}
 <p class="ph-campus-total" data-campus-total{% if campus_count == 0 %} hidden{% endif %}>
   <span class="ph-campus-total-figure"><strong data-campus-total-universities>{{ campus_count }}</strong> <span data-campus-total-universities-label>{% if campus_count == 1 %}university{% else %}universities{% endif %}</span></span>
-  <span class="ph-campus-total-figure"><strong data-campus-total-people>{{ people_count }}</strong> <span data-campus-total-people-label>{% if people_count == 1 %}person{% else %}people{% endif %}</span></span>
+  <span class="ph-campus-total-figure"><span class="ph-visually-hidden">and </span><strong data-campus-total-people>{{ people_count }}</strong> <span data-campus-total-people-label>{% if people_count == 1 %}person{% else %}people{% endif %}</span></span>
   <span class="ph-campus-total-split">across
     {%- for island in island_groups %}
     {%- assign in_island = campus.chapters | where: "island", island %}

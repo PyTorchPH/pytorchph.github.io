@@ -149,7 +149,7 @@ test("a university listed in the page gives way to the same university published
     <ul><li data-static-chapter="Example State University" data-aliases="ESU|Example State" data-island="Luzon">Example State University</li>
         <li data-static-chapter="Second Example College–North Campus" data-aliases="" data-island="Luzon">Second Example College</li>
         <li data-static-chapter="St. Mary's Example Institute" data-aliases="" data-island="Luzon">St. Mary's Example Institute</li>
-        <li data-static-chapter="Example Co-Op College" data-aliases="" data-island="Luzon">Example Co-Op College</li></ul>
+        <li class="ph-lead-pending" data-static-chapter="Example Co-Op College" data-aliases="" data-island="Luzon">Example Co-Op College</li></ul>
     <div data-site-content="chapters-Visayas"></div>`;
   const server = createServer((request, response) => {
     if (request.url === "/renderer.js") { response.setHeader("Content-Type", "application/javascript; charset=utf-8"); response.end(source); }
@@ -169,7 +169,8 @@ test("a university listed in the page gives way to the same university published
   assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 4");
   assert.equal(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), "");
   assert.match(await page.locator('[data-site-content="chapters-Visayas"]').textContent(), /No participating chapters/);
-  assert.deepEqual(await totals(page), ["4", "universities", "4", "people", "4"]);
+  // Every listed university counts; a listed university without a named lead adds no person.
+  assert.deepEqual(await totals(page), ["4", "universities", "3", "people", "4"]);
 
   state.chapters = [{ id: "c1", university: "example state university", chapter: "Published chapter", island: "Luzon", status: "active", leadName: "A published lead" }];
   state.revision = 2;
@@ -178,7 +179,7 @@ test("a university listed in the page gives way to the same university published
   assert.match(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), /Published chapter/);
   assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 4");
   // The total counts the university once and the published lead in place of the listed one.
-  assert.deepEqual(await totals(page), ["4", "universities", "4", "people", "4"]);
+  assert.deepEqual(await totals(page), ["4", "universities", "3", "people", "4"]);
   // A published chapter renders as the same person-first card: the lead, their role, then the
   // university, all under the island heading (h4, never h3).
   const card = page.locator('[data-site-content="chapters-Luzon"] article.ph-lead');
