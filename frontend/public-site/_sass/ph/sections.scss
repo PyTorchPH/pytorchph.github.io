@@ -949,11 +949,6 @@ section[tabindex="-1"]:focus {
   text-decoration: none;
   --ph-brand-height: 28px;
 
-  // Very narrow phones: the symbol stays at its 24px minimum.
-  @media (max-width: 359px) {
-    --ph-brand-height: 24px;
-  }
-
   @media (min-width: 420px) {
     --ph-brand-height: 32px;
   }
@@ -986,6 +981,20 @@ section[tabindex="-1"]:focus {
     letter-spacing: 0.2px;
     line-height: 1;
     white-space: nowrap;
+  }
+
+  // The symbol is 89% of the lockup's height, so 27px keeps it at the brand book's 24px minimum.
+  @media (max-width: 359px) {
+    --ph-brand-height: 27px;
+
+    .ph-brand-divider {
+      margin: 0 12px; // still wider than the wordmark "P" (11.7px at this size)
+    }
+
+    .ph-brand-name {
+      font-size: 14px;
+      letter-spacing: 0;
+    }
   }
 }
 

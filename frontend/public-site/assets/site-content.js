@@ -157,15 +157,22 @@
     }));
   }
 
-  // Universities listed in the page itself (_data/campus_labs.yml) give way to the same university
-  // once officers publish it, so a Campus Lab never appears twice.
+  // Entries listed in the page itself (_data/campus_labs.yml) give way to the same university once
+  // officers publish it, so a Campus Lab never appears twice. Names match without regard to case,
+  // accents, or punctuation, and through the aliases each listed entry declares.
+  function universityKey(value) { return String(value ?? "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
   function renderChapters(rows) {
-    const published = new Set(rows.map(row => String(row.university ?? "").trim().toLowerCase()).filter(Boolean));
-    document.querySelectorAll("[data-static-chapter]").forEach(node => { node.hidden = published.has(node.dataset.staticChapter.trim().toLowerCase()); });
+    const published = new Set(rows.map(row => universityKey(row.university)).filter(Boolean));
+    document.querySelectorAll("[data-static-chapter]").forEach(node => {
+      const names = [node.dataset.staticChapter, ...(node.dataset.aliases ?? "").split("|")].map(universityKey).filter(Boolean);
+      node.hidden = names.some(name => published.has(name));
+    });
     for (const island of ["Luzon", "Visayas", "Mindanao"]) {
       const listed = document.querySelectorAll(`[data-static-chapter][data-island="${island}"]:not([hidden])`).length;
       replace(`chapters-${island}`, rows.filter(row => row.island === island).map(row => {
-        const node = card(row.university, "ph-chapter");
+        // Chapters sit under an island heading (h3), like the listed entries.
+        const node = element("article", null, "ph-card ph-chapter");
+        node.append(element("h4", row.university));
         const photo = image(row.photoUrl, row.chapter);
         if (photo) node.prepend(photo);
         paragraph(node, "Chapter", row.chapter);

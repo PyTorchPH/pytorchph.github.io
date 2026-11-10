@@ -37,7 +37,7 @@ Empty states point to a next step. Lists loaded from the API sit in a wrapper wi
 | Blog post | add `_posts/YYYY-MM-DD-title.md`; use category `community` or `research` to also list it under News |
 | Learning path, materials, and open-source projects | `_data/learn.yml` (path stages match the program series names) |
 | PyTorch Foundation Ambassadors on `/about/#ambassadors` | Nothing by hand: `node scripts/fetch-ambassadors.mjs` copies the people the [official directory](https://pytorch.org/programs/ambassadors/) places in the Philippines, with their official photos and biographies, into `_data/ambassadors_directory.json` and `assets/images/ambassadors/`. It runs on every deploy and daily; a failed fetch keeps the committed snapshot. |
-| Campus Labs universities and leads | `_data/campus_labs.yml`, public sources only, each entry with its `sources`. A chapter published in the officer portal replaces the entry for the same university on `/campus-labs/`. |
+| Campus Labs leads and universities | `_data/campus_labs.yml`, public sources only, each entry with its `sources`; titles are quoted from the source. A chapter published in the officer portal replaces the entry for the same university on `/campus-labs/` and `/about/` (matched on the name or one of its `aliases`). The list is known to be incomplete. |
 | Mission and principles on `/about/` | `_data/community_identity.yml`, taken from the [organization profile](https://github.com/PyTorchPH) |
 | Sample code | `_includes/sample_code/*.py` |
 | People bios and social links | `_members/<first-last>.md`: `name`, optional `person_key` (`member:<64-hex token suffix from leadership.id>`), `link_github`, `link_linkedin`, `link_homepage`; the body is the bio. These enrich matching API-published people on `/about/`, not individual profile pages. |
@@ -83,14 +83,15 @@ PyTorch is a registered trademark of The Linux Foundation. This site follows the
 - **Do not alter the logo.** `assets/images/logo-pytorch-white.svg` is the official horizontal lockup,
   unmodified. The community name is separate text behind a divider (`_includes/ph/brand.html`), with
   at least one wordmark "P" of clear space. Never draw "Philippines" or anything else into a logo file.
-  `logo-ph.svg` and `logo-ph-dark.svg` (the old combined marks) remain only because unused upstream
-  styles and the portal reference them; do not use them in new work.
+  The old combined marks (`logo-ph.svg`, `logo-ph-dark.svg`) were removed from this site; the member
+  portal still ships its own copies under `/portal/brand/` and should be updated the same way.
 - **Attribution.** The footer carries the brand book's statement word for word: "PyTorch, the PyTorch
   logo and any related marks are trademarks of The Linux Foundation." The first prominent use of the
   name on the home page carries the ® symbol.
 - **No implied endorsement.** The footer and About page say the community is not affiliated with or
   otherwise sponsored by the PyTorch Foundation. Ambassadors are recognized as individuals.
-- **Symbol size and color.** Keep the symbol at 24px or larger on screen, in orange, white, black, or
+- **Symbol size and color.** Keep the symbol at 24px or larger on screen (the symbol is 89% of the
+  horizontal lockup's height, so the lockup is never shorter than 27px), in orange, white, black, or
   gray only, on a background with strong contrast. Use orange as an accent, not a fill.
 - **Needs written permission from the Foundation** (not something code can fix): the trademark policy
   and brand guidelines say not to use the name in a domain or organization name, and to ask before

@@ -48,8 +48,8 @@ hero_actions:
   <div class="container">
     <div class="ph-campus-map-grid">
       <div>
-        <h2 id="chapters-heading">Universities with a Campus Lab</h2>
-        <p class="ph-lede">Campus Labs and the people who lead them, by island group.</p>
+        <h2 id="chapters-heading">Campus Labs leads and universities</h2>
+        <p class="ph-lede">Campus Labs leads who have been announced or have a public profile, and the universities they come from, by island group.</p>
 
         {%- if campus.chapters.size == 0 %}
         <div class="ph-callout" data-show-when-all-empty="chapters-Luzon chapters-Visayas chapters-Mindanao">
@@ -58,22 +58,7 @@ hero_actions:
         </div>
         {%- endif %}
 
-        {%- for island in island_groups %}
-        {%- assign in_island = campus.chapters | where: "island", island %}
-        <div class="ph-island"{% if in_island.size == 0 %} data-hide-when-empty hidden{% endif %}>
-          <h3 id="campus-{{ island | downcase }}">{{ island }}</h3>
-          <div class="ph-managed-grid ph-chapter-grid" data-site-content="chapters-{{ island }}"></div>
-          {%- if in_island.size > 0 %}
-          {% include ph/campus_chapter_list.html island=island merge=true %}
-          {%- endif %}
-        </div>
-        {%- if in_island.size == 0 and campus.chapters.size > 0 %}
-        <div class="ph-callout ph-island" data-show-when-all-empty="chapters-{{ island }}">
-          <p>No Campus Lab in {% if island == "Visayas" %}the Visayas{% else %}{{ island }}{% endif %} yet.</p>
-          <p>Be the first: see <a href="#start">how to start a Campus Lab</a> below.</p>
-        </div>
-        {%- endif %}
-        {%- endfor %}
+        {% include ph/campus_islands.html callouts=true anchors=true %}
 
         <div class="ph-island" data-hide-when-empty hidden>
           <h3>Campus Labs leadership</h3>
@@ -81,7 +66,7 @@ hero_actions:
         </div>
 
         {%- if campus.chapters.size > 0 %}
-        <p class="ph-source">Compiled from the chapters' own public pages, the leads' public profiles, and PyTorch Philippines announcements (checked {{ campus.checked | date: "%B %-d, %Y" }}). Is your Campus Lab missing or out of date? {% if contacts.email %}Email <a href="mailto:{{ contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
+        <p class="ph-source">Compiled from the chapters' own public pages, the leads' public profiles, and PyTorch Philippines announcements (checked {{ campus.checked | date: "%B %-d, %Y" }}). Titles are shown as each source gives them. The list is not complete yet. Is your Campus Lab missing or out of date? {% if contacts.email %}Email <a href="mailto:{{ contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
         {%- endif %}
       </div>
       <div class="ph-archipelago-light">
@@ -94,7 +79,7 @@ hero_actions:
 <section class="ph-section" aria-labelledby="academia-heading">
   <div class="container">
     <h2 id="academia-heading">For educators and researchers</h2>
-    <p class="ph-lede">The PyTorch Foundation runs an <a href="https://github.com/pytorch-fdn/foundation-programs/blob/main/ospo-academic-outreach/README.md">OSPO &amp; Academic Outreach program</a> that connects PyTorch with academia through a webinar series and hands-on teaching materials. It is run by the Foundation, not by PyTorch Philippines, and is open to instructors and students everywhere.</p>
+    <p class="ph-lede">The PyTorch Foundation runs an <a href="https://github.com/pytorch-fdn/foundation-programs/blob/main/ospo-academic-outreach/README.md">OSPO &amp; Academic Outreach program</a> that connects PyTorch with academia through a webinar series and hands-on teaching materials for educators, students, and researchers. It is run by the Foundation, not by PyTorch Philippines.</p>
   </div>
 </section>
 

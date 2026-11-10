@@ -1,14 +1,12 @@
 {%- comment -%}
-  Campus Labs universities from _data/campus_labs.yml for one island group (include.island), or all
-  when include.island is empty. With include.merge (the Campus Labs page, which also shows chapters
-  published through the officer portal), each item carries data-static-chapter so site-content.js
-  can hide it when officers publish the same university.
+  Campus Labs entries from _data/campus_labs.yml for one island group (include.island). Each item
+  carries data-static-chapter (and data-aliases) so site-content.js can hide it when officers publish
+  the same university through the portal.
 {%- endcomment -%}
-{%- assign campus_items = site.data.campus_labs.chapters | sort: "university" -%}
-{%- if include.island %}{% assign campus_items = campus_items | where: "island", include.island %}{% endif -%}
+{%- assign campus_items = site.data.campus_labs.chapters | where: "island", include.island | sort: "university" -%}
 <ul class="ph-campus-list">
   {%- for item in campus_items %}
-  <li class="ph-campus"{% if include.merge %} data-static-chapter="{{ item.university | escape }}" data-island="{{ item.island | escape }}"{% endif %}>
+  <li class="ph-campus" data-static-chapter="{{ item.university | escape }}" data-aliases="{{ item.aliases | join: '|' | escape }}" data-island="{{ item.island | escape }}">
     <h4 class="ph-campus-name">{{ item.university | escape }}</h4>
     {%- if item.city %}<p class="ph-campus-place">{{ item.city | escape }}</p>{% endif %}
     {%- if item.leads %}

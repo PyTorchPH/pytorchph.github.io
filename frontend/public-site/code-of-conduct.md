@@ -29,10 +29,10 @@ space, report it to the organizers through the reporting form in the
 [member portal]({{ site.baseurl }}/portal/). Reports are reviewed confidentially, and organizers may
 take any action they consider appropriate, up to removal from community spaces.
 
-Concerns about PyTorch Foundation programs and events, including the conduct of a
-[PyTorch Foundation Ambassador](https://pytorch.org/programs/ambassadors/), can be reported directly to
-the PyTorch Foundation at [conduct@pytorch.org](mailto:conduct@pytorch.org), as described in the
-[PyTorch Foundation Code of Conduct]({{ site.external_urls.org_coc }}).
+The [PyTorch Foundation Code of Conduct]({{ site.external_urls.org_coc }}) covers the Foundation's
+outreach programs, including the [Ambassador Program](https://pytorch.org/programs/ambassadors/).
+Concerns about the conduct of a PyTorch Foundation Ambassador can also be reported directly to the
+Foundation at [conduct@pytorch.org](mailto:conduct@pytorch.org).
 
 PyTorch Foundation Ambassadors also comply with the Linux Foundation
 [antitrust policy](https://www.linuxfoundation.org/legal/antitrust-policy) as a requirement of the

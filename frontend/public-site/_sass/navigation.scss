@@ -49,7 +49,7 @@
 .header-logo {
   height: 40px;
   width: 2000px;
-  background-image: url($baseurl + "/assets/images/logo-ph-dark.svg");
+  background-image: url($baseurl + "/assets/images/logo-pytorch-white.svg");
   background-repeat: no-repeat;
   background-size: contain;
   display: block;
@@ -243,7 +243,7 @@
 .announcement-header,
 .mobile-header {
   .header-logo {
-    background-image: url($baseurl + "/assets/images/logo-ph.svg");
+    background-image: url($baseurl + "/assets/images/logo-dark.svg");
     background-size: contain;
     // top: -30px;
 
@@ -267,7 +267,7 @@
 
 .domains-header {
   .header-logo {
-    background-image: url($baseurl + "/assets/images/logo-ph-dark.svg");
+    background-image: url($baseurl + "/assets/images/logo-pytorch-white.svg");
     background-size: contain;
 
     @include desktop {

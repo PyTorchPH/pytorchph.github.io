@@ -1,7 +1,6 @@
 {%- assign identity = site.data.community_identity -%}
 {%- assign ambassadors = site.data.ambassadors_directory -%}
 {%- assign campus = site.data.campus_labs -%}
-{%- assign island_groups = "Luzon,Visayas,Mindanao" | split: "," -%}
 <section class="ph-section" aria-labelledby="about-heading">
   <div class="container">
     <h2 id="about-heading">About PyTorch Philippines</h2>
@@ -78,18 +77,12 @@
     <div class="ph-section-header">
       <div>
         <h2 id="campus-leads-heading">Campus Labs leads</h2>
-        <p>Campus Labs are the university communities of PyTorch Philippines. These are the universities with a Campus Lab and the people who lead them.</p>
+        <p>Campus Labs are the university communities of PyTorch Philippines. These are the Campus Labs leads who have been announced or have a public profile, and the universities they come from.</p>
       </div>
       <a href="{{ site.baseurl }}/campus-labs/" class="btn btn-lg with-right-arrow module-button">About Campus Labs</a>
     </div>
-    {%- for island in island_groups %}
-    {%- assign in_island = campus.chapters | where: "island", island %}
-    {%- if in_island.size > 0 %}
-    <h3 class="ph-island-heading">{{ island }}</h3>
-    {% include ph/campus_chapter_list.html island=island %}
-    {%- endif %}
-    {%- endfor %}
-    <p class="ph-source">Compiled from the chapters' own public pages, the leads' public profiles, and PyTorch Philippines announcements (checked {{ campus.checked | date: "%B %-d, %Y" }}). Is your Campus Lab missing or out of date? {% if site.data.public_contacts.email %}Email <a href="mailto:{{ site.data.public_contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ site.data.public_contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
+    {% include ph/campus_islands.html %}
+    <p class="ph-source">Compiled from the chapters' own public pages, the leads' public profiles, and PyTorch Philippines announcements (checked {{ campus.checked | date: "%B %-d, %Y" }}). Titles are shown as each source gives them. The list is not complete yet. Is your Campus Lab missing or out of date? {% if site.data.public_contacts.email %}Email <a href="mailto:{{ site.data.public_contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ site.data.public_contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
   </div>
 </section>
 {%- endif %}
