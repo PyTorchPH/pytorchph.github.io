@@ -86,9 +86,11 @@
     const upcoming = latestEvents.filter(row => isUpcomingSchedule(row, today)).sort(byStart);
     // Offer a series filter only for series that still have upcoming sessions.
     const activeSeries = new Set(upcoming.map(row => row.series).filter(Boolean));
+    const showFilters = activeSeries.size >= 2;
     seriesButtons().forEach(button => { if (button.dataset.eventSeries) button.hidden = !activeSeries.has(button.dataset.eventSeries); });
-    document.querySelectorAll("[data-event-filters]").forEach(group => { group.hidden = activeSeries.size < 2; });
-    if (selectedEventSeries() && !activeSeries.has(selectedEventSeries())) selectSeries("");
+    document.querySelectorAll("[data-event-filters]").forEach(group => { group.hidden = !showFilters; });
+    // A hidden or emptied filter must never keep excluding published events.
+    if (!showFilters || (selectedEventSeries() && !activeSeries.has(selectedEventSeries()))) selectSeries("");
     const series = selectedEventSeries();
     const shown = upcoming.filter(row => !series || row.series === series);
     replace("events", shown.map(eventCard), series ? "No upcoming events match this learning series." : "No upcoming programs are published right now. New sessions are announced here and on our community pages.");
@@ -98,7 +100,8 @@
   function renderPastSessions(today) {
     const earliest = new Date(today.getTime() - PAST_SESSION_DAYS * 86400000);
     const past = latestEvents
-      .filter(row => row.dateStatus === "confirmed" && /^\d{4}-\d{2}-\d{2}$/.test(row.startsAt) && !isUpcomingSchedule(row, today) && scheduleEnd(row) >= earliest)
+      // Exact dates only: a date ("2026-10-25") or a timestamp ("2026-10-25T08:00:00Z"), never a month.
+      .filter(row => row.dateStatus === "confirmed" && !/^\d{4}-\d{2}$/.test(row.startsAt) && scheduleEnd(row) && !isUpcomingSchedule(row, today) && scheduleEnd(row) >= earliest)
       .sort((a, b) => byStart(b, a));
     replace("events-past", past.map(row => {
       const item = element("li");

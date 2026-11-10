@@ -773,3 +773,8 @@ button.main-menu-close-button {
     color: $ph_muted;
   }
 }
+
+// Sections that receive focus programmatically (after an in-page menu link) need no focus ring.
+section[tabindex="-1"]:focus {
+  outline: none;
+}

@@ -19,9 +19,19 @@ var mobileMenu = {
       mobileMenu.close();
     });
 
-    // Following an in-page link (for example /#events while on the home page) closes the menu.
+    // Following an in-page link (for example /#events while on the home page) closes the menu and
+    // moves focus to the destination, so keyboard users do not stay on a link inside the hidden menu.
+    // Links to other pages navigate normally.
     $menu.on("click", "a[href*='#']", function() {
+      var url = new URL(this.href, window.location.href);
+      if (url.pathname !== window.location.pathname || url.hash.length < 2) return;
       mobileMenu.close(false);
+      var target = document.getElementById(decodeURIComponent(url.hash.slice(1)));
+      if (!target) return;
+      window.setTimeout(function() {
+        if (!target.matches("a[href], button, input, select, textarea, [tabindex]")) target.setAttribute("tabindex", "-1");
+        target.focus({ preventScroll: true });
+      }, 0);
     });
 
     $(document).on("keydown", function(e) {

@@ -1,0 +1,87 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { createServer } from "node:http";
+import { chromium } from "playwright";
+
+// Runs the production renderer against isolated published data; never the live API.
+const FILTER_MARKUP = `
+  <div role="group" data-event-filters hidden>
+    <button type="button" aria-pressed="true" data-event-series="">All programs</button>
+    <button type="button" aria-pressed="false" data-event-series="Series A">A</button>
+    <button type="button" aria-pressed="false" data-event-series="Series B">B</button>
+  </div>
+  <div data-site-content="events"></div>
+  <div class="past" data-hide-when-empty hidden><ul data-site-content="events-past"></ul></div>`;
+
+async function rendererPage(t, state) {
+  const source = await readFile(new URL("../../frontend/public-site/assets/site-content.js", import.meta.url), "utf8");
+  const server = createServer((request, response) => {
+    if (request.url === "/renderer.js") { response.setHeader("Content-Type", "application/javascript"); response.end(source); }
+    else if (request.url === "/defaults") { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ leadership: [], chapters: [], articles: [], events: [] })); }
+    else if (request.url === "/content") { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ revision: state.revision, document: { leadership: [], chapters: [], articles: [], events: state.events }, officialPytorchNews: [] })); }
+    else { response.setHeader("Content-Type", "text/html"); response.end(`<!doctype html><body>${FILTER_MARKUP}<script src="/renderer.js" data-api="/content" data-defaults="/defaults"></script></body>`); }
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const executablePath = process.env.BROWSER_EXECUTABLE_PATH ?? ["C:/Program Files/Google/Chrome/Application/chrome.exe", "/usr/bin/chromium", "/usr/bin/google-chrome"].find(existsSync);
+  const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
+  t.after(async () => { await browser.close(); await new Promise(resolve => server.close(resolve)); });
+  const page = await browser.newPage({ timezoneId: "Asia/Manila" });
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.clock.setFixedTime(new Date("2099-06-15T04:00:00Z"));
+  await page.goto(`http://127.0.0.1:${server.address().port}`);
+  await page.waitForFunction(value => document.documentElement.dataset.siteContentRevision === String(value), state.revision);
+  return { page, errors };
+}
+
+async function refresh(page, revision) {
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await page.waitForFunction(value => document.documentElement.dataset.siteContentRevision === String(value), revision);
+}
+
+const titles = page => page.locator('[data-site-content="events"] h3').allTextContents();
+
+test("a selected series is cleared when the filter hides, so no published event stays excluded", async t => {
+  const state = { revision: 1, events: [
+    { id: "a", title: "Series A session", series: "Series A", startsAt: "2099-07-01", dateStatus: "confirmed" },
+    { id: "b", title: "Series B session", series: "Series B", startsAt: "2099-07-02", dateStatus: "confirmed" },
+    { id: "loose", title: "Ungrouped session", startsAt: "2099-07-03", dateStatus: "confirmed" },
+  ] };
+  const { page, errors } = await rendererPage(t, state);
+  assert.equal(await page.locator("[data-event-filters]").isVisible(), true);
+  await page.getByRole("button", { name: "A", exact: true }).click();
+  assert.deepEqual(await titles(page), ["Series A session"]);
+
+  // Series B is withdrawn: one series remains, so the filter hides and must stop filtering.
+  state.events = state.events.filter(row => row.id !== "b");
+  state.revision = 2;
+  await refresh(page, 2);
+  assert.equal(await page.locator("[data-event-filters]").isVisible(), false);
+  assert.equal(await page.locator('[data-event-series=""]').getAttribute("aria-pressed"), "true");
+  assert.deepEqual(await titles(page), ["Series A session", "Ungrouped session"]);
+  assert.deepEqual(errors, []);
+});
+
+test("past sessions list recent exact dates and timestamps, never months or old sessions", async t => {
+  const state = { revision: 1, events: [
+    { id: "upcoming", title: "Upcoming session", startsAt: "2099-07-01", dateStatus: "confirmed" },
+    { id: "day", title: "Date-only session", startsAt: "2099-06-01", scheduleLabel: "June 1, 2099", dateStatus: "confirmed" },
+    { id: "stamp", title: "Timestamp session", startsAt: "2099-06-10T08:00:00Z", dateStatus: "confirmed" },
+    { id: "month", title: "Month-only session", startsAt: "2099-05", dateStatus: "confirmed" },
+    { id: "tentative", title: "Tentative past session", startsAt: "2099-06-05", dateStatus: "tentative" },
+    { id: "old", title: "Old session", startsAt: "2098-12-01", dateStatus: "confirmed" },
+  ] };
+  const { page, errors } = await rendererPage(t, state);
+  assert.deepEqual(await titles(page), ["Upcoming session"]);
+  const past = await page.locator('[data-site-content="events-past"] .ph-past-title').allTextContents();
+  assert.deepEqual(past, ["Timestamp session", "Date-only session"]);
+  assert.equal(await page.locator(".past").isVisible(), true);
+
+  state.events = state.events.filter(row => row.id === "upcoming");
+  state.revision = 2;
+  await refresh(page, 2);
+  assert.equal(await page.locator(".past").isVisible(), false);
+  assert.deepEqual(errors, []);
+});
