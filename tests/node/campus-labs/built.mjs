@@ -64,8 +64,19 @@ function checkCards(page) {
 }
 
 for (const page of ["campus-labs/index.html", "about/index.html"]) checkCards(page);
-// The real Campus Labs page has an island group without a Campus Lab, so it shows the invite card.
-assert.ok(checkCards("campus-labs/index.html").invites > 0, "campus-labs: the invite card for an empty island group is missing");
+// On the Campus Labs page, every island group without a Campus Lab ("No Campus Lab yet") has its
+// own invite card, and the page has at least one such group today.
+{
+  const { html, invites } = checkCards("campus-labs/index.html");
+  const emptyGroups = [...html.matchAll(/<div\b([^>]*)>\s*<h3\b[^>]*>[\s\S]*?<\/h3>\s*<div class="ph-lead-grid">([\s\S]*?)<\/div>\s*<\/div>/g)]
+    .filter(group => classList(group[1]).includes("ph-island") && /No Campus Lab yet/.test(group[0]));
+  assert.ok(emptyGroups.length > 0, "campus-labs: expected at least one island group without a Campus Lab");
+  for (const group of emptyGroups) {
+    const groupInvites = [...group[2].matchAll(/<a\b([^>]*)>/g)].filter(link => classList(link[1]).includes("ph-lead-invite"));
+    assert.equal(groupInvites.length, 1, "campus-labs: an island group without a Campus Lab must have its own invite card");
+  }
+  assert.equal(invites, emptyGroups.length, "campus-labs: one invite card per empty island group");
+}
 
 // Controlled fixture: one-word, spaced, markup-like, and entity-like names; markup in a
 // university and an alias.
