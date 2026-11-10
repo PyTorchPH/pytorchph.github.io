@@ -24,20 +24,28 @@ function read(page) {
 // read only up to its own </article>, and every badge on the page must sit inside a recognized
 // card or the "start the first one" invite link.
 const classList = attributes => (/(?:^|\s)class="([^"]*)"/.exec(attributes)?.[1] ?? "").split(/\s+/).filter(Boolean);
-const BADGE = /<span\b[^>]*\sclass="[^"]*\bph-lead-badge\b[^"]*"[^>]*>([^<]*)<\/span>/g;
+// Elements are recognized by an exact class token, so a renamed class (ph-lead-badge-small)
+// does not count.
+const withClass = (html, tag, token) => [...html.matchAll(new RegExp(`<${tag}\\b([^>]*)>([^<]*)<\\/${tag}>`, "g"))].filter(match => classList(match[1]).includes(token));
+const badgesIn = html => withClass(html, "span", "ph-lead-badge");
 function cards(html, page) {
   const found = [...html.matchAll(/<article\b([^>]*)>([\s\S]*?)<\/article>/g)]
     .filter(article => classList(article[1]).includes("ph-lead"));
   const invites = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].filter(link => classList(link[1]).includes("ph-lead-invite"));
-  const badgesInside = [...found, ...invites].reduce((total, element) => total + [...element[2].matchAll(BADGE)].length, 0);
-  assert.equal([...html.matchAll(BADGE)].length, badgesInside, `${page}: a badge outside a recognized card`);
+  for (const invite of invites) {
+    const badge = badgesIn(invite[2]);
+    assert.equal(badge.length, 1, `${page}: the invite card must have exactly one badge`);
+    assert.equal(badge[0][2], "+", `${page}: the invite badge must read "+"`);
+  }
+  const badgesInside = [...found, ...invites].reduce((total, element) => total + badgesIn(element[2]).length, 0);
+  assert.equal(badgesIn(html).length, badgesInside, `${page}: a badge outside a recognized card`);
   return found.map((article, index) => {
     const body = article[2];
-    const badges = [...body.matchAll(BADGE)];
-    const name = /<h4\b[^>]*\sclass="[^"]*\bph-lead-name\b[^"]*"[^>]*>([^<]*)<\/h4>/.exec(body);
+    const badges = badgesIn(body);
+    const names = withClass(body, "h4", "ph-lead-name");
     assert.equal(badges.length, 1, `${page}: card ${index + 1} must have exactly one badge`);
-    assert.ok(name, `${page}: card ${index + 1} has no name`);
-    return { classes: classList(article[1]).join(" "), attributes: article[1], badge: badges[0][1], name: name[1], body };
+    assert.equal(names.length, 1, `${page}: card ${index + 1} must have exactly one name`);
+    return { classes: classList(article[1]).join(" "), attributes: article[1], badge: badges[0][2], name: names[0][2], body };
   });
 }
 
@@ -51,10 +59,12 @@ function checkCards(page) {
     if (card.classes.includes("ph-lead-pending")) assert.equal(card.badge, "", `${page}: pending card has a badge`);
     else assert.equal(decode(card.badge), initials(decode(card.name)), `${page}: badge for ${decode(card.name)}`);
   }
-  return { html, all };
+  return { html, all, invites: (html.match(/ph-lead-invite/g) ?? []).length };
 }
 
 for (const page of ["campus-labs/index.html", "about/index.html"]) checkCards(page);
+// The real Campus Labs page has an island group without a Campus Lab, so it shows the invite card.
+assert.ok(checkCards("campus-labs/index.html").invites > 0, "campus-labs: the invite card for an empty island group is missing");
 
 // Controlled fixture: one-word, spaced, markup-like, and entity-like names; markup in a
 // university and an alias.
