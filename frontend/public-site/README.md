@@ -36,7 +36,9 @@ Empty states point to a next step. Lists loaded from the API sit in a wrapper wi
 | Events and learning programs | the officer portal (`/portal/admin/website/`); see `_events/README.md` |
 | Blog post | add `_posts/YYYY-MM-DD-title.md`; use category `community` or `research` to also list it under News |
 | Learning path, materials, and open-source projects | `_data/learn.yml` (path stages match the program series names) |
-| PyTorch Foundation Ambassadors on `/about/#ambassadors` | `_data/ambassadors.yml`, copied from the [official directory](https://pytorch.org/programs/ambassadors/); update `checked` |
+| PyTorch Foundation Ambassadors on `/about/#ambassadors` | Nothing by hand: `node scripts/fetch-ambassadors.mjs` copies the people the [official directory](https://pytorch.org/programs/ambassadors/) places in the Philippines, with their official photos and biographies, into `_data/ambassadors_directory.json` and `assets/images/ambassadors/`. It runs on every deploy and daily; a failed fetch keeps the committed snapshot. |
+| Campus Labs universities and leads | `_data/campus_labs.yml`, public sources only, each entry with its `sources`. A chapter published in the officer portal replaces the entry for the same university on `/campus-labs/`. |
+| Mission and principles on `/about/` | `_data/community_identity.yml`, taken from the [organization profile](https://github.com/PyTorchPH) |
 | Sample code | `_includes/sample_code/*.py` |
 | People bios and social links | `_members/<first-last>.md`: `name`, optional `person_key` (`member:<64-hex token suffix from leadership.id>`), `link_github`, `link_linkedin`, `link_homepage`; the body is the bio. These enrich matching API-published people on `/about/`, not individual profile pages. |
 | Page hero | front matter `hero_kicker` (a short Filipino phrase), `hero_kicker_meaning`, `hero_title`, `hero_lead`, `hero_actions`; layout `ph` or `ph_article` |
@@ -67,8 +69,33 @@ defaults, preserving its original biographies for About metadata. Three declarat
 PyTorch Foundation Ambassadors redirect to `/about/#ambassadors`. The stubs are excluded from the sitemap.
 
 The `#ambassadors` section is separate from the API-owned team directory. It lists only people the
-PyTorch Foundation's ambassador directory places in the Philippines, as text with links to their public
-profiles and no portraits, and cites the directory with the date it was checked.
+PyTorch Foundation's ambassador directory places in the Philippines, with the portraits and biographies
+the Foundation publishes there, and cites the directory with the date it was checked. A person who
+leaves the directory leaves this section (and their portrait is deleted) on the next deploy.
+
+## PyTorch brand and trademark rules
+
+PyTorch is a registered trademark of The Linux Foundation. This site follows the
+[Linux Foundation trademark usage policy](https://www.linuxfoundation.org/legal/trademark-usage), the
+[PyTorch brand guidelines](https://pytorch.org/brand-guidelines/), and the brand book in
+[pytorch-fdn/artwork](https://github.com/pytorch-fdn/artwork):
+
+- **Do not alter the logo.** `assets/images/logo-pytorch-white.svg` is the official horizontal lockup,
+  unmodified. The community name is separate text behind a divider (`_includes/ph/brand.html`), with
+  at least one wordmark "P" of clear space. Never draw "Philippines" or anything else into a logo file.
+  `logo-ph.svg` and `logo-ph-dark.svg` (the old combined marks) remain only because unused upstream
+  styles and the portal reference them; do not use them in new work.
+- **Attribution.** The footer carries the brand book's statement word for word: "PyTorch, the PyTorch
+  logo and any related marks are trademarks of The Linux Foundation." The first prominent use of the
+  name on the home page carries the ® symbol.
+- **No implied endorsement.** The footer and About page say the community is not affiliated with or
+  otherwise sponsored by the PyTorch Foundation. Ambassadors are recognized as individuals.
+- **Symbol size and color.** Keep the symbol at 24px or larger on screen, in orange, white, black, or
+  gray only, on a background with strong contrast. Use orange as an accent, not a fill.
+- **Needs written permission from the Foundation** (not something code can fix): the trademark policy
+  and brand guidelines say not to use the name in a domain or organization name, and to ask before
+  using the logo on a website. Confirm permission for `pytorch.ph`, the name "PyTorch Philippines", and
+  logo use with marketing@pytorch.org / trademarks@linuxfoundation.org, and keep the reply on file.
 
 ## Accessibility
 

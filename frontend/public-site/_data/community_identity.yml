@@ -3,7 +3,18 @@ description: >-
   A nationwide, community-driven network connecting researchers, universities,
   students, industry and government professionals, startups, and developers
   across Luzon, Visayas, and Mindanao to learn, collaborate, innovate, and build
-  with PyTorch.
+  with PyTorch®.
+# Mission and principles are the organization's own statements (github.com/PyTorchPH profile).
+mission: >-
+  Make practical machine learning education and collaboration more accessible throughout the
+  Philippines.
+principles:
+  - Openness
+  - Integrity
+  - Inclusion
+  - Collaboration
+  - Continuous Learning
+  - Responsible Innovation
 # The About page narrative. Keep statements verifiable: no statistics without a cited source.
 about:
   - heading: Open source powers AI innovation

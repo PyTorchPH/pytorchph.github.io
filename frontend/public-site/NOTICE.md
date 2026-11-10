@@ -10,3 +10,10 @@ content (blog translations, members, Korean model hub, and its code of conduct) 
 
 The Philippine archipelago artwork is generated from [Natural Earth](https://www.naturalearthdata.com/)
 1:50m country outlines, which are in the public domain.
+
+PyTorch Foundation Ambassador names, biographies, and portraits come from the official ambassador
+directory in [`pytorch-fdn/ambassador-program`](https://github.com/pytorch-fdn/ambassador-program)
+(Apache License 2.0) and are refreshed from it on every build.
+
+PyTorch, the PyTorch logo and any related marks are trademarks of The Linux Foundation, used under the
+[Linux Foundation trademark usage policy](https://www.linuxfoundation.org/legal/trademark-usage).

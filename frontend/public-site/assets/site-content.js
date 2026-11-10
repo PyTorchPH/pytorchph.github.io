@@ -157,8 +157,13 @@
     }));
   }
 
+  // Universities listed in the page itself (_data/campus_labs.yml) give way to the same university
+  // once officers publish it, so a Campus Lab never appears twice.
   function renderChapters(rows) {
+    const published = new Set(rows.map(row => String(row.university ?? "").trim().toLowerCase()).filter(Boolean));
+    document.querySelectorAll("[data-static-chapter]").forEach(node => { node.hidden = published.has(node.dataset.staticChapter.trim().toLowerCase()); });
     for (const island of ["Luzon", "Visayas", "Mindanao"]) {
+      const listed = document.querySelectorAll(`[data-static-chapter][data-island="${island}"]:not([hidden])`).length;
       replace(`chapters-${island}`, rows.filter(row => row.island === island).map(row => {
         const node = card(row.university, "ph-chapter");
         const photo = image(row.photoUrl, row.chapter);
@@ -167,8 +172,8 @@
         paragraph(node, "Lead", row.leadName);
         paragraph(node, "Status", humanize(row.status));
         return node;
-      }), "No participating chapters published yet.");
-      const count = counts.get(`chapters-${island}`);
+      }), listed ? "" : "No participating chapters published yet.");
+      const count = counts.get(`chapters-${island}`) + listed;
       document.querySelectorAll(`[data-chapter-count="${island}"]`).forEach(node => { node.textContent = count ? `· ${count}` : ""; });
     }
   }

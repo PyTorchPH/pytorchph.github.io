@@ -63,6 +63,7 @@ jobs:
           cp node_modules/bootstrap/dist/js/bootstrap.bundle.min.js assets/vendor/bootstrap.min.js
           node scripts/prepare-site-content.mjs
           node scripts/fetch-pytorch-news.mjs
+          node scripts/fetch-ambassadors.mjs
           bundle exec jekyll build
 
       - name: Assemble the Pages artifact

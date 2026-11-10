@@ -1,0 +1,111 @@
+# Campus Labs universities and their leads, from public sources only. Each entry records where it was
+# verified; `sources` is for maintainers and is not shown on the site. Do not add an entry without a
+# public source, and re-check the sources before editing. People are listed by name and role only
+# (no photos or contact details).
+#
+# These entries are the public record until officers publish chapters in the officer portal
+# (/portal/admin/website/). A chapter published there for the same university replaces the entry here
+# on the Campus Labs page (matched on the `university` name, ignoring case).
+#
+# Source keys:
+#   chapter-page   the chapter's own public page (first-party)
+#   lead-profile   the lead's own public profile states the role (first-party)
+#   fireside-2026  PyTorch Philippines announcement of the fireside chat "with PyTorch Campus Labs
+#                  Leads" (LinkedIn, about May 2026). Read through a search index, not the post itself:
+#                  confirm spellings with the people named before relying on them.
+checked: 2026-11-10
+chapters:
+  - university: Bulacan State University
+    city: City of Malolos, Bulacan
+    island: Luzon
+    leads:
+      - name: Ellah Benerado
+        role: Campus Labs Lead
+    sources:
+      - lead-profile https://github.com/letsellahvate/letsellahvate
+      - fireside-2026
+
+  - university: FEU Institute of Technology
+    city: Manila
+    island: Luzon
+    chapter: PyTorch FEU Tech Chapter
+    url: https://github.com/PyTorch-FEU-Tech-Chapter
+    leads:
+      - name: John Andrew Balbarosa
+        role: Campus Labs Lead
+    sources:
+      - chapter-page https://github.com/PyTorch-FEU-Tech-Chapter
+      - lead-profile https://github.com/JohnAndrewBalbarosa/JohnAndrewBalbarosa
+      - fireside-2026
+
+  - university: Graystone Institute of the Philippines
+    island: Luzon # only a Pangasinan branch is on public record (TESDA); confirm the campus
+    leads:
+      - name: Mile Ruth Cabalde
+        role: Campus Labs Lead
+    sources:
+      - fireside-2026
+
+  - university: National University
+    city: Manila
+    island: Luzon
+    leads:
+      - name: Renz Viloria
+        role: Campus Labs Lead
+    sources:
+      - fireside-2026
+
+  - university: Pampanga State University
+    city: Bacolor, Pampanga
+    island: Luzon
+    chapter: PyTorch Philippines Campus Labs, Pampanga State University Chapter
+    url: https://github.com/PyTorch-PH-Campus-Labs-PamSU-Chapter
+    leads:
+      - name: Francis Gian A. Lising
+        role: Chapter Director
+    sources:
+      - chapter-page https://github.com/PyTorch-PH-Campus-Labs-PamSU-Chapter
+
+  - university: Philippine Christian University
+    city: Manila
+    island: Luzon
+    leads:
+      - name: John Carl Santos
+        role: Campus Labs Lead
+    sources:
+      - fireside-2026
+
+  - university: Polytechnic University of the Philippines
+    city: Manila
+    island: Luzon
+    leads:
+      - name: John Paul M. Curada
+        role: Campus Labs Lead
+    sources:
+      - fireside-2026
+
+  - university: Technological Institute of the Philippines
+    city: Manila
+    island: Luzon
+    leads:
+      - name: Alvin Dellomas
+        role: Campus Labs Lead
+    sources:
+      - lead-profile https://github.com/Alvin187187/Alvin187187
+
+  - university: Mindanao State University, Main Campus
+    city: Marawi City, Lanao del Sur
+    island: Mindanao
+    chapter: PyTorch MSU Main Campus Lab
+    url: https://github.com/PyTorch-MSU-Main-Campus-Lab
+    sources:
+      - chapter-page https://github.com/PyTorch-MSU-Main-Campus-Lab
+
+  - university: Mindanao State University–Iligan Institute of Technology
+    city: Iligan City, Lanao del Norte
+    island: Mindanao
+    leads:
+      - name: Hannah Hontiveros
+        role: Campus Labs Lead
+    sources:
+      - lead-profile https://github.com/snowflower204/port-app

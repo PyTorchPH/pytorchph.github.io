@@ -2,7 +2,7 @@ SHELL := /bin/bash
 VENDOR_DIR = assets/vendor/
 JEKYLL := bundle exec jekyll
 
-.PHONY: install vendor content news build serve
+.PHONY: install vendor content news ambassadors build serve
 
 install:
 	bundle install
@@ -19,8 +19,11 @@ news:
 content:
 	node scripts/prepare-site-content.mjs
 
-build: install vendor content news
+ambassadors:
+	node scripts/fetch-ambassadors.mjs
+
+build: install vendor content news ambassadors
 	JEKYLL_ENV=production $(JEKYLL) build
 
-serve: install vendor content news
+serve: install vendor content news ambassadors
 	JEKYLL_ENV=development $(JEKYLL) serve --incremental

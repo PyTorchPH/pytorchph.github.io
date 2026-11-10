@@ -1,0 +1,31 @@
+{
+  "source": "https://raw.githubusercontent.com/pytorch-fdn/ambassador-program/main/doc/ambassadors.json",
+  "checked": "2026-11-10",
+  "people": [
+    {
+      "id": "alpha-romer-coma",
+      "name": "Alpha Romer Coma",
+      "location": "Philippines",
+      "region": "Asia",
+      "bio": [
+        "Alpha Romer Coma is an ML Engineer and Co-Founder of Experimental Intelligence, an independent AI research org in the Philippines. His focus is on AI accelerators (TPUs, Trainium, and Qualcomm and MediaTek NPUs) and edge inference with ExecuTorch.",
+        "A speaker at PyTorch Conference Europe 2026 and GitHub Universe, AWS Community Builder, and GitHub Campus Expert, he has organized and spoken at more than 30 community events across the Philippines. As a PyTorch Foundation Ambassador, he is launching monthly in-person events in Manila focused on frontier ML."
+      ],
+      "photo": "/assets/images/ambassadors/alpha-romer-coma.jpg",
+      "github": "https://github.com/alpharomercoma",
+      "linkedin": "https://www.linkedin.com/in/alpharomercoma"
+    },
+    {
+      "id": "giorgio-armani-magno",
+      "name": "Giorgio Armani Magno",
+      "location": "Pasay City, Philippines",
+      "region": "",
+      "bio": [
+        "He is a Data Scientist in the Philippines. He began his career in the real estate industry as an Assistant Data Scientist at Megaworld Corporation, and after almost a year, he progressed from an entry to specialist level Data Scientist at Semirara Mining and Power Corporation, the Philippines' largest coal producer. He also works part-time as a Data Science Specialist Instructor at CIIT College of Arts and Technology. As a Bachelor of Science in Computer Science graduate, he proudly represented the Philippines in the 2019 ICDL Asia Digital Challenge in Kuala Lumpur, Malaysia, winning third place. He envisions contributing further to the tech community's growth and innovation through his channel, GioData."
+      ],
+      "photo": "/assets/images/ambassadors/giorgio-armani-magno.jpg",
+      "github": "https://github.com/ggiorgioarmanim",
+      "linkedin": "https://www.linkedin.com/in/giorgioarmanimagno"
+    }
+  ]
+}

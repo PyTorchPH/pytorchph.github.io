@@ -135,3 +135,39 @@ test("changing the series list keeps the focused button and selection, and a wit
   assert.deepEqual(await titles(page), ["Series D session", "Series A session", "Series C session"]);
   assert.deepEqual(errors, []);
 });
+
+test("a university listed in the page gives way to the same university published by officers", async t => {
+  const source = await readFile(new URL("../../frontend/public-site/assets/site-content.js", import.meta.url), "utf8");
+  const state = { revision: 1, chapters: [] };
+  const markup = `
+    <span data-chapter-count="Luzon"></span><span data-chapter-count="Visayas"></span>
+    <div data-site-content="chapters-Luzon"></div>
+    <ul><li data-static-chapter="Example State University" data-island="Luzon">Example State University</li>
+        <li data-static-chapter="Second Example College" data-island="Luzon">Second Example College</li></ul>
+    <div data-site-content="chapters-Visayas"></div>`;
+  const server = createServer((request, response) => {
+    if (request.url === "/renderer.js") { response.setHeader("Content-Type", "application/javascript; charset=utf-8"); response.end(source); }
+    else if (request.url === "/defaults") { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ leadership: [], chapters: [], articles: [], events: [] })); }
+    else if (request.url === "/content") { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ revision: state.revision, document: { leadership: [], chapters: state.chapters, articles: [], events: [] }, officialPytorchNews: [] })); }
+    else { response.setHeader("Content-Type", "text/html; charset=utf-8"); response.end(`<!doctype html><meta charset="utf-8"><body>${markup}<script src="/renderer.js" data-api="/content" data-defaults="/defaults"></script></body>`); }
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const executablePath = process.env.BROWSER_EXECUTABLE_PATH ?? ["C:/Program Files/Google/Chrome/Application/chrome.exe", "/usr/bin/chromium", "/usr/bin/google-chrome"].find(existsSync);
+  const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
+  t.after(async () => { await browser.close(); await new Promise(resolve => server.close(resolve)); });
+  const page = await browser.newPage();
+  await page.goto(`http://127.0.0.1:${server.address().port}`);
+  await page.waitForFunction(() => document.documentElement.dataset.siteContentRevision === "1");
+  // Nothing published: both listed universities show, are counted, and no empty message appears beside them.
+  assert.equal(await page.locator("[data-static-chapter]:visible").count(), 2);
+  assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 2");
+  assert.equal(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), "");
+  assert.match(await page.locator('[data-site-content="chapters-Visayas"]').textContent(), /No participating chapters/);
+
+  state.chapters = [{ id: "c1", university: "example state university", chapter: "Published chapter", island: "Luzon", status: "active", leadName: "A published lead" }];
+  state.revision = 2;
+  await refresh(page, 2);
+  assert.deepEqual(await page.locator("[data-static-chapter]:visible").allTextContents(), ["Second Example College"]);
+  assert.match(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), /Published chapter/);
+  assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 2");
+});
