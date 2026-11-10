@@ -1,13 +1,24 @@
-# Photos used on the site that were not made by PyTorch Philippines, with what their license asks
-# for. Each entry is credited in the footer of every page that shows it (see _includes/footer.html).
+# Photos used on the site that were not made by PyTorch Philippines, with what their licenses ask
+# for. Every page that shows one credits it in its footer (_includes/footer.html), and
+# `npm run test:hero-photo:built` checks that.
 #
-# manila_post_office: the home page hero background (front matter `hero_photo: manila_post_office`).
-#   Source checked 2026-11-10 on Wikimedia Commons: "Self-photographed" by Junwiki21 on
-#   2018-12-04, licensed CC BY-SA 4.0. The building is tagged {{PD-Philippines-FoP work}} there.
-#   Original file SHA-1 f18a4ac27609e8851792ab1918fc5c14c0e951f9 (4144 × 2748).
-#   Our copies (assets/images/manila-post-office-night.jpg, 2000 px wide, and
-#   manila-post-office-night-1000.jpg) keep 12–88% of the original's height, are converted to
-#   black and white, and carry no metadata. As adaptations, they are shared under CC BY-SA 4.0 too.
+# The home page hero crossfades these photos in the order of `hero_photos:` in index.html's front
+# matter (see _includes/ph/hero.html and assets/hero-slides.js).
+#
+# All four were checked on Wikimedia Commons on 2026-11-10: author, license, and the copyright
+# status of the place shown (the Philippines has no freedom of panorama, so a recent building or
+# monument could still be under copyright; none of these is). `sha1` is the original file's SHA-1
+# as Commons reports it; our downloads matched it.
+#
+# Our copies in assets/images/hero/ are cropped (a 2:1 `image` for wide screens and a 3:4
+# `image_portrait` for phones), resized, converted to black and white, and carry no metadata.
+# Adaptations of CC BY-SA photos are shared under CC BY-SA 4.0 as well.
+#
+# Fields: title, author, author_url, attribution (how the author asks to be credited, if they say),
+# source_url, license, license_url, changes, status (copyright status of the place shown, for
+# maintainers), sha1, image, image_portrait, position (vertical background position on wide
+# screens), position_wide (on screens 1800 px and wider, where the photo is scaled up most).
+
 manila_post_office:
   title: "Manila Central Post Office at night from across the Pasig River"
   author: Junwiki21
@@ -16,3 +27,56 @@ manila_post_office:
   license: CC BY-SA 4.0
   license_url: "https://creativecommons.org/licenses/by-sa/4.0/"
   changes: "cropped, resized, and converted to black and white"
+  status: "Taken 2018-12-04. The building is tagged {{PD-Philippines-FoP work}} on Commons."
+  sha1: f18a4ac27609e8851792ab1918fc5c14c0e951f9
+  image: /assets/images/hero/manila-post-office-night.jpg
+  image_portrait: /assets/images/hero/manila-post-office-night-portrait.jpg
+  position: "34%"
+  position_wide: "18%"
+
+rizal_monument:
+  title: "DSC 0733 Rizal Monument"
+  author: GRMondala
+  author_url: "https://commons.wikimedia.org/wiki/User:GRMondala"
+  source_url: "https://commons.wikimedia.org/wiki/File:DSC_0733_Rizal_Monument.jpg"
+  license: CC BY-SA 4.0
+  license_url: "https://creativecommons.org/licenses/by-sa/4.0/"
+  changes: "cropped, resized, and converted to black and white"
+  status: "Taken 2018-09-29 in Rizal Park for Wiki Loves Monuments 2018. The monument (Richard Kissling, died 1919) is tagged {{PD-Philippines-FoP work}} on Commons."
+  sha1: 24e1c3f4aba30bc4039bc53a7aefcb8766926e00
+  image: /assets/images/hero/rizal-monument-night.jpg
+  image_portrait: /assets/images/hero/rizal-monument-night-portrait.jpg
+  position: "40%"
+  position_wide: "30%"
+
+fort_santiago:
+  title: "Manila, Fort Santiago, Walled city of Intramuros, Philippines"
+  author: Vyacheslav Argenberg
+  author_url: "https://commons.wikimedia.org/wiki/User:Argenberg"
+  attribution: "© Vyacheslav Argenberg"
+  source_url: "https://commons.wikimedia.org/wiki/File:Manila,_Fort_Santiago,_Walled_city_of_Intramuros,_Philippines.jpg"
+  license: CC BY 4.0
+  license_url: "https://creativecommons.org/licenses/by/4.0/"
+  changes: "cropped, resized, and converted to black and white"
+  status: "Taken 2009-01-22. The Fort Santiago gate is in Commons' category 'Built in Manila in 1714'."
+  sha1: a53596beb9166a418336ee67f58f3f32e89f9c2d
+  image: /assets/images/hero/fort-santiago-gate.jpg
+  image_portrait: /assets/images/hero/fort-santiago-gate-portrait.jpg
+  position: "45%"
+  position_wide: "40%"
+
+manila_bay_sunset:
+  title: "Majestic sunset in Manila Bay, Manila, Philippines"
+  author: Vyacheslav Argenberg
+  author_url: "https://commons.wikimedia.org/wiki/User:Argenberg"
+  attribution: "© Vyacheslav Argenberg"
+  source_url: "https://commons.wikimedia.org/wiki/File:Majestic_sunset_in_Manila_Bay,_Manila,_Philippines.jpg"
+  license: CC BY 4.0
+  license_url: "https://creativecommons.org/licenses/by/4.0/"
+  changes: "cropped, resized, and converted to black and white"
+  status: "Taken 2009-01-21 on the Baywalk, Roxas Boulevard. Two people are seen from behind, in silhouette."
+  sha1: 9fb3aa5f2a7b392ff9abb66db2702465f4fec18e
+  image: /assets/images/hero/manila-bay-sunset.jpg
+  image_portrait: /assets/images/hero/manila-bay-sunset-portrait.jpg
+  position: "40%"
+  position_wide: "35%"

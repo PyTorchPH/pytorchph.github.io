@@ -428,25 +428,108 @@ $hero_kicker: #ffb59e;
   }
 }
 
-// A background photo of a Philippine place (front matter hero_photo; credits in
-// _data/photo_credits.yml). The files are already black and white. The overlay is darkest behind the
-// text on the left and lets the photo show on the right.
-.ph-hero.ph-hero-backdrop-manila-post-office {
+// Background photos of Philippine places that crossfade (front matter hero_photos; credits and
+// framing in _data/photo_credits.yml; assets/hero-slides.js runs the crossfade). The files are already
+// black and white. One overlay sits over every photo: darkest behind the text on the left, lighter
+// on the right where the place shows.
+.ph-hero.ph-hero-backdrop {
   background-color: #262626;
-  background-image: linear-gradient(rgba(26, 26, 26, 0.74), rgba(26, 26, 26, 0.74)), url($baseurl + "/assets/images/manila-post-office-night-1000.jpg");
-  background-blend-mode: normal;
-  background-position: 30% 40%;
+  background-image: none;
+}
 
-  @include desktop {
-    background-image:
-      linear-gradient(90deg, rgba(26, 26, 26, 0.84) 0%, rgba(26, 26, 26, 0.76) 45%, rgba(26, 26, 26, 0.4) 80%, rgba(26, 26, 26, 0.32) 100%),
-      url($baseurl + "/assets/images/manila-post-office-night.jpg");
-    background-position: center 34%;
+.ph-hero-slides {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(26, 26, 26, 0.74);
+
+    @include desktop {
+      background: linear-gradient(90deg, rgba(26, 26, 26, 0.84) 0%, rgba(26, 26, 26, 0.76) 45%, rgba(26, 26, 26, 0.4) 80%, rgba(26, 26, 26, 0.32) 100%);
+    }
+  }
+}
+
+.ph-hero-slide {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  opacity: 0;
+  transition: opacity 1.6s ease-in-out;
+
+  &.is-active {
+    opacity: 1;
   }
 
-  // On very wide screens the photo is scaled up; keep the roofline in view.
+  @include desktop {
+    background-position: center var(--photo-y, 40%);
+  }
+
+  // On very wide screens the photo is scaled up most; each photo says where to keep it.
   @media (min-width: 1800px) {
-    background-position: center 18%;
+    background-position: center var(--photo-y-wide, 40%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Only the first photo loads with the page; the others load once the crossfade starts.
+.ph-hero-slide:first-child,
+.ph-hero-slides.is-playing .ph-hero-slide {
+  background-image: var(--photo-portrait);
+
+  @include desktop {
+    background-image: var(--photo);
+  }
+}
+
+.ph-hero-slides-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: rem(56px);
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+
+  @include desktop {
+    bottom: rem(100px);
+  }
+}
+
+.ph-hero-slides-toggle {
+  pointer-events: auto;
+  min-height: 28px; // above the 24 px minimum target size (WCAG 2.2, 2.5.8) at every root font size
+  padding: rem(4px) rem(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 0;
+  background: rgba(26, 26, 26, 0.72);
+  color: $white;
+  font-size: rem(13px);
+  line-height: 1.4;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $white;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $white;
+    outline-offset: 2px;
+  }
+
+  &[hidden] {
+    display: none;
   }
 }
 
