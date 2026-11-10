@@ -3,9 +3,11 @@
   lead (person first, then their university), or one chapter card for a university whose lead is
   not announced. Every card carries data-static-chapter (and data-aliases) so site-content.js can
   hide it when officers publish the same university through the portal. Students are shown by name
-  and role only: an initials badge, never a photo.
+  and role only: an initials badge, never a photo. include.items replaces the data file (used by the
+  unpublished test fixture, test-fixtures/campus-cards.html).
 {%- endcomment -%}
-{%- assign campus_items = site.data.campus_labs.chapters | where: "island", include.island | sort: "university" -%}
+{%- assign campus_source = include.items | default: site.data.campus_labs.chapters -%}
+{%- assign campus_items = campus_source | where: "island", include.island | sort: "university" -%}
 {%- for item in campus_items %}
 {%- capture card_attrs %} data-static-chapter="{{ item.university | escape }}" data-aliases="{{ item.aliases | join: '|' | escape }}" data-island="{{ item.island | escape }}"{% endcapture %}
 {%- capture university_block %}

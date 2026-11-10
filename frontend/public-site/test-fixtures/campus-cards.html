@@ -1,0 +1,28 @@
+---
+# Test fixture for tests/node/campus-labs/built.mjs. Never published: it is only built with
+# `jekyll build --unpublished`. It renders the real Campus Labs card include with names that
+# exercise escaping and initials.
+published: false
+layout: null
+sitemap: false
+permalink: /test-fixtures/campus-cards/
+items:
+  - university: Fixture University
+    island: Luzon
+    leads:
+      - name: "Ana"
+        role: One-word name
+      - name: "  Maria   Clara  "
+        role: Extra spaces
+      - name: "<img src=x onerror=alert(1)>"
+        role: Markup in the name
+      - name: "&amp; Lead"
+        role: Entity-like name
+  - university: "Fixture <b>College</b>"
+    island: Luzon
+    aliases: ["FC", "x\" onmouseover=\"alert(1)"]
+---
+<!doctype html>
+<meta charset="utf-8">
+<title>Campus cards fixture</title>
+<main>{% include ph/campus_chapter_list.html island="Luzon" items=page.items %}</main>
