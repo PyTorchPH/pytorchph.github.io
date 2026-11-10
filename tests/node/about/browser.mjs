@@ -119,8 +119,15 @@ async function mockPublishedRequests(context, origin, state, legacyPortraitReque
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(stale) });
     }
     if (url.origin === "https://pytorch.ph") {
-      const response = await route.fetch({ url: `${origin}${url.pathname}${url.search}` });
-      return route.fulfill({ response });
+      // A navigation can abandon this request while it is in flight; Playwright then disposes the
+      // response, which is not a page failure.
+      try {
+        const response = await route.fetch({ url: `${origin}${url.pathname}${url.search}` });
+        return await route.fulfill({ response });
+      } catch (error) {
+        if (/disposed|closed|Target page/.test(error.message)) return;
+        throw error;
+      }
     }
     return url.origin === origin ? route.continue() : route.abort();
   });

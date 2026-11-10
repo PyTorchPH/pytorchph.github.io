@@ -19,20 +19,20 @@
 # maintainers), sha1, image, image_portrait, position (vertical background position on wide
 # screens), position_wide (on screens 1800 px and wider, where the photo is scaled up most).
 
-manila_post_office:
-  title: "Manila Central Post Office at night from across the Pasig River"
-  author: Junwiki21
-  author_url: "https://commons.wikimedia.org/wiki/User:Junwiki21"
-  source_url: "https://commons.wikimedia.org/wiki/File:Manila_Central_Post_Office_at_night_from_across_the_Pasig_River.jpg"
+malacanang:
+  title: "Malacañang Kalayaan Hall front left night view (J.P. Laurel, San Miguel, Manila; 12-23-2022)"
+  author: Patrickroque01
+  author_url: "https://commons.wikimedia.org/wiki/User:Patrickroque01"
+  source_url: "https://commons.wikimedia.org/wiki/File:Malaca%C3%B1ang_Kalayaan_Hall_front_left_night_view_(J.P._Laurel,_San_Miguel,_Manila;_12-23-2022).jpg"
   license: CC BY-SA 4.0
   license_url: "https://creativecommons.org/licenses/by-sa/4.0/"
   changes: "cropped, resized, and converted to black and white"
-  status: "Taken 2018-12-04. The building is tagged {{PD-Philippines-FoP work}} on Commons."
-  sha1: f18a4ac27609e8851792ab1918fc5c14c0e951f9
-  image: /assets/images/hero/manila-post-office-night.jpg
-  image_portrait: /assets/images/hero/manila-post-office-night-portrait.jpg
-  position: "34%"
-  position_wide: "18%"
+  status: "Taken 2022-12-23 from J.P. Laurel Street. Shows Kalayaan Hall (1920), the building of the Malacañang Palace complex that faces the street, not the main palace by the river. Dual-licensed CC BY-SA 4.0 and GFDL; we use CC BY-SA 4.0. Tagged {{PD-Philippines-FoP work}} on Commons."
+  sha1: cf6c2f525e5eb6d3d16bcddbbc06a73c04f5feac
+  image: /assets/images/hero/malacanang-kalayaan-hall-night.jpg
+  image_portrait: /assets/images/hero/malacanang-kalayaan-hall-night-portrait.jpg
+  position: "40%"
+  position_wide: "30%"
 
 rizal_monument:
   title: "DSC 0733 Rizal Monument"

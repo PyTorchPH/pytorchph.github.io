@@ -1,7 +1,8 @@
 // Drives the built home page (frontend/public-site/_site) in Chromium and checks the hero crossfade:
 // only the first photo loads with the page and the others after it, at the size the screen uses;
-// the photos advance; "Pause photos" stops and resumes them; and visitors who prefer reduced motion
-// get the first photo only, with no button. Takes about 30 seconds (each photo shows for 7 s).
+// the photos advance, also after the screen crosses the breakpoint; and visitors who prefer reduced
+// motion get the first photo only. There is no pause button (the site owner asked for none). Takes
+// about 40 seconds (each photo shows for 7 s).
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -47,24 +48,25 @@ try {
   {
     const { context, page, errors } = await open({ viewport: { width: 1440, height: 900 } });
     await page.waitForSelector(".ph-hero-slides.is-playing", { timeout: 15000 });
-    const toggle = page.locator("[data-hero-slides-toggle]");
-    assert.equal(await toggle.isVisible(), true);
-    assert.equal(await toggle.textContent(), "Pause photos");
-    assert.equal(await active(page), "manila_post_office");
+    assert.equal(await page.locator("[data-hero-slides-toggle], .ph-hero button").count(), 0, "no pause button");
+    assert.equal(await active(page), "malacanang");
     const requests = await heroRequests(page);
-    assert.deepEqual(requests.filter(request => !request.afterLoad).map(request => request.file), ["manila-post-office-night.jpg"], "only the first photo loads with the page");
-    assert.deepEqual(requests.map(request => request.file).sort(), ["fort-santiago-gate.jpg", "manila-bay-sunset.jpg", "manila-post-office-night.jpg", "rizal-monument-night.jpg"], "wide screens load the wide photos only");
+    assert.deepEqual(requests.filter(request => !request.afterLoad).map(request => request.file), ["malacanang-kalayaan-hall-night.jpg"], "only the first photo loads with the page");
+    assert.deepEqual(requests.map(request => request.file).sort(), ["fort-santiago-gate.jpg", "malacanang-kalayaan-hall-night.jpg", "manila-bay-sunset.jpg", "rizal-monument-night.jpg"], "wide screens load the wide photos only");
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "rizal_monument", null, { timeout: 10000 });
     assert.notEqual(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), "none");
-    // Paused, the photo stays; resumed, it advances again.
-    await toggle.click();
-    assert.equal(await toggle.textContent(), "Play photos");
-    await page.waitForTimeout(8500);
-    assert.equal(await active(page), "rizal_monument", "paused photos do not advance");
-    await toggle.click();
-    assert.equal(await toggle.textContent(), "Pause photos");
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "fort_santiago", null, { timeout: 10000 });
     assert.equal(await page.locator(".ph-hero-slide.is-active").count(), 1);
+    // Crossing to a phone width: the portrait photos load and the crossfade carries on with them.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "manila_bay_sunset", null, { timeout: 12000 });
+    const portraits = (await heroRequests(page)).map(request => request.file).filter(file => file.includes("-portrait"));
+    for (const file of ["rizal-monument-night-portrait.jpg", "fort-santiago-gate-portrait.jpg", "manila-bay-sunset-portrait.jpg"]) assert.ok(portraits.includes(file), `${file} loads after crossing the breakpoint`);
+    // Turning reduced motion on mid-visit: back to the first photo, and it stays.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "malacanang");
+    await page.waitForTimeout(8000);
+    assert.equal(await active(page), "malacanang", "reduced motion keeps the first photo");
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -73,19 +75,18 @@ try {
     const { context, page, errors } = await open({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     await page.waitForSelector(".ph-hero-slides.is-playing", { timeout: 15000 });
     const files = (await heroRequests(page)).map(request => request.file).sort();
-    assert.deepEqual(files, ["fort-santiago-gate-portrait.jpg", "manila-bay-sunset-portrait.jpg", "manila-post-office-night-portrait.jpg", "rizal-monument-night-portrait.jpg"]);
+    assert.deepEqual(files, ["fort-santiago-gate-portrait.jpg", "malacanang-kalayaan-hall-night-portrait.jpg", "manila-bay-sunset-portrait.jpg", "rizal-monument-night-portrait.jpg"]);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []);
     await context.close();
   }
-  // Reduced motion: the first photo only, no crossfade, no button.
+  // Reduced motion: the first photo only, no crossfade.
   {
     const { context, page, errors } = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
     await page.waitForTimeout(2000);
     assert.equal(await page.locator(".ph-hero-slides.is-playing").count(), 0);
-    assert.equal(await page.locator("[data-hero-slides-toggle]").isVisible(), false);
-    assert.equal(await active(page), "manila_post_office");
-    assert.deepEqual((await heroRequests(page)).map(request => request.file), ["manila-post-office-night.jpg"]);
+    assert.equal(await active(page), "malacanang");
+    assert.deepEqual((await heroRequests(page)).map(request => request.file), ["malacanang-kalayaan-hall-night.jpg"]);
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -93,4 +94,4 @@ try {
   await browser.close();
   server.close();
 }
-console.log(JSON.stringify({ event: "hero_photo.browser_verified", outcome: "success", checks: ["first-photo-only-before-load", "wide-and-portrait-sizes", "advances", "pause-and-resume", "reduced-motion", "no-overflow"] }));
+console.log(JSON.stringify({ event: "hero_photo.browser_verified", outcome: "success", checks: ["first-photo-only-before-load", "wide-and-portrait-sizes", "advances", "no-pause-button", "breakpoint-crossing", "reduced-motion", "reduced-motion-mid-visit", "no-overflow"] }));

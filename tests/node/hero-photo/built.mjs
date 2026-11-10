@@ -46,6 +46,8 @@ for (const file of pages(site)) {
     assert.ok(credit.includes(`<a href="${want.source_url}">${want.title}</a>`), `${page}: ${key} credit links the title to the source`);
     assert.ok(credit.includes(`<a href="${want.author_url}">${attribution ?? want.author}</a>`), `${page}: ${key} credit names the author as they ask`);
     assert.ok(credit.includes(`<a href="${want.license_url}">${want.license}</a>`), `${page}: ${key} credit links the license`);
+    // ShareAlike: our edited version must be offered under the same license, and say so.
+    if (want.license.includes("BY-SA")) assert.ok(credit.includes(`our edited version is shared under <a href="${want.license_url}">${want.license}</a> too`), `${page}: ${key} credit gives the license of the edited version`);
     const slide = html.match(new RegExp(`data-hero-photo="${key}"[^>]*`))[0];
     for (const image of [want.image, want.image_portrait]) {
       assert.ok(slide.includes(image), `${page}: ${key} slide uses ${image}`);
@@ -57,5 +59,5 @@ for (const file of pages(site)) {
 assert.ok(checked > 0, "no page shows hero photos: the home page should");
 const home = readFileSync(resolve(site, "index.html"), "utf8");
 const homeKeys = [...home.matchAll(/data-hero-photo="([a-z0-9_]+)"/g)].map(match => match[1]);
-assert.deepEqual(homeKeys, ["manila_post_office", "rizal_monument", "fort_santiago", "manila_bay_sunset"], "the home hero photos, in order");
+assert.deepEqual(homeKeys, ["malacanang", "rizal_monument", "fort_santiago", "manila_bay_sunset"], "the home hero photos, in order");
 console.log(JSON.stringify({ event: "hero_photo.built.verified", outcome: "success", pages: checked, photos: [...shown] }));

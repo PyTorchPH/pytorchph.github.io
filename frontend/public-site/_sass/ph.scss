@@ -492,47 +492,6 @@ $hero_kicker: #ffb59e;
   }
 }
 
-.ph-hero-slides-controls {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: rem(56px);
-  z-index: 2;
-  display: flex;
-  justify-content: flex-end;
-  pointer-events: none;
-
-  @include desktop {
-    bottom: rem(100px);
-  }
-}
-
-.ph-hero-slides-toggle {
-  pointer-events: auto;
-  min-height: 28px; // above the 24 px minimum target size (WCAG 2.2, 2.5.8) at every root font size
-  padding: rem(4px) rem(10px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 0;
-  background: rgba(26, 26, 26, 0.72);
-  color: $white;
-  font-size: rem(13px);
-  line-height: 1.4;
-  cursor: pointer;
-
-  &:hover {
-    border-color: $white;
-  }
-
-  &:focus-visible {
-    outline: 2px solid $white;
-    outline-offset: 2px;
-  }
-
-  &[hidden] {
-    display: none;
-  }
-}
-
 // The Philippine archipelago as a connected network (scripts/generate-archipelago.mjs).
 .ph-hero-art {
   position: absolute;
