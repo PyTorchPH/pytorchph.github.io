@@ -61,5 +61,5 @@ for (const file of pages(site)) {
 assert.ok(checked > 0, "no page shows hero photos: the home page should");
 const home = readFileSync(resolve(site, "index.html"), "utf8");
 const homeKeys = [...home.matchAll(/data-hero-photo="([a-z0-9_]+)"/g)].map(match => match[1]);
-assert.deepEqual(homeKeys, ["malacanang", "rizal_monument", "fort_santiago", "manila_bay_sunset"], "the home hero photos, in order");
+assert.deepEqual(homeKeys, ["rizal_monument", "malacanang", "fort_santiago", "manila_bay_sunset"], "the home hero photos, in order");
 console.log(JSON.stringify({ event: "hero_photo.built.verified", outcome: "success", pages: checked, photos: [...shown] }));

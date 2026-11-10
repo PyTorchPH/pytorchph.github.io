@@ -49,11 +49,11 @@ try {
     const { context, page, errors } = await open({ viewport: { width: 1440, height: 900 } });
     await page.waitForSelector(".ph-hero-slides.is-playing", { timeout: 15000 });
     assert.equal(await page.locator("[data-hero-slides-toggle], .ph-hero button").count(), 0, "no pause button");
-    assert.equal(await active(page), "malacanang");
+    assert.equal(await active(page), "rizal_monument");
     const requests = await heroRequests(page);
-    assert.deepEqual(requests.filter(request => !request.afterLoad).map(request => request.file), ["malacanang-palace-river.jpg"], "only the first photo loads with the page");
+    assert.deepEqual(requests.filter(request => !request.afterLoad).map(request => request.file), ["rizal-monument-night.jpg"], "only the first photo loads with the page");
     assert.deepEqual(requests.map(request => request.file).sort(), ["fort-santiago-gate.jpg", "malacanang-palace-river.jpg", "manila-bay-sunset.jpg", "rizal-monument-night.jpg"], "wide screens load the wide photos only");
-    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "rizal_monument", null, { timeout: 10000 });
+    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "malacanang", null, { timeout: 10000 });
     assert.notEqual(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), "none");
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "fort_santiago", null, { timeout: 10000 });
     assert.equal(await page.locator(".ph-hero-slide.is-active").count(), 1);
@@ -64,12 +64,12 @@ try {
     assert.equal(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), before);
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "manila_bay_sunset", null, { timeout: 12000 });
     const portraits = (await heroRequests(page)).map(request => request.file).filter(file => file.includes("-portrait"));
-    for (const file of ["rizal-monument-night-portrait.jpg", "fort-santiago-gate-portrait.jpg", "manila-bay-sunset-portrait.jpg"]) assert.ok(portraits.includes(file), `${file} loads after crossing the breakpoint`);
+    for (const file of ["malacanang-palace-river-portrait.jpg", "fort-santiago-gate-portrait.jpg", "manila-bay-sunset-portrait.jpg"]) assert.ok(portraits.includes(file), `${file} loads after crossing the breakpoint`);
     // Turning reduced motion on mid-visit: back to the first photo, and it stays.
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "malacanang");
+    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "rizal_monument");
     await page.waitForTimeout(8000);
-    assert.equal(await active(page), "malacanang", "reduced motion keeps the first photo");
+    assert.equal(await active(page), "rizal_monument", "reduced motion keeps the first photo");
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -88,12 +88,12 @@ try {
     const { context, page, errors } = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
     await page.waitForTimeout(2000);
     assert.equal(await page.locator(".ph-hero-slides.is-playing").count(), 0);
-    assert.equal(await active(page), "malacanang");
-    assert.deepEqual((await heroRequests(page)).map(request => request.file), ["malacanang-palace-river.jpg"]);
+    assert.equal(await active(page), "rizal_monument");
+    assert.deepEqual((await heroRequests(page)).map(request => request.file), ["rizal-monument-night.jpg"]);
     // Crossing the breakpoint: the photo keeps its image, then switches to the portrait size.
     await page.setViewportSize({ width: 390, height: 844 });
-    assert.match(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), /malacanang-palace-river\.jpg/);
-    await page.waitForFunction(() => /palace-river-portrait\.jpg/.test(getComputedStyle(document.querySelector(".ph-hero-slide.is-active")).backgroundImage));
+    assert.match(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), /rizal-monument-night\.jpg/);
+    await page.waitForFunction(() => /rizal-monument-night-portrait\.jpg/.test(getComputedStyle(document.querySelector(".ph-hero-slide.is-active")).backgroundImage));
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -102,7 +102,7 @@ try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await context.route("**/*", route => {
       const url = route.request().url();
-      if (url.includes("/assets/images/hero/malacanang-")) return route.abort();
+      if (url.includes("/assets/images/hero/rizal-monument-")) return route.abort();
       return url.startsWith(origin) ? route.continue() : route.abort();
     });
     const page = await context.newPage();
@@ -110,10 +110,10 @@ try {
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(`${origin}/`, { waitUntil: "load" });
     await page.waitForSelector(".ph-hero-slides.is-playing", { timeout: 15000 });
-    assert.equal(await active(page), "rizal_monument");
+    assert.equal(await active(page), "malacanang");
     const seen = new Set();
     for (let tick = 0; tick < 24; tick++) { seen.add(await active(page)); await page.waitForTimeout(1000); }
-    assert.ok(!seen.has("malacanang"), "the photo that failed never shows");
+    assert.ok(!seen.has("rizal_monument"), "the photo that failed never shows");
     assert.ok(seen.size >= 3, "the other photos keep crossfading");
     assert.deepEqual(errors, []);
     await context.close();
