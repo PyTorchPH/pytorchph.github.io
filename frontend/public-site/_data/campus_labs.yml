@@ -3,7 +3,11 @@
 # without a public source, and re-check the sources before editing.
 #
 # Rules for entries:
-#   - `role` quotes the title used in the source. Do not normalize titles.
+#   - `role` quotes the title used in the source, without the organization name: the page already
+#     says PyTorch Philippines, and a source's spelling of the mark (for example "Pytorch") must not
+#     be reproduced. "Lead Data Scientist Ambassador, PyTorch Campus Labs Philippines" becomes
+#     "Lead Data Scientist Ambassador"; "Pytorch Campus Lead Data Scientist" becomes
+#     "Campus Lead Data Scientist". Do not otherwise normalize titles.
 #   - `city` appears only when the source names the campus.
 #   - `chapter` and `url` appear only when the chapter has its own public page.
 #   - People are listed by name and role only (no photos or contact details).
