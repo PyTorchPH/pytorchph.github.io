@@ -606,71 +606,200 @@ button.main-menu-close-button {
   }
 }
 
-// Campus Labs universities and leads (About and Campus Labs pages).
+// Campus Labs leads (About and Campus Labs pages): one card per person, the person first and their
+// university second, in a grid shared by listed and portal-published entries.
 .ph-island-heading {
-  margin: rem(28px) 0 rem(12px);
-  font-size: rem(20px);
-}
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: rem(16px);
+  margin: 0 0 rem(16px);
+  padding-bottom: rem(10px);
+  border-bottom: 2px solid $not_quite_black;
+  font-size: rem(22px);
 
-.ph-campus-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0 rem(40px);
-  border-top: 1px solid $ph_rule;
-
-  @include desktop {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .ph-island-count {
+    color: $ph_muted;
+    font-family: "Open Sans", sans-serif;
+    font-size: rem(15px);
+    font-weight: 400;
+    white-space: nowrap;
   }
 }
 
-.ph-campus {
-  padding: rem(16px) 0;
-  border-bottom: 1px solid $ph_rule;
+.ph-lead-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(16px);
+
+  @media (min-width: 576px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  // Wide pages without the map column (About) fit three across.
+  @include full-nav-menu-desktop {
+    grid-template-columns: repeat(auto-fill, minmax(rem(340px), 1fr));
+  }
+
+  // Both sources of cards flow into the same grid.
+  .ph-lead-set {
+    display: contents;
+  }
+
+  // The "nothing published" message is only for islands with no listed entries either.
+  .ph-lead-set > .ph-empty {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+}
+
+.ph-lead {
+  display: grid;
+  grid-template-columns: rem(48px) minmax(0, 1fr);
+  gap: rem(14px);
+  align-items: start;
+  padding: rem(16px);
+
+  @media (min-width: 576px) {
+    grid-template-columns: rem(56px) minmax(0, 1fr);
+    gap: rem(16px);
+    padding: rem(20px);
+  }
+  background: $white;
+  border: 1px solid #e4e5ea;
+
+  .ph-section:not(.ph-section-grey) & {
+    background: $light_grey;
+    border-color: transparent;
+  }
 
   &[hidden] {
     display: none;
   }
+}
 
-  .ph-campus-name {
-    margin: 0;
-    color: $slate;
-    font-size: rem(18px);
-    line-height: 1.3;
+.ph-lead-badge {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #fbe4dd;
+  color: $orange;
+  font-family: Montserrat, "Open Sans", sans-serif;
+  font-size: rem(19px);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+
+  .ph-lead-pending & {
+    background: transparent;
+    border: 2px dashed #c9cad0;
   }
 
-  .ph-campus-place,
-  .ph-campus-link {
-    margin: rem(2px) 0 0;
-    color: $ph_muted;
+  .ph-lead-photo {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 0;
+    object-fit: cover;
+  }
+}
+
+.ph-lead-body {
+  min-width: 0;
+
+  p {
+    margin: 0;
     font-size: rem(15px);
     line-height: rem(22px);
+    color: $ph_muted;
   }
+}
 
-  .ph-campus-leads {
-    list-style: none;
-    margin: rem(8px) 0 0;
-    padding: 0;
-    font-size: rem(16px);
-    line-height: rem(24px);
+.ph-lead-name {
+  margin: rem(2px) 0 rem(2px);
+  color: $slate;
+  font-size: rem(18px);
+  line-height: 1.3;
+
+  .ph-lead-pending & {
+    font-size: rem(17px);
   }
+}
 
-  .ph-campus-lead {
-    color: $slate;
+.ph-lead-role {
+  .ph-lead-body & {
+    color: $orange;
     font-weight: 600;
   }
 
-  .ph-campus-role {
+  .ph-lead-pending .ph-lead-body & {
     color: $ph_muted;
+    font-weight: 400;
+    font-style: italic;
+  }
+}
 
-    &::before {
-      content: "· ";
-    }
+// "Start the first one" card for an island group without a Campus Lab.
+a.ph-lead-invite {
+  text-decoration: none;
+  border-style: dashed;
+  border-color: #c9cad0;
+
+  .ph-lead-badge {
+    color: $ph_muted;
+    font-size: rem(26px);
+    font-weight: 400;
   }
 
-  .ph-campus-link a {
+  .ph-lead-body {
+    display: block;
+  }
+
+  .ph-lead-name,
+  .ph-lead-role {
+    display: block;
+  }
+
+  .ph-lead-name {
+    margin-top: rem(4px);
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-weight: 500;
+  }
+
+  .ph-lead-role {
+    color: $ph_muted;
+    font-size: rem(15px);
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: $orange;
+
+    .ph-lead-name {
+      color: $orange;
+    }
+  }
+}
+
+// The university sits under a rule so the person and the place read as two separate facts.
+.ph-lead-school {
+  .ph-lead-body & {
+    margin-top: rem(10px);
+    padding-top: rem(10px);
+    border-top: 1px solid $ph_rule;
+    color: $slate;
+    font-weight: 600;
+  }
+}
+
+.ph-lead-link {
+  .ph-lead-body & {
+    margin-top: rem(6px);
+  }
+
+  a {
     color: $orange;
   }
 }
@@ -692,29 +821,44 @@ button.main-menu-close-button {
   gap: rem(40px);
 
   @include desktop {
-    grid-template-columns: minmax(0, 1fr) rem(300px);
+    grid-template-columns: minmax(0, 1fr) rem(260px);
     align-items: start;
   }
 
+  @include full-nav-menu-desktop {
+    grid-template-columns: minmax(0, 1fr) rem(300px);
+    gap: rem(56px);
+  }
+
+  // Beside the map the list is narrower: two cards across at most.
+  .ph-lead-grid {
+    @include full-nav-menu-desktop {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
   .ph-archipelago {
-    max-width: rem(260px);
+    max-width: rem(240px);
 
     @include desktop {
       max-width: 100%;
     }
   }
+
+  // The map stays in view while the island groups scroll past it.
+  .ph-archipelago-light {
+    @include desktop {
+      position: sticky;
+      top: rem(120px);
+    }
+  }
 }
 
 .ph-island {
-  margin-top: rem(32px);
+  margin-top: rem(36px);
 
   &[hidden] {
     display: none;
-  }
-
-  h3 {
-    font-size: rem(22px);
-    margin-bottom: 0;
   }
 }
 
@@ -998,7 +1142,3 @@ section[tabindex="-1"]:focus {
   }
 }
 
-// An island with only listed universities has an empty portal grid; it takes no space.
-.ph-chapter-grid:empty {
-  display: none;
-}

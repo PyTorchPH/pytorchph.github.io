@@ -1,8 +1,10 @@
 {%- comment -%}
-  Campus Labs by island group, shared by the Campus Labs and About pages: chapters officers publish
-  through the portal (loaded by site-content.js) followed by the publicly sourced entries from
-  _data/campus_labs.yml. An island with neither stays hidden; with include.callouts it shows an
-  invitation to start one instead. include.anchors adds the #campus-<island> ids (one page only).
+  Campus Labs by island group, shared by the Campus Labs and About pages. Each island has one card
+  grid holding chapters officers publish through the portal (rendered by site-content.js into the
+  data-site-content target) and the publicly sourced entries from _data/campus_labs.yml. Both
+  containers use display: contents, so all cards share one grid. An island with neither stays
+  hidden; with include.callouts it shows an invitation card to start the first one instead. include.anchors adds
+  the #campus-<island> ids (one page only).
 {%- endcomment -%}
 {%- assign campus = site.data.campus_labs -%}
 {%- assign island_groups = "Luzon,Visayas,Mindanao" | split: "," -%}
@@ -13,16 +15,32 @@
 {%- assign in_island = campus.chapters | where: "island", island %}
 {%- assign island_count = in_island | size %}
 <div class="ph-island"{% if island_count == 0 %} data-hide-when-empty hidden{% endif %}>
-  <h3 class="ph-island-heading"{% if add_anchors %} id="campus-{{ island | downcase }}"{% endif %}>{{ island }}</h3>
-  <div class="ph-managed-grid ph-chapter-grid" data-site-content="chapters-{{ island }}"></div>
-  {%- if island_count > 0 %}
-  {% include ph/campus_chapter_list.html island=island %}
-  {%- endif %}
+  <h3 class="ph-island-heading"{% if add_anchors %} id="campus-{{ island | downcase }}"{% endif %}>
+    <span>{{ island }}</span>
+    <span class="ph-island-count" data-island-count="{{ island }}">{% if island_count > 0 %}{{ island_count }} {% if island_count == 1 %}university{% else %}universities{% endif %}{% endif %}</span>
+  </h3>
+  <div class="ph-lead-grid">
+    <div class="ph-lead-set" data-site-content="chapters-{{ island }}"></div>
+    {%- if island_count > 0 %}
+    <div class="ph-lead-set">
+      {% include ph/campus_chapter_list.html island=island %}
+    </div>
+    {%- endif %}
+  </div>
 </div>
 {%- if show_callouts and island_count == 0 and campus_count > 0 %}
-<div class="ph-callout ph-island" data-show-when-all-empty="chapters-{{ island }}">
-  <p>No Campus Lab in {% if island == "Visayas" %}the Visayas{% else %}{{ island }}{% endif %} yet.</p>
-  <p>Be the first: see <a href="#start">how to start a Campus Lab</a> below.</p>
+{%- capture island_name %}{% if island == "Visayas" %}the Visayas{% else %}{{ island }}{% endif %}{% endcapture %}
+<div class="ph-island" data-show-when-all-empty="chapters-{{ island }}">
+  <h3 class="ph-island-heading"><span>{{ island }}</span><span class="ph-island-count">No Campus Lab yet</span></h3>
+  <div class="ph-lead-grid">
+    <a class="ph-lead ph-lead-pending ph-lead-invite" href="#start">
+      <span class="ph-lead-badge" aria-hidden="true">+</span>
+      <span class="ph-lead-body">
+        <span class="ph-lead-name">Start the first Campus Lab in {{ island_name }}</span>
+        <span class="ph-lead-role">See how to start one below</span>
+      </span>
+    </a>
+  </div>
 </div>
 {%- endif %}
 {%- endfor %}

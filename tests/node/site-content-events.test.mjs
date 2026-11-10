@@ -172,7 +172,13 @@ test("a university listed in the page gives way to the same university published
   assert.deepEqual(await page.locator("[data-static-chapter]:visible").allTextContents(), ["Second Example College", "St. Mary's Example Institute", "Example Co-Op College"]);
   assert.match(await page.locator('[data-site-content="chapters-Luzon"]').textContent(), /Published chapter/);
   assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 4");
-  assert.equal(await page.locator('[data-site-content="chapters-Luzon"] h4').textContent(), "example state university");
+  // A published chapter renders as the same person-first card: the lead, their role, then the
+  // university, all under the island heading (h4, never h3).
+  const card = page.locator('[data-site-content="chapters-Luzon"] article.ph-lead');
+  assert.equal(await card.locator("h4").textContent(), "A published lead");
+  assert.equal(await card.locator(".ph-lead-role").textContent(), "Campus Labs Lead");
+  assert.equal(await card.locator(".ph-lead-school").textContent(), "example state university");
+  assert.equal(await card.locator(".ph-lead-badge").textContent(), "AL");
   assert.equal(await page.locator('[data-site-content="chapters-Luzon"] h3').count(), 0);
 
   // Officers may use an alias, different dashes, or drop punctuation inside a word ("St Marys", "Coop");
@@ -186,6 +192,8 @@ test("a university listed in the page gives way to the same university published
   state.revision = 3;
   await refresh(page, 3);
   assert.equal(await page.locator("[data-static-chapter]:visible").count(), 0);
+  // A chapter without a named lead shows the university and says the lead is not announced.
+  assert.match(await page.locator('[data-site-content="chapters-Luzon"] article.ph-lead-pending').first().textContent(), /Lead not announced yet/);
   assert.equal(await page.locator('[data-chapter-count="Luzon"]').textContent(), "· 4");
   state.chapters = [];
   state.revision = 4;

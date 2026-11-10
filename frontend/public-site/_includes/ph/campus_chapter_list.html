@@ -1,22 +1,39 @@
 {%- comment -%}
-  Campus Labs entries from _data/campus_labs.yml for one island group (include.island). Each item
-  carries data-static-chapter (and data-aliases) so site-content.js can hide it when officers publish
-  the same university through the portal.
+  Campus Labs cards from _data/campus_labs.yml for one island group (include.island): one card per
+  lead (person first, then their university), or one chapter card for a university whose lead is
+  not announced. Every card carries data-static-chapter (and data-aliases) so site-content.js can
+  hide it when officers publish the same university through the portal. Students are shown by name
+  and role only: an initials badge, never a photo.
 {%- endcomment -%}
 {%- assign campus_items = site.data.campus_labs.chapters | where: "island", include.island | sort: "university" -%}
-<ul class="ph-campus-list">
-  {%- for item in campus_items %}
-  <li class="ph-campus" data-static-chapter="{{ item.university | escape }}" data-aliases="{{ item.aliases | join: '|' | escape }}" data-island="{{ item.island | escape }}">
-    <h4 class="ph-campus-name">{{ item.university | escape }}</h4>
-    {%- if item.city %}<p class="ph-campus-place">{{ item.city | escape }}</p>{% endif %}
-    {%- if item.leads %}
-    <ul class="ph-campus-leads">
-      {%- for lead in item.leads %}
-      <li><span class="ph-campus-lead">{{ lead.name | escape }}</span> <span class="ph-campus-role">{{ lead.role | escape }}</span></li>
-      {%- endfor %}
-    </ul>
-    {%- endif %}
-    {%- if item.url %}<p class="ph-campus-link"><a href="{{ item.url | escape }}" rel="noopener noreferrer">{{ item.chapter | default: "Chapter page" | escape }}<span class="ph-visually-hidden"> on GitHub</span></a></p>{% endif %}
-  </li>
-  {%- endfor %}
-</ul>
+{%- for item in campus_items %}
+{%- capture card_attrs %} data-static-chapter="{{ item.university | escape }}" data-aliases="{{ item.aliases | join: '|' | escape }}" data-island="{{ item.island | escape }}"{% endcapture %}
+{%- capture university_block %}
+    <p class="ph-lead-school">{{ item.university | escape }}</p>
+    {%- if item.city %}<p class="ph-lead-place">{{ item.city | escape }}</p>{% endif %}
+    {%- if item.url %}<p class="ph-lead-link"><a href="{{ item.url | escape }}" rel="noopener noreferrer">Chapter page<span class="ph-visually-hidden">: {{ item.chapter | default: item.university | escape }} on GitHub</span></a></p>{% endif %}
+{%- endcapture %}
+{%- if item.leads and item.leads.size > 0 %}
+{%- for lead in item.leads %}
+{%- assign name_parts = lead.name | split: " " %}
+<article class="ph-lead"{{ card_attrs }}>
+  <span class="ph-lead-badge" aria-hidden="true">{{ name_parts.first | slice: 0 }}{{ name_parts.last | slice: 0 }}</span>
+  <div class="ph-lead-body">
+    <h4 class="ph-lead-name">{{ lead.name | escape }}</h4>
+    <p class="ph-lead-role">{{ lead.role | escape }}</p>
+    {{ university_block }}
+  </div>
+</article>
+{%- endfor %}
+{%- else %}
+<article class="ph-lead ph-lead-pending"{{ card_attrs }}>
+  <span class="ph-lead-badge" aria-hidden="true"></span>
+  <div class="ph-lead-body">
+    <h4 class="ph-lead-name">{{ item.university | escape }}</h4>
+    <p class="ph-lead-role">Lead not announced yet</p>
+    {%- if item.city %}<p class="ph-lead-place">{{ item.city | escape }}</p>{% endif %}
+    {%- if item.url %}<p class="ph-lead-link"><a href="{{ item.url | escape }}" rel="noopener noreferrer">Chapter page<span class="ph-visually-hidden">: {{ item.chapter | default: item.university | escape }} on GitHub</span></a></p>{% endif %}
+  </div>
+</article>
+{%- endif %}
+{%- endfor %}

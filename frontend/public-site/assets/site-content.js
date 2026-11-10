@@ -162,6 +162,24 @@
   // and digits only, so case, accents, spacing, and punctuation do not matter ("St. Mary's" =
   // "St Marys", "MSU-IIT" = "MSU IIT", "Co-Op" = "Coop"), and through the aliases each entry declares.
   function universityKey(value) { return String(value ?? "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ""); }
+  function initials(name) { const words = String(name ?? "").trim().split(/\s+/).filter(Boolean); return words.length ? (words[0][0] + (words.length > 1 ? words[words.length - 1][0] : "")).toLocaleUpperCase("en-PH") : ""; }
+  // A published chapter as the same card the page uses for listed entries: the lead first (an
+  // officer-published photo when there is one, initials otherwise), then the university.
+  function chapterCard(row) {
+    const node = element("article", null, row.leadName ? "ph-lead" : "ph-lead ph-lead-pending");
+    const photo = row.leadName ? image(row.photoUrl, row.leadName) : null;
+    const badge = element("span", photo ? null : (row.leadName ? initials(row.leadName) : null), "ph-lead-badge");
+    badge.setAttribute("aria-hidden", "true");
+    if (photo) { photo.className = "ph-lead-photo"; photo.width = 56; photo.height = 56; photo.alt = ""; badge.append(photo); }
+    const body = element("div", null, "ph-lead-body");
+    body.append(element("h4", row.leadName || row.university, "ph-lead-name"));
+    body.append(element("p", row.leadName ? "Campus Labs Lead" : "Lead not announced yet", "ph-lead-role"));
+    if (row.leadName) body.append(element("p", row.university, "ph-lead-school"));
+    if (row.chapter && row.chapter !== row.university) body.append(element("p", row.chapter, "ph-lead-place"));
+    if (row.status && row.status !== "active") body.append(element("p", humanize(row.status), "ph-lead-place"));
+    node.append(badge, body);
+    return node;
+  }
   function renderChapters(rows) {
     const published = new Set(rows.map(row => universityKey(row.university)).filter(Boolean));
     document.querySelectorAll("[data-static-chapter]").forEach(node => {
@@ -169,20 +187,14 @@
       node.hidden = names.some(name => published.has(name));
     });
     for (const island of ["Luzon", "Visayas", "Mindanao"]) {
-      const listed = document.querySelectorAll(`[data-static-chapter][data-island="${island}"]:not([hidden])`).length;
-      replace(`chapters-${island}`, rows.filter(row => row.island === island).map(row => {
-        // Chapters sit under an island heading (h3), like the listed entries.
-        const node = element("article", null, "ph-card ph-chapter");
-        node.append(element("h4", row.university));
-        const photo = image(row.photoUrl, row.chapter);
-        if (photo) node.prepend(photo);
-        paragraph(node, "Chapter", row.chapter);
-        paragraph(node, "Lead", row.leadName);
-        paragraph(node, "Status", humanize(row.status));
-        return node;
-      }), listed ? "" : "No participating chapters published yet.");
-      const count = counts.get(`chapters-${island}`) + listed;
+      const listedNodes = [...document.querySelectorAll(`[data-static-chapter][data-island="${island}"]:not([hidden])`)];
+      // A university with two leads has two cards; it still counts once.
+      const listed = new Set(listedNodes.map(node => universityKey(node.dataset.staticChapter))).size;
+      const own = rows.filter(row => row.island === island);
+      replace(`chapters-${island}`, own.map(chapterCard), listed ? "" : "No participating chapters published yet.");
+      const count = new Set(own.map(row => universityKey(row.university)).filter(Boolean)).size + listed;
       document.querySelectorAll(`[data-chapter-count="${island}"]`).forEach(node => { node.textContent = count ? `· ${count}` : ""; });
+      document.querySelectorAll(`[data-island-count="${island}"]`).forEach(node => { node.textContent = count ? `${count} ${count === 1 ? "university" : "universities"}` : ""; });
     }
   }
 
