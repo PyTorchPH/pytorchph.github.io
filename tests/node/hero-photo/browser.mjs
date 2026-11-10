@@ -58,7 +58,10 @@ try {
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "fort_santiago", null, { timeout: 10000 });
     assert.equal(await page.locator(".ph-hero-slide.is-active").count(), 1);
     // Crossing to a phone width: the portrait photos load and the crossfade carries on with them.
+    const before = await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage);
     await page.setViewportSize({ width: 390, height: 844 });
+    // At the moment of the change the photo on screen keeps its image instead of going blank.
+    assert.equal(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), before);
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "manila_bay_sunset", null, { timeout: 12000 });
     const portraits = (await heroRequests(page)).map(request => request.file).filter(file => file.includes("-portrait"));
     for (const file of ["rizal-monument-night-portrait.jpg", "fort-santiago-gate-portrait.jpg", "manila-bay-sunset-portrait.jpg"]) assert.ok(portraits.includes(file), `${file} loads after crossing the breakpoint`);

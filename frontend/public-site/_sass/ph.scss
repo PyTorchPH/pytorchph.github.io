@@ -482,9 +482,9 @@ $hero_kicker: #ffb59e;
   }
 }
 
-// Only the first photo loads with the page; the others load once the crossfade starts.
-.ph-hero-slide:first-child,
-.ph-hero-slides.is-playing .ph-hero-slide {
+// Only the first photo loads with the page. assets/hero-slides.js sets every slide's photo (inline)
+// once it has loaded at the size the screen uses.
+.ph-hero-slide:first-child {
   background-image: var(--photo-portrait);
 
   @include desktop {
