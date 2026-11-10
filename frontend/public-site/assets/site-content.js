@@ -162,7 +162,14 @@
   // and digits only, so case, accents, spacing, and punctuation do not matter ("St. Mary's" =
   // "St Marys", "MSU-IIT" = "MSU IIT", "Co-Op" = "Coop"), and through the aliases each entry declares.
   function universityKey(value) { return String(value ?? "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ""); }
-  function initials(name) { const words = String(name ?? "").trim().split(/\s+/).filter(Boolean); return words.length ? (words[0][0] + (words.length > 1 ? words[words.length - 1][0] : "")).toLocaleUpperCase("en-PH") : ""; }
+  // First letter of the first word and of the last word of the surname, skipping a suffix ("Jr.").
+  function initials(name) {
+    const words = String(name ?? "").trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return "";
+    let last = words.length - 1;
+    if (words.length > 2 && /^(jr|sr|ii|iii|iv)$/.test(words[last].toLowerCase().replace(/[.,]/g, ""))) last--;
+    return (words[0][0] + (last > 0 ? words[last][0] : "")).toLocaleUpperCase("en-PH");
+  }
   // A published chapter as the same card the page uses for listed entries: the lead first (an
   // officer-published photo when there is one, initials otherwise), then the university.
   function chapterCard(row) {

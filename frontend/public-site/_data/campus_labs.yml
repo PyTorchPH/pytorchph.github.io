@@ -20,6 +20,10 @@
 #                  Leads" (2026), read through a search index because LinkedIn requires sign-in:
 #                  https://www.linkedin.com/posts/pytorch-philippines_pytorchphilippines-pytorchph-pytorchcampuslabs-activity-7468199885024964609-YHpX
 #                  Confirm spellings with the people named.
+#   batch2-2026    PyTorch Philippines Campus Labs announcement graphics, Batch 2 (partial: 14
+#                  graphics), provided by the PyTorch Foundation Ambassador for the Philippines on
+#                  2026-11-10. Each graphic gives a name and a university, but no title, so these
+#                  entries use the role "Campus Labs, Batch 2" until the official title is confirmed.
 checked: 2026-11-10
 chapters:
   - university: Bulacan State University
@@ -76,6 +80,7 @@ chapters:
         role: Director
     sources:
       - chapter-page https://github.com/PyTorch-PH-Campus-Labs-PamSU-Chapter
+      - batch2-2026 ("Francis Gian Lising, Pampanga State University")
 
   - university: Philippine Christian University
     aliases: [PCU, PCU Manila, Philippine Christian University Manila]
@@ -109,12 +114,129 @@ chapters:
       - lead-profile https://github.com/Alvin187187/Alvin187187 ("Pytorch Campus Lead Data Scientist"; "a student from TIP-Manila")
 
   - university: Mindanao State University, Main Campus
-    aliases: [MSU Main Campus, MSU Main, Mindanao State University Main Campus, MSU Marawi]
+    aliases: [MSU Main Campus, MSU Main, Mindanao State University Main Campus, MSU Marawi, MSU-Marawi, Mindanao State University Main Campus - Marawi]
+    city: Marawi City, Lanao del Sur
     island: Mindanao
     chapter: PyTorch MSU Main Campus Lab
     url: https://github.com/PyTorch-MSU-Main-Campus-Lab
+    leads:
+      - name: Abdul-khaliq Solaiman
+        role: Campus Labs, Batch 2
     sources:
       - chapter-page https://github.com/PyTorch-MSU-Main-Campus-Lab
+      - batch2-2026 ("Mindanao State University Main Campus - Marawi (MSU-Marawi)")
+
+  - university: Davao Oriental State University
+    aliases: [DOrSU]
+    island: Mindanao # the graphic names no campus; every DOrSU campus is in Davao Oriental
+    leads:
+      - name: Reyjoy Sabino
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("Davao Oriental State University (DOrSU)")
+
+  - university: University of Perpetual Help System DALTA – Molino Campus
+    aliases: [UPHSD-Molino, UPHSD Molino, University of Perpetual Help System DALTA Molino]
+    city: Bacoor, Cavite
+    island: Luzon
+    leads:
+      - name: Jhane Rose Sadicon
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("University of Perpetual Help System DALTA - Molino Campus (UPHSD-Molino)")
+
+  - university: Batangas State University, The National Engineering University – Alangilan
+    aliases: [BatStateU Alangilan, BatStateU-Alangilan, Batangas State University Alangilan, BatStateU-TNEU Alangilan]
+    city: Batangas City
+    island: Luzon
+    leads:
+      - name: Regina Annemarie Bool
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("Batangas State University, The National Engineering University - Alangilan")
+
+  - university: West Visayas State University
+    aliases: [WVSU]
+    island: Visayas # the graphic names no campus; every WVSU campus is in Western Visayas
+    leads:
+      - name: Jhon Patrick Watimar
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("West Visayas State University (WVSU)")
+
+  - university: Ateneo de Naga University – Main Campus
+    aliases: [AdNU, Ateneo de Naga, Ateneo de Naga University]
+    city: Naga City, Camarines Sur
+    island: Luzon
+    leads:
+      - name: Lenard Amiel Oliva
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("Ateneo de Naga University - Main Campus")
+
+  - university: Nueva Vizcaya State University – Bayombong Campus
+    aliases: [NVSU-BAY, NVSU Bayombong, NVSU, Nueva Vizcaya State University Bayombong]
+    city: Bayombong, Nueva Vizcaya
+    island: Luzon
+    leads:
+      - name: Jacob John Ferrer Jr.
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("Nueva Vizcaya State University - Bayombong Campus (NVSU-BAY)")
+
+  - university: Quezon City University
+    aliases: [QCU]
+    island: Luzon
+    leads:
+      - name: James Fontanilla
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("Quezon City University")
+
+  - university: Pamantasan ng Lungsod ng Pasig
+    aliases: [PLP]
+    island: Luzon
+    leads:
+      - name: Zarrah Exekiel Valles
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("Pamantasan ng Lungsod ng Pasig (PLP)")
+
+  - university: Pamantasan ng Lungsod ng Maynila – Intramuros
+    aliases: [PLM, Pamantasan ng Lungsod ng Maynila, PLM Intramuros]
+    island: Luzon
+    leads:
+      - name: Aldrin James Yang
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("Pamantasan ng Lungsod ng Maynila - Intramuros (PLM)")
+
+  - university: University of the East – Manila
+    aliases: [UE-MNL, UE Manila, University of the East Manila]
+    island: Luzon
+    leads:
+      - name: Keisha Nicole Dilao
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("University of the East - Manila (UE-MNL)")
+
+  - university: University of Santo Tomas – Manila
+    aliases: [UST-MNL, UST, University of Santo Tomas, UST Manila]
+    island: Luzon
+    leads:
+      - name: Antonio Axellance Paco
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("University of Santo Tomas - Manila (UST-MNL)")
+
+  - university: Mapúa University
+    aliases: [MU, Mapua University, Mapua]
+    island: Luzon # the graphic names no campus; Mapúa University's campuses are in Metro Manila
+    leads:
+      - name: Justin Andre De Leon
+        role: Campus Labs, Batch 2
+    sources:
+      - batch2-2026 ("Mapúa University (MU)")
 
 # Pending confirmation (not shown on the site): add once a public source names the university.
 #   Hannah Hontiveros, "Lead Data Scientist Ambassador, PyTorch Campus Labs Philippines"

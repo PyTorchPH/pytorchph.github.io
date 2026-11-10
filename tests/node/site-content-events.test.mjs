@@ -179,6 +179,11 @@ test("a university listed in the page gives way to the same university published
   assert.equal(await card.locator(".ph-lead-role").textContent(), "Campus Labs Lead");
   assert.equal(await card.locator(".ph-lead-school").textContent(), "example state university");
   assert.equal(await card.locator(".ph-lead-badge").textContent(), "AL");
+  // Name suffixes do not become initials.
+  state.chapters = [{ id: "c1", university: "example state university", chapter: "Published chapter", island: "Luzon", status: "active", leadName: "Juan Santos Jr." }];
+  state.revision = 21;
+  await refresh(page, 21);
+  assert.equal(await page.locator('[data-site-content="chapters-Luzon"] .ph-lead-badge').textContent(), "JS");
   assert.equal(await page.locator('[data-site-content="chapters-Luzon"] h3').count(), 0);
 
   // Officers may use an alias, different dashes, or drop punctuation inside a word ("St Marys", "Coop");

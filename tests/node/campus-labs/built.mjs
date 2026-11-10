@@ -10,8 +10,13 @@ import { resolve } from "node:path";
 const site = resolve(import.meta.dirname, "../../../frontend/public-site/_site");
 const decode = value => value.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
 // Mirrors _includes/ph/campus_chapter_list.html: first letter of the first word and, when there is
-// more than one word, of the last word, upper-cased.
-const initials = name => { const words = name.trim().split(/\s+/).filter(Boolean); return (words[0][0] + (words.length > 1 ? words.at(-1)[0] : "")).toUpperCase(); };
+// more than one word, of the last word, skipping a suffix (Jr., Sr., II, III, IV); upper-cased.
+const initials = name => {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  let last = words.length - 1;
+  if (words.length > 2 && /^(jr|sr|ii|iii|iv)$/.test(words[last].toLowerCase().replace(/[.,]/g, ""))) last--;
+  return (words[0][0] + (last > 0 ? words[last][0] : "")).toUpperCase();
+};
 
 function read(page) {
   const file = resolve(site, page);
@@ -92,6 +97,8 @@ assert.equal(byName["Ana"].badge, "A", "one-word name gets one initial");
 assert.equal(byName["Maria Clara"].badge, "MC", "surrounding and repeated spaces are ignored");
 assert.equal(byName["<img src=x onerror=alert(1)>"].badge, "&lt;O", "markup in a name is escaped in the badge");
 assert.equal(byName["&amp; Lead"].badge, "&amp;L", "entity-like text stays text");
+assert.equal(byName["Jacob John Ferrer Jr."].badge, "JF", "a suffix such as Jr. is skipped");
+assert.equal(byName["Juan Dela Cruz III"].badge, "JC", "a numeral suffix is skipped");
 assert.ok(!/<img src=x/.test(html), "markup in a name is never output as markup");
 assert.ok(!/<b>College<\/b>/.test(html), "markup in a university is never output as markup");
 assert.ok(!/" onmouseover="/.test(html), "an alias cannot break out of its attribute");

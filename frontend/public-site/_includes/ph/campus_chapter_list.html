@@ -7,6 +7,7 @@
   unpublished test fixture, test-fixtures/campus-cards.html).
 {%- endcomment -%}
 {%- assign campus_source = include.items | default: site.data.campus_labs.chapters -%}
+{%- assign name_suffixes = "jr,sr,ii,iii,iv" | split: "," -%}
 {%- assign campus_items = campus_source | where: "island", include.island | sort: "university" -%}
 {%- for item in campus_items %}
 {%- capture card_attrs %} data-static-chapter="{{ item.university | escape }}" data-aliases="{{ item.aliases | join: '|' | escape }}" data-island="{{ item.island | escape }}"{% endcapture %}
@@ -18,7 +19,11 @@
 {%- if item.leads and item.leads.size > 0 %}
 {%- for lead in item.leads %}
 {%- assign name_parts = lead.name | strip | split: " " %}
-{%- capture lead_initials %}{{ name_parts.first | slice: 0 }}{% if name_parts.size > 1 %}{{ name_parts.last | slice: 0 }}{% endif %}{% endcapture %}
+{%- comment -%} Initials use the last word of the surname, skipping a suffix such as "Jr." {%- endcomment -%}
+{%- assign last_word = name_parts.last %}
+{%- assign suffix_key = last_word | downcase | remove: "." | remove: "," %}
+{%- if name_parts.size > 2 and name_suffixes contains suffix_key %}{% assign last_index = name_parts.size | minus: 2 %}{% assign last_word = name_parts[last_index] %}{% endif %}
+{%- capture lead_initials %}{{ name_parts.first | slice: 0 }}{% if name_parts.size > 1 %}{{ last_word | slice: 0 }}{% endif %}{% endcapture %}
 <article class="ph-lead"{{ card_attrs }}>
   <span class="ph-lead-badge" aria-hidden="true">{{ lead_initials | upcase | escape }}</span>
   <div class="ph-lead-body">
