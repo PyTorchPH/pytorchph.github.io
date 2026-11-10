@@ -121,6 +121,7 @@ function commit(portraits, json) {
   const previousPhotos = resolve(staging, "previous-photos");
   let movedPrevious = false;
   let installedPhotos = false;
+  let keepStaging = false;
   try {
     mkdirSync(stagedPhotos);
     for (const photo of portraits) writeFileSync(resolve(stagedPhotos, photo.name), photo.bytes, { flag: "wx" });
@@ -131,16 +132,25 @@ function commit(portraits, json) {
     renameSync(stagedData, dataFile);
   } catch (error) {
     // Put the previous portraits back so the old data file still matches what is on disk.
-    if (installedPhotos) rmSync(photoDirectory, { recursive: true, force: true });
-    if (movedPrevious) renameSync(previousPhotos, photoDirectory);
+    try {
+      if (installedPhotos) rmSync(photoDirectory, { recursive: true, force: true });
+      if (movedPrevious) renameSync(previousPhotos, photoDirectory);
+    } catch (rollbackError) {
+      // The only copy of the previous portraits is in the staging directory: keep it and say where.
+      keepStaging = true;
+      throw new Error(`write failed (${error.message}) and the previous portraits could not be restored (${rollbackError.message}); they are preserved in ${previousPhotos}. Move that directory back to ${photoDirectory}.`);
+    }
     throw error;
   } finally {
-    rmSync(staging, { recursive: true, force: true });
+    if (!keepStaging) rmSync(staging, { recursive: true, force: true });
   }
 }
 
 try {
   await main();
 } catch (error) {
-  console.warn(JSON.stringify({ event: "site.ambassadors.fetch_failed", outcome: "kept_snapshot", reason: error instanceof Error ? error.message : String(error) }));
+  const reason = error instanceof Error ? error.message : String(error);
+  const recoveryNeeded = reason.includes("could not be restored");
+  console.warn(JSON.stringify({ event: "site.ambassadors.fetch_failed", outcome: recoveryNeeded ? "recovery_needed" : "kept_snapshot", reason }));
+  if (recoveryNeeded) process.exitCode = 1; // fail the build rather than publish a list without its portraits
 }

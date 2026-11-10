@@ -47,7 +47,7 @@ chapters:
 
   - university: Graystone Institute of the Philippines
     aliases: [Graystone Institute]
-    island: Luzon # the campus is not named, but every campus on public record (TESDA: Dagupan City, San Jacinto, San Fabian, Alaminos) is in Pangasinan
+    island: Luzon # the campus is not named; TESDA lists the institute's sites in Pangasinan (Dagupan City, San Jacinto)
     leads:
       - name: Mile Ruth Cabalde
         role: Campus Labs Lead

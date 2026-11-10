@@ -158,10 +158,10 @@
   }
 
   // Entries listed in the page itself (_data/campus_labs.yml) give way to the same university once
-  // officers publish it, so a Campus Lab never appears twice. Names match without regard to case,
-  // accents, or punctuation ("St. Mary's" = "St Marys", "MSU-IIT" = "MSU IIT"), and through the
-  // aliases each listed entry declares.
-  function universityKey(value) { return String(value ?? "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/['\u2019.]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); }
+  // officers publish it, so a Campus Lab never appears twice. Names are compared on their letters
+  // and digits only, so case, accents, spacing, and punctuation do not matter ("St. Mary's" =
+  // "St Marys", "MSU-IIT" = "MSU IIT", "Co-Op" = "Coop"), and through the aliases each entry declares.
+  function universityKey(value) { return String(value ?? "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ""); }
   function renderChapters(rows) {
     const published = new Set(rows.map(row => universityKey(row.university)).filter(Boolean));
     document.querySelectorAll("[data-static-chapter]").forEach(node => {
