@@ -15,24 +15,33 @@
 # Adaptations of CC BY-SA photos are shared under CC BY-SA 4.0 as well.
 #
 # Fields: title, author, author_url, attribution (how the author asks to be credited, if they say),
-# source_url, license, license_url, changes, status (copyright status of the place shown, for
-# maintainers), sha1, image, image_portrait, position (vertical background position on wide
+# source_url, license, license_url, changes, architect (credited in the footer when the building's
+# design is still under copyright), status (copyright status of the place shown, for maintainers), sha1, image, image_portrait, position (vertical background position on wide
 # screens), position_wide (on screens 1800 px and wider, where the photo is scaled up most).
 
 malacanang:
-  title: "Malacañang Kalayaan Hall front left night view (J.P. Laurel, San Miguel, Manila; 12-23-2022)"
-  author: Patrickroque01
-  author_url: "https://commons.wikimedia.org/wiki/User:Patrickroque01"
-  source_url: "https://commons.wikimedia.org/wiki/File:Malaca%C3%B1ang_Kalayaan_Hall_front_left_night_view_(J.P._Laurel,_San_Miguel,_Manila;_12-23-2022).jpg"
-  license: CC BY-SA 4.0
-  license_url: "https://creativecommons.org/licenses/by-sa/4.0/"
+  title: "Facade of the Malacañang Palace as seen from Pasig River"
+  author: Official Gazette of the Philippines
+  author_url: "https://en.wikipedia.org/wiki/Official_Gazette_(Philippines)"
+  source_url: "https://en.wikipedia.org/wiki/File:Malaca%C3%B1ang_Palace_(local_img).jpg"
+  license: Public domain
+  license_url: "https://commons.wikimedia.org/wiki/Template:PD-PhilippinesGov"
   changes: "cropped, resized, and converted to black and white"
-  status: "Taken 2022-12-23 from J.P. Laurel Street. Shows Kalayaan Hall (1920), the building of the Malacañang Palace complex that faces the street, not the main palace by the river. Dual-licensed CC BY-SA 4.0 and GFDL; we use CC BY-SA 4.0. Tagged {{PD-Philippines-FoP work}} on Commons."
-  sha1: cf6c2f525e5eb6d3d16bcddbbc06a73c04f5feac
-  image: /assets/images/hero/malacanang-kalayaan-hall-night.jpg
-  image_portrait: /assets/images/hero/malacanang-kalayaan-hall-night-portrait.jpg
-  position: "40%"
-  position_wide: "30%"
+  architect: Jorge Ramos
+  status: >-
+    Taken 2016-05-26 by the Official Gazette of the Philippines. The photo is a Philippine
+    government work, so no copyright subsists in it (RA 8293 sec. 176; the Official Gazette:
+    "All content is in the public domain unless otherwise stated"). The building is not: the palace
+    as it stands is the 1979 reconstruction overseen by architect Jorge Ramos (died 2015), whose
+    design is presumed under copyright until 2065, and the Philippines has no freedom of panorama.
+    For that reason Wikimedia Commons deleted this photo (2021) and English Wikipedia hosts it only
+    as {{FoP-USonly}}. Used here at the site owner's decision on 2026-11-10, accepting that risk.
+    Replace it with a photo used with the Office of the President's permission if one is obtained.
+  sha1: b0ec78b8392ae359db8cd0ec5ad69d762af88406
+  image: /assets/images/hero/malacanang-palace-river.jpg
+  image_portrait: /assets/images/hero/malacanang-palace-river-portrait.jpg
+  position: "85%"
+  position_wide: "70%"
 
 rizal_monument:
   title: "DSC 0733 Rizal Monument"

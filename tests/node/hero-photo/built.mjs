@@ -35,7 +35,7 @@ for (const file of pages(site)) {
   if (keys.length > 1) assert.match(html, /<script src="[^"]*\/assets\/hero-slides\.js" defer><\/script>/, `${page}: crossfade script`);
   const footer = html.slice(html.indexOf("<footer"));
   const changes = field(keys[0], "changes");
-  assert.ok(footer.includes(`Header photos from Wikimedia Commons, ${changes}:`) || keys.every(key => footer.includes(`; ${field(key, "changes")})`)), `${page}: the credit says what was changed`);
+  assert.ok(footer.includes(`Header photos, ${changes}:`) || keys.every(key => footer.includes(`; ${field(key, "changes")})`)), `${page}: the credit says what was changed`);
   for (const key of keys) {
     shown.add(key);
     const want = Object.fromEntries(["title", "author", "author_url", "source_url", "license", "license_url", "changes", "image", "image_portrait", "sha1"].map(name => [name, field(key, name)]));
@@ -47,6 +47,8 @@ for (const file of pages(site)) {
     assert.ok(credit.includes(`<a href="${want.author_url}">${attribution ?? want.author}</a>`), `${page}: ${key} credit names the author as they ask`);
     assert.ok(credit.includes(`<a href="${want.license_url}">${want.license}</a>`), `${page}: ${key} credit links the license`);
     // ShareAlike: our edited version must be offered under the same license, and say so.
+    const architect = field(key, "architect");
+    if (architect) assert.ok(credit.includes(`building by architect ${architect}`), `${page}: ${key} credit names the building's architect`);
     if (want.license.includes("BY-SA")) assert.ok(credit.includes(`our edited version is shared under <a href="${want.license_url}">${want.license}</a> too`), `${page}: ${key} credit gives the license of the edited version`);
     const slide = html.match(new RegExp(`data-hero-photo="${key}"[^>]*`))[0];
     for (const image of [want.image, want.image_portrait]) {

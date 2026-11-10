@@ -51,8 +51,8 @@ try {
     assert.equal(await page.locator("[data-hero-slides-toggle], .ph-hero button").count(), 0, "no pause button");
     assert.equal(await active(page), "malacanang");
     const requests = await heroRequests(page);
-    assert.deepEqual(requests.filter(request => !request.afterLoad).map(request => request.file), ["malacanang-kalayaan-hall-night.jpg"], "only the first photo loads with the page");
-    assert.deepEqual(requests.map(request => request.file).sort(), ["fort-santiago-gate.jpg", "malacanang-kalayaan-hall-night.jpg", "manila-bay-sunset.jpg", "rizal-monument-night.jpg"], "wide screens load the wide photos only");
+    assert.deepEqual(requests.filter(request => !request.afterLoad).map(request => request.file), ["malacanang-palace-river.jpg"], "only the first photo loads with the page");
+    assert.deepEqual(requests.map(request => request.file).sort(), ["fort-santiago-gate.jpg", "malacanang-palace-river.jpg", "manila-bay-sunset.jpg", "rizal-monument-night.jpg"], "wide screens load the wide photos only");
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "rizal_monument", null, { timeout: 10000 });
     assert.notEqual(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), "none");
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "fort_santiago", null, { timeout: 10000 });
@@ -78,7 +78,7 @@ try {
     const { context, page, errors } = await open({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     await page.waitForSelector(".ph-hero-slides.is-playing", { timeout: 15000 });
     const files = (await heroRequests(page)).map(request => request.file).sort();
-    assert.deepEqual(files, ["fort-santiago-gate-portrait.jpg", "malacanang-kalayaan-hall-night-portrait.jpg", "manila-bay-sunset-portrait.jpg", "rizal-monument-night-portrait.jpg"]);
+    assert.deepEqual(files, ["fort-santiago-gate-portrait.jpg", "malacanang-palace-river-portrait.jpg", "manila-bay-sunset-portrait.jpg", "rizal-monument-night-portrait.jpg"]);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []);
     await context.close();
@@ -89,11 +89,11 @@ try {
     await page.waitForTimeout(2000);
     assert.equal(await page.locator(".ph-hero-slides.is-playing").count(), 0);
     assert.equal(await active(page), "malacanang");
-    assert.deepEqual((await heroRequests(page)).map(request => request.file), ["malacanang-kalayaan-hall-night.jpg"]);
+    assert.deepEqual((await heroRequests(page)).map(request => request.file), ["malacanang-palace-river.jpg"]);
     // Crossing the breakpoint: the photo keeps its image, then switches to the portrait size.
     await page.setViewportSize({ width: 390, height: 844 });
-    assert.match(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), /malacanang-kalayaan-hall-night\.jpg/);
-    await page.waitForFunction(() => /night-portrait\.jpg/.test(getComputedStyle(document.querySelector(".ph-hero-slide.is-active")).backgroundImage));
+    assert.match(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), /malacanang-palace-river\.jpg/);
+    await page.waitForFunction(() => /palace-river-portrait\.jpg/.test(getComputedStyle(document.querySelector(".ph-hero-slide.is-active")).backgroundImage));
     assert.deepEqual(errors, []);
     await context.close();
   }
