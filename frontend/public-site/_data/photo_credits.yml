@@ -5,10 +5,12 @@
 # The home page hero crossfades these photos in the order of `hero_photos:` in index.html's front
 # matter (see _includes/ph/hero.html and assets/hero-slides.js).
 #
-# All four were checked on Wikimedia Commons on 2026-11-10: author, license, and the copyright
-# status of the place shown (the Philippines has no freedom of panorama, so a recent building or
-# monument could still be under copyright; none of these is). `sha1` is the original file's SHA-1
-# as Commons reports it; our downloads matched it.
+# All four were checked on 2026-11-10 at their source pages (three on Wikimedia Commons, the
+# Malacañang photo on English Wikipedia): author, license, and the copyright status of the place
+# shown. The Philippines has no freedom of panorama, so a recent building or monument can still be
+# under copyright: the Rizal Monument, Fort Santiago and the Manila Bay view are clear; the
+# Malacañang Palace building is not (see its `status`). `sha1` is the original file's SHA-1 as its
+# source reports it; our downloads matched it.
 #
 # Our copies in assets/images/hero/ are cropped (a 2:1 `image` for wide screens and a 3:4
 # `image_portrait` for phones), resized, converted to black and white, and carry no metadata.
@@ -16,8 +18,9 @@
 #
 # Fields: title, author, author_url, attribution (how the author asks to be credited, if they say),
 # source_url, license, license_url, changes, architect (credited in the footer when the building's
-# design is still under copyright), status (copyright status of the place shown, for maintainers), sha1, image, image_portrait, position (vertical background position on wide
-# screens), position_wide (on screens 1800 px and wider, where the photo is scaled up most).
+# design is still under copyright), status (copyright status of the place shown, for maintainers),
+# sha1, image, image_portrait, position (vertical background position on wide screens),
+# position_wide (on screens 1800 px and wider, where the photo is scaled up most).
 
 malacanang:
   title: "Facade of the Malacañang Palace as seen from Pasig River"
