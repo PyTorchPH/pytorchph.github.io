@@ -25,6 +25,14 @@
   let generation = 0; // only the latest preparation may change what shows
   let timer = 0;
   let started = false;
+  const hasImage = new Set(); // slides whose photo has loaded at some size
+  const place = (slide, key) => {
+    slide.style.backgroundImage = `url("${slide.dataset[key]}")`;
+    hasImage.add(slide);
+  };
+  // Pin the first photo at its current size, so the stylesheet's breakpoint switch cannot blank it
+  // before a new size has loaded (also for visitors who prefer reduced motion).
+  slides[0].style.backgroundImage = `url("${slides[0].dataset[variant()]}")`;
 
   const active = () => slides.find(slide => slide.classList.contains("is-active")) ?? slides[0];
   const show = slide => {
@@ -56,13 +64,11 @@
     window.clearTimeout(timer);
     const loaded = await usable[key];
     if (run !== generation) return; // a later preparation takes over
-    slides.forEach((slide, index) => {
-      if (loaded[index]) slide.style.backgroundImage = `url("${slide.dataset[key]}")`;
-    });
-    // A photo that failed at this size stays if it still shows the other size; the first photo
-    // always stays (the stylesheet places it).
-    rotation = slides.filter((slide, index) => loaded[index] || slide.style.backgroundImage || index === 0);
-    if (!rotation.includes(active())) show(rotation[0] ?? slides[0]);
+    slides.forEach((slide, index) => { if (loaded[index]) place(slide, key); });
+    // A photo that failed at this size stays if it still shows another size; one that never
+    // loaded (the first photo included) is left out.
+    rotation = slides.filter(slide => hasImage.has(slide));
+    if (rotation.length && !rotation.includes(active())) show(rotation[0]);
     root.classList.toggle("is-playing", rotation.length > 1);
     ready = true;
     schedule();
@@ -74,11 +80,16 @@
     prepare();
   }
 
-  wide.addEventListener?.("change", () => { if (started) prepare(); });
+  wide.addEventListener?.("change", () => {
+    if (started) { prepare(); return; }
+    // Not crossfading (yet, or reduced motion): swap the first photo once its new size has loaded.
+    const key = variant();
+    load(slides[0].dataset[key]).then(ok => { if (ok && key === variant()) place(slides[0], key); });
+  });
   reducedMotion.addEventListener?.("change", () => {
     if (!reducedMotion.matches) { if (started) schedule(); else start(); return; }
     window.clearTimeout(timer);
-    show(slides[0]);
+    show(rotation[0] ?? slides[0]);
   });
 
   if (document.readyState === "complete") start();

@@ -90,6 +90,31 @@ try {
     assert.equal(await page.locator(".ph-hero-slides.is-playing").count(), 0);
     assert.equal(await active(page), "malacanang");
     assert.deepEqual((await heroRequests(page)).map(request => request.file), ["malacanang-kalayaan-hall-night.jpg"]);
+    // Crossing the breakpoint: the photo keeps its image, then switches to the portrait size.
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.match(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), /malacanang-kalayaan-hall-night\.jpg/);
+    await page.waitForFunction(() => /night-portrait\.jpg/.test(getComputedStyle(document.querySelector(".ph-hero-slide.is-active")).backgroundImage));
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // The first photo fails to load: the crossfade leaves it out instead of fading to an empty frame.
+  {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await context.route("**/*", route => {
+      const url = route.request().url();
+      if (url.includes("/assets/images/hero/malacanang-")) return route.abort();
+      return url.startsWith(origin) ? route.continue() : route.abort();
+    });
+    const page = await context.newPage();
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await page.goto(`${origin}/`, { waitUntil: "load" });
+    await page.waitForSelector(".ph-hero-slides.is-playing", { timeout: 15000 });
+    assert.equal(await active(page), "rizal_monument");
+    const seen = new Set();
+    for (let tick = 0; tick < 24; tick++) { seen.add(await active(page)); await page.waitForTimeout(1000); }
+    assert.ok(!seen.has("malacanang"), "the photo that failed never shows");
+    assert.ok(seen.size >= 3, "the other photos keep crossfading");
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -97,4 +122,4 @@ try {
   await browser.close();
   server.close();
 }
-console.log(JSON.stringify({ event: "hero_photo.browser_verified", outcome: "success", checks: ["first-photo-only-before-load", "wide-and-portrait-sizes", "advances", "no-pause-button", "breakpoint-crossing", "reduced-motion", "reduced-motion-mid-visit", "no-overflow"] }));
+console.log(JSON.stringify({ event: "hero_photo.browser_verified", outcome: "success", checks: ["first-photo-only-before-load", "wide-and-portrait-sizes", "advances", "no-pause-button", "breakpoint-crossing", "reduced-motion", "reduced-motion-breakpoint", "failed-first-photo", "reduced-motion-mid-visit", "no-overflow"] }));
