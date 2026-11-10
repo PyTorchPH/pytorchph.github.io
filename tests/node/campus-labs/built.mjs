@@ -39,7 +39,7 @@ function cards(html, page) {
   }
   const badgesInside = [...found, ...invites].reduce((total, element) => total + badgesIn(element[2]).length, 0);
   assert.equal(badgesIn(html).length, badgesInside, `${page}: a badge outside a recognized card`);
-  return found.map((article, index) => {
+  const list = found.map((article, index) => {
     const body = article[2];
     const badges = badgesIn(body);
     const names = withClass(body, "h4", "ph-lead-name");
@@ -47,11 +47,12 @@ function cards(html, page) {
     assert.equal(names.length, 1, `${page}: card ${index + 1} must have exactly one name`);
     return { classes: classList(article[1]).join(" "), attributes: article[1], badge: badges[0][2], name: names[0][2], body };
   });
+  return { list, invites: invites.length };
 }
 
 function checkCards(page) {
   const html = read(page);
-  const all = cards(html, page);
+  const { list: all, invites } = cards(html, page);
   assert.ok(all.length > 0, `${page}: no lead cards found`);
   for (const card of all) {
     assert.match(card.attributes, /data-static-chapter="[^"]+"/, `${page}: card without data-static-chapter`);
@@ -59,7 +60,7 @@ function checkCards(page) {
     if (card.classes.includes("ph-lead-pending")) assert.equal(card.badge, "", `${page}: pending card has a badge`);
     else assert.equal(decode(card.badge), initials(decode(card.name)), `${page}: badge for ${decode(card.name)}`);
   }
-  return { html, all, invites: (html.match(/ph-lead-invite/g) ?? []).length };
+  return { html, all, invites };
 }
 
 for (const page of ["campus-labs/index.html", "about/index.html"]) checkCards(page);
