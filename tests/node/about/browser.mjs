@@ -68,6 +68,8 @@ async function assertAbout(page) {
   assert.deepEqual(names, ["Alpha Romer Coma", "Giorgio Armani Magno"]);
   assert.equal(await page.locator(".ph-ambassador-photo").count(), 2);
   assert.equal(await page.locator("#campus-labs-leads article.ph-lead").count(), 26);
+  // Every Campus Labs card shows the portrait from that person's poster, not initials.
+  assert.equal(await page.locator("#campus-labs-leads article.ph-lead .ph-lead-badge .ph-lead-photo").count(), 26);
   // Every portrait loads (lazy images are scrolled into view first).
   for (const selector of [".ph-ambassador-photo", "#campus-labs-leads .ph-lead-photo"]) {
     const images = page.locator(selector);

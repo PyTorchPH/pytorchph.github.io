@@ -79,7 +79,16 @@ function checkCards(page) {
   return { html, all, invites };
 }
 
-for (const page of ["campus-labs/index.html", "about/index.html"]) checkCards(page);
+for (const page of ["campus-labs/index.html", "about/index.html"]) {
+  // Every person in _data/campus_labs.yml has a poster portrait; none may fall back to initials.
+  const data = readFileSync(resolve(site, "../_data/campus_labs.yml"), "utf8");
+  const people = (data.match(/^\s+- name: /gm) ?? []).length;
+  const photos = (data.match(/^\s+photo: \/assets\/images\/campus-labs\/[a-z0-9-]+\.jpg$/gm) ?? []).length;
+  assert.equal(photos, people, "every Campus Labs person in the data has a portrait");
+  const { all } = checkCards(page);
+  const withPhoto = all.filter(card => /<img\b/.test(card.badge)).length;
+  assert.equal(withPhoto, people, `${page}: every Campus Labs card shows its portrait`);
+}
 // On the Campus Labs page, every island group with no entry in _data/campus_labs.yml (derived from
 // the data, not from the rendered page) has its own group with exactly one invite card.
 {
