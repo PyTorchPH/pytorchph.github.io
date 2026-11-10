@@ -68,14 +68,6 @@ async function assertAbout(page) {
   assert.deepEqual(names, ["Alpha Romer Coma", "Giorgio Armani Magno"]);
   assert.equal(await page.locator(".ph-ambassador-photo").count(), 2);
   assert.equal(await page.locator("#campus-labs-leads article.ph-lead").count(), 26);
-  // Every Campus Labs card shows exactly one portrait, the file named for the person on that card.
-  const cards = await page.locator("#campus-labs-leads article.ph-lead").evaluateAll(nodes => nodes.map(node => ({
-    name: node.querySelector(".ph-lead-name")?.textContent.trim(),
-    photos: [...node.querySelectorAll(".ph-lead-badge .ph-lead-photo")].map(image => new URL(image.src).pathname),
-  })));
-  const slug = name => name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  assert.equal(new Set(cards.map(card => card.name)).size, 26, "26 distinct people");
-  for (const card of cards) assert.deepEqual(card.photos, [`/assets/images/campus-labs/${slug(card.name)}.jpg`], `portrait for ${card.name}`);
   // Every portrait loads (lazy images are scrolled into view first).
   for (const selector of [".ph-ambassador-photo", "#campus-labs-leads .ph-lead-photo"]) {
     const images = page.locator(selector);
@@ -84,6 +76,19 @@ async function assertAbout(page) {
       await image.scrollIntoViewIfNeeded();
       await page.waitForFunction(element => element.complete && element.naturalWidth > 0, await image.elementHandle());
     }
+  }
+  // Every Campus Labs card shows exactly one portrait, the file named for the person on that card.
+  const cards = await page.locator("#campus-labs-leads article.ph-lead").evaluateAll(nodes => nodes.map(node => ({
+    name: node.querySelector(".ph-lead-name")?.textContent.trim(),
+    // The displayed image (currentSrc) counts, and no srcset or <picture> may choose another file.
+    photos: [...node.querySelectorAll(".ph-lead-badge .ph-lead-photo")].map(image => new URL(image.currentSrc || image.src).pathname),
+    alternates: node.querySelectorAll(".ph-lead-badge img[srcset], .ph-lead-badge picture, .ph-lead-badge source").length,
+  })));
+  const slug = name => name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  assert.equal(new Set(cards.map(card => card.name)).size, 26, "26 distinct people");
+  for (const card of cards) {
+    assert.deepEqual(card.photos, [`/assets/images/campus-labs/${slug(card.name)}.jpg`], `portrait for ${card.name}`);
+    assert.equal(card.alternates, 0, `portrait for ${card.name} has no srcset or picture alternates`);
   }
   assert.equal(await page.locator("h1").count(), 1);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);

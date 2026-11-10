@@ -93,6 +93,7 @@ for (const page of ["campus-labs/index.html", "about/index.html"]) {
   for (const card of all) {
     const sources = [...card.badge.matchAll(/(?:^|\s)src="([^"]+)"/g)].map(match => decode(match[1]));
     assert.deepEqual(sources, [`/assets/images/campus-labs/${slug(decode(card.name).trim())}.jpg`], `${page}: portrait for ${decode(card.name)}`);
+    assert.ok(!/\ssrcset=|<picture\b|<source\b/.test(card.badge), `${page}: portrait for ${decode(card.name)} has no srcset or picture alternates`);
   }
 }
 // On the Campus Labs page, every island group with no entry in _data/campus_labs.yml (derived from
