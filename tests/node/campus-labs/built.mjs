@@ -79,15 +79,21 @@ function checkCards(page) {
   return { html, all, invites };
 }
 
+// Every person in _data/campus_labs.yml has their own poster portrait, and every rendered card shows
+// exactly the portrait named for the person on it: none may fall back to initials or borrow another.
+const slug = name => name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const dataPeople = [...readFileSync(resolve(site, "../_data/campus_labs.yml"), "utf8").matchAll(/^(\s+)- name: (.+)\n\1  photo: (.+)$/gm)];
+const dataNames = [...readFileSync(resolve(site, "../_data/campus_labs.yml"), "utf8").matchAll(/^\s+- name: (.+)$/gm)].map(match => match[1].trim());
+assert.equal(dataPeople.length, dataNames.length, "every Campus Labs person in the data has a photo right after their name");
+for (const [, , name, photo] of dataPeople) assert.equal(photo.trim(), `/assets/images/campus-labs/${slug(name.trim())}.jpg`, `data photo for ${name.trim()}`);
 for (const page of ["campus-labs/index.html", "about/index.html"]) {
-  // Every person in _data/campus_labs.yml has a poster portrait; none may fall back to initials.
-  const data = readFileSync(resolve(site, "../_data/campus_labs.yml"), "utf8");
-  const people = (data.match(/^\s+- name: /gm) ?? []).length;
-  const photos = (data.match(/^\s+photo: \/assets\/images\/campus-labs\/[a-z0-9-]+\.jpg$/gm) ?? []).length;
-  assert.equal(photos, people, "every Campus Labs person in the data has a portrait");
   const { all } = checkCards(page);
-  const withPhoto = all.filter(card => /<img\b/.test(card.badge)).length;
-  assert.equal(withPhoto, people, `${page}: every Campus Labs card shows its portrait`);
+  const names = all.map(card => decode(card.name).trim());
+  assert.deepEqual([...names].sort(), [...dataNames].sort(), `${page}: one card per person in the data`);
+  for (const card of all) {
+    const sources = [...card.badge.matchAll(/(?:^|\s)src="([^"]+)"/g)].map(match => decode(match[1]));
+    assert.deepEqual(sources, [`/assets/images/campus-labs/${slug(decode(card.name).trim())}.jpg`], `${page}: portrait for ${decode(card.name)}`);
+  }
 }
 // On the Campus Labs page, every island group with no entry in _data/campus_labs.yml (derived from
 // the data, not from the rendered page) has its own group with exactly one invite card.

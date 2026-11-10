@@ -68,8 +68,14 @@ async function assertAbout(page) {
   assert.deepEqual(names, ["Alpha Romer Coma", "Giorgio Armani Magno"]);
   assert.equal(await page.locator(".ph-ambassador-photo").count(), 2);
   assert.equal(await page.locator("#campus-labs-leads article.ph-lead").count(), 26);
-  // Every Campus Labs card shows the portrait from that person's poster, not initials.
-  assert.equal(await page.locator("#campus-labs-leads article.ph-lead .ph-lead-badge .ph-lead-photo").count(), 26);
+  // Every Campus Labs card shows exactly one portrait, the file named for the person on that card.
+  const cards = await page.locator("#campus-labs-leads article.ph-lead").evaluateAll(nodes => nodes.map(node => ({
+    name: node.querySelector(".ph-lead-name")?.textContent.trim(),
+    photos: [...node.querySelectorAll(".ph-lead-badge .ph-lead-photo")].map(image => new URL(image.src).pathname),
+  })));
+  const slug = name => name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  assert.equal(new Set(cards.map(card => card.name)).size, 26, "26 distinct people");
+  for (const card of cards) assert.deepEqual(card.photos, [`/assets/images/campus-labs/${slug(card.name)}.jpg`], `portrait for ${card.name}`);
   // Every portrait loads (lazy images are scrolled into view first).
   for (const selector of [".ph-ambassador-photo", "#campus-labs-leads .ph-lead-photo"]) {
     const images = page.locator(selector);
