@@ -16,7 +16,8 @@
 #   - `island` is the island group of the university named on the poster (needed to group the list).
 #   - `aliases` are other names officers might use for the same university in the portal; they are
 #     used for matching only and never shown. Quote an alias that contains a comma.
-#   - People are shown by name only, with an initials badge: no photos or contact details.
+#   - `photo` is the portrait cropped from the person's own poster (straightened and cropped to the
+#     face, 240 × 240, no metadata), used at the ambassador's direction. No contact details.
 #
 # Entries give way to chapters officers publish in the portal (/portal/admin/website/) for the same
 # university.
@@ -28,6 +29,7 @@ chapters:
     island: Luzon
     leads:
       - name: John Carl Santos
+        photo: /assets/images/campus-labs/john-carl-santos.jpg
         batch: 1
 
   - university: STI College Gensan
@@ -35,6 +37,7 @@ chapters:
     island: Mindanao
     leads:
       - name: Rolando Ferrer Jr.
+        photo: /assets/images/campus-labs/rolando-ferrer-jr.jpg
         batch: 1
 
   - university: Southwestern University PHINMA
@@ -42,6 +45,7 @@ chapters:
     island: Visayas
     leads:
       - name: Yurii Onein Yankin
+        photo: /assets/images/campus-labs/yurii-onein-yankin.jpg
         batch: 1
 
   - university: Bulacan State University
@@ -49,6 +53,7 @@ chapters:
     island: Luzon
     leads:
       - name: Ellah Bernardo
+        photo: /assets/images/campus-labs/ellah-bernardo.jpg
         batch: 1
 
   - university: Far Eastern University - Institute of Technology
@@ -56,6 +61,7 @@ chapters:
     island: Luzon
     leads:
       - name: John Andrew Balbarosa
+        photo: /assets/images/campus-labs/john-andrew-balbarosa.jpg
         batch: 1
 
   - university: Mindanao State University - Iligan Institute of Technology
@@ -63,6 +69,7 @@ chapters:
     island: Mindanao
     leads:
       - name: Hannah Hontiveros
+        photo: /assets/images/campus-labs/hannah-hontiveros.jpg
         batch: 1
 
   - university: Cebu Technological University
@@ -70,6 +77,7 @@ chapters:
     island: Visayas
     leads:
       - name: Julian Gen Carticiano
+        photo: /assets/images/campus-labs/julian-gen-carticiano.jpg
         batch: 1
 
   - university: Polytechnic University of the Philippines - Manila
@@ -77,6 +85,7 @@ chapters:
     island: Luzon
     leads:
       - name: John Paul Curada
+        photo: /assets/images/campus-labs/john-paul-curada.jpg
         batch: 1
 
   - university: National University - Manila
@@ -85,6 +94,7 @@ chapters:
     note: First-ever PyTorch Philippines Campus Labs recognized student organization
     leads:
       - name: Renz Jerik Viloria
+        photo: /assets/images/campus-labs/renz-jerik-viloria.jpg
         role: Campus Labs Lead
         batch: 1
 
@@ -93,6 +103,7 @@ chapters:
     island: Luzon
     leads:
       - name: Mile Ruth Kobe Cabalde
+        photo: /assets/images/campus-labs/mile-ruth-kobe-cabalde.jpg
         batch: 1
 
   # Batch 2
@@ -101,6 +112,7 @@ chapters:
     island: Luzon
     leads:
       - name: Jhane Rose Sadicon
+        photo: /assets/images/campus-labs/jhane-rose-sadicon.jpg
         batch: 2
 
   - university: Batangas State University, The National Engineering University - Alangilan
@@ -108,6 +120,7 @@ chapters:
     island: Luzon
     leads:
       - name: Regina Annemarie Bool
+        photo: /assets/images/campus-labs/regina-annemarie-bool.jpg
         batch: 2
 
   - university: West Visayas State University (WVSU)
@@ -115,6 +128,7 @@ chapters:
     island: Visayas
     leads:
       - name: Jhon Patrick Watimar
+        photo: /assets/images/campus-labs/jhon-patrick-watimar.jpg
         batch: 2
 
   - university: Ateneo de Naga University - Main Campus
@@ -122,6 +136,7 @@ chapters:
     island: Luzon
     leads:
       - name: Lenard Amiel Oliva
+        photo: /assets/images/campus-labs/lenard-amiel-oliva.jpg
         batch: 2
 
   - university: Nueva Vizcaya State University - Bayombong Campus (NVSU-BAY)
@@ -129,6 +144,7 @@ chapters:
     island: Luzon
     leads:
       - name: Jacob John Ferrer Jr.
+        photo: /assets/images/campus-labs/jacob-john-ferrer-jr.jpg
         batch: 2
 
   - university: Quezon City University
@@ -136,6 +152,7 @@ chapters:
     island: Luzon
     leads:
       - name: James Fontanilla
+        photo: /assets/images/campus-labs/james-fontanilla.jpg
         batch: 2
 
   - university: Pamantasan ng Lungsod ng Pasig (PLP)
@@ -143,6 +160,7 @@ chapters:
     island: Luzon
     leads:
       - name: Zarrah Exekiel Valles
+        photo: /assets/images/campus-labs/zarrah-exekiel-valles.jpg
         batch: 2
 
   - university: Pamantasan ng Lungsod ng Maynila - Intramuros (PLM)
@@ -150,6 +168,7 @@ chapters:
     island: Luzon
     leads:
       - name: Aldrin James Yang
+        photo: /assets/images/campus-labs/aldrin-james-yang.jpg
         batch: 2
 
   - university: University of the East - Manila (UE-MNL)
@@ -157,6 +176,7 @@ chapters:
     island: Luzon
     leads:
       - name: Keisha Nicole Dilao
+        photo: /assets/images/campus-labs/keisha-nicole-dilao.jpg
         batch: 2
 
   - university: Mindanao State University Main Campus - Marawi (MSU-Marawi)
@@ -164,6 +184,7 @@ chapters:
     island: Mindanao
     leads:
       - name: Abdul-khaliq Solaiman
+        photo: /assets/images/campus-labs/abdul-khaliq-solaiman.jpg
         batch: 2
 
   - university: University of Santo Tomas - Manila (UST-MNL)
@@ -171,6 +192,7 @@ chapters:
     island: Luzon
     leads:
       - name: Antonio Axellance Paco
+        photo: /assets/images/campus-labs/antonio-axellance-paco.jpg
         batch: 2
 
   - university: Davao Oriental State University (DOrSU)
@@ -178,6 +200,7 @@ chapters:
     island: Mindanao
     leads:
       - name: Reyjoy Sabino
+        photo: /assets/images/campus-labs/reyjoy-sabino.jpg
         batch: 2
 
   - university: Mapúa University (MU)
@@ -185,6 +208,7 @@ chapters:
     island: Luzon
     leads:
       - name: Justin Andre De Leon
+        photo: /assets/images/campus-labs/justin-andre-de-leon.jpg
         batch: 2
 
   - university: Pampanga State University
@@ -192,6 +216,7 @@ chapters:
     island: Luzon
     leads:
       - name: Francis Gian Lising
+        photo: /assets/images/campus-labs/francis-gian-lising.jpg
         batch: 2
 
   - university: Universidad de Dagupan
@@ -199,6 +224,7 @@ chapters:
     island: Luzon
     leads:
       - name: Julius De Leon
+        photo: /assets/images/campus-labs/julius-de-leon.jpg
         batch: 2
 
   - university: Technological Institute of the Philippines - Manila (TIP-MNL)
@@ -206,4 +232,5 @@ chapters:
     island: Luzon
     leads:
       - name: Alvin Paduganao Dellomas
+        photo: /assets/images/campus-labs/alvin-paduganao-dellomas.jpg
         batch: 2

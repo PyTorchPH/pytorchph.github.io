@@ -41,7 +41,7 @@ Empty states point to a next step. Lists loaded from the API sit in a wrapper wi
 | Ambassador terms on `/about/#ambassadors` | `_data/ambassador_terms.yml`, from PyTorch Philippines' ambassador poster, keyed by directory id |
 | Mission and principles on `/about/` | `_data/community_identity.yml`, taken from the [organization profile](https://github.com/PyTorchPH) |
 | Sample code | `_includes/sample_code/*.py` |
-| People bios and social links | `_members/<first-last>.md`: `name`, optional `person_key` (`member:<64-hex token suffix from leadership.id>`), `link_github`, `link_linkedin`, `link_homepage`; the body is the bio. These enrich matching API-published people on `/about/`, not individual profile pages. |
+| People bios and social links | `_members/<first-last>.md`, used only by the team-directory renderer (`assets/people/`), which no public page currently includes. |
 | Page hero | front matter `hero_kicker` (a short Filipino phrase), `hero_kicker_meaning`, `hero_title`, `hero_lead`, `hero_actions`; layout `ph` or `ph_article` |
 | Hero artwork | `node scripts/generate-archipelago.mjs` rewrites `assets/images/ph-network.svg` from the Natural Earth outline in `scripts/data/` |
 | Section layouts | `_includes/ph/*_section.html` |
@@ -55,24 +55,24 @@ and `_get_started/installation/*.md` are written for PyTorch 2.15 (checked again
 update them with each release. The PyTorch 2.x and Previous Versions pages redirect to pytorch.org,
 which keeps them current.
 
-### Shared people directory
+### People on the site
 
-`/about/` shows each published person once, combining their current roles. The public API owns the roster,
-roles, group labels, and photo visibility. `_members` supplies only optional biography text and validated
-GitHub, LinkedIn, and Website links through the inert `community-people-details` template. Metadata needs
-an exact identity-key match or an unambiguous name match; it cannot publish a person, override current
-roles, or restore a withheld or removed photo. Keep bios independent of changing organization titles.
+The About page has no team directory: the "Our team" section was removed at the site owner's
+request. People appear in two places, each from a single source:
 
-There are no individual person pages: the `members` collection uses `output: false` and has no redirect
-defaults, preserving its original biographies for About metadata. Three declarative compatibility stubs in
-`redirects/people/` use the existing `jekyll-redirect-from` plugin: `/about/john-andrew-balbarosa/`,
-`/about/alpha-romer-coma/`, and `/about/giorgio-armani/`. The first redirects to `/about/#team`; the two
-PyTorch Foundation Ambassadors redirect to `/about/#ambassadors`. The stubs are excluded from the sitemap.
+- `/about/#ambassadors`: the PyTorch Foundation Ambassadors that the Foundation's directory places in
+  the Philippines, with the portraits and biographies the Foundation publishes there and the terms
+  from PyTorch Philippines' ambassador poster (`_data/ambassador_terms.yml`). A person who leaves the
+  directory leaves this section (and their portrait is deleted) on the next deploy.
+- `/campus-labs/` and `/about/#campus-labs-leads`: the Campus Labs people from PyTorch Philippines'
+  posters (`_data/campus_labs.yml`), with portraits cropped from those posters
+  (`assets/images/campus-labs/`).
 
-The `#ambassadors` section is separate from the API-owned team directory. It lists only people the
-PyTorch Foundation's ambassador directory places in the Philippines, with the portraits and biographies
-the Foundation publishes there, and cites the directory with the date it was checked. A person who
-leaves the directory leaves this section (and their portrait is deleted) on the next deploy.
+The officer portal still publishes the leadership roster to the API, and `assets/people/` can still
+render it, but no public page includes a target for it. `_members` biographies are kept for that
+renderer. Three compatibility stubs in `redirects/people/` keep old profile URLs working:
+`/about/john-andrew-balbarosa/` redirects to `/campus-labs/`, and `/about/alpha-romer-coma/` and
+`/about/giorgio-armani/` to `/about/#ambassadors`. The stubs are excluded from the sitemap.
 
 ## PyTorch brand and trademark rules
 
@@ -89,8 +89,8 @@ PyTorch is a registered trademark of The Linux Foundation. This site follows the
 - **Attribution.** The footer carries the brand book's statement word for word: "PyTorch, the PyTorch
   logo and any related marks are trademarks of The Linux Foundation." The first prominent use of the
   name on the home page carries the ® symbol.
-- **No implied endorsement.** The footer and About page say the community is not affiliated with or
-  otherwise sponsored by the PyTorch Foundation. Ambassadors are recognized as individuals.
+- **No implied endorsement.** The footer says the community is not affiliated with or otherwise
+  sponsored by the PyTorch Foundation. Ambassadors are recognized as individuals.
 - **Symbol size and color.** Keep the symbol at 24px or larger on screen (the symbol is 89% of the
   horizontal lockup's height, so the lockup is never shorter than 27px), in orange, white, black, or
   gray only, on a background with strong contrast. Use orange as an accent, not a fill.

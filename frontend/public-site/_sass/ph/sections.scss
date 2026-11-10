@@ -661,8 +661,8 @@ button.main-menu-close-button {
   padding: rem(16px);
 
   @media (min-width: 576px) {
-    grid-template-columns: rem(56px) minmax(0, 1fr);
-    gap: rem(16px);
+    grid-template-columns: rem(72px) minmax(0, 1fr);
+    gap: rem(18px);
     padding: rem(20px);
   }
   background: $white;
@@ -703,6 +703,12 @@ button.main-menu-close-button {
     margin: 0;
     border-radius: 0;
     object-fit: cover;
+  }
+
+  // Poster portraits have white backgrounds: a thin ring keeps the circle visible on white cards.
+  &:has(.ph-lead-photo) {
+    background: $light_grey;
+    box-shadow: 0 0 0 1px #d6d7dc;
   }
 }
 

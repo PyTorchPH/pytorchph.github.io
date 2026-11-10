@@ -4,7 +4,7 @@ import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { servePages } from "../../../development/pages-demo/verify/serve-pages.mjs";
-import { API_ORIGIN, JOHN_NAME, JOHN_TOKEN, JANE_TOKEN, PHOTO_SVG, publishedDocument, publishedLeadership } from "./fixtures.mjs";
+import { API_ORIGIN, PHOTO_SVG, publishedDocument, publishedLeadership } from "./fixtures.mjs";
 
 async function main() {
   // Mental model: actual built Pages + real bootstrap/modules + published GET fixtures, never live accounts.
@@ -25,9 +25,12 @@ async function main() {
     await browser?.close();
     await server.close();
   }
-  console.log(JSON.stringify({ event: "about.pages.browser_verified", outcome: "success", checks: ["three-published-people", "all-roles", "single-portrait", "withheld-photo", "first-party-biography", "no-static-resurrection", "stable-refresh", "three-legacy-redirects", "single-h1", "no-horizontal-overflow"], artifacts: artifactDirectory }));
+  console.log(JSON.stringify({ event: "about.pages.browser_verified", outcome: "success", checks: ["no-team-directory", "no-static-resurrection", "ambassador-portraits", "campus-labs-portraits", "three-legacy-redirects", "single-h1", "no-horizontal-overflow"], artifacts: artifactDirectory }));
 }
 
+// The About page has no team directory (removed at the site owner's request): even when the API
+// publishes a leadership roster, no person card renders. People appear only as PyTorch Foundation
+// Ambassadors and as Campus Labs people, each with a portrait that loads.
 async function verifyBuiltAbout(browser, origin, artifacts, device, viewport) {
   const context = await browser.newContext({ viewport, reducedMotion: "reduce" });
   const state = { rows: publishedLeadership(), revision: 21, failure: false };
@@ -39,35 +42,17 @@ async function verifyBuiltAbout(browser, origin, artifacts, device, viewport) {
   try {
     await page.goto(`${origin}/about/`, { waitUntil: "networkidle" });
     await expectRevision(page, state.revision);
-    await assertPeople(page);
-    await assertPageStructure(page);
-    await page.evaluate(() => document.querySelector("#team").scrollIntoView({ block: "start", behavior: "instant" }));
+    await assertAbout(page);
+    await page.evaluate(() => document.querySelector("#ambassadors").scrollIntoView({ block: "start", behavior: "instant" }));
     await page.screenshot({ path: resolve(artifacts, `${device}.png`), animations: "disabled", fullPage: false });
-    state.revision++;
-    await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-    await expectRevision(page, state.revision);
-    await assertPeople(page);
-    state.rows = [];
-    state.revision++;
-    await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-    await expectRevision(page, state.revision);
-    assert.equal(await page.locator("article.ph-person").count(), 0);
-    assert.equal(await page.locator('[data-site-content="people"] img').count(), 0);
     state.failure = true;
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForFunction(() => document.documentElement.dataset.siteContentStatus === "fallback");
-    assert.equal(await page.locator("article.ph-person").count(), 0);
-    assert.equal(await page.locator('[data-site-content="people"] img').count(), 0);
+    await assertAbout(page);
     state.failure = false;
-    state.rows = publishedLeadership();
-    state.revision++;
-    // Legacy profile URLs land on the matching About section: the team, or the PyTorch Foundation ambassadors.
-    for (const [slug, hash] of [["john-andrew-balbarosa", "#team"], ["alpha-romer-coma", "#ambassadors"], ["giorgio-armani", "#ambassadors"]]) {
+    for (const [slug, path, hash] of [["john-andrew-balbarosa", "/campus-labs/", ""], ["alpha-romer-coma", "/about/", "#ambassadors"], ["giorgio-armani", "/about/", "#ambassadors"]]) {
       await page.goto(`${origin}/about/${slug}/`, { waitUntil: "domcontentloaded" });
-      await page.waitForURL(url => url.pathname === "/about/" && url.hash === hash);
-      await expectRevision(page, state.revision);
-      await assertPeople(page);
-      await assertPageStructure(page);
+      await page.waitForURL(url => url.pathname === path && url.hash === hash);
     }
     assert.deepEqual(legacyPortraitRequests, []);
     assert.deepEqual(errors, []);
@@ -76,40 +61,23 @@ async function verifyBuiltAbout(browser, origin, artifacts, device, viewport) {
   }
 }
 
-async function assertPeople(page) {
-  assert.equal(await page.locator("article.ph-person").count(), 3);
-  const names = await page.locator(".ph-person-name").allTextContents();
-  assert.deepEqual(names, [JOHN_NAME, "Jane Rivera", "Kai Santos"]);
-  assert.equal(names.includes("Alpha Romer Coma"), false);
-  assert.equal(names.includes("Giorgio Armani"), false);
-  const john = page.locator(`article.ph-person[data-person-key="member:${JOHN_TOKEN}"]`);
-  assert.deepEqual(await john.locator(".ph-person-roles li").allTextContents(), ["Chief Technology Officer", "Campus Labs Lead"]);
-  for (const role of ["Core team", "Departments", "Technology department", "Education department", "PyTorch Philippines", "Campus Labs"]) {
-    assert.ok((await john.textContent()).includes(role), `Keep published role metadata: ${role}`);
+async function assertAbout(page) {
+  assert.equal(await page.locator('[data-site-content="people"], #team, article.ph-person').count(), 0, "the team directory is removed");
+  assert.equal(await page.getByRole("heading", { name: "Our team" }).count(), 0);
+  const names = await page.locator(".ph-ambassador h3").allTextContents();
+  assert.deepEqual(names, ["Alpha Romer Coma", "Giorgio Armani Magno"]);
+  assert.equal(await page.locator(".ph-ambassador-photo").count(), 2);
+  assert.equal(await page.locator("#campus-labs-leads article.ph-lead").count(), 26);
+  // Every portrait loads (lazy images are scrolled into view first).
+  for (const selector of [".ph-ambassador-photo", "#campus-labs-leads .ph-lead-photo"]) {
+    const images = page.locator(selector);
+    for (let index = 0; index < await images.count(); index++) {
+      const image = images.nth(index);
+      await image.scrollIntoViewIfNeeded();
+      await page.waitForFunction(element => element.complete && element.naturalWidth > 0, await image.elementHandle());
+    }
   }
-  assert.match(await john.locator(".ph-person-bio").textContent(), /created the community website and member portal/);
-  assert.equal(await john.getByRole("link", { name: "GitHub", exact: true }).getAttribute("href"), "https://github.com/JohnAndrewBalbarosa");
-  for (const token of [JOHN_TOKEN, JANE_TOKEN]) {
-    const portrait = page.locator(`article.ph-person[data-person-key="member:${token}"] img.ph-person-photo`);
-    assert.equal(await portrait.count(), 1);
-    assert.equal(await portrait.getAttribute("width"), "160");
-    assert.equal(await portrait.getAttribute("height"), "160");
-    assert.equal(await portrait.getAttribute("src"), `${API_ORIGIN}/public/organization-photos/${token}`);
-  }
-  const kai = page.locator("article.ph-person").filter({ has: page.getByRole("heading", { name: "Kai Santos", exact: true }) });
-  assert.equal(await kai.locator("img").count(), 0);
-  assert.equal(await kai.locator(".ph-person-placeholder").count(), 1);
-  assert.equal(await page.locator("article.ph-person img").count(), 2);
-  assert.match(await page.locator(`article.ph-person[data-person-key="member:${JANE_TOKEN}"]`).textContent(), /Ambassadors/);
-}
-
-async function assertPageStructure(page) {
   assert.equal(await page.locator("h1").count(), 1);
-  assert.notEqual((await page.locator("h1").textContent()).trim(), JOHN_NAME);
-  const linksToJohn = await page.locator("header a, nav a").evaluateAll(links => links.filter(link => {
-    try { return new URL(link.href).pathname === "/about/john-andrew-balbarosa/"; } catch { return false; }
-  }).length);
-  assert.equal(linksToJohn, 0);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
 }
 

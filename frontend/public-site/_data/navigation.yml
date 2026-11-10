@@ -64,9 +64,6 @@ main_menu:
       - title: "Ambassadors"
         url: "/about/#ambassadors"
         url_type: "baseurl"
-      - title: "Team"
-        url: "/about/#team"
-        url_type: "baseurl"
 
   - title: "Member Portal"
     key: "portal"

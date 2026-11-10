@@ -31,7 +31,7 @@ function read(page) {
 const classList = attributes => (/(?:^|\s)class="([^"]*)"/.exec(attributes)?.[1] ?? "").split(/\s+/).filter(Boolean);
 // Elements are recognized by an exact class token, so a renamed class (ph-lead-badge-small)
 // does not count.
-const withClass = (html, tag, token) => [...html.matchAll(new RegExp(`<${tag}\\b([^>]*)>([^<]*)<\\/${tag}>`, "g"))].filter(match => classList(match[1]).includes(token));
+const withClass = (html, tag, token) => [...html.matchAll(new RegExp(`<${tag}\\b([^>]*)>([\\s\\S]*?)<\\/${tag}>`, "g"))].filter(match => classList(match[1]).includes(token));
 const badgesIn = html => withClass(html, "span", "ph-lead-badge");
 function cards(html, page) {
   const found = [...html.matchAll(/<article\b([^>]*)>([\s\S]*?)<\/article>/g)]
@@ -63,6 +63,17 @@ function checkCards(page) {
     assert.match(card.attributes, /data-static-chapter="[^"]+"/, `${page}: card without data-static-chapter`);
     assert.match(card.attributes, /data-island="(Luzon|Visayas|Mindanao)"/, `${page}: card without a valid island`);
     if (card.classes.includes("ph-lead-pending")) assert.equal(card.badge, "", `${page}: pending card has a badge`);
+    else if (/<img\b/.test(card.badge)) {
+      // A portrait: one image, decorative (the name is next to it), pointing at a file that exists.
+      const images = [...card.badge.matchAll(/<img\b([^>]*)>/g)];
+      assert.equal(images.length, 1, `${page}: badge for ${decode(card.name)} has one image`);
+      assert.equal(card.badge.replace(/<img\b[^>]*>/, "").trim(), "", `${page}: badge for ${decode(card.name)} has only the image`);
+      const attributes = images[0][1];
+      assert.match(attributes, /(?:^|\s)alt=""/, `${page}: portrait of ${decode(card.name)} must have empty alt text`);
+      const src = /(?:^|\s)src="([^"]+)"/.exec(attributes)?.[1];
+      assert.ok(src && src.startsWith("/assets/images/campus-labs/"), `${page}: portrait of ${decode(card.name)} comes from assets/images/campus-labs`);
+      assert.ok(existsSync(resolve(site, decode(src).slice(1))), `${page}: portrait file missing for ${decode(card.name)}: ${src}`);
+    }
     else assert.equal(decode(card.badge), initials(decode(card.name)), `${page}: badge for ${decode(card.name)}`);
   }
   return { html, all, invites };
