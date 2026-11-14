@@ -77,7 +77,7 @@ const headerAlpha = page => page.evaluate(() => {
 const textOf = locator => locator.evaluate(node => node.textContent.replace(/\s+/g, " ").trim());
 const occurrences = (text, part) => text.split(part).length - 1;
 const tiles = page => page.locator('[data-site-content="program-events"] > .ph-tile');
-const courses = page => page.locator('[data-site-content="program-training"] > .ph-course');
+const courses = page => page.locator('[data-site-content="program-training"] > .ph-tile');
 
 // Community events are three equal dark tiles (after the Linux Foundation's event pages: the name, then
 // the date large); training is a slim list with details one click away. Both parts get the same weight.
@@ -120,54 +120,48 @@ test("community events: three equal dark tiles, each with its kind, name, one se
   assert.deepEqual(errors, []);
 });
 
-test("training: a light card per upcoming course, its modules one click away, finished courses behind a small toggle", async t => {
+test("training: the same tile as the events above, in light grey, with the modules listed and the dates large at the foot", async t => {
   const { page, errors } = await homePage(t, 1440);
   assert.equal(await textOf(page.locator(".ph-program-label").nth(1)), "Training");
   assert.deepEqual(await courses(page).locator("h4").allTextContents(), ["Example Techniques", "Example Advanced"]);
-  assert.equal(await textOf(courses(page).nth(0).locator(".ph-course-when")), "November and December 2026 (tentative)");
-  assert.equal(await textOf(courses(page).nth(1).locator(".ph-course-when")), "January 2027 (tentative)");
-  // Cards too, like the community events, but light: side by side, same width, a light background.
-  const cards = await courses(page).evaluateAll(nodes => nodes.map(node => { const box = node.getBoundingClientRect(); return { top: Math.round(box.top), width: Math.round(box.width), background: getComputedStyle(node).backgroundColor }; }));
-  assert.equal(new Set(cards.map(card => JSON.stringify(card))).size, 1, JSON.stringify(cards));
-  assert.equal(cards[0].background, "rgb(243, 244, 247)");
-  // Sample data says so on the line itself.
-  assert.equal(await courses(page).nth(0).locator("summary").getByText("Demo/Test").isVisible(), true);
-  // Modules as published, each once, hidden until the course is opened.
-  const modules = courses(page).nth(0).locator("ol.ph-event-modules li");
-  assert.equal(await modules.first().isVisible(), false);
-  await courses(page).nth(0).locator("summary").click();
-  assert.deepEqual(await modules.allTextContents(), ["Tensors", "Training loops", "Text", "Pipelines"]);
-  // Opened, the course splits into its sessions: each with its own date and its own modules, side by
-  // side across the card, and the summary's dates step aside so no date shows twice.
-  const sessions = courses(page).nth(0).locator(".ph-session");
-  assert.deepEqual(await sessions.locator(".ph-session-when").allTextContents(), ["November 2026 (tentative)", "December 2026 (tentative)"]);
-  assert.deepEqual(await sessions.nth(0).locator("li").allTextContents(), ["Tensors", "Training loops"]);
-  assert.deepEqual(await sessions.nth(1).locator("li").allTextContents(), ["Text", "Pipelines"]);
-  const spread = await sessions.evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect()).map(box => ({ top: Math.round(box.top), left: Math.round(box.left) })));
-  assert.ok(spread[0].top === spread[1].top && spread[1].left > spread[0].left + 200, "sessions sit side by side");
-  assert.equal(await courses(page).nth(0).locator(".ph-course-when").isVisible(), false);
-  assert.equal(await courses(page).nth(1).locator(".ph-course-when").isVisible(), true, "a closed card keeps its dates");
-  await courses(page).nth(1).locator("summary").click();
+  // The same tile as the community events (same class, corners, and date at the foot), but light.
+  const look = locator => locator.evaluate(node => { const style = getComputedStyle(node); return { radius: style.borderTopLeftRadius, display: style.display, direction: style.flexDirection, padding: style.paddingLeft }; });
+  assert.deepEqual(await look(courses(page).nth(0)), await look(tiles(page).nth(0)));
+  assert.equal(await courses(page).nth(0).evaluate(node => getComputedStyle(node).backgroundColor), "rgb(243, 244, 247)");
+  const boxes = await courses(page).evaluateAll(nodes => nodes.map(node => { const box = node.getBoundingClientRect(); return { top: Math.round(box.top), height: Math.round(box.height), width: Math.round(box.width) }; }));
+  assert.equal(new Set(boxes.map(box => JSON.stringify(box))).size, 1, "equal tiles, side by side");
+  // Nothing to open: the modules as published, each once, in order.
+  assert.equal(await page.locator('[data-site-content="program-training"] summary').count(), 0);
+  assert.deepEqual(await courses(page).nth(0).locator("ol.ph-event-modules li").allTextContents(), ["Tensors", "Training loops", "Text", "Pipelines"]);
+  assert.equal(await courses(page).nth(0).locator("ol.ph-event-modules li").first().isVisible(), true);
+  // The dates, large at the foot, said once; "Tentative" on the small line above them.
+  assert.equal(await textOf(courses(page).nth(0).locator(".ph-tile-date")), "Tentative November and December 2026");
+  assert.equal(await textOf(courses(page).nth(1).locator(".ph-tile-date")), "Tentative January 2027");
+  assert.equal(occurrences(await textOf(courses(page).nth(0)), "2026"), 1);
+  const tops = await page.evaluate(() => [...document.querySelectorAll('[data-site-content="program-training"] .ph-tile-day')].map(node => Math.round(node.getBoundingClientRect().top)));
+  assert.equal(new Set(tops).size, 1, "the dates line up across the tiles");
+  // The row's label already says Training: no "Training" label on each tile.
+  assert.equal(await courses(page).locator(".ph-tile-kind").count(), 0);
+  assert.equal(await courses(page).nth(0).getByText("Demo/Test event — sample data").isVisible(), true);
   assert.equal(await courses(page).nth(1).getByRole("link", { name: /Learn more/ }).getAttribute("href"), "https://example.org/register");
-  // The finished course is not listed outright.
+  // The finished course is not listed outright; opened, it is the same tile.
   const previous = page.locator("details.ph-previous");
   assert.equal(await previous.getAttribute("open"), null);
   assert.equal(await textOf(previous.locator(":scope > summary")), "Previous courses (1)");
   assert.equal(await previous.getByText("Example Fundamentals").isVisible(), false);
   await previous.locator(":scope > summary").click();
-  assert.equal(await previous.getByText("Example Fundamentals").isVisible(), true);
-  assert.equal(await textOf(previous.locator(".ph-course-when")), "October 25 and November 8, 2026");
+  assert.equal(await previous.locator(".ph-tile h4").textContent(), "Example Fundamentals");
+  assert.equal(await textOf(previous.locator(".ph-tile-date")), "October 25 and November 8, 2026");
   assert.deepEqual(errors, []);
 });
 
-test("a session with no modules keeps its date when its course is opened", async t => {
+test("every session's date shows in its course's tile, also one with no modules", async t => {
   const published = [
     { id: "a", title: "Example Course", series: "Example Course", startsAt: "2026-11-25", dateStatus: "confirmed", eventType: "training", modules: "Module 1: Tensors" },
     { id: "b", title: "Example Course", series: "Example Course", startsAt: "2026-11-28", dateStatus: "confirmed", eventType: "training" },
   ];
   const { page, errors } = await homePage(t, 1440, { published });
-  await courses(page).first().locator("summary").click();
-  assert.deepEqual(await courses(page).first().locator(".ph-session-when").allTextContents(), ["November 25, 2026", "November 28, 2026"]);
+  assert.equal(await textOf(courses(page).first().locator(".ph-tile-date")), "November 25 and November 28, 2026");
   assert.deepEqual(errors, []);
 });
 
@@ -218,13 +212,14 @@ test("a published session that has passed does not bring the planned date back",
   assert.deepEqual(errors, []);
 });
 
-test("an unchanged refresh keeps an opened course open and keyboard focus where it was", async t => {
+test("an unchanged refresh keeps the previous courses open and keyboard focus where it was", async t => {
   const { page, errors, refresh } = await homePage(t, 1440);
-  await courses(page).nth(0).locator("summary").focus();
-  await page.keyboard.press("Enter");
+  const previous = page.locator("details.ph-previous");
+  await previous.locator(":scope > summary").click();
+  await courses(page).nth(1).getByRole("link", { name: /Learn more/ }).focus();
   await refresh();
-  assert.equal(await courses(page).nth(0).evaluate(node => node.open), true);
-  assert.equal(await page.evaluate(() => document.activeElement?.closest(".ph-course") !== null), true);
+  assert.equal(await previous.evaluate(node => node.open), true);
+  assert.equal(await page.evaluate(() => document.activeElement?.textContent.trim()), "Learn more →");
   assert.deepEqual(errors, []);
 });
 
@@ -262,7 +257,7 @@ for (const [width, floor] of [[1440, 16], [390, 15]]) {
 test("buttons and cards have 8px corners, and full-width bands stay square", async t => {
   const { page, errors } = await homePage(t, 1440);
   const radius = selector => page.locator(selector).first().evaluate(node => getComputedStyle(node).borderTopLeftRadius);
-  for (const selector of [".ph-hero-actions .btn", ".ph-tile", ".ph-course", ".ph-nationwide .btn", '[data-site-content="pytorch-news"] .ph-card', "#get-involved .ph-card"]) assert.equal(await radius(selector), "8px", selector);
+  for (const selector of [".ph-hero-actions .btn", ".ph-tile", ".ph-tile-light", ".ph-nationwide .btn", '[data-site-content="pytorch-news"] .ph-card', "#get-involved .ph-card"]) assert.equal(await radius(selector), "8px", selector);
   for (const selector of [".ph-hero", "#events", ".ph-stack", "footer.site-footer", ".header-holder"]) assert.equal(await radius(selector), "0px", selector);
   // Hovering a button changes its colors; no line is drawn under its rounded corners.
   const button = page.locator(".ph-hero-actions .btn").first();

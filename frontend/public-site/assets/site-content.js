@@ -147,7 +147,7 @@
   // The home page's events, in two parts of equal weight. Community events: three equal dark tiles, one
   // per series, each with its next session: a published one for that series when there is one, else
   // the planned one from _data/community_events.yml (embedded in the page). Training:
-  // a line per upcoming course (published sessions sharing a title), with its modules one click away,
+  // the same tile, light, per upcoming course (published sessions sharing a title), with its modules,
   // and recently finished courses behind a small toggle. Nothing is shown that the data does not say:
   // no date means no date line, and module names appear as published.
   function communityEventsConfig() {
@@ -193,40 +193,31 @@
     poster.className = "ph-event-poster";
     node.append(poster);
   }
-  // A course card: its title and dates. It opens to its sessions, which are separate events: each with
-  // its own date, its modules as published (the list numbers them through the course, so "Module N:" is
-  // dropped; none twice), and its registration link.
-  function courseRow(rows, today) {
+  // A training course as a tile, the same form as a community event's but light: the title, its
+  // modules as published across its sessions (the list numbers them, so "Module N:" is dropped; none
+  // twice), a registration link for each upcoming session that has one, and at the foot the sessions'
+  // dates, large, said once. The row's label already says "Training", so the tile has no kind line.
+  function courseTile(rows, today) {
     const [first] = rows;
-    const body = element("div", null, "ph-course-body");
-    const sessions = element("div", null, "ph-course-sessions");
-    const seen = new Set();
-    // Every session keeps its column (and so its date) once the card opens, also one with nothing to
-    // list; a course with no details at all does not open.
-    let hasDetails = false;
-    for (const row of rows) {
-      const modules = String(row.modules || row.topic || "").split(";").map(value => value.trim().replace(/^Module\s+\d+\s*:\s*/i, "")).filter(item => item && !seen.has(item) && Boolean(seen.add(item)));
-      const more = isUpcomingSchedule(row, today) ? arrowLink("Learn more", row.registrationUrl) : null;
-      if (modules.length || more) hasDetails = true;
-      const session = element("div", null, "ph-session");
-      session.append(element("p", `${datesPhrase([row]).replace(/^\w+day, /, "")}${row.dateStatus === "tentative" ? " (tentative)" : ""}`, "ph-session-when"));
-      if (modules.length) {
-        const list = element("ol", null, "ph-event-modules");
-        modules.forEach(item => list.append(element("li", item)));
-        session.append(list);
-      }
-      if (more) session.append(more);
-      sessions.append(session);
+    const node = element("article", null, "ph-tile ph-tile-light");
+    addPoster(node, rows, first.title);
+    node.append(element("h4", first.title));
+    if (rows.some(row => row.isDemo)) node.append(element("p", "Demo/Test event — sample data", "ph-demo-label"));
+    const modules = [...new Set(rows.flatMap(row => String(row.modules || row.topic || "").split(";").map(value => value.trim().replace(/^Module\s+\d+\s*:\s*/i, "")).filter(Boolean)))];
+    if (modules.length) {
+      const list = element("ol", null, "ph-event-modules");
+      modules.forEach(item => list.append(element("li", item)));
+      node.append(list);
     }
-    if (hasDetails) body.append(sessions);
-    const expandable = body.childNodes.length > 0;
-    const node = element(expandable ? "details" : "div", null, "ph-course");
-    const head = element(expandable ? "summary" : "div", null, "ph-course-head");
-    head.append(element("h4", first.title));
-    if (rows.some(row => row.isDemo)) head.append(element("span", "Demo/Test", "ph-demo-label"));
-    head.append(element("span", `${datesPhrase(rows)}${rows.some(row => row.dateStatus === "tentative") ? " (tentative)" : ""}`, "ph-course-when"));
-    node.append(head);
-    if (expandable) node.append(body);
+    const open = rows.filter(row => row.registrationUrl && isUpcomingSchedule(row, today));
+    const urls = [...new Set(open.map(row => row.registrationUrl))];
+    urls.forEach(url => {
+      const more = arrowLink(urls.length === 1 ? "Learn more" : `Learn more: ${scheduleDateLabel(open.find(row => row.registrationUrl === url))}`, url);
+      if (more) node.append(more);
+    });
+    const when = element("p", null, "ph-tile-date");
+    when.append(element("span", rows.some(row => row.dateStatus === "tentative") ? "Tentative" : "\u00a0", "ph-tile-weekday"), " ", element("span", datesPhrase(rows), "ph-tile-day"));
+    node.append(when);
     return node;
   }
   // The Manila calendar day as "2026-11-20", to compare with the data file's dates.
@@ -316,12 +307,12 @@
     replace("program-events", entries.map(entry => eventTile(entry.item, entry.sessions)));
     show("events", entries.length > 0);
 
-    // Training: upcoming courses as lines; recently finished ones behind the toggle.
+    // Training: upcoming courses as tiles; recently finished ones behind the toggle.
     const courses = groupBy(latestEvents.filter(row => trainingType && row.eventType === trainingType), row => `${row.series ?? ""}\u0000${row.title ?? ""}`);
     const ahead = courses.filter(rows => rows.some(upcoming));
     const finished = courses.filter(rows => !rows.some(upcoming) && rows.some(recent));
-    replace("program-training", ahead.map(rows => courseRow(rows, today)));
-    replace("program-previous", finished.map(rows => courseRow(rows, today)));
+    replace("program-training", ahead.map(rows => courseTile(rows, today)));
+    replace("program-previous", finished.map(rows => courseTile(rows, today)));
     document.querySelectorAll("[data-previous-count]").forEach(node => { node.textContent = finished.length ? `(${finished.length})` : ""; });
     show("training", ahead.length + finished.length > 0);
   }

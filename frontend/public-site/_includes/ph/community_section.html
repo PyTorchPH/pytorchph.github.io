@@ -1,9 +1,9 @@
 {%- comment -%}
   Events, right under the hero, in two parts of equal weight. Community events: three equal dark tiles
   (after the Linux Foundation's event pages: the name, one sentence, the date large), one per series in
-  _data/community_events.yml (embedded below). Training: a slim list, a line per upcoming course from
-  the sessions officers publish in the portal, opening to its modules, with finished courses behind a
-  small toggle.
+  _data/community_events.yml (embedded below). Training: the same tile in light grey, one per upcoming
+  course from the sessions officers publish in the portal, with its modules and its dates, and
+  finished courses behind a small toggle.
   site-content.js renders all of it ("<" is escaped in the embedded JSON, so no string can close the script). The h2 is for screen readers; each part has its own label.
 {%- endcomment -%}
 <section class="ph-section ph-events" id="events" aria-labelledby="events-heading">
@@ -16,10 +16,10 @@
     </div>
     <div class="ph-program" data-program="training" hidden>
       <h3 class="ph-program-label">{{ site.data.community_events.training.label | escape }}</h3>
-      <div class="ph-course-list" data-site-content="program-training"></div>
+      <div class="ph-tile-grid ph-tile-grid-fit" data-site-content="program-training"></div>
       <details class="ph-previous" data-hide-when-empty hidden>
         <summary>Previous courses <span data-previous-count></span></summary>
-        <div class="ph-course-list" data-site-content="program-previous"></div>
+        <div class="ph-tile-grid ph-tile-grid-fit" data-site-content="program-previous"></div>
       </details>
     </div>
     <noscript><p>JavaScript is needed to load the latest published programs. Follow our community pages for announcements.</p></noscript>

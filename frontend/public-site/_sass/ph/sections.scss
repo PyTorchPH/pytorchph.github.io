@@ -346,160 +346,61 @@ button.main-menu-close-button {
   }
 }
 
-// Training: light cards, one per course (its dates, then its title), each opening to its modules.
-// Cards like the community events above, but light, so the two parts read as a pair and stay distinct.
-// Finished courses wait behind a small toggle.
-.ph-course-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: rem(16px);
-  align-items: start;
-
-  // Two courses share the width in halves, three in thirds.
+// Training courses use the same tile in light grey, so the two rows are one family and still read
+// apart. Two courses share the width in halves, three in thirds.
+.ph-tile-grid.ph-tile-grid-fit {
   @include desktop {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: rem(20px);
   }
 }
 
-.ph-course {
-  min-width: 0;
-  overflow-wrap: anywhere;
+.ph-tile.ph-tile-light {
   background: $light_grey;
-
-  .ph-course-head {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: rem(6px);
-    padding: rem(24px) rem(22px);
-    list-style: none;
-
-    @include desktop {
-      padding: rem(26px) rem(28px);
-    }
-
-    &::-webkit-details-marker {
-      display: none;
-    }
-  }
-
-  summary.ph-course-head {
-    padding-right: rem(56px);
-    cursor: pointer;
-
-    // A small chevron on the right of the card.
-    &::after {
-      content: "";
-      position: absolute;
-      right: rem(28px);
-      top: rem(34px);
-      width: 8px;
-      height: 8px;
-      border-right: 2px solid $orange;
-      border-bottom: 2px solid $orange;
-      transform: rotate(45deg);
-    }
-
-    &:hover h4 {
-      color: $orange;
-    }
-  }
-
-  &[open] > summary.ph-course-head::after {
-    transform: translateY(4px) rotate(225deg);
-  }
-
-  // The dates first, small; then the title. Opened, the sessions below carry the dates instead.
-  .ph-course-when {
-    order: -1;
-    color: $ph_muted;
-    @include ph-text(13px);
-  }
-
-  &[open] .ph-course-head .ph-course-when {
-    display: none;
-  }
+  color: $slate;
 
   h4 {
-    margin: 0;
     color: $slate;
-    font-family: Montserrat, "Open Sans", sans-serif;
-    font-size: rem(22px);
-    font-weight: 500;
-    line-height: 1.3;
   }
 
-  .ph-demo-label {
+  .ph-demo-label,
+  .ph-event-link {
     color: $orange;
-    @include ph-text(13px);
-    font-weight: 600;
   }
 
-  .ph-course-body {
-    padding: 0 rem(22px) rem(24px);
-    counter-reset: ph-module; // modules are numbered through the course, across its sessions
+  // The modules: small numerals, one module a line.
+  .ph-event-modules {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: ph-module;
+    color: $ph_muted;
+    @include ph-text(16px);
+    line-height: 1.45;
 
-    @include desktop {
-      padding: 0 rem(28px) rem(26px);
-    }
-  }
+    li {
+      position: relative;
+      padding: 0 0 rem(8px) rem(30px);
+      counter-increment: ph-module;
 
-  // The course's sessions, side by side across the card: each its date, then its modules.
-  .ph-course-sessions {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: rem(20px) rem(32px);
-    padding-top: rem(18px);
-    border-top: 1px solid $ph_rule;
-
-    @media (min-width: 576px) {
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-  }
-
-  .ph-session {
-    min-width: 0;
-
-    .ph-session-when {
-      margin: 0 0 rem(8px);
-      color: $slate;
-      @include ph-text(14px);
-      font-weight: 600;
-    }
-
-    .ph-event-modules {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      color: $ph_muted;
-      @include ph-text(15px);
-      line-height: 1.6;
-
-      li {
-        position: relative;
-        padding: 0 0 rem(6px) rem(26px);
-        counter-increment: ph-module;
-
-        &::before {
-          content: counter(ph-module);
-          position: absolute;
-          left: 0;
-          color: $slate;
-          font-family: Montserrat, "Open Sans", sans-serif;
-          @include ph-text(13px);
-          font-weight: 600;
-        }
+      &::before {
+        content: counter(ph-module);
+        position: absolute;
+        left: 0;
+        color: $slate;
+        font-family: Montserrat, "Open Sans", sans-serif;
+        font-weight: 600;
+        @include ph-text(14px);
       }
     }
+  }
 
-    .ph-event-link {
-      display: inline-block;
-      margin-top: rem(6px);
-      color: $orange;
-      @include ph-text(14px);
-      font-weight: 600;
-      text-decoration: none;
+  .ph-tile-date {
+    .ph-tile-weekday {
+      color: $ph_muted;
+    }
+
+    .ph-tile-day {
+      color: $slate;
     }
   }
 }
@@ -528,7 +429,7 @@ button.main-menu-close-button {
     }
   }
 
-  .ph-course-list {
+  .ph-tile-grid {
     margin-top: rem(12px);
   }
 }

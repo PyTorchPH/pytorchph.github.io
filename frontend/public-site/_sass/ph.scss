@@ -991,7 +991,6 @@ $orange_on_dark: #ff8a66; // 6.5:1 on #262626; $orange is for light backgrounds 
 
 // Cards: one radius, and what is inside (a portrait, a poster, an opened list) is clipped to it.
 .ph-tile,
-.ph-course,
 .ph-lead,
 .ph-ambassador,
 .ph-callout,
@@ -1000,7 +999,6 @@ $orange_on_dark: #ff8a66; // 6.5:1 on #262626; $orange is for light backgrounds 
 }
 
 .ph-tile,
-.ph-course,
 .ph-lead,
 .ph-ambassador {
   overflow: hidden;
