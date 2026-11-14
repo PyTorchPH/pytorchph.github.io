@@ -1050,14 +1050,24 @@ pre.ph-code {
     }
   }
 
-  // The outlined button on the dark band fills with white instead.
-  .btn.ph-btn-outline {
+  // The outlined button on the dark band fills with white instead, and keeps an orange arrow.
+  .btn.ph-btn-outline,
+  .btn.ph-btn-outline.with-right-arrow {
     &:hover,
     &:focus-visible {
       background-color: $white;
       border-color: $white;
       color: $not_quite_black;
       background-image: url($baseurl + "/assets/images/chevron-right-orange.svg");
+    }
+  }
+
+  // The phone menu's button turns orange like the others.
+  .mobile-main-menu.open .ph-menu-foot .btn {
+    &:hover,
+    &:focus-visible {
+      background-color: $orange;
+      color: $white;
     }
   }
 

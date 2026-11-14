@@ -94,6 +94,21 @@ test("the directory lists everyone alphabetically and filters by island group an
   assert.deepEqual(errors, []);
 });
 
+test("when the chosen batch disappears, the batch filter resets and people show again", async t => {
+  const state = { revision: 1, chapters: [] };
+  const { page, errors, count, refresh } = await campusPage(t, state);
+  const batchOne = await page.locator('[data-campus-directory] .ph-lead[data-batch="1"]').evaluateAll(nodes => nodes.map(node => ({ university: node.dataset.staticChapter, island: node.dataset.island })));
+  await page.getByLabel("Batch").selectOption("1");
+  assert.equal(await count(), `Showing ${batchOne.length} people`);
+  // Officers publish every Batch 1 university: those listed cards give way, and no Batch 1 card is left.
+  state.chapters = batchOne.map((card, index) => ({ id: `c${index}`, university: card.university, island: card.island, leadName: `Published ${index}`, status: "active" }));
+  state.revision = 2;
+  await refresh();
+  assert.equal(await page.getByLabel("Batch").inputValue(), "");
+  assert.equal(await count(), `Showing ${people} people`);
+  assert.deepEqual(errors, []);
+});
+
 test("cards have 8px corners that clip the photo, and the search and selectors have 6px", async t => {
   const { page, errors } = await campusPage(t, { revision: 1, chapters: [] });
   const style = (selector, property) => page.locator(selector).first().evaluate((node, name) => getComputedStyle(node)[name], property);

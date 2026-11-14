@@ -201,10 +201,13 @@
     const body = element("div", null, "ph-course-body");
     const sessions = element("div", null, "ph-course-sessions");
     const seen = new Set();
+    // Every session keeps its column (and so its date) once the card opens, also one with nothing to
+    // list; a course with no details at all does not open.
+    let hasDetails = false;
     for (const row of rows) {
       const modules = String(row.modules || row.topic || "").split(";").map(value => value.trim().replace(/^Module\s+\d+\s*:\s*/i, "")).filter(item => item && !seen.has(item) && Boolean(seen.add(item)));
       const more = isUpcomingSchedule(row, today) ? arrowLink("Learn more", row.registrationUrl) : null;
-      if (!modules.length && !more) continue;
+      if (modules.length || more) hasDetails = true;
       const session = element("div", null, "ph-session");
       session.append(element("p", `${datesPhrase([row]).replace(/^\w+day, /, "")}${row.dateStatus === "tentative" ? " (tentative)" : ""}`, "ph-session-when"));
       if (modules.length) {
@@ -215,7 +218,7 @@
       if (more) session.append(more);
       sessions.append(session);
     }
-    if (sessions.childNodes.length) body.append(sessions);
+    if (hasDetails) body.append(sessions);
     const expandable = body.childNodes.length > 0;
     const node = element(expandable ? "details" : "div", null, "ph-course");
     const head = element(expandable ? "summary" : "div", null, "ph-course-head");

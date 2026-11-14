@@ -59,27 +59,30 @@
 
   function filter() {
     const query = fold(search.value);
+    // Cards site-content.js hid (a listed entry that gave way to the same published university) stay hidden.
+    const visible = cards().filter(node => !node.hidden);
     const people = new Map();
     const batches = new Map();
-    let shownPeople = 0;
-    let shownCards = 0;
-    // Cards site-content.js hid (a listed entry that gave way to the same published university) stay hidden.
-    for (const card of cards().filter(node => !node.hidden)) {
-      const where = card.dataset.island;
-      if (isPerson(card)) people.set(where, (people.get(where) ?? 0) + 1);
-      if (isPerson(card) && card.dataset.batch) batches.set(card.dataset.batch, (batches.get(card.dataset.batch) ?? 0) + 1);
-      const matches = (!island || where === island) && (!batch || card.dataset.batch === batch)
-        && (isInvite(card) ? !query && !batch : !query || fold(card.textContent).includes(query));
-      card.toggleAttribute("data-filtered-out", !matches);
-      if (matches) shownCards++;
-      if (matches && isPerson(card)) shownPeople++;
+    for (const card of visible.filter(isPerson)) {
+      people.set(card.dataset.island, (people.get(card.dataset.island) ?? 0) + 1);
+      if (card.dataset.batch) batches.set(card.dataset.batch, (batches.get(card.dataset.batch) ?? 0) + 1);
     }
     // The selectors: each option says how many people it holds; batches come from the cards themselves.
+    // A chosen batch that no card has any more is dropped before filtering, so the list does not go empty.
     region.querySelectorAll("option[data-label]").forEach(option => { option.textContent = `${option.dataset.label} (${people.get(option.value) ?? 0})`; });
     const known = [...batches.keys()].sort((a, b) => Number(a) - Number(b));
     if (known.join() !== [...batchSelect.options].slice(1).map(option => option.value).join() || [...batchSelect.options].slice(1).some(option => option.textContent !== `Batch ${option.value} (${batches.get(option.value)})`)) {
       batchSelect.replaceChildren(batchSelect.options[0], ...known.map(value => new Option(`Batch ${value} (${batches.get(value)})`, value)));
-      if (batch && !known.includes(batch)) batch = "";
+    }
+    if (batch && !known.includes(batch)) batch = "";
+    let shownPeople = 0;
+    let shownCards = 0;
+    for (const card of visible) {
+      const matches = (!island || card.dataset.island === island) && (!batch || card.dataset.batch === batch)
+        && (isInvite(card) ? !query && !batch : !query || fold(card.textContent).includes(query));
+      card.toggleAttribute("data-filtered-out", !matches);
+      if (matches) shownCards++;
+      if (matches && isPerson(card)) shownPeople++;
     }
     region.value = island;
     batchSelect.value = batch;

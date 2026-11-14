@@ -85,6 +85,7 @@ for (const [width, height] of [[1280, 800], [1440, 900], [1024, 768]]) {
   test(`at ${width} × ${height} the community events' names show without scrolling`, async t => {
     const { page, errors } = await homePage(t, width, { height });
     const boxes = await tiles(page).evaluateAll(nodes => nodes.slice(0, 3).map(node => ({ top: node.getBoundingClientRect().top, title: node.querySelector("h4").getBoundingClientRect().bottom })));
+    assert.ok(boxes.length === 3 && await tiles(page).first().isVisible(), "three tiles on screen to measure");
     assert.ok(boxes.every(box => Math.abs(box.top - boxes[0].top) < 1), "side by side");
     for (const box of boxes) assert.ok(box.title <= height - 40, `a name ends at ${Math.round(box.title)}px of ${height}`);
     assert.deepEqual(errors, []);
@@ -156,6 +157,17 @@ test("training: a light card per upcoming course, its modules one click away, fi
   await previous.locator(":scope > summary").click();
   assert.equal(await previous.getByText("Example Fundamentals").isVisible(), true);
   assert.equal(await textOf(previous.locator(".ph-course-when")), "October 25 and November 8, 2026");
+  assert.deepEqual(errors, []);
+});
+
+test("a session with no modules keeps its date when its course is opened", async t => {
+  const published = [
+    { id: "a", title: "Example Course", series: "Example Course", startsAt: "2026-11-25", dateStatus: "confirmed", eventType: "training", modules: "Module 1: Tensors" },
+    { id: "b", title: "Example Course", series: "Example Course", startsAt: "2026-11-28", dateStatus: "confirmed", eventType: "training" },
+  ];
+  const { page, errors } = await homePage(t, 1440, { published });
+  await courses(page).first().locator("summary").click();
+  assert.deepEqual(await courses(page).first().locator(".ph-session-when").allTextContents(), ["November 25, 2026", "November 28, 2026"]);
   assert.deepEqual(errors, []);
 });
 
@@ -259,6 +271,17 @@ test("buttons and cards have 8px corners, and full-width bands stay square", asy
   await page.waitForTimeout(400);
   assert.deepEqual(await button.evaluate(node => { const style = getComputedStyle(node); return [style.backgroundColor, style.color]; }), ["rgb(190, 44, 16)", "rgb(255, 255, 255)"]);
   await page.mouse.move(5, 500);
+  // The arrow stays visible on hover: white on the orange fill, orange where the fill is white.
+  const arrow = locator => locator.evaluate(node => getComputedStyle(node).backgroundImage.match(/chevron-right-(\w+)\.svg/)?.[1]);
+  await button.hover();
+  await page.waitForTimeout(300);
+  assert.equal(await arrow(button), "white");
+  const outlined = page.locator(".ph-nationwide .btn.ph-btn-outline");
+  await outlined.scrollIntoViewIfNeeded();
+  await outlined.hover();
+  await page.waitForTimeout(300);
+  assert.deepEqual([await outlined.evaluate(node => getComputedStyle(node).backgroundColor), await arrow(outlined)], ["rgb(255, 255, 255)", "orange"]);
+  await page.mouse.move(5, 5);
   // A card clips what is inside it to its corners.
   assert.equal(await page.locator(".ph-tile").first().evaluate(node => getComputedStyle(node).overflow), "hidden");
   assert.deepEqual(errors, []);
@@ -307,6 +330,15 @@ test("the phone menu sweeps in and out, and ends with the tagline and a way to j
   assert.equal((await foot.locator(".ph-menu-tagline").textContent()).replace(/\s+/g, " ").trim(), "Sindihan ang sulo.");
   assert.equal(await foot.locator(".ph-menu-tagline").getAttribute("lang"), "fil");
   assert.equal(await foot.getByRole("link", { name: "Join the community" }).getAttribute("href"), "/portal/register/");
+  // Its arrow is visible at rest and on hover.
+  const join = foot.getByRole("link", { name: "Join the community" });
+  const joinLook = () => join.evaluate(node => { const style = getComputedStyle(node); return `${style.backgroundColor} ${style.backgroundImage.match(/chevron-right-(\w+)\.svg/)?.[1]}`; });
+  await page.waitForTimeout(700);
+  assert.equal(await joinLook(), "rgb(255, 255, 255) orange");
+  await join.hover();
+  await page.waitForTimeout(300);
+  assert.equal(await joinLook(), "rgb(190, 44, 16) white");
+  await page.mouse.move(5, 5);
   assert.deepEqual(await foot.locator(".ph-menu-contacts a").allTextContents(), ["Facebook", "LinkedIn", "Email"]);
   await page.waitForTimeout(700);
   assert.ok((await foot.boundingBox()).y + (await foot.boundingBox()).height <= 844 + 1, "the foot fits on the first screen of the menu");
@@ -438,6 +470,7 @@ test("the menu keeps 4.5:1 contrast on every photo, at the top and while scrolli
     const marker = await link.evaluate(node => node.parentElement.classList.contains("active") ? getComputedStyle(node.parentElement, "::after").color.match(/\d+/g).slice(0, 3).map(Number) : null);
     menu.push({ name: (await link.textContent()).trim(), colors: [shown, hovered], marker, box: await link.boundingBox() });
   }
+  assert.ok(menu.length >= 5 && menu.some(item => item.marker), "the menu and the current page's marker are there to measure");
   await page.addStyleTag({ content: ".ph-header .main-menu a, .ph-header .ph-brand-name { color: transparent !important; } .ph-hero-slide, .ph-header, .ph-header a { transition: none !important; }" });
   const heroEnd = await page.evaluate(() => document.querySelector(".ph-hero").offsetHeight);
   // The top, the dark band leaving, the headline passing behind the menu, and the hero's end.
