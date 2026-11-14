@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, normalize, resolve } from "node:path";
 import { chromium } from "playwright";
+import sharp from "sharp";
 
 const site = resolve(import.meta.dirname, "../../../frontend/public-site/_site");
 const directory = JSON.parse(readFileSync(resolve(site, "../_data/ambassadors_directory.json"), "utf8"));
@@ -164,5 +165,47 @@ test("on a phone the About opening stacks and nothing scrolls sideways", async t
   const { page, errors } = await aboutPage(t, 390);
   assert.equal(await page.locator(".ph-reasons > article").count(), 3);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  assert.deepEqual(errors, []);
+});
+
+// The Filipino phrase above each page title is in PyTorch orange (not a muted tint), large enough to
+// count as large text, on a hero dark enough to keep 3:1 or more behind it (WCAG 2.2, 1.4.3).
+test("the phrase above each page title is PyTorch orange and readable", async t => {
+  const { page, errors } = await aboutPage(t, 1440);
+  const origin = new URL(page.url()).origin;
+  const linear = value => (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+  const luminance = ([r, g, b]) => 0.2126 * linear(r / 255) + 0.7152 * linear(g / 255) + 0.0722 * linear(b / 255);
+  for (const [width, paths] of [[1440, ["/about/", "/news/", "/learn/", "/campus-labs/", "/code-of-conduct/"]], [390, ["/about/", "/campus-labs/"]]]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const path of paths) {
+      await page.goto(`${origin}${path}`);
+      const kicker = page.locator(".ph-hero .ph-hero-kicker");
+      // Read from the phrase's own element, which is what is drawn.
+      const style = await kicker.evaluate(node => { const s = getComputedStyle(node.querySelector("span") ?? node); return { color: s.color, size: parseFloat(s.fontSize), weight: Number(s.fontWeight) }; });
+      assert.equal(style.color, "rgb(238, 76, 44)", `${path} at ${width}`);
+      assert.ok(style.size >= 24 || (style.size >= 18.66 && style.weight >= 700), `${path} at ${width}: ${style.size}px at weight ${style.weight} is large text`);
+      await page.addStyleTag({ content: ".ph-hero .ph-hero-kicker { color: transparent !important; }" });
+      const { data, info } = await sharp(await page.screenshot({ clip: await kicker.boundingBox() })).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      const backgrounds = [];
+      for (let index = 0; index < data.length; index += info.channels) backgrounds.push(luminance([data[index], data[index + 1], data[index + 2]]));
+      backgrounds.sort((a, b) => a - b);
+      const text = luminance([238, 76, 44]);
+      const worst = Math.min(...[backgrounds[Math.floor(backgrounds.length * 0.01)], backgrounds[Math.floor(backgrounds.length * 0.99)]].map(background => (Math.max(text, background) + 0.05) / (Math.min(text, background) + 0.05)));
+      assert.ok(worst >= 3, `${path} at ${width}: ${worst.toFixed(2)}:1`);
+    }
+  }
+  assert.deepEqual(errors, []);
+});
+
+// A hero says each thing once: the About hero has no paragraph (the page opens with the mission and
+// introduction right below), and the Campus Labs hero names Campus Labs and the community once each.
+test("page heroes do not repeat what the page says next", async t => {
+  const { page, errors } = await aboutPage(t, 1440);
+  const origin = new URL(page.url()).origin;
+  assert.equal(await page.locator(".ph-hero .lead").count(), 0);
+  await page.goto(`${origin}/campus-labs/`);
+  const hero = (await page.locator(".ph-hero .ph-hero-content > div").first().textContent()).replace(/\s+/g, " ");
+  assert.equal(hero.split("Campus Labs").length - 1, 1, "in the title only");
+  assert.equal(hero.split("PyTorch Philippines").length - 1, 1);
   assert.deepEqual(errors, []);
 });

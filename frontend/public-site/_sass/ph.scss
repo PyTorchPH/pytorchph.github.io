@@ -324,7 +324,6 @@ main li a:not(.btn):not(.ph-card-link):not(.ph-jump-link):not(.nav-link):not(.pa
 // sizes to its content, so nothing overlaps on small screens.
 // ---------------------------------------------------------------------------------------------
 $orange_on_dark: #ff8a66; // 6.5:1 on #262626; $orange is for light backgrounds only
-$hero_kicker: #ffb59e;
 
 .ph-visually-hidden {
   position: absolute;
@@ -372,7 +371,7 @@ $hero_kicker: #ffb59e;
   padding: rem(44px) 0 rem(52px);
   color: $white;
   background-color: #888;
-  background-image: linear-gradient(rgba(38, 38, 38, 0.66), rgba(38, 38, 38, 0.66)), url($baseurl + "/assets/images/home-background.jpg");
+  background-image: linear-gradient(rgba(38, 38, 38, 0.84), rgba(38, 38, 38, 0.84)), url($baseurl + "/assets/images/home-background.jpg");
   background-blend-mode: normal, luminosity;
   background-size: cover;
   background-position: 80% center;
@@ -398,16 +397,23 @@ $hero_kicker: #ffb59e;
     z-index: 1;
   }
 
+  // The Filipino phrase above a page title, in PyTorch orange. It is sized as large text (bold at
+  // 20px on phones, 26px on desktops), which the hero's darkened background keeps at 3:1 or more.
   .ph-hero-kicker {
     margin: 0 0 rem(8px);
     font-family: Montserrat, "Open Sans", sans-serif;
-    font-size: rem(20px);
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    color: $hero_kicker;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: $pytorch_orange;
 
     @include desktop {
-      font-size: rem(26px);
+      font-size: 26px;
+    }
+
+    // base_styles.scss sets Open Sans 400 on every element: the phrase's own span takes the kicker's.
+    span {
+      font: inherit;
     }
   }
 

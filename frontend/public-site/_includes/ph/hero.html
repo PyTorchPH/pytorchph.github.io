@@ -1,7 +1,7 @@
 {% assign display_title = include.title | default: page.hero_title | default: page.title | default: site.title %}
 {% assign display_lead = include.lead | default: page.hero_lead %}
 {% if page.body-class == "ph-home" and include.title == nil and page.hero_title == nil %}{% assign display_title = site.data.community_identity.tagline | default: site.title %}{% endif %}
-{% if page.hero_lead == nil %}{% if page.body-class == "ph-home" or page.body-class == "ph-about" %}{% assign display_lead = site.data.community_identity.description %}{% endif %}{% endif %}
+{% if page.hero_lead == nil and page.body-class == "ph-home" %}{% assign display_lead = site.data.community_identity.description %}{% endif %}
 {%- comment -%}
   Page hero. It sizes to its content, so long headings never collide with the header on small screens.
   Front matter: hero_kicker (a short Filipino phrase), hero_kicker_meaning (its English meaning, for
