@@ -31,6 +31,9 @@ sections:
   lightning talk slides are due three days before, and session slides the day before. Left out on purpose: budgets and what the event
   cannot pay for (no finances on the site), the organizing committee, the venue under discussion, and
   the two draft programs.
+  The venue host gives one talk outside the open call and has up to four attendee places held for
+  its team (the organizer, 2026-11-14): both are said on the page, because the prospectus sent to
+  hosts links here.
   The tracks and the submission types are set out as on the Linux Foundation's PyTorch Day China call
   for proposals (read 2026-11-14): each track with a definition (see the data file for where each
   comes from), each submission type with that page's one-line description, and the speaker line-up
@@ -67,7 +70,7 @@ sections:
 <section class="ph-event-band ph-event-registration" id="registration" aria-labelledby="registration-heading">
   <div class="container">
     <h2 id="registration-heading">Registration</h2>
-    <p class="ph-event-band-text">This is not first come, first served. Seating is limited, so we review every registration and select attendees based on their GitHub or Hugging Face profile. Anyone not selected at first stays on the waitlist.</p>
+    <p class="ph-event-band-text">This is not first come, first served. Seating is limited, so we review every registration and select attendees based on their GitHub or Hugging Face profile. Anyone not selected at first stays on the waitlist. Up to four places are held for the venue host's team.</p>
     {%- if registration.url and registration.url != "" %}
     <div class="ph-event-gate" data-gate data-opens="{{ registration.opens | escape }}" data-closes="{{ registration.closes | escape }}"><a class="ph-event-button" href="{{ registration.url | escape }}" rel="noopener noreferrer">Register on Luma</a></div>
     {%- endif %}
@@ -82,7 +85,7 @@ sections:
       <div class="ph-cfp-body">
         <section id="overview" aria-labelledby="overview-heading">
           <h3 id="overview-heading" class="ph-event-bar">Overview</h3>
-          <p>Every talk on the program comes from this open call. We want to hear from engineers, researchers and students who train, serve or build on models with PyTorch and its ecosystem.</p>
+          <p>Talks on the program come from this open call, apart from one given by the venue host. We want to hear from engineers, researchers and students who train, serve or build on models with PyTorch and its ecosystem.</p>
           <p>First-time speakers are welcome.</p>
           {%- if cfp.url and cfp.url != "" %}
           <div class="ph-cfp-submit ph-event-gate" data-gate data-opens="{{ cfp.opens | escape }}" data-closes="{{ cfp.closes | escape }}" data-after="CFP closed"><a class="ph-event-button" href="{{ cfp.url | escape }}" rel="noopener noreferrer">Submit a proposal</a></div>
@@ -138,7 +141,7 @@ sections:
 
         <section id="review" aria-labelledby="review-heading">
           <h3 id="review-heading" class="ph-event-bar">How proposals are reviewed</h3>
-          <p>A program committee scores every proposal with speaker names hidden, on relevance to PyTorch and ML practice, technical depth, clarity and originality.</p>
+          <p>A program committee scores every proposal from the call with speaker names hidden, on relevance to PyTorch and ML practice, technical depth, clarity and originality.</p>
           <p>It then builds the program from the top-scored proposals, balancing tracks and levels.</p>
         </section>
       </div>

@@ -234,7 +234,10 @@ test("Tensor Talks' call for proposals is part of the page: a menu of its sectio
 
 test("the call for proposals states the tracks, the levels, the two submission types, the notes and how talks are chosen", async t => {
   const { page, errors } = await open(t, CFP);
-  assert.match(await textOf(page.locator("#overview")), /Every talk on the program comes from this open call.*First-time speakers are welcome\./);
+  // The program comes from the open call, with one stated exception: a talk by the venue host.
+  assert.match(await textOf(page.locator("#overview")), /^Overview Talks on the program come from this open call, apart from one given by the venue host\..*First-time speakers are welcome\./);
+  assert.doesNotMatch(await textOf(page.locator("main")), /Every talk on the program/);
+  assert.match(await textOf(page.locator("#review")), /scores every proposal from the call with speaker names hidden/);
   // Each track is defined, as the Linux Foundation's "Suggested Topics" are: the name, then what it covers.
   assert.deepEqual(await textsOf(page.locator(".ph-tracks li strong")), ["Training and Post-Training:", "Inference and Deployment:", "Math and Foundations:", "Agents and Applications:", "PyTorch Ecosystem:"]);
   const definitions = await page.locator(".ph-tracks li").evaluateAll(nodes => nodes.map(node => node.textContent.replace(node.querySelector("strong").textContent, "").trim()));
@@ -257,7 +260,6 @@ test("the call for proposals states the tracks, the levels, the two submission t
   assert.equal(await textOf(page.locator(".ph-rules li").nth(6)), "Speakers receive a printed certificate.");
   assert.match(await textOf(page.locator(".ph-rules li").nth(0)), /^Submit up to two proposals\./);
   assert.equal(await page.locator('.ph-rules a[href="https://events.linuxfoundation.org/about/code-of-conduct/"]').count(), 1);
-  assert.match(await textOf(page.locator("#review")), /scores every proposal with speaker names hidden/);
   // Every chevron list says it is a list (Safari drops that from a list without markers).
   const lists = await page.locator("ul.ph-chevrons").evaluateAll(nodes => nodes.map(node => node.getAttribute("role")));
   assert.ok(lists.length === 5 && lists.every(role => role === "list"), JSON.stringify(lists));
@@ -339,7 +341,7 @@ test("Tensor Talks: Register leads to Luma only while registration is open; befo
   // The band under the introduction says how attendees are selected, whatever the date.
   const band = before.page.locator("#registration");
   assert.equal(await textOf(band.locator("h2")), "Registration");
-  assert.match(await textOf(band.locator(".ph-event-band-text")), /^This is not first come, first served\..*GitHub or Hugging Face profile\..*waitlist\.$/);
+  assert.match(await textOf(band.locator(".ph-event-band-text")), /^This is not first come, first served\..*GitHub or Hugging Face profile\..*waitlist\. Up to four places are held for the venue host's team\.$/);
   assert.ok(await band.locator(".ph-event-gate").isHidden(), "no button in the band before registration opens");
   // From the opening day through the closing day: Register, in the hero and in the band.
   for (const now of ["2026-12-20T16:30:00Z", "2027-01-18T15:30:00Z"]) { // 12:30 AM on December 21 and 11:30 PM on January 18, in Manila
