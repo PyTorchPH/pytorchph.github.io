@@ -164,7 +164,7 @@
     if (items.length < 3) return items.join(" and ");
     return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
   }
-  // One phrase for a column's dates, each date once: "Saturday, January 16, 2027", "October 25 and
+  // One phrase for a column's dates, each date once: "Saturday, January 23, 2027", "October 25 and
   // November 8, 2026", "November and December 2026".
   function datesPhrase(rows) {
     if (rows.length === 1 && hasDay(rows[0])) return manila(date(rows[0].startsAt), { weekday: "long", month: "long", day: "numeric", year: "numeric" });
@@ -232,13 +232,38 @@
     if (submit) node.append(" ", submit);
     return node;
   }
+  // A series' page in the event directory (/events/<slug>/): the directory's address as the page gives
+  // it, and a slug of lowercase letters, digits and hyphens only. The page is about one session
+  // (page_session) as the data file has it, so a tile showing another one (the next edition), or the
+  // same one with a date or status published in the portal that the page does not have yet, has no
+  // link: a tile never opens a page that contradicts it.
+  function eventPageUrl(item, next) {
+    const base = document.querySelector("[data-community-events]")?.dataset.eventsUrl;
+    const planned = (Array.isArray(item.sessions) ? item.sessions : []).find(row => row.title === item.page_session);
+    if (!base || !planned || !next || next.title !== planned.title) return "";
+    const day = row => (/^\d{4}-\d{2}(-\d{2})?$/.test(String(row.startsAt ?? "")) ? row.startsAt : hasDay(row) ? date(row.startsAt).toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }) : "");
+    if (day(next) !== day(planned) || next.dateStatus !== planned.dateStatus) return "";
+    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(item.slug ?? "")) ? `${base}${item.slug}/` : "";
+  }
   // A community event as a dark tile, after the Linux Foundation's event pages: the kind (and place),
   // the name, one sentence, the call for proposals, a link, and at the foot the date, large, said once.
-  // A series with no date shows none.
+  // A series with no date shows none. A series with a page in the event directory links its name to
+  // it, and the link covers the whole tile (the tile's other links stay above it).
   function eventTile(item, sessions) {
     const [next] = sessions;
     const title = next?.title || item.name;
     const node = element("article", null, "ph-tile");
+    const pageUrl = eventPageUrl(item, next);
+    const heading = element("h4", pageUrl ? null : title);
+    if (pageUrl) {
+      const more = element("a", title, "ph-tile-link");
+      more.href = pageUrl;
+      heading.append(more);
+      const arrow = element("span", "→", "ph-tile-arrow");
+      arrow.setAttribute("aria-hidden", "true");
+      node.classList.add("ph-tile-linked");
+      node.append(arrow);
+    }
     const poster = image(next?.photoUrl, `Poster: ${title}`);
     if (poster) {
       poster.className = "ph-tile-poster";
@@ -249,7 +274,7 @@
       if (index) kind.append(" ", separator(), " ");
       kind.append(part);
     });
-    node.append(kind, element("h4", title));
+    node.append(kind, heading);
     if (next?.isDemo) node.append(element("p", "Demo/Test event — sample data", "ph-demo-label"));
     paragraph(node, "", next?.description || item.blurb, "ph-tile-blurb");
     const cfp = callForProposals(item.cfp);

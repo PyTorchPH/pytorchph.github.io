@@ -1,0 +1,37 @@
+---
+layout: ph
+---
+{%- comment -%}
+  One community event's page in the event directory (/events/<slug>/), laid out after the Linux
+  Foundation's PyTorch event pages (PyTorch Day Japan and China, PyTorch Conference Europe and North
+  America): a dark hero with the name on the left and the date and place in capitals on the right, a
+  countdown, a short introduction beside a colored box, a row of figures, and full-width bands with
+  centered headings. An event with a call for proposals carries it on the same page (see
+  events/tensor-talks.html). Front matter:
+    series      the series' slug in _data/community_events.yml: its kind, and the session this page is
+                about (`page_session` there), which gives the name and the date
+    place       the city or area, once the organizers have stated one
+    starts_time the start time in Philippine time ("13:00"), when the organizers have stated one: the
+                countdown runs to it, and to the start of the event's day in the Philippines otherwise.
+                Every event has the same five rings (the site owner, 2026-11-14)
+  Everything on a page is what the organizers have stated: see the rules at the top of the data file.
+{%- endcomment -%}
+{%- assign series = site.data.community_events.events.series | where: "slug", page.series | first -%}
+{%- assign session = series.sessions | where: "title", series.page_session | first -%}
+{%- assign date_parts = session.startsAt | split: "-" -%}
+{%- if date_parts.size == 3 %}
+<div class="ph-countdown" data-countdown="{{ session.startsAt | escape }}T{{ page.starts_time | default: '00:00' | escape }}:00+08:00" role="timer" aria-label="Time until {{ session.startsAt | date: '%B %-d, %Y' }}" hidden>
+  <div class="container">
+    <ul>
+      <li><span class="ph-countdown-ring"><span data-unit="weeks">0</span></span> Weeks</li>
+      <li><span class="ph-countdown-ring"><span data-unit="days">0</span></span> Days</li>
+      <li><span class="ph-countdown-ring"><span data-unit="hours">0</span></span> Hours</li>
+      <li><span class="ph-countdown-ring"><span data-unit="minutes">0</span></span> Minutes</li>
+      <li><span class="ph-countdown-ring"><span data-unit="seconds">0</span></span> Seconds</li>
+    </ul>
+  </div>
+</div>
+{%- endif %}
+{{ content }}
+{% include ph/more_events.html %}
+<script src="{{ site.baseurl }}/assets/event-page.js" defer></script>

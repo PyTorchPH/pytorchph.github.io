@@ -103,7 +103,7 @@ test("community events: three equal dark tiles, each with its kind, name, one se
   assert.equal(new Set(boxes.map(box => JSON.stringify(box))).size, 1, JSON.stringify(boxes));
   assert.equal(boxes[0].background, "rgb(38, 38, 38)");
   // The date, large, said once; only the dates the organizers give.
-  assert.equal(await textOf(tiles(page).nth(0).locator(".ph-tile-date")), "Saturday January 16, 2027");
+  assert.equal(await textOf(tiles(page).nth(0).locator(".ph-tile-date")), "Saturday, Tentative January 23, 2027");
   assert.equal(await textOf(tiles(page).nth(1).locator(".ph-tile-date")), "Saturday, Tentative February 20, 2027");
   assert.equal(await textOf(tiles(page).nth(2).locator(".ph-tile-date")), "Saturday, Tentative March 20, 2027");
   assert.equal(occurrences(await textOf(tiles(page).nth(0)), "2027"), 1);
@@ -118,6 +118,56 @@ test("community events: three equal dark tiles, each with its kind, name, one se
   assert.equal(await tiles(page).nth(3).locator("img").getAttribute("alt"), "Poster: Paper Reading Circle");
   assert.equal(await tiles(page).nth(0).locator("img").count(), 0);
   assert.deepEqual(errors, []);
+});
+
+// The page has the data file's date and status. A session published in the portal with either one
+// different shows on the tile, and the tile then has no link to a page that would contradict it.
+for (const [what, change] of [["another date", { startsAt: "2027-02-27" }], ["another status", { dateStatus: "confirmed" }]]) {
+  test(`a tile whose published session has ${what} than its page does not link to the page`, async t => {
+    const published = [{ id: "mc", title: "ML & Coffee", series: "ML & Coffee", startsAt: "2027-02-20", dateStatus: "tentative", eventType: "meetup", ...change }];
+    const { page } = await homePage(t, 1440, { published });
+    assert.equal(await tiles(page).nth(1).locator("h4").textContent(), "ML & Coffee");
+    assert.equal(await tiles(page).nth(1).locator("a.ph-tile-link").count(), 0);
+    assert.equal(await tiles(page).nth(0).locator("a.ph-tile-link").count(), 1, "the other series keep their links");
+    // The same session with the page's own date and status keeps the link.
+    const same = await homePage(t, 1440, { published: [{ ...published[0], startsAt: "2027-02-20", dateStatus: "tentative" }] });
+    assert.equal(await tiles(same.page).nth(1).locator("a.ph-tile-link").count(), 1);
+  });
+}
+
+// Each named series has a page in the event directory (/events/<slug>/): its tile is one link to it,
+// the whole tile wide, and a published series without a page stays a plain tile.
+test("a community event's tile opens its page in the event directory", async t => {
+  const { page, errors } = await homePage(t, 1440);
+  assert.deepEqual(await tiles(page).locator("h4 a.ph-tile-link").evaluateAll(nodes => nodes.map(node => new URL(node.href).pathname)), ["/events/tensor-talks/", "/events/ml-and-coffee/", "/events/torch-trials/"]);
+  assert.equal(await tiles(page).nth(3).locator("a").count(), 0, "no page, no link");
+  // One link per tile to its page: nothing a screen reader hears twice.
+  assert.equal(await tiles(page).nth(1).locator("a").count(), 1);
+  // The corner arrow shows it opens, without being read out.
+  assert.equal(await tiles(page).nth(1).locator(".ph-tile-arrow").getAttribute("aria-hidden"), "true");
+  assert.equal(await tiles(page).nth(3).locator(".ph-tile-arrow").count(), 0);
+  // The link has a keyboard focus ring around the whole tile.
+  await tiles(page).nth(1).locator("a").focus();
+  assert.notEqual(await tiles(page).nth(1).locator("a").evaluate(node => getComputedStyle(node, "::after").outlineStyle), "none");
+  // A click anywhere on the tile, here its blurb, opens the page.
+  await tiles(page).nth(1).scrollIntoViewIfNeeded();
+  const blurb = await tiles(page).nth(1).locator(".ph-tile-blurb").boundingBox();
+  await page.mouse.click(blurb.x + blurb.width / 2, blurb.y + blurb.height / 2);
+  await page.waitForURL(url => url.pathname === "/events/ml-and-coffee/");
+  assert.equal(await page.locator("h1").textContent(), "ML & Coffee");
+  assert.deepEqual(errors, []);
+});
+
+test("a tile's own links still work over the link to its page", async t => {
+  // Published in the portal with the date and status the page has, so the tile still links to the page.
+  const published = [{ id: "tt", title: "Tensor Talks: Initialized", series: "Tensor Talks", startsAt: "2027-01-23T13:00:00+08:00", dateStatus: "tentative", eventType: "talk", registrationUrl: "https://example.org/talks" }];
+  const { page } = await homePage(t, 1440, { published });
+  assert.equal(await tiles(page).nth(0).locator("a.ph-tile-link").count(), 1);
+  const more = tiles(page).nth(0).locator("a.ph-event-link");
+  assert.equal(await more.getAttribute("href"), "https://example.org/talks");
+  await more.scrollIntoViewIfNeeded();
+  const box = await more.boundingBox();
+  assert.equal(await page.evaluate(([x, y]) => document.elementFromPoint(x, y).closest("a").className, [box.x + box.width / 2, box.y + box.height / 2]), "ph-event-link");
 });
 
 test("training: the same tile as the events above, in light grey, with the modules listed and the dates large at the foot", async t => {
@@ -186,19 +236,28 @@ test("the call for proposals line follows the calendar: opens, open until, then 
 });
 
 test("once an event has passed, its series moves on to the next one", async t => {
-  const { page, errors } = await homePage(t, 1440, { now: "2027-01-20T04:00:00Z" });
+  const { page, errors } = await homePage(t, 1440, { now: "2027-01-27T04:00:00Z" });
   assert.equal(await tiles(page).nth(0).locator("h4").textContent(), "Tensor Talks #2");
+  // The series' page is about the first edition: the next one's tile does not link to it.
+  assert.equal(await tiles(page).nth(0).locator("a.ph-tile-link").count(), 0);
+  assert.equal(await tiles(page).nth(0).locator(".ph-tile-arrow").count(), 0);
   assert.equal(await textOf(tiles(page).nth(0).locator(".ph-tile-date")), "Tentative March 2027");
   assert.deepEqual(errors, []);
 });
 
 test("a session published in the portal replaces the planned one for its series", async t => {
-  const published = [{ id: "tt", title: "Tensor Talks: Initialized", series: "Tensor Talks", startsAt: "2027-01-23", dateStatus: "confirmed", eventType: "talk", venue: "Makati", registrationUrl: "https://example.org/talks" }];
+  const published = [{ id: "tt", title: "Tensor Talks: Initialized", series: "Tensor Talks", startsAt: "2027-01-30", dateStatus: "confirmed", eventType: "talk", venue: "Makati", registrationUrl: "https://example.org/talks" }];
   const { page, errors } = await homePage(t, 1440, { published });
   const tile = tiles(page).nth(0);
-  assert.equal(await textOf(tile.locator(".ph-tile-date")), "Saturday January 23, 2027");
+  assert.equal(await textOf(tile.locator(".ph-tile-date")), "Saturday January 30, 2027");
   assert.equal(await textOf(tile.locator(".ph-tile-kind")), "Talks · Makati");
   assert.equal(await tile.getByRole("link", { name: /Learn more/ }).getAttribute("href"), "https://example.org/talks");
+  // The event's page still has the data file's date (January 23, tentative): the tile does not open
+  // a page that contradicts it, until the data file is brought in line.
+  assert.equal(await tile.locator("a.ph-tile-link").count(), 0);
+  assert.equal(await tile.locator(".ph-tile-arrow").count(), 0);
+  assert.equal(await tile.locator("h4").textContent(), "Tensor Talks: Initialized");
+  assert.equal(await tiles(page).nth(1).locator("a.ph-tile-link").count(), 1, "the other series keep their links");
   assert.equal(await tiles(page).count(), 3);
   // With no training sessions published, that part and its label stay out of the way.
   assert.equal(await page.locator(".ph-program").nth(1).isVisible(), false);

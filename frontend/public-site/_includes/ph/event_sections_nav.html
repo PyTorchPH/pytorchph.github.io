@@ -1,0 +1,8 @@
+{%- comment -%} The menu of a page's proposal sections (front matter `sections`: [{id, title}]). {%- endcomment -%}
+<nav class="ph-cfp-nav" aria-label="{{ include.label | escape }}">
+  <ul>
+    {%- for item in page.sections %}
+    <li><a class="ph-jump-link" href="#{{ item.id | escape }}">{{ item.title | escape }}</a></li>
+    {%- endfor %}
+  </ul>
+</nav>

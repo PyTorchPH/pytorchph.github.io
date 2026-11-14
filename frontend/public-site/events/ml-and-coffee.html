@@ -1,0 +1,63 @@
+---
+layout: ph_event
+title: "ML & Coffee"
+permalink: /events/ml-and-coffee/
+body-class: ph-event
+series: ml-and-coffee
+sections:
+  - id: overview
+    title: "Overview"
+  - id: levels
+    title: "Levels"
+  - id: tracks
+    title: "Tracks"
+---
+{%- comment -%}
+  Source: the organizers' planning document "PyTorch PH Events" (read 2026-11-14), in its own words.
+  The date is the organizer's (2026-11-14, tentative); it replaces the document's. The tracks are
+  Tensor Talks' (the organizer, 2026-11-14: "same tracks"). Left out on purpose: the budget, the
+  organizing committee, the venue under discussion, and the draft program's clock times, which were
+  written for the earlier date. No dates for proposals are stated yet, so none are shown.
+{%- endcomment -%}
+<section class="ph-section ph-event-intro" aria-labelledby="about-event-heading">
+  <div class="container">
+    <h2 id="about-event-heading" class="ph-visually-hidden">About ML &amp; Coffee</h2>
+    <div class="ph-event-intro-text">
+      <p>ML &amp; Coffee is PyTorch Philippines' meetup for people interested in machine learning, at any experience level. It is for meeting each other and sharing knowledge: short talks open the program, followed by a networking session.</p>
+    </div>
+    <ul class="ph-event-stats">
+      <li><strong>40</strong> <span>Attendees planned</span></li>
+      <li><strong>3</strong> <span>Talk levels</span></li>
+      <li><strong>5</strong> <span>Tracks</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="ph-section ph-section-grey ph-cfp" id="talks" aria-labelledby="talks-heading">
+  <div class="container">
+    <div class="ph-cfp-layout">
+      <h2 id="talks-heading" class="ph-event-heading">Talk proposals</h2>
+      {% include ph/event_sections_nav.html label="Talk proposal sections" %}
+      <div class="ph-cfp-body">
+        <section id="overview" aria-labelledby="overview-heading">
+          <h3 id="overview-heading" class="ph-event-bar">Overview</h3>
+          <p>Talks are chosen from submitted proposals, which are grouped into three levels.</p>
+        </section>
+
+        <section id="levels" aria-labelledby="levels-heading">
+          <h3 id="levels-heading" class="ph-event-bar">Levels</h3>
+          <ul role="list" class="ph-chevrons ph-levels-list">
+            <li><strong>Ignite:</strong> beginner learning journeys and inspirations in machine learning.</li>
+            <li><strong>Personal and fun projects:</strong> ML projects created without real-world or business constraints.</li>
+            <li><strong>Industry and real-world impact:</strong> AI and ML implementations that highlight real case uses and their impact.</li>
+          </ul>
+        </section>
+
+        <section id="tracks" aria-labelledby="tracks-heading">
+          <h3 id="tracks-heading" class="ph-event-bar">Tracks</h3>
+          {% include ph/event_tracks.html %}
+        </section>
+      </div>
+    </div>
+  </div>
+</section>

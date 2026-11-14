@@ -8,7 +8,7 @@
       </div>
     </div>
     <main id="main-content" tabindex="-1">
-      {% include ph/hero.html %}
+      {% if page.layout == "ph_event" %}{% include ph/event_hero.html %}{% else %}{% include ph/hero.html %}{% endif %}
       {{ content }}
     </main>
     {% include footer.html %}

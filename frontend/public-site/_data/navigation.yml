@@ -5,8 +5,8 @@ main_menu:
     url: "/"
     has_dropdown: true
     dropdown_items:
-      - title: "Upcoming programs"
-        url: "/#events"
+      - title: "Events"
+        url: "/events/"
         url_type: "baseurl"
       - title: "Get involved"
         url: "/#get-involved"

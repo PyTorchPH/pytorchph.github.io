@@ -1,0 +1,30 @@
+{%- comment -%}
+  The foot of an event's page: the other events as the home page's tiles (built here, since they come
+  only from the data file), in the data file's order, and one button back to the directory. Each tile
+  is one link, the whole tile wide.
+{%- endcomment -%}
+<section class="ph-section ph-more-events" aria-labelledby="more-events-heading">
+  <div class="container">
+    <h2 id="more-events-heading" class="ph-event-heading">More events</h2>
+    <div class="ph-tile-grid ph-tile-grid-fit">
+      {%- for series in site.data.community_events.events.series %}
+      {%- assign other = site.pages | where: "layout", "ph_event" | where: "series", series.slug | first -%}
+      {%- if other == nil or other.url == page.url %}{% continue %}{% endif -%}
+      {%- assign session = series.sessions | where: "title", series.page_session | first -%}
+      {%- assign date_parts = session.startsAt | split: "-" %}
+      <article class="ph-tile ph-tile-linked">
+        <span class="ph-tile-arrow" aria-hidden="true">→</span>
+        <p class="ph-tile-kind">{{ series.kind | escape }}</p>
+        <h3><a class="ph-tile-link" href="{{ other.url | relative_url }}">{{ session.title | default: series.name | escape }}</a></h3>
+        <p class="ph-tile-blurb">{{ series.blurb | escape }}</p>
+        {%- if date_parts.size == 3 %}
+        <p class="ph-tile-date"><span class="ph-tile-weekday">{{ session.startsAt | date: "%A" }}{% if session.dateStatus == "tentative" %}, Tentative{% endif %}</span> <span class="ph-tile-day">{{ session.startsAt | date: "%B %-d, %Y" }}</span></p>
+        {%- elsif date_parts.size == 2 %}
+        <p class="ph-tile-date"><span class="ph-tile-weekday">{% if session.dateStatus == "tentative" %}Tentative{% else %}&nbsp;{% endif %}</span> <span class="ph-tile-day">{{ session.startsAt | append: "-01" | date: "%B %Y" }}</span></p>
+        {%- endif %}
+      </article>
+      {%- endfor %}
+    </div>
+    <div class="ph-more-events-all"><a class="ph-event-button" href="{{ '/events/' | relative_url }}">All events and training</a></div>
+  </div>
+</section>

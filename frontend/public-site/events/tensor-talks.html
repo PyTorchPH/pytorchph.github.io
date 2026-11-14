@@ -1,0 +1,147 @@
+---
+layout: ph_event
+title: "Tensor Talks: Initialized"
+permalink: /events/tensor-talks/
+body-class: ph-event
+series: tensor-talks
+place: "Metro Manila"
+starts_time: "13:00"
+hero_actions:
+  - label: "Call for proposals"
+    url: "/events/tensor-talks/#cfp"
+sections:
+  - id: overview
+    title: "Overview"
+  - id: dates
+    title: "Dates to remember"
+  - id: tracks
+    title: "Tracks"
+  - id: formats
+    title: "Submission types"
+  - id: notes
+    title: "Important notes"
+  - id: review
+    title: "How proposals are reviewed"
+---
+{%- comment -%}
+  Sources: the organizers' planning document "PyTorch PH Events" (read 2026-11-14) and the event's
+  Sessionize call for proposals, in their own words. The event's day is the organizer's (2026-11-14):
+  January 23, a week after the one in both sources. The three dates the sources set by the event's day
+  moved the same week with it, keeping their distance from it: registration closes five days before,
+  lightning talk slides are due three days before, and session slides the day before. Left out on purpose: budgets and what the event
+  cannot pay for (no finances on the site), the organizing committee, the venue under discussion, and
+  the two draft programs.
+  The tracks and the submission types are set out as on the Linux Foundation's PyTorch Day China call
+  for proposals (read 2026-11-14): each track with a definition (see the data file for where each
+  comes from), each submission type with that page's one-line description, and the speaker line-up
+  rule as a note under sessions.
+  The introduction is a centered column of text, as on PyTorch Day Japan's page. The call for proposals
+  is part of this page, laid out after the Linux Foundation's CFP pages: a menu of its sections on the
+  left, and each section under a colored bar. The call itself is on
+  Sessionize: its "Submit a proposal" button appears once _data/community_events.yml has the link
+  (`cfp.url`); event-page.js holds it back until the opening day, replaces it with "CFP closed" after
+  the closing day, checks off the dates that have passed, and tags the next one.
+  Registration is on Luma (`registration` in the data file). As on the Linux Foundation's pages,
+  Register is the first button in the hero; a band under the introduction says how attendees are
+  selected, and carries the button too while registration is open.
+{%- endcomment -%}
+{%- assign series = site.data.community_events.events.series | where: "slug", page.series | first -%}
+{%- assign cfp = series.cfp -%}
+<section class="ph-section ph-event-intro" aria-labelledby="about-event-heading">
+  <div class="container">
+    <h2 id="about-event-heading" class="ph-visually-hidden">About Tensor Talks</h2>
+    <div class="ph-event-intro-text">
+      <p>Tensor Talks is PyTorch Philippines' technical talk series on how modern AI systems are built: training, inference, the mathematics underneath, and agentic systems. It gives Filipino students and practitioners a recurring, technically deep venue, taught by local speakers.</p>
+      <p>Initialized is the first edition: an afternoon of full sessions and lightning talks, with the last hour for networking with the speakers. The series runs every two months and is run by community volunteers.</p>
+    </div>
+    <ul class="ph-event-stats">
+      <li><strong>1:00 to 6:00 PM</strong> <span>Time</span></li>
+      <li><strong>12:30 PM</strong> <span>Doors open</span></li>
+      <li><strong>Free</strong> <span>Admission</span></li>
+      <li><strong>60</strong> <span>Attendees planned</span></li>
+    </ul>
+  </div>
+</section>
+
+{%- assign registration = series.registration -%}
+<section class="ph-event-band ph-event-registration" id="registration" aria-labelledby="registration-heading">
+  <div class="container">
+    <h2 id="registration-heading">Registration</h2>
+    <p class="ph-event-band-text">This is not first come, first served. Seating is limited, so we review every registration and select attendees based on their GitHub or Hugging Face profile. Anyone not selected at first stays on the waitlist.</p>
+    {%- if registration.url and registration.url != "" %}
+    <div class="ph-event-gate" data-gate data-opens="{{ registration.opens | escape }}" data-closes="{{ registration.closes | escape }}"><a class="ph-event-button" href="{{ registration.url | escape }}" rel="noopener noreferrer">Register on Luma</a></div>
+    {%- endif %}
+  </div>
+</section>
+
+<section class="ph-section ph-section-grey ph-cfp" id="cfp" aria-labelledby="cfp-heading">
+  <div class="container">
+    <div class="ph-cfp-layout">
+      <h2 id="cfp-heading" class="ph-event-heading">Call for proposals</h2>
+      {% include ph/event_sections_nav.html label="Call for proposals sections" %}
+      <div class="ph-cfp-body">
+        <section id="overview" aria-labelledby="overview-heading">
+          <h3 id="overview-heading" class="ph-event-bar">Overview</h3>
+          <p>Every talk on the program comes from this open call. We want to hear from engineers, researchers and students who train, serve or build on models with PyTorch and its ecosystem.</p>
+          <p>First-time speakers are welcome.</p>
+          {%- if cfp.url and cfp.url != "" %}
+          <div class="ph-cfp-submit ph-event-gate" data-gate data-opens="{{ cfp.opens | escape }}" data-closes="{{ cfp.closes | escape }}" data-after="CFP closed"><a class="ph-event-button" href="{{ cfp.url | escape }}" rel="noopener noreferrer">Submit a proposal</a></div>
+          {%- endif %}
+        </section>
+
+        <section id="dates" aria-labelledby="dates-heading">
+          <h3 id="dates-heading" class="ph-event-bar">Dates to remember</h3>
+          <ul role="list" class="ph-chevrons ph-key-dates">
+            <li><strong>CFP opens:</strong> <time datetime="{{ cfp.opens | escape }}">{{ cfp.opens | date: "%A, %B %-d, %Y" }}</time></li>
+            <li><strong>CFP closes:</strong> <time datetime="{{ cfp.closes | escape }}">{{ cfp.closes | date: "%A, %B %-d, %Y" }}</time> at 11:59 PM, Philippine time</li>
+            <li><strong>Speakers notified:</strong> <time datetime="2026-12-14">Monday, December 14, 2026</time></li>
+            <li><strong>Confirm your talk by:</strong> <time datetime="2026-12-18">Friday, December 18, 2026</time></li>
+            <li><strong>Schedule published and registration opens:</strong> <time datetime="2026-12-21">Monday, December 21, 2026</time></li>
+            <li><strong>Registration closes:</strong> <time datetime="2027-01-18">Monday, January 18, 2027</time></li>
+            <li><strong>Lightning talk slides due:</strong> <time datetime="2027-01-20">Wednesday, January 20, 2027</time></li>
+            <li><strong>Session slides due:</strong> <time datetime="2027-01-22">Friday, January 22, 2027</time></li>
+          </ul>
+          <p class="ph-dates-note">The January dates move with the event's day if it changes.</p>
+        </section>
+
+        <section id="tracks" aria-labelledby="tracks-heading">
+          <h3 id="tracks-heading" class="ph-event-bar">Tracks</h3>
+          {% include ph/event_tracks.html %}
+          <p class="ph-levels">You also pick a level for your talk: Beginner, Intermediate or Advanced.</p>
+        </section>
+
+        <section id="formats" aria-labelledby="formats-heading">
+          <h3 id="formats-heading" class="ph-event-bar">Submission types</h3>
+          <ul role="list" class="ph-chevrons ph-formats">
+            <li><strong>Session (20 to 30 minutes, up to 3 speakers):</strong> A focused talk covering a specific topic, concept, or case study, including Q&amp;A.
+              <ul role="list" class="ph-chevrons ph-chevron-note">
+                <li>Note: a talk with three or more speakers can't have only men on stage. This follows the Linux Foundation rule used at PyTorch events.</li>
+              </ul>
+            </li>
+            <li><strong>Lightning talk (10 to 15 minutes, up to 2 speakers):</strong> A fast-paced, high-impact presentation that delivers key insights or ideas in a concise format. There is no Q&amp;A on stage; you take questions at the speaker corners during networking. A lightning talk is a good way to give your first technical talk.</li>
+          </ul>
+          <p class="ph-formats-note">The final length depends on how many talks we accept. Your acceptance email will state it.</p>
+        </section>
+
+        <section id="notes" aria-labelledby="notes-heading">
+          <h3 id="notes-heading" class="ph-event-bar">Important notes</h3>
+          <ul role="list" class="ph-chevrons ph-rules">
+            <li>Submit up to two proposals. Each person can have at most one accepted talk.</li>
+            <li>This is a community event, so no product or vendor sales pitches.</li>
+            <li>Write the proposal yourself. Proposals that lean heavily on AI-generated or templated text rarely show the technical depth reviewers look for.</li>
+            <li>All speakers agree to follow the <a href="https://events.linuxfoundation.org/about/code-of-conduct/" rel="noopener noreferrer">Linux Foundation Events Code of Conduct</a>.</li>
+            <li>Strong proposals that don't fit January may be offered a slot at Tensor Talks in March 2027.</li>
+            <li>We take photos during the event. The submission form asks whether we may also record your talk.</li>
+            <li>Speakers receive a printed certificate.</li>
+          </ul>
+        </section>
+
+        <section id="review" aria-labelledby="review-heading">
+          <h3 id="review-heading" class="ph-event-bar">How proposals are reviewed</h3>
+          <p>A program committee scores every proposal with speaker names hidden, on relevance to PyTorch and ML practice, technical depth, clarity and originality.</p>
+          <p>It then builds the program from the top-scored proposals, balancing tracks and levels.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</section>

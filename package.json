@@ -52,6 +52,7 @@
     "test:hero-photo:built": "node tests/node/hero-photo/built.mjs",
     "test:hero-photo:browser": "node tests/node/hero-photo/browser.mjs",
     "test:home:browser": "node --test tests/node/home/home.test.mjs",
+    "test:events:browser": "node --test tests/node/events/pages.test.mjs",
     "test:ambassadors:browser": "node --test tests/node/about/ambassadors.test.mjs"
   },
   "devDependencies": {

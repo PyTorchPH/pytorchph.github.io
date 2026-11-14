@@ -2062,3 +2062,763 @@ section[tabindex="-1"]:focus {
   }
 }
 
+
+// ---- The event directory (/events/) and each event's page (/events/<slug>/) ----
+
+// The home page's hero ends in waves that already leave white above the events; the directory's
+// does not, so its events keep a section's usual space.
+.ph-events-page .ph-events {
+  padding-top: rem(56px);
+
+  @include desktop {
+    padding-top: rem(64px);
+  }
+}
+
+// A tile that leads to a page: its name is the link, and the link covers the tile (the tile's other
+// links stay above it). An arrow in the corner says so without hovering; on hover or keyboard focus an
+// orange line sweeps in along the top from the left and out to the right, as on the Campus Labs cards.
+.ph-tile h3 {
+  margin: 0 0 rem(12px);
+  color: $white;
+  font-family: Montserrat, "Open Sans", sans-serif;
+  font-size: rem(26px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ph-tile.ph-tile-linked {
+  position: relative;
+
+  .ph-tile-kind,
+  h3,
+  h4 {
+    padding-right: 36px;
+  }
+
+  .ph-tile-link {
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      border-radius: $ph_radius;
+    }
+
+    &:focus-visible {
+      outline: none;
+
+      &::after {
+        outline: 3px solid $orange_on_dark;
+        outline-offset: -5px;
+      }
+    }
+  }
+
+  .ph-event-note a,
+  > .ph-event-link {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ph-tile-arrow {
+    position: absolute;
+    top: rem(22px);
+    right: rem(22px);
+    color: $orange_on_dark;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1;
+    transition: transform 0.25s ease;
+
+    @include desktop {
+      top: rem(28px);
+      right: rem(28px);
+    }
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 4px;
+    background: $pytorch_orange;
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: transform 0.35s ease;
+  }
+
+  &:focus-within::before {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+
+  @media (hover: hover) {
+    &:hover::before {
+      transform: scaleX(1);
+      transform-origin: left center;
+    }
+
+    &:hover .ph-tile-arrow {
+      transform: translateX(4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before,
+    .ph-tile-arrow {
+      transition: none;
+    }
+  }
+}
+
+// ---- An event's pages, laid out after the Linux Foundation's PyTorch event pages (PyTorch Day Japan
+// and China, PyTorch Conference Europe and North America). Their gradient is ours in PyTorch orange,
+// kept dark enough at both ends for white text at any size (4.5:1 or more). ----
+$ph_event_gradient: linear-gradient(90deg, #b0250b, #d63f20);
+
+// The hero: the name and the kind of event on the left; the date, the place and the weekday on the
+// right, in capitals with wide letter-spacing as theirs are.
+.ph-event-hero {
+  .ph-event-hero-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: rem(28px);
+
+    @include desktop {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: rem(56px);
+      align-items: center;
+    }
+  }
+
+  // As on their pages, the name is centered in its half, so the two halves meet at the middle of the
+  // page and read as one block, over the countdown centered below.
+  .ph-event-name {
+    @include desktop {
+      text-align: center;
+    }
+  }
+
+  h1 {
+    max-width: none;
+    margin: 0 0 rem(16px);
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0;
+    text-transform: none;
+
+    @include desktop {
+      font-size: 54px;
+    }
+  }
+
+  p {
+    margin: 0;
+    color: $white;
+    font-family: Montserrat, "Open Sans", sans-serif;
+  }
+
+  // The bar under the name, as the "JAPAN 2026" bar under theirs. Bold at 20px: large text, 3:1 or more.
+  .ph-event-kind {
+    display: inline-block;
+    padding: 3px 16px;
+    background: $pytorch_orange;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+
+  .ph-event-date {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    line-height: 1.2;
+    text-transform: uppercase;
+
+    @include desktop {
+      font-size: 40px;
+    }
+
+    time {
+      font: inherit;
+    }
+  }
+
+  .ph-event-place {
+    margin-top: 6px;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    line-height: 1.3;
+    text-transform: uppercase;
+
+    @include desktop {
+      font-size: 30px;
+    }
+  }
+
+  .ph-event-day {
+    margin-top: 8px;
+    font-family: "Open Sans", sans-serif;
+    font-size: 19px;
+    line-height: 1.4;
+
+    @include desktop {
+      font-size: 22px;
+    }
+  }
+
+  .ph-hero-actions {
+    margin-top: rem(24px);
+  }
+}
+
+// The countdown under the hero: five thin rings, each filled by its share (--part, from event-page.js).
+.ph-countdown {
+  padding-top: rem(28px);
+
+  &[hidden] {
+    display: none;
+  }
+
+  ul {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    // The narrowest phones: five rings still fit in one row.
+    @media (max-width: 359.98px) {
+      gap: 0;
+    }
+
+    @include desktop {
+      gap: 56px;
+    }
+  }
+
+  li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 58px;
+    color: $slate;
+    white-space: nowrap;
+    @include ph-text(14px);
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  .ph-countdown-ring {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: conic-gradient(#{$pytorch_orange} calc(var(--part, 0) * 1turn), #{$ph_rule} 0);
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      bottom: 2px;
+      left: 2px;
+      border-radius: 50%;
+      background: $white;
+    }
+
+    span {
+      position: relative;
+      color: $slate;
+      font-family: Montserrat, "Open Sans", sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+    }
+  }
+}
+
+// The introduction, as on PyTorch Day Japan's page: a centered column of ordinary text under the
+// countdown, then a row of figures.
+.ph-event-intro {
+  padding: rem(32px) 0 rem(56px);
+
+  .ph-event-intro-text {
+    max-width: 860px;
+    margin: 0 auto;
+
+    p {
+      margin: 0 0 rem(18px);
+      color: $slate;
+      @include ph-text(18px);
+      line-height: 1.7;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+// Figures in outlined boxes: the figure bold, its label under it in capitals.
+.ph-event-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: rem(36px) 0 0;
+  padding: 0;
+  list-style: none;
+
+  @include desktop {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  li {
+    padding: 18px 18px 20px;
+    border: 1px solid $ph_rule;
+    border-radius: $ph_radius;
+
+    @include desktop {
+      padding: 22px 24px 24px;
+    }
+  }
+
+  // A pair of figures stacks on a phone, so a long label has the full width.
+  li:first-child:nth-last-child(2),
+  li:first-child:nth-last-child(2) ~ li {
+    grid-column: 1 / -1;
+
+    @include desktop {
+      grid-column: auto;
+    }
+  }
+
+  strong {
+    display: block;
+    color: $slate;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+
+    @include desktop {
+      font-size: 26px;
+    }
+  }
+
+  // Labels wrap between words only: never mid-word.
+  span {
+    display: block;
+    margin-top: 6px;
+    color: $ph_muted;
+    letter-spacing: 1px;
+    line-height: 1.4;
+    overflow-wrap: normal;
+    word-break: normal;
+    text-transform: uppercase;
+    @include ph-text(14px);
+  }
+}
+
+// A heading in their manner: centered capitals, widely spaced.
+.ph-event-heading,
+.ph-event-band h2 {
+  margin: 0 0 rem(24px);
+  font-family: Montserrat, "Open Sans", sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  line-height: 1.3;
+  text-align: center;
+  text-transform: uppercase;
+
+  @include desktop {
+    font-size: 30px;
+  }
+}
+
+// A full-width band in the gradient: a heading, then a button and a line, or white cards.
+.ph-event-band {
+  padding: rem(48px) 0 rem(56px);
+  background: $ph_event_gradient;
+  color: $white;
+  text-align: center;
+
+  h2 {
+    color: $white;
+  }
+
+  .ph-event-band-text {
+    max-width: 760px;
+    margin: 0 auto;
+    color: $white;
+    @include ph-text(18px);
+    line-height: 1.6;
+  }
+
+  .ph-event-gate {
+    margin-top: rem(24px);
+  }
+
+  .ph-event-band-line {
+    margin: rem(20px) 0 0;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    letter-spacing: 3px;
+    line-height: 1.4;
+    text-transform: uppercase;
+    @include ph-text(17px);
+  }
+}
+
+.ph-event-button,
+a.ph-event-button {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: $ph_radius;
+  background: $not_quite_black;
+  color: $white;
+  font-family: Montserrat, "Open Sans", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+  text-decoration: none;
+  text-transform: uppercase;
+  @include ph-text(16px);
+
+  // $orange, not the brighter brand orange: white needs 4.5:1 at this size.
+  &:hover,
+  &:focus-visible {
+    background: $orange;
+    color: $white;
+    text-decoration: none;
+  }
+
+  &:focus-visible {
+    outline: 3px solid $slate;
+    outline-offset: 3px;
+  }
+
+  &[hidden] {
+    display: none;
+  }
+
+}
+
+// A button that leads somewhere only during a window (event-page.js). Outside it, a plain label
+// stands in its place: outlined, so it does not read as something to press.
+.ph-event-gate {
+  display: inline-block;
+
+  &[hidden],
+  a[hidden],
+  .ph-event-chip[hidden] {
+    display: none;
+  }
+}
+
+.ph-event-chip {
+  display: inline-block;
+  padding: 10px 18px;
+  border: 1px solid $ph_muted;
+  border-radius: $ph_radius;
+  color: $slate;
+  font-family: Montserrat, "Open Sans", sans-serif;
+  font-weight: 600;
+  line-height: 1.3;
+  @include ph-text(16px);
+
+  .ph-hero & {
+    border-color: rgba(255, 255, 255, 0.7);
+    color: $white;
+  }
+}
+
+.ph-event-band a.ph-event-button {
+  &:hover,
+  &:focus-visible {
+    background: $white;
+    color: $not_quite_black;
+  }
+
+  &:focus-visible {
+    outline-color: $white;
+  }
+}
+
+.ph-event-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include desktop {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  li {
+    padding: 24px 22px 26px;
+    border-radius: $ph_radius;
+    background: $white;
+  }
+
+  h3 {
+    margin: 0 0 rem(8px);
+    color: $slate;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  p {
+    margin: 0;
+    color: $ph_muted;
+    @include ph-text(18px);
+    line-height: 1.55;
+  }
+
+  // Cards that hold one phrase each.
+  &.ph-event-words li {
+    color: $slate;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+}
+
+// Lists with a chevron before each item and a bold lead-in, as on their pages.
+.ph-chevrons {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    position: relative;
+    padding: 0 0 rem(14px) 34px;
+    color: $slate;
+    @include ph-text(18px);
+    line-height: 1.55;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0.55em;
+      left: 10px;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid $slate;
+      border-bottom: 2px solid $slate;
+      transform: rotate(-45deg);
+    }
+  }
+
+  strong,
+  time {
+    font: inherit;
+  }
+
+  strong {
+    font-weight: 700;
+  }
+
+  // A note under an item, as under their "Session Presentation": indented and in italics.
+  .ph-chevron-note {
+    margin-top: rem(10px);
+
+    li {
+      padding-bottom: 0;
+      font-style: italic;
+    }
+  }
+
+  a {
+    color: $orange;
+    font: inherit;
+    font-weight: 600;
+  }
+}
+
+// The call for proposals, part of the event's page: a menu of its sections on the left (wide screens),
+// and each section under a rounded bar in the gradient.
+.ph-cfp {
+  padding-bottom: rem(64px);
+
+  .ph-event-heading {
+    margin-bottom: rem(32px);
+    color: $slate;
+  }
+
+  // The heading is centered over the sections' column, in line with their bars; the menu starts
+  // level with the first bar.
+  .ph-cfp-layout {
+    @include full-nav-menu-desktop {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      column-gap: rem(56px);
+      align-items: start;
+
+      .ph-event-heading,
+      .ph-cfp-body {
+        grid-column: 2;
+      }
+
+      .ph-cfp-nav {
+        grid-column: 1;
+        grid-row: 2;
+      }
+    }
+  }
+
+  .ph-cfp-nav {
+    display: none;
+
+    @include full-nav-menu-desktop {
+      display: block;
+      position: sticky;
+      top: $desktop_header_height + 28px;
+    }
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      margin-bottom: 16px;
+    }
+
+    a {
+      color: $orange;
+      font-weight: 600;
+      @include ph-text(16px);
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .ph-cfp-body {
+    > section {
+      margin-bottom: rem(44px);
+      scroll-margin-top: $desktop_header_height + 20px;
+
+      // Focused from the section menu: the bar shows where you are; no ring around the whole section.
+      &:focus {
+        outline: none;
+      }
+
+      &:focus-visible .ph-event-bar {
+        outline: 3px solid $slate;
+        outline-offset: 3px;
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    p {
+      margin: 0 0 rem(12px);
+      color: $slate;
+      @include ph-text(18px);
+      line-height: 1.6;
+    }
+
+    .ph-chevrons + p {
+      margin-top: rem(4px);
+    }
+
+    .ph-cfp-submit {
+      margin-top: rem(20px);
+    }
+  }
+
+  .ph-event-bar {
+    margin: 0 0 rem(22px);
+    padding: 12px 20px;
+    border-radius: $ph_radius;
+    background: $ph_event_gradient;
+    color: $white;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    line-height: 1.3;
+    text-align: center;
+    text-transform: uppercase;
+
+    @include desktop {
+      font-size: 24px;
+    }
+  }
+
+  // Dates that have passed step back; the next one carries a tag.
+  .ph-key-dates {
+    // A check mark in place of the chevron.
+    li.is-past {
+      color: $ph_muted;
+
+      &::before {
+        top: 0.3em;
+        left: 11px;
+        width: 7px;
+        height: 12px;
+        border-color: $ph_muted;
+        transform: rotate(45deg);
+      }
+    }
+
+    .ph-date-tag {
+      display: inline-block;
+      margin-left: 12px;
+      padding: 0 10px;
+      border-radius: $ph_radius_field;
+      background: $orange;
+      color: $white;
+      font-weight: 600;
+      @include ph-text(14px);
+    }
+  }
+}
+
+// The foot of an event page: the other events, and a button back to the directory.
+.ph-more-events {
+  .ph-event-heading {
+    color: $slate;
+  }
+
+  .ph-more-events-all {
+    margin: rem(28px) 0 0;
+    text-align: center;
+  }
+}

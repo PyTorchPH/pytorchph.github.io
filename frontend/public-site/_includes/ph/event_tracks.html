@@ -1,0 +1,10 @@
+{%- comment -%}
+  The tracks in _data/community_events.yml, each with its definition, as the "Suggested Topics" on the
+  Linux Foundation's call-for-proposals pages: a chevron list, the name in bold, then what it covers.
+  role="list" on these lists: Safari drops list semantics from a list with no markers.
+{%- endcomment -%}
+<ul role="list" class="ph-chevrons ph-tracks">
+  {%- for track in site.data.community_events.events.tracks %}
+  <li><strong>{{ track.name | escape }}:</strong> {{ track.description | escape }}</li>
+  {%- endfor %}
+</ul>

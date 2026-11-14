@@ -1,0 +1,50 @@
+{%- comment -%}
+  The hero of an event's page, after the Linux Foundation's PyTorch event pages: the name and the kind
+  of event on the left, and on the right the date and the place in capitals, the weekday (and
+  "tentative" while the date is not confirmed), then the buttons: Register (from the series'
+  `registration` in the data file) and the page's own. The date comes from
+  _data/community_events.yml; a month-only date stays a month, never an invented day.
+{%- endcomment -%}
+{%- assign series = site.data.community_events.events.series | where: "slug", page.series | first -%}
+{%- assign session = series.sessions | where: "title", series.page_session | first -%}
+{%- assign date_parts = session.startsAt | split: "-" -%}
+<section class="ph-hero ph-event-hero" aria-labelledby="hero-heading">
+  <div class="container ph-hero-content ph-event-hero-layout">
+    <div class="ph-event-name">
+      <h1 id="hero-heading">{{ session.title | default: page.title | escape }}</h1>
+      <p class="ph-event-kind">{{ series.kind | escape }}</p>
+    </div>
+    <div class="ph-event-when">
+      {%- if date_parts.size == 3 %}
+      <p class="ph-event-date"><time datetime="{{ session.startsAt | escape }}">{{ session.startsAt | date: "%B %-d, %Y" }}</time></p>
+      {%- elsif date_parts.size == 2 %}
+      <p class="ph-event-date"><time datetime="{{ session.startsAt | escape }}">{{ session.startsAt | append: "-01" | date: "%B %Y" }}</time></p>
+      {%- endif %}
+      {%- if page.place %}
+      <p class="ph-event-place">{{ page.place | escape }}</p>
+      {%- endif %}
+      {%- if date_parts.size == 3 %}
+      <p class="ph-event-day">{{ session.startsAt | date: "%A" }}{% if session.dateStatus == "tentative" %}, tentative{% endif %}</p>
+      {%- elsif session.dateStatus == "tentative" %}
+      <p class="ph-event-day">Tentative</p>
+      {%- endif %}
+      {%- assign registration = series.registration -%}
+      {%- if page.hero_actions or registration.url %}
+      <div class="ph-hero-actions">
+        {%- comment -%}
+          Register, first among the buttons as on the Linux Foundation's event pages. It follows the
+          registration window (event-page.js): before it opens the button gives way to "Registration
+          not yet open" (the date is in the page's dates, said once), and after it closes to
+          "Registration closed".
+        {%- endcomment -%}
+        {%- if registration.url and registration.url != "" %}
+        <span class="ph-event-gate" data-gate data-opens="{{ registration.opens | escape }}" data-closes="{{ registration.closes | escape }}" data-before="Registration not yet open" data-after="Registration closed"><a href="{{ registration.url | escape }}" class="btn btn-lg with-right-arrow" rel="noopener noreferrer">Register</a></span>
+        {%- endif %}
+        {%- for action in page.hero_actions %}
+        <a href="{{ action.url | relative_url }}" class="btn btn-lg with-right-arrow">{{ action.label | escape }}</a>
+        {%- endfor %}
+      </div>
+      {%- endif %}
+    </div>
+  </div>
+</section>
