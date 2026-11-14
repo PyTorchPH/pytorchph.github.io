@@ -28,8 +28,8 @@ const events = [
   { id: "pr", title: "Paper Reading Circle", series: "Paper Reading Circle", startsAt: "2027-04-03", dateStatus: "confirmed", eventType: "paper_reading", description: "We read one paper together.", photoUrl: "https://example.org/poster.jpg" },
 ];
 
-async function homePage(t, width, { javaScript = true, height = 900, published = events, now = NOW } = {}) {
-  const state = { revision: 1, events: published };
+async function homePage(t, width, { javaScript = true, height = 900, published = events, now = NOW, chapters = [] } = {}) {
+  const state = { revision: 1, events: published, chapters };
   assert.ok(existsSync(resolve(site, "index.html")), "Build the public Pages site first");
   const server = createServer((request, response) => {
     let file = normalize(decodeURIComponent(new URL(request.url, "http://x").pathname));
@@ -51,7 +51,7 @@ async function homePage(t, width, { javaScript = true, height = 900, published =
   await page.route("**/*", route => {
     const url = route.request().url();
     if (url === "https://api.pytorch.ph/public/site-content") {
-      return route.fulfill({ contentType: "application/json", body: JSON.stringify({ schemaVersion: 3, revision: state.revision, document: { leadership: [], chapters: [], articles: [], events: state.events }, officialPytorchNews: [] }) });
+      return route.fulfill({ contentType: "application/json", body: JSON.stringify({ schemaVersion: 3, revision: state.revision, document: { leadership: [], chapters: state.chapters, articles: [], events: state.events }, officialPytorchNews: [] }) });
     }
     // The site's own files, and Google Fonts, so layouts are measured in the real typefaces.
     return url.startsWith(origin) || /^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(url) ? route.continue() : route.abort();
@@ -262,6 +262,27 @@ test("buttons and cards have 8px corners, and full-width bands stay square", asy
   // A card clips what is inside it to its corners.
   assert.equal(await page.locator(".ph-tile").first().evaluate(node => getComputedStyle(node).overflow), "hidden");
   assert.deepEqual(errors, []);
+});
+
+// The map on the home page counts the Campus Labs universities in each island group, as the Campus Labs
+// page's map does: from _data/campus_labs.yml, plus chapters officers publish (a university once).
+test("the home page map shows how many Campus Labs universities each island group has", async t => {
+  const data = readFileSync(resolve(site, "../_data/campus_labs.yml"), "utf8");
+  const listed = island => (data.match(new RegExp(`^\\s+island:\\s*${island}\\b`, "gm")) ?? []).length;
+  const labels = page => page.locator(".ph-nationwide .ph-archipelago-label").evaluateAll(nodes => nodes.map(node => node.textContent.replace(/\s+/g, " ").trim()));
+  const { page, errors } = await homePage(t, 1440);
+  assert.deepEqual(await labels(page), [`Luzon · ${listed("Luzon")}`, `Visayas · ${listed("Visayas")}`, `Mindanao · ${listed("Mindanao")}`]);
+  assert.ok(listed("Luzon") > 0);
+  assert.deepEqual(errors, []);
+  // A published chapter at a new university adds one; one at a listed university (by an alias) does not.
+  const published = await homePage(t, 1440, { chapters: [
+    { id: "c1", university: "Example State College", island: "Visayas", leadName: "A Lead", status: "active" },
+    { id: "c2", university: "BulSU", island: "Luzon", leadName: "B Lead", status: "active" },
+  ] });
+  assert.deepEqual(await labels(published.page), [`Luzon · ${listed("Luzon")}`, `Visayas · ${listed("Visayas") + 1}`, `Mindanao · ${listed("Mindanao")}`]);
+  // Without JavaScript the counts from the data file are already in the page.
+  const plain = await homePage(t, 1440, { javaScript: false });
+  assert.deepEqual(await labels(plain.page), [`Luzon · ${listed("Luzon")}`, `Visayas · ${listed("Visayas")}`, `Mindanao · ${listed("Mindanao")}`]);
 });
 
 // The phone menu is more than a list: it wipes in from the left behind an orange edge and out to the

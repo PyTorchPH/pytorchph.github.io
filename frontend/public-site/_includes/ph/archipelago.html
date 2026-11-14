@@ -2,13 +2,20 @@
   The archipelago network (assets/images/ph-network.svg) with the three island groups labeled at the
   hubs the generator marks: Manila (Luzon), Cebu (Visayas), Davao (Mindanao). Positions are the hub
   coordinates as percentages of the 600 × 977 viewBox. With include.counts, each label also shows
-  the number of published Campus Labs chapters for that island group (filled in by site-content.js).
+  the number of Campus Labs universities in that island group: the count from _data/campus_labs.yml
+  is in the page, and site-content.js keeps it current when officers publish chapters. On a page
+  without the Campus Labs cards (the home page) it does that from the list of universities embedded
+  here ("<" is escaped, so no string can close the script).
   With include.filter, clicking a label filters the Campus Labs directory to that island group
   (assets/campus-directory.js); the island buttons there are the keyboard and screen reader route.
 {%- endcomment -%}
 <figure class="ph-archipelago" aria-hidden="true">
   <img src="{{ site.baseurl }}/assets/images/ph-network.svg" alt="" width="600" height="977" loading="lazy">
-  <span class="ph-archipelago-label"{% if include.filter %} data-island-filter="Luzon"{% endif %} style="--x: 42.3%; --y: 40%;">Luzon{% if include.counts %} <span class="ph-archipelago-count" data-chapter-count="Luzon"></span>{% endif %}</span>
-  <span class="ph-archipelago-label"{% if include.filter %} data-island-filter="Visayas"{% endif %} style="--x: 70.2%; --y: 65.8%;">Visayas{% if include.counts %} <span class="ph-archipelago-count" data-chapter-count="Visayas"></span>{% endif %}</span>
-  <span class="ph-archipelago-label"{% if include.filter %} data-island-filter="Mindanao"{% endif %} style="--x: 86.6%; --y: 85.4%;">Mindanao{% if include.counts %} <span class="ph-archipelago-count" data-chapter-count="Mindanao"></span>{% endif %}</span>
+  <span class="ph-archipelago-label"{% if include.filter %} data-island-filter="Luzon"{% endif %} style="--x: 42.3%; --y: 40%;">Luzon{% if include.counts %} <span class="ph-archipelago-count" data-chapter-count="Luzon">{%- assign in_island = site.data.campus_labs.chapters | where: "island", "Luzon" %}{% if in_island.size > 0 %}· {{ in_island.size }}{% endif %}</span>{% endif %}</span>
+  <span class="ph-archipelago-label"{% if include.filter %} data-island-filter="Visayas"{% endif %} style="--x: 70.2%; --y: 65.8%;">Visayas{% if include.counts %} <span class="ph-archipelago-count" data-chapter-count="Visayas">{%- assign in_island = site.data.campus_labs.chapters | where: "island", "Visayas" %}{% if in_island.size > 0 %}· {{ in_island.size }}{% endif %}</span>{% endif %}</span>
+  <span class="ph-archipelago-label"{% if include.filter %} data-island-filter="Mindanao"{% endif %} style="--x: 86.6%; --y: 85.4%;">Mindanao{% if include.counts %} <span class="ph-archipelago-count" data-chapter-count="Mindanao">{%- assign in_island = site.data.campus_labs.chapters | where: "island", "Mindanao" %}{% if in_island.size > 0 %}· {{ in_island.size }}{% endif %}</span>{% endif %}</span>
 </figure>
+{%- if include.counts %}
+{%- capture listed_universities %}[{% for item in site.data.campus_labs.chapters %}{"island":{{ item.island | jsonify }},"names":{{ item.aliases | default: empty | unshift: item.university | jsonify }}}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endcapture %}
+<script type="application/json" data-campus-universities>{{ listed_universities | replace: "<", "\u003c" }}</script>
+{%- endif %}

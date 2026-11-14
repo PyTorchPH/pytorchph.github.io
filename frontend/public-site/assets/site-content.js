@@ -385,12 +385,24 @@
       names.forEach(name => canonical.set(name, names[0]));
       node.hidden = names.some(name => published.has(name));
     });
+    // A page with the map but no Campus Labs cards (the home page) counts from the list of universities
+    // embedded beside the map instead: the same names and aliases, without the cards.
+    const withoutCards = !document.querySelector("[data-static-chapter]");
+    let embedded = [];
+    if (withoutCards) {
+      try { embedded = JSON.parse(document.querySelector("[data-campus-universities]")?.textContent ?? "[]"); } catch { embedded = []; }
+      if (!Array.isArray(embedded)) embedded = [];
+      embedded = embedded.map(item => ({ island: item.island, names: (Array.isArray(item.names) ? item.names : []).map(universityKey).filter(Boolean) })).filter(item => item.names.length);
+      embedded.forEach(item => item.names.forEach(name => canonical.set(name, item.names[0])));
+    }
     let totalUniversities = 0;
     let totalPeople = 0;
     for (const island of ["Luzon", "Visayas", "Mindanao"]) {
       const listedNodes = [...document.querySelectorAll(`[data-static-chapter][data-island="${island}"]:not([hidden])`)];
       // A university with two leads has two cards; it still counts once.
-      const listed = new Set(listedNodes.map(node => universityKey(node.dataset.staticChapter))).size;
+      const listed = withoutCards
+        ? new Set(embedded.filter(item => item.island === island && !item.names.some(name => published.has(name))).map(item => item.names[0])).size
+        : new Set(listedNodes.map(node => universityKey(node.dataset.staticChapter))).size;
       const own = rows.filter(row => row.island === island);
       replace(`chapters-${island}`, own.map(chapterCard), listed ? "" : "No participating chapters published yet.");
       // Published names that are aliases of a listed university count as that university.
