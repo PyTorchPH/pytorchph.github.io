@@ -121,3 +121,48 @@ test("on a phone the portraits stay large and nothing scrolls sideways", async t
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   assert.deepEqual(errors, []);
 });
+
+// The top of the About page: the mission as a large statement, the six principles as a row of words,
+// three short reasons, and three goals on a dark band, instead of six equal boxes of text.
+test("the About page opens with the mission, large, then the principles, three reasons, and three goals", async t => {
+  const { page, errors } = await aboutPage(t, 1440);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const identity = readFileSync(resolve(site, "../_data/community_identity.yml"), "utf8");
+  const mission = page.locator(".ph-mission-statement");
+  assert.match((await mission.textContent()).replace(/\s+/g, " ").trim(), /^Make practical machine learning education and collaboration more accessible throughout the Philippines\.$/);
+  assert.ok(await mission.evaluate(node => parseFloat(getComputedStyle(node).fontSize)) >= 30, "the mission is large");
+  // The principles: six words in one row.
+  const values = page.locator(".ph-values li");
+  assert.deepEqual(await values.allTextContents(), ["Openness", "Integrity", "Inclusion", "Collaboration", "Continuous Learning", "Responsible Innovation"]);
+  assert.equal(new Set(await values.evaluateAll(nodes => nodes.map(node => Math.round(node.getBoundingClientRect().top)))).size, 1);
+  // Three reasons, each a heading and a couple of short sentences, side by side.
+  const reasons = page.locator(".ph-reasons > article");
+  assert.equal(await reasons.count(), 3);
+  for (const text of await reasons.locator("p").allTextContents()) assert.ok(text.trim().length <= 190, `"${text.trim()}" is ${text.trim().length} characters`);
+  assert.equal(new Set(await reasons.evaluateAll(nodes => nodes.map(node => Math.round(node.getBoundingClientRect().top)))).size, 1);
+  // Three goals on a dark band.
+  const goals = page.locator(".ph-goals li");
+  assert.equal(await goals.count(), 3);
+  assert.equal(await page.locator(".ph-goals").evaluate(node => getComputedStyle(node).backgroundColor), "rgb(38, 38, 38)");
+  // No grid of boxes, no repeated page title, and no text under 16px.
+  assert.equal(await page.locator("main > section").first().locator(".ph-about-item").count(), 0);
+  assert.equal(await page.getByRole("heading", { name: "About PyTorch Philippines" }).evaluate(node => getComputedStyle(node).position), "absolute", "the section's name is for screen readers; the hero already says About us");
+  const smallest = await page.evaluate(() => {
+    let min = 99;
+    for (const section of document.querySelectorAll(".ph-about-intro, .ph-goals")) {
+      const walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) { const parent = walker.currentNode.parentElement; if (!walker.currentNode.textContent.trim() || parent.closest(".ph-visually-hidden")) continue; min = Math.min(min, parseFloat(getComputedStyle(parent).fontSize)); }
+    }
+    return min;
+  });
+  assert.ok(smallest >= 16, `smallest text ${smallest}px`);
+  assert.ok(identity.includes("reasons:") && identity.includes("goals:"));
+  assert.deepEqual(errors, []);
+});
+
+test("on a phone the About opening stacks and nothing scrolls sideways", async t => {
+  const { page, errors } = await aboutPage(t, 390);
+  assert.equal(await page.locator(".ph-reasons > article").count(), 3);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  assert.deepEqual(errors, []);
+});

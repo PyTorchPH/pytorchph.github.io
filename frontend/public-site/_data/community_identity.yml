@@ -15,29 +15,22 @@ principles:
   - Collaboration
   - Continuous Learning
   - Responsible Innovation
-# The About page narrative. Keep statements verifiable: no statistics without a cited source.
-about:
-  - heading: Open source powers AI innovation
+# The About page narrative, short on purpose: three reasons (a heading and one or two sentences each)
+# and three goals (one sentence each). Keep statements verifiable: no statistics without a cited source.
+reasons:
+  - heading: Open tools for everyone
     text: >-
-      PyTorch is an open-source deep learning framework hosted by the PyTorch Foundation, part of the
-      Linux Foundation. Its code, documentation, and tutorials are open to everyone, so a student in
-      Davao can learn from and build on the same tools that research labs and companies use.
-  - heading: The opportunity for the Philippines
+      PyTorch's code, documentation, and tutorials are open, so a student in Davao can learn from and
+      build on the same tools that research labs and companies use.
+  - heading: Contributors, not only users
     text: >-
-      Filipino students, researchers, and engineers can use these open tools to work on problems that
-      matter here, in our languages, industries, and communities, and take part in the global PyTorch
-      ecosystem as contributors, not only as users.
-  - heading: Why a nationwide community
+      Filipino students, researchers, and engineers can work on problems that matter here, in our
+      languages, industries, and communities.
+  - heading: One community, three island groups
     text: >-
-      Learning alone is hard. A community that spans Luzon, Visayas, and Mindanao puts study
-      programs, mentors, and collaborators within reach wherever you are, online and in person.
-  - heading: What success looks like
-    text: >-
-      Members who move from their first tensor to models they can explain, deploy, and share.
-      Campus Labs active in all three island groups. More Filipino contributions to PyTorch and its
-      ecosystem.
-  - heading: Everyone has a role
-    text: >-
-      Students, educators, researchers, engineers, startups, and government professionals all have
-      something to teach and something to learn. Attend a session, mentor, give a talk, start a
-      Campus Lab, or contribute code and learning materials.
+      Learning alone is hard. A community across Luzon, Visayas, and Mindanao puts study programs,
+      mentors, and collaborators within reach.
+goals:
+  - Members who move from their first tensor to models they can explain, deploy, and share.
+  - Campus Labs active in all three island groups.
+  - More Filipino contributions to PyTorch and its ecosystem.

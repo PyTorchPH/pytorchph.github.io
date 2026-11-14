@@ -2,31 +2,52 @@
 {%- assign ambassadors = site.data.ambassadors_directory -%}
 {%- assign campus = site.data.campus_labs -%}
 {%- assign campus_count = campus.chapters | size -%}
-<section class="ph-section" aria-labelledby="about-heading">
+{%- comment -%}
+  The opening: the mission as one large statement beside a short introduction, the six principles as a
+  row of words, and three short reasons; then three goals on a dark band. The section's name is for
+  screen readers (the hero already says "About us").
+{%- endcomment -%}
+<section class="ph-section ph-about-intro" aria-labelledby="about-heading">
   <div class="container">
-    <h2 id="about-heading">About PyTorch Philippines</h2>
-    <p class="ph-lede">PyTorch Philippines is an independent, community-led user group for anyone in the country who learns, teaches, researches, or builds with PyTorch.</p>
-    {%- if identity.mission %}
-    <p class="ph-mission"><span class="ph-mission-label">Our mission</span> {{ identity.mission | escape }}</p>
+    <h2 id="about-heading" class="ph-visually-hidden">About PyTorch Philippines</h2>
+    <div class="ph-mission">
+      {%- if identity.mission %}
+      <div>
+        <p class="ph-mission-label">Our mission</p>
+        <p class="ph-mission-statement">{{ identity.mission | escape }}</p>
+      </div>
+      {%- endif %}
+      <p class="ph-mission-about">PyTorch Philippines is an independent, community-led user group for anyone in the country who learns, teaches, researches, or builds with PyTorch.</p>
+    </div>
+    {%- if identity.principles %}
+    <div class="ph-values">
+      <h3>What guides us</h3>
+      <ul>
+        {%- for principle in identity.principles %}<li>{{ principle | escape }}</li>{% endfor %}
+      </ul>
+    </div>
     {%- endif %}
-    <div class="ph-about-grid">
-      {%- for item in identity.about %}
-      <article class="ph-about-item">
+    <div class="ph-reasons">
+      {%- for item in identity.reasons %}
+      <article>
         <h3>{{ item.heading | escape }}</h3>
-        {%- if item.text and item.text != "" %}<p>{{ item.text | escape }}</p>{% endif %}
+        <p>{{ item.text | escape }}</p>
       </article>
       {%- endfor %}
-      {%- if identity.principles %}
-      <article class="ph-about-item">
-        <h3>What guides us</h3>
-        <ul class="ph-principles">
-          {%- for principle in identity.principles %}<li>{{ principle | escape }}</li>{% endfor %}
-        </ul>
-      </article>
-      {%- endif %}
     </div>
   </div>
 </section>
+
+{%- if identity.goals %}
+<section class="ph-goals" aria-labelledby="goals-heading">
+  <div class="container">
+    <h2 id="goals-heading">What success looks like</h2>
+    <ul>
+      {%- for goal in identity.goals %}<li>{{ goal | escape }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+{%- endif %}
 
 <section class="ph-section ph-section-grey" id="ambassadors" aria-labelledby="ambassadors-heading">
   {%- comment -%}
