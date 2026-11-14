@@ -237,6 +237,16 @@
     replace("recaps", sorted.filter(row => row.kind === "recap").map(article), "Past-event recaps will appear here with verified details and documentation.");
   }
 
+  // The pytorch.org feed writes punctuation as numeric character references ("kernel&#8217;s"). The API
+  // decodes the named ones (&amp;, &lt;, ...) but passes these through, so decode only these here: decoding
+  // a named one again would turn a post's literal "&lt;" into "<". The result is only ever set as text,
+  // never parsed as HTML. References outside Unicode, or to a lone surrogate, stay as written.
+  function decodeReferences(value) {
+    return String(value ?? "").replace(/&#(?:(\d+)|x([0-9a-f]+));/gi, (match, decimal, hex) => {
+      const code = decimal ? Number(decimal) : parseInt(hex, 16);
+      return code > 0 && code <= 0x10ffff && (code < 0xd800 || code > 0xdfff) ? String.fromCodePoint(code) : match;
+    });
+  }
   // The pytorch.org feed appends "The post … appeared first on PyTorch." to every excerpt.
   function cleanExcerpt(value) { return String(value ?? "").replace(/\s*The post [\s\S]*? appeared first on PyTorch\.?\s*$/, "").trim(); }
   // An empty or missing feed keeps the copy built into the page from _data/pytorch_news.json.
@@ -244,13 +254,15 @@
     if (!Array.isArray(rows) || !rows.length) return;
     const nodes = rows.map(row => {
       const node = element("article", null, "ph-card");
-      const meta = [displayDate(row.publishedAt), ...(Array.isArray(row.categories) ? row.categories : [])].filter(Boolean).join(" · ");
+      const categories = Array.isArray(row.categories) ? row.categories.map(decodeReferences) : [];
+      const meta = [displayDate(row.publishedAt), ...categories].filter(Boolean).join(" · ");
       if (meta) node.append(element("p", meta, "ph-card-meta"));
       const heading = element("h3");
-      const title = link(row.title, row.url, "ph-card-link");
-      heading.append(title ?? row.title);
+      const name = decodeReferences(row.title);
+      const title = link(name, row.url, "ph-card-link");
+      heading.append(title ?? name);
       node.append(heading);
-      paragraph(node, "", cleanExcerpt(row.excerpt));
+      paragraph(node, "", cleanExcerpt(decodeReferences(row.excerpt)));
       return node;
     });
     targets("pytorch-news").forEach(target => {
