@@ -288,6 +288,8 @@
     renderChapters(content.chapters);
     renderArticles(content.articles);
     renderOfficialNews(officialNews);
+    // Pages that rearrange rendered content (assets/campus-directory.js) pick up each render here.
+    document.dispatchEvent(new Event("site-content:rendered"));
   }
 
   async function refresh() {

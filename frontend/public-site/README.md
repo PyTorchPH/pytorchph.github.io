@@ -43,7 +43,7 @@ Empty states point to a next step. Lists loaded from the API sit in a wrapper wi
 | Mission and principles on `/about/` | `_data/community_identity.yml`, taken from the [organization profile](https://github.com/PyTorchPH) |
 | Sample code | `_includes/sample_code/*.py` |
 | People bios and social links | `_members/<first-last>.md`, used only by the team-directory renderer (`assets/people/`), which no public page currently includes. |
-| Page hero | front matter `hero_kicker` (a short Filipino phrase), `hero_kicker_meaning`, `hero_title`, `hero_lead`, `hero_actions`; layout `ph` or `ph_article` |
+| Page hero | front matter `hero_kicker` (a short Filipino phrase), `hero_kicker_meaning`, `hero_title`, `hero_lead`, `hero_actions`; layout `ph` or `ph_article`. `hero_style: light` (Campus Labs) gives a white hero after the PyTorch Foundation's program pages, with `hero_subtitle`, `hero_prompt`, and `hero_aside: archipelago` |
 | Hero artwork | `node scripts/generate-archipelago.mjs` rewrites `assets/images/ph-network.svg` from the Natural Earth outline in `scripts/data/` |
 | Section layouts | `_includes/ph/*_section.html` |
 | PyTorch Philippines styles | `_sass/ph.scss`; page sections in `_sass/ph/sections.scss`; people cards in `_sass/ph/people.scss` (upstream styles stay unchanged where possible) |
@@ -67,7 +67,9 @@ request. People appear in two places, each from a single source:
   directory leaves this section (and their portrait is deleted) on the next deploy.
 - `/campus-labs/` and `/about/#campus-labs-leads`: the Campus Labs people from PyTorch Philippines'
   posters (`_data/campus_labs.yml`), with portraits cropped from those posters
-  (`assets/images/campus-labs/`).
+  (`assets/images/campus-labs/`, 455 × 455). `/campus-labs/` shows them in one alphabetical directory
+  with a search and an island group filter (`_includes/ph/campus_directory.html`,
+  `assets/campus-directory.js`); the About page groups them by island.
 
 The officer portal still publishes the leadership roster to the API, and `assets/people/` can still
 render it, but no public page includes a target for it. `_members` biographies are kept for that

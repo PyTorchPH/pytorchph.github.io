@@ -47,7 +47,8 @@ function cards(html, page) {
   const list = found.map((article, index) => {
     const body = article[2];
     const badges = badgesIn(body);
-    const names = withClass(body, "h4", "ph-lead-name");
+    // Cards are h3 in the Campus Labs directory and h4 under the About page's island headings.
+    const names = [...withClass(body, "h3", "ph-lead-name"), ...withClass(body, "h4", "ph-lead-name")];
     assert.equal(badges.length, 1, `${page}: card ${index + 1} must have exactly one badge`);
     assert.equal(names.length, 1, `${page}: card ${index + 1} must have exactly one name`);
     return { classes: classList(article[1]).join(" "), attributes: article[1], badge: badges[0][2], name: names[0][2], body };
@@ -97,20 +98,18 @@ for (const page of ["campus-labs/index.html", "about/index.html"]) {
   }
 }
 // On the Campus Labs page, every island group with no entry in _data/campus_labs.yml (derived from
-// the data, not from the rendered page) has its own group with exactly one invite card.
+// the data, not from the rendered page) has exactly one invite card in the directory, marked with its
+// island so the island filter keeps it.
 {
   const data = readFileSync(resolve(site, "../_data/campus_labs.yml"), "utf8");
   const listedIslands = new Set([...data.matchAll(/^\s+island:\s*(Luzon|Visayas|Mindanao)\b/gm)].map(match => match[1]));
   const emptyIslands = ["Luzon", "Visayas", "Mindanao"].filter(island => !listedIslands.has(island));
   const { html, invites } = checkCards("campus-labs/index.html");
-  const groups = [...html.matchAll(/<div\b([^>]*)>\s*<h3\b[^>]*>\s*<span>(Luzon|Visayas|Mindanao)<\/span>[\s\S]*?<\/h3>\s*<div class="ph-lead-grid">([\s\S]*?)<\/div>\s*<\/div>/g)]
-    .filter(group => classList(group[1]).includes("ph-island"));
+  const inviteLinks = [...html.matchAll(/<a\b([^>]*)>/g)].filter(link => classList(link[1]).includes("ph-lead-invite"));
   for (const island of emptyIslands) {
-    const group = groups.find(candidate => candidate[2] === island && /No Campus Lab yet/.test(candidate[0]));
-    assert.ok(group, `campus-labs: ${island} has no Campus Lab in the data but no "No Campus Lab yet" group`);
-    const groupInvites = [...group[3].matchAll(/<a\b([^>]*)>/g)].filter(link => classList(link[1]).includes("ph-lead-invite"));
-    assert.equal(groupInvites.length, 1, `campus-labs: ${island} must have its own invite card`);
-    assert.match(groupInvites[0][1], /(?:^|\s)href="#start"/, `campus-labs: ${island} invite must link to the "Start a Campus Lab" steps`);
+    const own = inviteLinks.filter(link => new RegExp(`(?:^|\\s)data-island="${island}"`).test(link[1]));
+    assert.equal(own.length, 1, `campus-labs: ${island} has no Campus Lab in the data but no invite card of its own`);
+    assert.match(own[0][1], /(?:^|\s)href="#start"/, `campus-labs: ${island} invite must link to the "Start a Campus Lab" steps`);
   }
   assert.equal(invites, emptyIslands.length, "campus-labs: one invite card per island group without a Campus Lab");
   assert.match(html, /\sid="start"/, 'campus-labs: the invite target #start is missing');

@@ -3,18 +3,39 @@ layout: ph
 title: Campus Labs
 permalink: /campus-labs/
 body-class: ph-campus-labs
+hero_style: light
+hero_aside: archipelago
 hero_kicker: "Tara, sali na!"
 hero_kicker_meaning: "Come on, join now!"
 hero_title: "Campus Labs"
-hero_lead: "University chapters of PyTorch Philippines, where students and faculty learn PyTorch together, build practical projects, and connect with the nationwide community."
+hero_subtitle: "Meet the people behind PyTorch Philippines Campus Labs"
+hero_lead: "Campus Labs are the university chapters of PyTorch Philippines, where students and faculty learn PyTorch together, build practical projects, and connect with the nationwide community."
+hero_prompt: "Want a Campus Lab at your university?"
 hero_actions:
   - label: "Start a Campus Lab"
     url: "/campus-labs/#start"
 ---
 {%- assign contacts = site.data.public_contacts -%}
-{%- assign island_groups = "Luzon,Visayas,Mindanao" | split: "," -%}
 {%- assign campus = site.data.campus_labs -%}
 {%- assign campus_count = campus.chapters | size -%}
+
+<section class="ph-section ph-section-grey ph-directory" id="people" aria-labelledby="people-heading">
+  <div class="container">
+    <h2 id="people-heading">People and universities</h2>
+    <p class="ph-lede">Everyone PyTorch Philippines has announced for Campus Labs, and their university.</p>
+    {%- if campus_count == 0 %}
+    <div class="ph-callout" data-show-when-all-empty="chapters-Luzon chapters-Visayas chapters-Mindanao">
+      <p>No Campus Labs chapters are published yet.</p>
+      <p>Be the first at your university: see <a href="#start">how to start a Campus Lab</a> below.</p>
+    </div>
+    {%- endif %}
+    {% include ph/campus_total.html %}
+    {% include ph/campus_directory.html %}
+    {%- if campus_count > 0 %}
+    <p class="ph-source">As announced by PyTorch Philippines in its Campus Labs posters, Batch 1 and Batch 2. Is something out of date? {% if contacts.email %}Email <a href="mailto:{{ contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
+    {%- endif %}
+  </div>
+</section>
 
 <section class="ph-section" aria-labelledby="campus-what-heading">
   <div class="container">
@@ -42,45 +63,6 @@ hero_actions:
         <p>Members can record their participation and build a résumé in the <a href="{{ site.baseurl }}/portal/">member portal</a>.</p>
       </article>
     </div>
-  </div>
-</section>
-
-<section class="ph-section ph-section-grey" id="chapters" aria-labelledby="chapters-heading">
-  <div class="container">
-    <div class="ph-campus-map-grid">
-      <div>
-        <h2 id="chapters-heading">PyTorch Philippines Campus Labs</h2>
-        <p class="ph-lede">The people PyTorch Philippines has announced for Campus Labs, and their universities, by island group.</p>
-
-        {%- if campus_count == 0 %}
-        <div class="ph-callout" data-show-when-all-empty="chapters-Luzon chapters-Visayas chapters-Mindanao">
-          <p>No Campus Labs chapters are published yet.</p>
-          <p>Be the first at your university: see <a href="#start">how to start a Campus Lab</a> below.</p>
-        </div>
-        {%- endif %}
-
-        {% include ph/campus_islands.html callouts=true anchors=true %}
-
-        <div class="ph-island" data-hide-when-empty hidden>
-          <h3>Campus Labs leadership</h3>
-          <div class="ph-managed-grid" data-site-content="campus-leads"></div>
-        </div>
-
-        {%- if campus_count > 0 %}
-        <p class="ph-source">As announced by PyTorch Philippines in its Campus Labs posters, Batch 1 and Batch 2. Is something out of date? {% if contacts.email %}Email <a href="mailto:{{ contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
-        {%- endif %}
-      </div>
-      <div class="ph-archipelago-light">
-        {% include ph/archipelago.html counts=true %}
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="ph-section" aria-labelledby="academia-heading">
-  <div class="container">
-    <h2 id="academia-heading">For educators and researchers</h2>
-    <p class="ph-lede">The PyTorch Foundation runs an <a href="https://github.com/pytorch-fdn/foundation-programs/blob/main/ospo-academic-outreach/README.md">OSPO &amp; Academic Outreach program</a> that connects PyTorch with academia through a webinar series and hands-on teaching materials for educators, students, and researchers. It is run by the Foundation, not by PyTorch Philippines.</p>
   </div>
 </section>
 
@@ -112,3 +94,12 @@ hero_actions:
     </ol>
   </div>
 </section>
+
+<section class="ph-section" aria-labelledby="academia-heading">
+  <div class="container">
+    <h2 id="academia-heading">For educators and researchers</h2>
+    <p class="ph-lede">The PyTorch Foundation runs an <a href="https://github.com/pytorch-fdn/foundation-programs/blob/main/ospo-academic-outreach/README.md">OSPO &amp; Academic Outreach program</a> that connects PyTorch with academia through a webinar series and hands-on teaching materials for educators, students, and researchers. It is run by the Foundation, not by PyTorch Philippines.</p>
+  </div>
+</section>
+
+<script src="{{ site.baseurl }}/assets/campus-directory.js" defer></script>

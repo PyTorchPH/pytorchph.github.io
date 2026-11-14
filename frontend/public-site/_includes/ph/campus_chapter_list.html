@@ -4,12 +4,14 @@
   not announced. Every card carries data-static-chapter (and data-aliases) so site-content.js can
   hide it when officers publish the same university through the portal. The badge shows the
   portrait cropped from the person's poster (`photo`), or their initials when there is none. include.items replaces the data file (used by the
-  unpublished test fixture, test-fixtures/campus-cards.html).
+  unpublished test fixture, test-fixtures/campus-cards.html). include.heading sets the level of the
+  name (h4 under the About page's island headings, the default; h3 in the Campus Labs directory).
 {%- endcomment -%}
 {%- assign campus_source = include.items | default: site.data.campus_labs.chapters -%}
 {%- assign name_suffixes = "jr,sr,ii,iii,iv" | split: "," -%}
 {%- comment -%} The posters give a title only where `role` is set; everyone else is "Campus Labs". {%- endcomment -%}
 {%- assign campus_title = "Campus Labs" -%}
+{%- assign name_tag = include.heading | default: "h4" -%}
 {%- assign campus_items = campus_source | where: "island", include.island | sort: "university" -%}
 {%- for item in campus_items %}
 {%- capture card_attrs %} data-static-chapter="{{ item.university | escape }}" data-aliases="{{ item.aliases | join: '|' | escape }}" data-island="{{ item.island | escape }}"{% endcapture %}
@@ -28,9 +30,9 @@
 {%- if name_parts.size > 2 and name_suffixes contains suffix_key %}{% assign last_index = name_parts.size | minus: 2 %}{% assign last_word = name_parts[last_index] %}{% endif %}
 {%- capture lead_initials %}{{ name_parts.first | slice: 0 }}{% if name_parts.size > 1 %}{{ last_word | slice: 0 }}{% endif %}{% endcapture %}
 <article class="ph-lead"{{ card_attrs }}>
-  <span class="ph-lead-badge" aria-hidden="true">{% if lead.photo %}<img class="ph-lead-photo" src="{{ site.baseurl }}{{ lead.photo | escape }}" alt="" width="72" height="72" loading="lazy" decoding="async">{% else %}{{ lead_initials | upcase | escape }}{% endif %}</span>
+  <span class="ph-lead-badge" aria-hidden="true">{% if lead.photo %}<img class="ph-lead-photo" src="{{ site.baseurl }}{{ lead.photo | escape }}" alt="" width="455" height="455" loading="lazy" decoding="async">{% else %}{{ lead_initials | upcase | escape }}{% endif %}</span>
   <div class="ph-lead-body">
-    <h4 class="ph-lead-name">{{ lead.name | escape }}</h4>
+    <{{ name_tag }} class="ph-lead-name">{{ lead.name | escape }}</{{ name_tag }}>
     <p class="ph-lead-role">{{ lead.role | default: campus_title | escape }}{% if lead.batch %} <span class="ph-lead-batch">Batch {{ lead.batch | escape }}</span>{% endif %}</p>
     {{ university_block }}
   </div>
@@ -40,7 +42,7 @@
 <article class="ph-lead ph-lead-pending"{{ card_attrs }}>
   <span class="ph-lead-badge" aria-hidden="true"></span>
   <div class="ph-lead-body">
-    <h4 class="ph-lead-name">{{ item.university | escape }}</h4>
+    <{{ name_tag }} class="ph-lead-name">{{ item.university | escape }}</{{ name_tag }}>
     <p class="ph-lead-role">Lead not announced yet</p>
     {%- if item.city %}<p class="ph-lead-place">{{ item.city | escape }}</p>{% endif %}
     {%- if item.url %}<p class="ph-lead-link"><a href="{{ item.url | escape }}" rel="noopener noreferrer">Chapter page<span class="ph-visually-hidden">: {{ item.chapter | default: item.university | escape }} on GitHub</span></a></p>{% endif %}

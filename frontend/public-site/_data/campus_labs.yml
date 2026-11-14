@@ -17,7 +17,7 @@
 #   - `aliases` are other names officers might use for the same university in the portal; they are
 #     used for matching only and never shown. Quote an alias that contains a comma.
 #   - `photo` is the portrait cropped from the person's own poster (straightened and cropped to the
-#     face, 240 × 240, no metadata), used at the ambassador's direction. No contact details.
+#     face, 455 × 455, no metadata), used at the ambassador's direction. No contact details.
 #
 # Entries give way to chapters officers publish in the portal (/portal/admin/website/) for the same
 # university.

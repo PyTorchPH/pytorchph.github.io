@@ -1,0 +1,53 @@
+{%- comment -%}
+  The Campus Labs directory: everyone in one grid of portrait cards, after the PyTorch Foundation's
+  ambassador directory, with a filter by island group and a search by name or university
+  (assets/campus-directory.js, which also says how many show). Cards come from _data/campus_labs.yml
+  (the data-campus-list set) and from chapters officers publish in the portal: site-content.js renders
+  those into the chapters-<island> targets and hides the listed entry for the same university, and
+  campus-directory.js moves them into the list and puts the whole list in alphabetical order, so the
+  page reads in the order it shows. The sets use display: contents and share one grid. Without
+  JavaScript the filters stay hidden and every listed card shows, by island group and university.
+{%- endcomment -%}
+{%- assign campus = site.data.campus_labs -%}
+{%- assign island_groups = "Luzon,Visayas,Mindanao" | split: "," -%}
+{%- assign campus_count = campus.chapters | size -%}
+<div class="ph-directory-tools" data-campus-filters hidden>
+  <h3 class="ph-directory-heading">Filter the list</h3>
+  <div class="ph-directory-controls">
+    <div class="ph-directory-search">
+      <label for="campus-search">Search by name or university</label>
+      <input id="campus-search" type="search" autocomplete="off" spellcheck="false" data-campus-search>
+    </div>
+    <div class="ph-filter ph-directory-islands" role="group" aria-label="Island group">
+      <button type="button" aria-pressed="true" data-island-filter="">All</button>
+      {%- for island in island_groups %}
+      <button type="button" aria-pressed="false" data-island-filter="{{ island }}">{{ island }} <span class="ph-directory-island-count" data-island-people="{{ island }}"></span></button>
+      {%- endfor %}
+    </div>
+    <button type="button" class="ph-directory-clear" data-campus-clear>Clear filters</button>
+  </div>
+</div>
+<p class="ph-directory-count" data-campus-count role="status" hidden></p>
+<div class="ph-lead-grid ph-directory-grid" data-campus-directory>
+  {%- for island in island_groups %}
+  <div class="ph-lead-set" data-site-content="chapters-{{ island }}" data-island="{{ island }}"></div>
+  {%- endfor %}
+  <div class="ph-lead-set" data-campus-list>
+    {%- for island in island_groups %}
+    {%- assign in_island = campus.chapters | where: "island", island %}
+    {%- if in_island.size > 0 %}
+    {% include ph/campus_chapter_list.html island=island heading="h3" %}
+    {%- elsif campus_count > 0 %}
+    {%- capture island_name %}{% if island == "Visayas" %}the Visayas{% else %}{{ island }}{% endif %}{% endcapture %}
+    <a class="ph-lead ph-lead-pending ph-lead-invite" href="#start" data-island="{{ island }}" data-show-when-all-empty="chapters-{{ island }}">
+      <span class="ph-lead-badge" aria-hidden="true">+</span>
+      <span class="ph-lead-body">
+        <span class="ph-lead-name">Start the first Campus Lab in {{ island_name }}</span>
+        <span class="ph-lead-role">See how to start one below</span>
+      </span>
+    </a>
+    {%- endif %}
+    {%- endfor %}
+  </div>
+</div>
+<p class="ph-directory-none" data-campus-none hidden>No one matches these filters. <button type="button" data-campus-clear>Clear filters</button></p>

@@ -7,10 +7,13 @@
   Front matter: hero_kicker (a short Filipino phrase), hero_kicker_meaning (its English meaning, for
   screen readers and hover), hero_title, hero_lead, hero_actions [{label, url}], hero_wave, hero_image,
   hero_photos (keys in _data/photo_credits.yml: background photos that crossfade, credited in the footer).
+  A light hero (hero_style: light, after the PyTorch Foundation's program pages) also takes
+  hero_subtitle, hero_prompt (a line above the actions), and hero_aside: archipelago (the island map,
+  whose labels filter the Campus Labs directory).
   The first photo is in the page; assets/hero-slides.js loads the others after the page and starts
   the crossfade, unless the visitor prefers reduced motion.
 {%- endcomment -%}
-<section class="ph-hero{% if page.hero_image %} ph-hero-profile{% endif %}{% if page.hero_wave %} ph-hero-with-wave{% endif %}{% if page.hero_photos %} ph-hero-backdrop{% endif %}" aria-labelledby="hero-heading">
+<section class="ph-hero{% if page.hero_style == "light" %} ph-hero-light{% endif %}{% if page.hero_image %} ph-hero-profile{% endif %}{% if page.hero_wave %} ph-hero-with-wave{% endif %}{% if page.hero_photos %} ph-hero-backdrop{% endif %}" aria-labelledby="hero-heading">
   {%- if page.hero_photos %}
   <div class="ph-hero-slides" aria-hidden="true" data-hero-slides>
     {%- for key in page.hero_photos %}
@@ -18,10 +21,10 @@
     <div class="ph-hero-slide{% if forloop.first %} is-active{% endif %}" data-hero-photo="{{ key }}" data-image="{{ photo.image | relative_url }}" data-image-portrait="{{ photo.image_portrait | relative_url }}" style="--photo: url('{{ photo.image | relative_url }}'); --photo-portrait: url('{{ photo.image_portrait | relative_url }}'); --photo-y: {{ photo.position | default: '40%' }}; --photo-y-wide: {{ photo.position_wide | default: photo.position | default: '40%' }};"></div>
     {%- endfor %}
   </div>
-  {%- else %}
+  {%- elsif page.hero_style != "light" %}
   <div class="ph-hero-art" aria-hidden="true"></div>
   {%- endif %}
-  <div class="container ph-hero-content">
+  <div class="container ph-hero-content{% if page.hero_aside %} ph-hero-split{% endif %}">
     {%- if page.hero_image %}
     <img class="ph-hero-photo" src="{{ page.hero_image | relative_url }}" alt="{{ display_title | escape }}" width="480" height="480">
     {%- endif %}
@@ -30,8 +33,14 @@
       <p class="ph-hero-kicker"><span lang="fil"{% if page.hero_kicker_meaning %} title="{{ page.hero_kicker_meaning }}"{% endif %}>{{ page.hero_kicker }}</span>{% if page.hero_kicker_meaning %}<span class="ph-visually-hidden"> ({{ page.hero_kicker_meaning }})</span>{% endif %}</p>
       {%- endif %}
       <h1 id="hero-heading">{{ display_title | escape }}</h1>
+      {%- if page.hero_subtitle %}
+      <p class="ph-hero-subtitle">{{ page.hero_subtitle | escape }}</p>
+      {%- endif %}
       {%- if display_lead %}
       <p class="lead">{{ display_lead | escape }}</p>
+      {%- endif %}
+      {%- if page.hero_prompt %}
+      <p class="ph-hero-prompt">{{ page.hero_prompt | escape }}</p>
       {%- endif %}
       {%- if page.hero_actions %}
       <div class="ph-hero-actions">
@@ -41,6 +50,11 @@
       </div>
       {%- endif %}
     </div>
+    {%- if page.hero_aside == "archipelago" %}
+    <div class="ph-hero-aside ph-archipelago-light">
+      {% include ph/archipelago.html counts=true filter=true %}
+    </div>
+    {%- endif %}
   </div>
   {%- if page.hero_photos.size > 1 %}
   <script src="{{ site.baseurl }}/assets/hero-slides.js" defer></script>

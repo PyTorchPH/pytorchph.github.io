@@ -48,6 +48,7 @@
     "test:about": "node --test tests/node/about/model.test.mjs tests/node/about/runtime.test.mjs",
     "test:about:built": "node tests/node/about/browser.mjs",
     "test:campus:built": "node tests/node/campus-labs/built.mjs",
+    "test:campus:browser": "node --test tests/node/campus-labs/directory.test.mjs",
     "test:hero-photo:built": "node tests/node/hero-photo/built.mjs",
     "test:hero-photo:browser": "node tests/node/hero-photo/browser.mjs"
   },
