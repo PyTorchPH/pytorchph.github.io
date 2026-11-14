@@ -38,8 +38,11 @@ for (const file of pages(site)) {
   assert.ok(footer.includes(`Header photos, ${changes}:`) || keys.every(key => footer.includes(`; ${field(key, "changes")})`)), `${page}: the credit says what was changed`);
   for (const key of keys) {
     shown.add(key);
-    const want = Object.fromEntries(["title", "author", "author_url", "source_url", "license", "license_url", "changes", "image", "image_portrait", "sha1"].map(name => [name, field(key, name)]));
+    const want = Object.fromEntries(["title", "place", "author", "author_url", "source_url", "license", "license_url", "changes", "image", "image_portrait", "sha1"].map(name => [name, field(key, name)]));
     for (const [name, value] of Object.entries(want)) assert.ok(value, `${page}: _data/photo_credits.yml has no ${name} for ${key}`);
+    // The hero's caption: the place and the photographer, one per photo, the first one showing.
+    const caption = decode(html.match(new RegExp(`<span class="ph-hero-credit-item[^"]*" data-hero-credit="${key}">([\\s\\S]*?)</span>\\s*(?=<span class="ph-hero-credit-item|</p>)`))?.[1] ?? "");
+    assert.ok(caption.includes(want.place) && caption.includes(want.author), `${page}: the hero caption for ${key} gives its place and photographer`);
     const attribution = field(key, "attribution");
     const credit = decode(footer.match(new RegExp(`<span class="ph-photo-credit" data-photo-credit="${key}">([\\s\\S]*?)</span>`))?.[1] ?? "");
     assert.ok(credit, `${page}: shows ${key} but its footer does not credit it`);

@@ -512,6 +512,69 @@ $orange_on_dark: #ff8a66; // 6.5:1 on #262626; $orange is for light backgrounds 
   }
 }
 
+// The photo's caption: its place and photographer in the far bottom right corner of the hero. It is
+// meant to be found, not noticed: small (at the site owner's request, the one exception to the text
+// scale above), regular weight, slightly see-through, with a soft shadow so it stays legible on a
+// bright photo. On the home page it sits in the corner the waves leave clear: their layers start
+// lower at the right edge than the top of their box. The captions lie on top of each other and fade
+// with their photos.
+.ph-hero-credit {
+  position: absolute;
+  right: 16px;
+  bottom: 10px;
+  z-index: 1;
+  pointer-events: none;
+
+  @include desktop {
+    right: 24px;
+  }
+
+  .ph-hero-with-wave & {
+    bottom: 44px; // the waves' box is 64px high on phones; at the right its first 22px are clear
+
+    @include desktop {
+      bottom: 80px; // ... and 120px on desktops, with the first 44px clear
+    }
+  }
+
+  p {
+    position: relative;
+    height: 20px;
+    margin: 0;
+  }
+
+  .ph-hero-credit-item {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-family: "Open Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+    line-height: 20px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1.6s ease-in-out, visibility 0s linear 1.6s;
+
+    &.is-active {
+      opacity: 1;
+      visibility: visible;
+      transition-delay: 0s;
+    }
+
+    span {
+      font: inherit;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+}
+
 // Only the first photo loads with the page. assets/hero-slides.js sets every slide's photo (inline)
 // once it has loaded at the size the screen uses.
 .ph-hero-slide:first-child {

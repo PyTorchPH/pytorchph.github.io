@@ -50,11 +50,17 @@ try {
     await page.waitForSelector(".ph-hero-slides.is-playing", { timeout: 15000 });
     assert.equal(await page.locator("[data-hero-slides-toggle], .ph-hero button").count(), 0, "no pause button");
     assert.equal(await active(page), "rizal_monument");
+    // The caption at the foot of the hero names the place and the photographer of the photo showing.
+    const caption = () => page.locator(".ph-hero-credit-item").evaluateAll(nodes => nodes.filter(node => getComputedStyle(node).visibility === "visible").map(node => [node.dataset.heroCredit, [...node.childNodes].filter(part => !(part.classList && part.classList.contains("ph-visually-hidden"))).map(part => part.textContent).join("").replace(/\s+/g, " ").trim()]));
+    assert.deepEqual(await caption(), [["rizal_monument", "Rizal Park, Manila · GRMondala"]]);
     const requests = await heroRequests(page);
     assert.deepEqual(requests.filter(request => !request.afterLoad).map(request => request.file), ["rizal-monument-night.jpg"], "only the first photo loads with the page");
     assert.deepEqual(requests.map(request => request.file).sort(), ["fort-santiago-gate.jpg", "lapulapu-monument.jpg", "mount-apo.jpg", "rizal-monument-night.jpg"], "wide screens load the wide photos only");
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "lapulapu_monument", null, { timeout: 10000 });
     assert.notEqual(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), "none");
+    // The caption follows the photo: once the fade is over, only the new photo's is showing.
+    await page.waitForFunction(() => [...document.querySelectorAll(".ph-hero-credit-item")].filter(node => getComputedStyle(node).visibility === "visible").length === 1);
+    assert.deepEqual(await caption(), [["lapulapu_monument", "Mactan Shrine, Cebu · Claudio monceda"]]);
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "fort_santiago", null, { timeout: 10000 });
     assert.equal(await page.locator(".ph-hero-slide.is-active").count(), 1);
     // Crossing to a phone width: the portrait photos load and the crossfade carries on with them.
@@ -70,6 +76,7 @@ try {
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "rizal_monument");
     await page.waitForTimeout(8000);
     assert.equal(await active(page), "rizal_monument", "reduced motion keeps the first photo");
+    assert.deepEqual((await caption()).map(([key]) => key), ["rizal_monument"], "and its caption");
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -122,4 +129,4 @@ try {
   await browser.close();
   server.close();
 }
-console.log(JSON.stringify({ event: "hero_photo.browser_verified", outcome: "success", checks: ["first-photo-only-before-load", "wide-and-portrait-sizes", "advances", "no-pause-button", "breakpoint-crossing", "reduced-motion", "reduced-motion-breakpoint", "failed-first-photo", "reduced-motion-mid-visit", "no-overflow"] }));
+console.log(JSON.stringify({ event: "hero_photo.browser_verified", outcome: "success", checks: ["first-photo-only-before-load", "wide-and-portrait-sizes", "advances", "no-pause-button", "breakpoint-crossing", "reduced-motion", "reduced-motion-breakpoint", "failed-first-photo", "reduced-motion-mid-visit", "no-overflow", "caption-follows-photo"] }));

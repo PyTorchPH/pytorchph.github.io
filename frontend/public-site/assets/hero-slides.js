@@ -34,9 +34,12 @@
   // before a new size has loaded (also for visitors who prefer reduced motion).
   slides[0].style.backgroundImage = `url("${slides[0].dataset[variant()]}")`;
 
+  // Each photo's caption (its place and photographer, at the bottom right of the hero) shows with it.
+  const captions = [...document.querySelectorAll("[data-hero-credit]")];
   const active = () => slides.find(slide => slide.classList.contains("is-active")) ?? slides[0];
   const show = slide => {
     for (const other of slides) other.classList.toggle("is-active", other === slide);
+    for (const caption of captions) caption.classList.toggle("is-active", caption.dataset.heroCredit === slide.dataset.heroPhoto);
   };
   const schedule = () => {
     window.clearTimeout(timer);

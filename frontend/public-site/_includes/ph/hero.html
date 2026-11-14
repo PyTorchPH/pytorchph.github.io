@@ -6,7 +6,8 @@
   Page hero. It sizes to its content, so long headings never collide with the header on small screens.
   Front matter: hero_kicker (a short Filipino phrase), hero_kicker_meaning (its English meaning, for
   screen readers and hover), hero_title, hero_lead, hero_actions [{label, url}], hero_wave, hero_image,
-  hero_photos (keys in _data/photo_credits.yml: background photos that crossfade, credited in the footer).
+  hero_photos (keys in _data/photo_credits.yml: background photos that crossfade, each captioned at
+  the bottom right with its place and photographer, and credited in full in the footer).
   A light hero (hero_style: light, after the PyTorch Foundation's program pages) also takes
   hero_subtitle, hero_prompt (a line above the actions), and hero_aside: archipelago (the island map,
   whose labels filter the Campus Labs directory). hero_title_lines breaks the title into staggered
@@ -24,6 +25,22 @@
     {%- assign photo = site.data.photo_credits[key] %}
     <div class="ph-hero-slide{% if forloop.first %} is-active{% endif %}" data-hero-photo="{{ key }}" data-image="{{ photo.image | relative_url }}" data-image-portrait="{{ photo.image_portrait | relative_url }}" style="--photo: url('{{ photo.image | relative_url }}'); --photo-portrait: url('{{ photo.image_portrait | relative_url }}'); --photo-y: {{ photo.position | default: '40%' }}; --photo-y-wide: {{ photo.position_wide | default: photo.position | default: '40%' }};"></div>
     {%- endfor %}
+  </div>
+  {%- comment -%}
+    The photo's caption, at the far bottom right: where it was taken and who took it, with a centered
+    dot between (read out as "Photo: <place>, by <author>"). One per photo; hero-slides.js shows the
+    one for the photo on screen, and without it the first stays. The full credit, with the license
+    and links, is in the footer.
+  {%- endcomment -%}
+  <div class="ph-hero-credit">
+    <p>
+      {%- for key in page.hero_photos %}
+      {%- assign photo = site.data.photo_credits[key] %}
+      {%- if photo.place %}
+      <span class="ph-hero-credit-item{% if forloop.first %} is-active{% endif %}" data-hero-credit="{{ key }}"><span class="ph-visually-hidden">Photo: </span>{{ photo.place | escape }}<span class="ph-visually-hidden">, by</span><span aria-hidden="true"> · </span>{{ photo.author | escape }}</span>
+      {%- endif %}
+      {%- endfor %}
+    </p>
   </div>
   {%- elsif page.hero_style != "light" %}
   <div class="ph-hero-art" aria-hidden="true"></div>

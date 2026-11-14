@@ -295,7 +295,8 @@ for (const [width, floor] of [[1440, 16], [390, 15]]) {
       for (const walk of [walker, footer]) {
         while (walk.nextNode()) {
           const node = walk.currentNode, parent = node.parentElement;
-          if (!node.textContent.trim() || !parent.getClientRects().length || parent.closest(".ph-visually-hidden, script, noscript")) continue;
+          // The photo caption in the hero is the one exception, small at the site owner's request (2026-11-14); it has its own test.
+          if (!node.textContent.trim() || !parent.getClientRects().length || parent.closest(".ph-visually-hidden, .ph-hero-credit, script, noscript")) continue;
           const size = parseFloat(getComputedStyle(parent).fontSize);
           if (size < floor) found.set(`${parent.className || parent.tagName} ${size}px`, node.textContent.trim().slice(0, 30));
         }
@@ -307,6 +308,52 @@ for (const [width, floor] of [[1440, 16], [390, 15]]) {
       const paragraphs = await page.locator("#events .ph-tile-blurb, .ph-stack .ph-flow-projects p:not(.ph-flow-part), .ph-hero .lead").evaluateAll(nodes => nodes.map(node => parseFloat(getComputedStyle(node).fontSize)));
       assert.ok(Math.min(...paragraphs) >= 18, `paragraphs from ${Math.min(...paragraphs)}px`);
     }
+    assert.deepEqual(errors, []);
+  });
+}
+
+// The photo's caption: where it was taken and who took it, with a centered dot between, in the far
+// bottom right corner of the hero. Small and quiet, at the site owner's request (it must not draw
+// the eye), but still legible.
+for (const [width, height, least] of [[1440, 900, 13], [390, 844, 13]]) {
+  test(`at ${width}px the hero photo's place and photographer sit at its bottom right, small but legible`, async t => {
+    const { page, errors } = await homePage(t, width, { height });
+    const shown = page.locator(".ph-hero-credit-item.is-active");
+    assert.equal(await shown.count(), 1);
+    assert.equal(await shown.evaluate(node => [...node.childNodes].filter(part => !(part.classList && part.classList.contains("ph-visually-hidden"))).map(part => part.textContent).join("").replace(/\s+/g, " ").trim()), "Rizal Park, Manila · GRMondala");
+    // Read out in words, not as a dot.
+    assert.equal(await textOf(shown), "Photo: Rizal Park, Manila, by · GRMondala");
+    assert.equal(await shown.locator('[aria-hidden="true"]').textContent(), " · ");
+    const box = await page.evaluate(() => {
+      const rect = node => node.getBoundingClientRect().toJSON();
+      const item = rect(document.querySelector(".ph-hero-credit-item.is-active")), hero = rect(document.querySelector(".ph-hero")), wave = rect(document.querySelector(".ph-hero-wave")), content = rect(document.querySelector(".ph-hero .ph-hero-content"));
+      const style = getComputedStyle(document.querySelector(".ph-hero-credit-item.is-active"));
+      const actions = rect(document.querySelector(".ph-hero-actions"));
+      const buttonsRight = Math.max(...[...document.querySelectorAll(".ph-hero-actions .btn")].map(node => node.getBoundingClientRect().right));
+      // What is under the caption's corners, with the caption itself out of the way: the photo, not a wave.
+      const credit = document.querySelector(".ph-hero-credit");
+      credit.style.visibility = "hidden";
+      const under = [[item.left + 2, item.bottom - 1], [item.right - 2, item.bottom - 1]].map(([x, y]) => document.elementsFromPoint(x, y).some(node => node.closest(".ph-hero-wave path")));
+      credit.style.visibility = "";
+      return { item, hero, under, weight: style.fontWeight, waveTop: wave.top, contentRight: actions.right, actionsBottom: actions.bottom, buttonsRight, size: parseFloat(style.fontSize), color: style.color, shadow: style.textShadow, lines: Math.round(item.height / parseFloat(style.lineHeight)) };
+    });
+    assert.ok(box.size >= least && box.size <= 14, `caption is ${box.size}px`);
+    assert.equal(box.weight, "400", "regular weight: quiet");
+    assert.equal(box.lines, 1, "on one line");
+    // Far right: it ends near the screen's edge, past the page's content column.
+    const edge = width - box.item.right;
+    assert.ok(edge >= 12 && edge <= 28 && box.item.right > box.contentRight, `the caption ends ${edge}px from the edge`);
+    if (width >= 768) assert.ok(box.item.left > box.hero.width / 2, "in the right half on a wide screen");
+    // Bottom: in the corner the waves leave clear at the right, lower than where their box begins,
+    // with the photo under it and not a wave, and below the buttons.
+    assert.ok(box.item.top >= box.waveTop - 1 && box.item.bottom <= box.hero.bottom, `caption at ${box.item.top} to ${box.item.bottom}, waves' box from ${box.waveTop}`);
+    assert.deepEqual(box.under, [false, false], "no wave under the caption");
+    assert.ok(box.item.top >= box.actionsBottom, "below the buttons");
+    // White, a little see-through.
+    const [, , , alpha = "1"] = box.color.match(/[\d.]+/g);
+    assert.ok(box.color.startsWith("rgba(255, 255, 255") && Number(alpha) >= 0.75 && Number(alpha) < 1, box.color);
+    assert.notEqual(box.shadow, "none", "a shadow keeps it legible on a bright photo");
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     assert.deepEqual(errors, []);
   });
 }
