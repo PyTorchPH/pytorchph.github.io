@@ -4,23 +4,37 @@ body-class: ph-home
 redirect_from:
   - "/community/"
   - "/events/"
-hero_kicker: "Mabuhay!"
-hero_kicker_meaning: "Welcome — a Filipino greeting that wishes you a long life"
+hero_title: "Sindihan ang sulo."
+hero_title_lines:
+  - "Sindihan"
+  - "ang"
+  - "sulo."
+hero_title_accent: 3
+hero_title_lang: fil
+hero_title_meaning: "Light the torch."
+hero_lead: "Isang malayang komunidad sa Pilipinas para sa pag-aaral at paggawa gamit ang PyTorch®."
+hero_lead_lang: fil
+hero_lead_meaning: "An independent community in the Philippines for learning and building with PyTorch®."
 hero_wave: true
+header_over_hero: true
 hero_photos:
   - rizal_monument
-  - malacanang
+  - lapulapu_monument
   - fort_santiago
-  - manila_bay_sunset
+  - mount_apo
 hero_actions:
+  - label: "Upcoming sessions"
+    url: "/#events"
   - label: "Join the community"
     url: "/portal/register/"
-  - label: "Install PyTorch"
-    url: "/get-started/locally/"
 ---
 
-{% include ph/home_pillars.html %}
+{%- comment -%}
+  Home page, after PyTorch Korea's (pytorch.kr): the header over the hero photo, the hero ending in
+  layered waves, and upcoming events first, then the Foundation's projects.
+{%- endcomment -%}
 {% include ph/community_section.html %}
+{% include ph/stack.html %}
 {% include ph/nationwide.html %}
 {% include ph/home_news.html %}
 {% include ph/get_involved.html %}

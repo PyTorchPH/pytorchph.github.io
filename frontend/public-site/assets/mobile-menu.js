@@ -1,5 +1,6 @@
 // Full-screen mobile menu. The open button reports its state, focus moves into the menu and back,
-// and Escape closes it.
+// and Escape closes it. It sweeps in from the left and out to the right (ph.scss); closing waits for
+// that sweep, unless the visitor prefers reduced motion.
 var mobileMenu = {
   bind: function() {
     var $open = $("[data-behavior='open-mobile-menu']");
@@ -7,7 +8,8 @@ var mobileMenu = {
 
     $open.on("click", function(e) {
       e.preventDefault();
-      $menu.addClass("open");
+      window.clearTimeout(mobileMenu.closing);
+      $menu.removeClass("closing").addClass("open");
       $("body").addClass("no-scroll");
       $open.attr("aria-expanded", "true");
       $menu.find("[data-behavior='close-mobile-menu']").trigger("focus");
@@ -68,7 +70,15 @@ var mobileMenu = {
   },
 
   close: function(returnFocus) {
-    $(".mobile-main-menu").removeClass("open");
+    var $menu = $(".mobile-main-menu");
+    var finish = function() { $menu.removeClass("open closing"); };
+    window.clearTimeout(mobileMenu.closing);
+    if ($menu.hasClass("open") && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      $menu.addClass("closing");
+      mobileMenu.closing = window.setTimeout(finish, 280);
+    } else {
+      finish();
+    }
     $("body").removeClass("no-scroll");
     $(window).off("resize.ForMobileMenu");
     var $open = $("[data-behavior='open-mobile-menu']").attr("aria-expanded", "false");

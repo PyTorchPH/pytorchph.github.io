@@ -1,23 +1,30 @@
 {%- assign contacts = site.data.public_contacts -%}
-<div class="container-fluid docs-tutorials-resources" role="region" aria-label="PyTorch resources">
+{%- comment -%} The closing trio, after PyTorch Korea's: where this community lives, not general PyTorch pages. {%- endcomment -%}
+<div class="container-fluid docs-tutorials-resources" role="region" aria-label="PyTorch Philippines community">
   <div class="container">
     <div class="row">
-      <div class="col-md-4 text-center">
-        <h2>PyTorch docs</h2>
-        <p>The official API reference for PyTorch and its domain libraries.</p>
-        <a class="with-right-arrow" href="{{ site.external_urls.org_docs }}/stable/">View the docs</a>
-      </div>
-
-      <div class="col-md-4 text-center">
-        <h2>Tutorials</h2>
-        <p>Official tutorials for beginners and advanced developers.</p>
-        <a class="with-right-arrow" href="{{ site.external_urls.org_tutorials }}/">View the tutorials</a>
-      </div>
-
       <div class="col-md-4 text-center">
         <h2>PyTorchPH on GitHub</h2>
         <p>The source of this website and our community files. Contributions are welcome.</p>
         <a class="with-right-arrow" href="{{ site.external_urls.repo_org }}">Go to GitHub</a>
+      </div>
+
+      <div class="col-md-4 text-center">
+        <h2>Campus Labs</h2>
+        <p>University chapters across Luzon, the Visayas, and Mindanao.</p>
+        <a class="with-right-arrow" href="{{ site.baseurl }}/campus-labs/">Meet the Campus Labs</a>
+      </div>
+
+      <div class="col-md-4 text-center">
+        {%- if contacts.facebook %}
+        <h2>Community page</h2>
+        <p>Announcements, event posters, and updates from PyTorch Philippines.</p>
+        <a class="with-right-arrow" href="{{ contacts.facebook | escape }}" rel="noopener noreferrer">Go to Facebook</a>
+        {%- else %}
+        <h2>Member portal</h2>
+        <p>Create a member account and keep a record of your participation.</p>
+        <a class="with-right-arrow" href="{{ site.baseurl }}/portal/">Go to the portal</a>
+        {%- endif %}
       </div>
     </div>
   </div>
@@ -58,28 +65,41 @@
           <li><a href="{{ site.external_urls.repo_org }}">GitHub</a></li>
         </ul>
       </div>
+      {%- if contacts.facebook or contacts.linkedin or contacts.email %}
+
+      <div class="footer-links-col">
+        <ul>
+          <li class="list-title">Connect</li>
+          {%- if contacts.facebook %}<li><a href="{{ contacts.facebook | escape }}" rel="noopener noreferrer">Facebook</a></li>{% endif %}
+          {%- if contacts.linkedin %}<li><a href="{{ contacts.linkedin | escape }}" rel="noopener noreferrer">LinkedIn</a></li>{% endif %}
+          {%- if contacts.email %}<li><a href="mailto:{{ contacts.email | escape }}">Email</a></li>{% endif %}
+        </ul>
+      </div>
+      {%- endif %}
     </nav>
 
-    {%- if contacts.facebook or contacts.linkedin or contacts.email %}
-    <nav class="ph-footer-contacts" aria-label="Contact PyTorch Philippines">
-      {% if contacts.facebook %}<a href="{{ contacts.facebook | escape }}" rel="noopener noreferrer">Facebook</a>{% endif %}
-      {% if contacts.linkedin %}<a href="{{ contacts.linkedin | escape }}" rel="noopener noreferrer">LinkedIn</a>{% endif %}
-      {% if contacts.email %}<a href="mailto:{{ contacts.email | escape }}">{{ contacts.email | escape }}</a>{% endif %}
-    </nav>
-    {%- endif %}
+    {%- comment -%}
+      Two short lines, as on pytorch.kr: independence, and the PyTorch brand book's trademark statement word
+      for word. The credits the photo and code licenses require stay in the footer, behind "Credits" at the end
+      of that line.
+    {%- endcomment -%}
     <div class="trademark-disclaimer">
-      <ul>
-        <li>PyTorch Philippines is an independent, community-led user group and is not affiliated with or otherwise sponsored by the PyTorch Foundation. For official PyTorch information, see <a href="{{ site.external_urls.org_www }}">pytorch.org</a>.</li>
-        <li>PyTorch, the PyTorch logo and any related marks are trademarks of The Linux Foundation. See the <a href="https://www.linuxfoundation.org/legal/trademark-usage">Linux Foundation trademark usage policy</a> and the <a href="https://pytorch.org/brand-guidelines/">PyTorch brand guidelines</a>.</li>
-        {%- if page.hero_photos %}
-        {%- comment -%} Every photo's license asks for the title, author, license and changes. The changes are said once when every photo had the same ones. {%- endcomment -%}
-        {%- assign first_photo = site.data.photo_credits[page.hero_photos.first] %}
-        {%- assign same_changes = true %}
-        {%- for key in page.hero_photos %}{% if site.data.photo_credits[key].changes != first_photo.changes %}{% assign same_changes = false %}{% endif %}{% endfor %}
-        <li>Header photos{% if same_changes %}, {{ first_photo.changes }}{% endif %}:{% for key in page.hero_photos %}{% assign photo = site.data.photo_credits[key] %} <span class="ph-photo-credit" data-photo-credit="{{ key }}"><a href="{{ photo.source_url }}">{{ photo.title }}</a>{% if photo.attribution %}, <a href="{{ photo.author_url }}">{{ photo.attribution }}</a>{% else %} by <a href="{{ photo.author_url }}">{{ photo.author }}</a>{% endif %} (<a href="{{ photo.license_url }}">{{ photo.license }}</a>{% unless same_changes %}; {{ photo.changes }}{% endunless %}{% if photo.architect %}; building by architect {{ photo.architect }}{% endif %}{% if photo.license contains "BY-SA" %}; our edited version is shared under <a href="{{ photo.license_url }}">{{ photo.license }}</a> too{% endif %}){% if forloop.last %}.{% else %};{% endif %}</span>{% endfor %}</li>
-        {%- endif %}
-        <li>This site is adapted from the open-source <a href="https://github.com/PyTorchKR/pytorch.kr">PyTorch Korea</a> and <a href="https://github.com/pytorch/pytorch.github.io">pytorch.org</a> websites (BSD 3-Clause).</li>
-      </ul>
+      <p class="ph-footer-notice">PyTorch Philippines is an independent community, not affiliated with or sponsored by the PyTorch Foundation. Official information is at <a href="{{ site.external_urls.org_www }}">pytorch.org</a>.</p>
+      <div class="ph-footer-notice">PyTorch, the PyTorch logo and any related marks are trademarks of The Linux Foundation. <a href="https://www.linuxfoundation.org/legal/trademark-usage">Trademark policy</a>.
+        <details class="ph-footer-credits">
+        <summary>Credits</summary>
+        <ul>
+          {%- if page.hero_photos %}
+          {%- comment -%} Every photo's license asks for the title, author, license and changes. The changes are said once when every photo had the same ones. {%- endcomment -%}
+          {%- assign first_photo = site.data.photo_credits[page.hero_photos.first] %}
+          {%- assign same_changes = true %}
+          {%- for key in page.hero_photos %}{% if site.data.photo_credits[key].changes != first_photo.changes %}{% assign same_changes = false %}{% endif %}{% endfor %}
+          <li>Header photos{% if same_changes %}, {{ first_photo.changes }}{% endif %}:{% for key in page.hero_photos %}{% assign photo = site.data.photo_credits[key] %} <span class="ph-photo-credit" data-photo-credit="{{ key }}"><a href="{{ photo.source_url }}">{{ photo.title }}</a>{% if photo.attribution %}, <a href="{{ photo.author_url }}">{{ photo.attribution }}</a>{% else %} by <a href="{{ photo.author_url }}">{{ photo.author }}</a>{% endif %} (<a href="{{ photo.license_url }}">{{ photo.license }}</a>{% unless same_changes %}; {{ photo.changes }}{% endunless %}{% if photo.architect %}; building by architect {{ photo.architect }}{% endif %}{% if photo.license contains "BY-SA" %}; our edited version is shared under <a href="{{ photo.license_url }}">{{ photo.license }}</a> too{% endif %}){% if forloop.last %}.{% else %};{% endif %}</span>{% endfor %}</li>
+          {%- endif %}
+          <li>This site is adapted from the open-source <a href="https://github.com/PyTorchKR/pytorch.kr">PyTorch Korea</a> and <a href="https://github.com/pytorch/pytorch.github.io">pytorch.org</a> websites (BSD 3-Clause). See also the <a href="https://pytorch.org/brand-guidelines/">PyTorch brand guidelines</a>.</li>
+        </ul>
+        </details>
+      </div>
     </div>
   </div>
 </footer>

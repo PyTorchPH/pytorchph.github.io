@@ -1,25 +1,27 @@
 {%- comment -%}
-  Upcoming events and learning programs, published by officers and loaded by site-content.js.
-  site-content.js adds one filter button per series with upcoming sessions; past sessions appear below when
-  there are any.
+  Events, right under the hero, in two parts of equal weight. Community events: three equal dark tiles
+  (after the Linux Foundation's event pages: the name, one sentence, the date large), one per series in
+  _data/community_events.yml (embedded below). Training: a slim list, a line per upcoming course from
+  the sessions officers publish in the portal, opening to its modules, with finished courses behind a
+  small toggle.
+  site-content.js renders all of it ("<" is escaped in the embedded JSON, so no string can close the script). The h2 is for screen readers; each part has its own label.
 {%- endcomment -%}
-<section class="ph-section ph-section-grey" id="events" aria-labelledby="events-heading">
+<section class="ph-section ph-events" id="events" aria-labelledby="events-heading">
   <div class="container">
-    <div class="ph-section-header">
-      <div>
-        <h2 id="events-heading">Upcoming programs</h2>
-        <p>Community training sessions and learning programs. Schedules that are not final yet are marked Tentative.</p>
-      </div>
+    <h2 id="events-heading" class="ph-visually-hidden">Programs and events</h2>
+    <script type="application/json" data-community-events>{{ site.data.community_events | jsonify | replace: "<", "\u003c" }}</script>
+    <div class="ph-program" data-program="events" hidden>
+      <h3 class="ph-program-label">{{ site.data.community_events.events.label | escape }}</h3>
+      <div class="ph-tile-grid" data-site-content="program-events"></div>
     </div>
-    <div class="ph-filter" role="group" aria-label="Filter by learning series" data-event-filters hidden>
-      <button type="button" aria-pressed="true" data-event-series="">All programs</button>
+    <div class="ph-program" data-program="training" hidden>
+      <h3 class="ph-program-label">{{ site.data.community_events.training.label | escape }}</h3>
+      <div class="ph-course-list" data-site-content="program-training"></div>
+      <details class="ph-previous" data-hide-when-empty hidden>
+        <summary>Previous courses <span data-previous-count></span></summary>
+        <div class="ph-course-list" data-site-content="program-previous"></div>
+      </details>
     </div>
-    <div class="ph-managed-grid ph-event-grid" data-site-content="events" aria-live="polite"><p class="ph-empty">Loading published programs…</p></div>
     <noscript><p>JavaScript is needed to load the latest published programs. Follow our community pages for announcements.</p></noscript>
-    <p class="ph-source">Looking for PyTorch events elsewhere? See the <a href="https://pytorch.org/events/">PyTorch Foundation events calendar</a>.</p>
-    <div class="ph-past" data-hide-when-empty hidden>
-      <h3 class="ph-past-heading">Past sessions</h3>
-      <ul class="ph-past-list" data-site-content="events-past"></ul>
-    </div>
   </div>
 </section>

@@ -39,7 +39,7 @@ Empty states point to a next step. Lists loaded from the API sit in a wrapper wi
 | PyTorch Foundation Ambassadors on `/about/#ambassadors` | Nothing by hand: `node scripts/fetch-ambassadors.mjs` copies the people the [official directory](https://pytorch.org/programs/ambassadors/) places in the Philippines, with their official photos and biographies, into `_data/ambassadors_directory.json` and `assets/images/ambassadors/`. It runs on every deploy and daily. A failed fetch, a malformed directory, or a failed write keeps the committed snapshot; an empty result replaces a non-empty snapshot only with `AMBASSADORS_ALLOW_EMPTY=1`. The portrait directory belongs to the script and is replaced as a whole. |
 | Campus Labs people | `_data/campus_labs.yml`, exactly as PyTorch Philippines' Campus Labs posters give them (name, university, batch, and a title only where a poster gives one); the posters are the only source. A chapter published in the officer portal replaces the entry for the same university on `/campus-labs/` and `/about/` (matched on the name or one of its `aliases`). |
 | Ambassador terms on `/about/#ambassadors` | `_data/ambassador_terms.yml`, from PyTorch Philippines' ambassador poster, keyed by directory id |
-| Home page background photos | `_data/photo_credits.yml`: four Manila photos (three from Wikimedia Commons, the Malacañang one from English Wikipedia) that crossfade in the home hero (in order: Rizal Monument, Malacañang Palace from the Pasig River, Fort Santiago, Manila Bay sunset), each with its source, author, license, changes, copyright status of the place, and SHA-1. The Malacañang photo is a public-domain Official Gazette photo of a building still under copyright (architect Jorge Ramos, to 2065); it is used at the site owner's decision and should be replaced if the Office of the President grants permission for another. The footer of the page credits every photo it shows. To add or swap one: crop a 2:1 `image` (2000 × 1000) and a 3:4 `image_portrait` (900 × 1200) into `assets/images/hero/` in black and white with no metadata, add an entry, list its key under `hero_photos:` in the page's front matter, and check text contrast over it. `assets/hero-slides.js` runs the crossfade (7 s per photo; off for reduced motion). `npm run test:hero-photo:built` checks the credits and files; `npm run test:hero-photo:browser` checks the crossfade. |
+| Home page background photos | `_data/photo_credits.yml`: four photos from Wikimedia Commons that crossfade in the home hero (in order: Rizal Monument in Manila, the Lapulapu Monument at Mactan Shrine in Cebu, Fort Santiago in Manila, Mount Apo in Davao: Luzon, the Visayas, and Mindanao), each with its source, author, license, changes, copyright status of the place, and SHA-1. The Lapulapu statue (1981) is most likely still under copyright; its photo is used at the site owner's decision and should be replaced if the rights holder objects. The footer of the page credits every photo it shows. To add or swap one: crop a 2:1 `image` (2000 × 1000) with the subject right of center (the hero's text is on the left) and a 3:4 `image_portrait` (900 × 1200) into `assets/images/hero/` in black and white with no metadata, add an entry, list its key under `hero_photos:` in the page's front matter, and check text contrast over it. `assets/hero-slides.js` runs the crossfade (7 s per photo; off for reduced motion). `npm run test:hero-photo:built` checks the credits and files; `npm run test:hero-photo:browser` checks the crossfade. |
 | Mission and principles on `/about/` | `_data/community_identity.yml`, taken from the [organization profile](https://github.com/PyTorchPH) |
 | Sample code | `_includes/sample_code/*.py` |
 | People bios and social links | `_members/<first-last>.md`, used only by the team-directory renderer (`assets/people/`), which no public page currently includes. |
@@ -62,7 +62,8 @@ The About page has no team directory: the "Our team" section was removed at the 
 request. People appear in two places, each from a single source:
 
 - `/about/#ambassadors`: the PyTorch Foundation Ambassadors that the Foundation's directory places in
-  the Philippines, with the portraits and biographies the Foundation publishes there and the terms
+  the Philippines, as large portrait cards with the portraits and biographies the Foundation publishes
+  there (each biography opens in a panel from its card's "Read bio" button) and the terms
   from PyTorch Philippines' ambassador poster (`_data/ambassador_terms.yml`). A person who leaves the
   directory leaves this section (and their portrait is deleted) on the next deploy.
 - `/campus-labs/` and `/about/#campus-labs-leads`: the Campus Labs people from PyTorch Philippines'
@@ -92,8 +93,10 @@ PyTorch is a registered trademark of The Linux Foundation. This site follows the
 - **Attribution.** The footer carries the brand book's statement word for word: "PyTorch, the PyTorch
   logo and any related marks are trademarks of The Linux Foundation." The first prominent use of the
   name on the home page carries the ® symbol.
-- **No implied endorsement.** The footer says the community is not affiliated with or otherwise
-  sponsored by the PyTorch Foundation. Ambassadors are recognized as individuals.
+- **No implied endorsement.** The footer says the community is independent and not affiliated with or
+  sponsored by the PyTorch Foundation, in two short lines as on pytorch.kr; the photo and code credits
+  the licenses require sit under them behind a closed "Credits" toggle. Ambassadors are recognized as
+  individuals.
 - **Symbol size and color.** Keep the symbol at 24px or larger on screen (the symbol is 89% of the
   horizontal lockup's height, so the lockup is never shorter than 27px), in orange, white, black, or
   gray only, on a background with strong contrast. Use orange as an accent, not a fill.

@@ -29,11 +29,7 @@ hero_actions:
       <p>Be the first at your university: see <a href="#start">how to start a Campus Lab</a> below.</p>
     </div>
     {%- endif %}
-    {% include ph/campus_total.html %}
     {% include ph/campus_directory.html %}
-    {%- if campus_count > 0 %}
-    <p class="ph-source">As announced by PyTorch Philippines in its Campus Labs posters, Batch 1 and Batch 2. Is something out of date? {% if contacts.email %}Email <a href="mailto:{{ contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
-    {%- endif %}
   </div>
 </section>
 

@@ -34,4 +34,18 @@
       </ul>
     </nav>
   </div>
+
+  {%- comment -%} The menu ends with the home page's tagline, the way to join, and the contact links. {%- endcomment -%}
+  {%- assign menu_contacts = site.data.public_contacts -%}
+  <div class="ph-menu-foot">
+    <p class="ph-menu-tagline" lang="fil" title="Light the torch.">Sindihan ang <span>sulo.</span></p>
+    <a class="btn btn-lg with-right-arrow" href="{{ site.baseurl }}/portal/register/">Join the community</a>
+    {%- if menu_contacts.facebook or menu_contacts.linkedin or menu_contacts.email %}
+    <p class="ph-menu-contacts">
+      {%- if menu_contacts.facebook %}<a href="{{ menu_contacts.facebook | escape }}" rel="noopener noreferrer">Facebook</a>{% endif %}
+      {%- if menu_contacts.linkedin %}<a href="{{ menu_contacts.linkedin | escape }}" rel="noopener noreferrer">LinkedIn</a>{% endif %}
+      {%- if menu_contacts.email %}<a href="mailto:{{ menu_contacts.email | escape }}">Email</a>{% endif %}
+    </p>
+    {%- endif %}
+  </div>
 </div>

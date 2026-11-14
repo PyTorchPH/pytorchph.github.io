@@ -52,8 +52,8 @@ try {
     assert.equal(await active(page), "rizal_monument");
     const requests = await heroRequests(page);
     assert.deepEqual(requests.filter(request => !request.afterLoad).map(request => request.file), ["rizal-monument-night.jpg"], "only the first photo loads with the page");
-    assert.deepEqual(requests.map(request => request.file).sort(), ["fort-santiago-gate.jpg", "malacanang-palace-river.jpg", "manila-bay-sunset.jpg", "rizal-monument-night.jpg"], "wide screens load the wide photos only");
-    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "malacanang", null, { timeout: 10000 });
+    assert.deepEqual(requests.map(request => request.file).sort(), ["fort-santiago-gate.jpg", "lapulapu-monument.jpg", "mount-apo.jpg", "rizal-monument-night.jpg"], "wide screens load the wide photos only");
+    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "lapulapu_monument", null, { timeout: 10000 });
     assert.notEqual(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), "none");
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "fort_santiago", null, { timeout: 10000 });
     assert.equal(await page.locator(".ph-hero-slide.is-active").count(), 1);
@@ -62,9 +62,9 @@ try {
     await page.setViewportSize({ width: 390, height: 844 });
     // At the moment of the change the photo on screen keeps its image instead of going blank.
     assert.equal(await page.locator(".ph-hero-slide.is-active").evaluate(node => getComputedStyle(node).backgroundImage), before);
-    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "manila_bay_sunset", null, { timeout: 12000 });
+    await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "mount_apo", null, { timeout: 12000 });
     const portraits = (await heroRequests(page)).map(request => request.file).filter(file => file.includes("-portrait"));
-    for (const file of ["malacanang-palace-river-portrait.jpg", "fort-santiago-gate-portrait.jpg", "manila-bay-sunset-portrait.jpg"]) assert.ok(portraits.includes(file), `${file} loads after crossing the breakpoint`);
+    for (const file of ["fort-santiago-gate-portrait.jpg", "mount-apo-portrait.jpg"]) assert.ok(portraits.includes(file), `${file} loads after crossing the breakpoint`);
     // Turning reduced motion on mid-visit: back to the first photo, and it stays.
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.waitForFunction(() => document.querySelector(".ph-hero-slide.is-active")?.dataset.heroPhoto === "rizal_monument");
@@ -78,7 +78,7 @@ try {
     const { context, page, errors } = await open({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     await page.waitForSelector(".ph-hero-slides.is-playing", { timeout: 15000 });
     const files = (await heroRequests(page)).map(request => request.file).sort();
-    assert.deepEqual(files, ["fort-santiago-gate-portrait.jpg", "malacanang-palace-river-portrait.jpg", "manila-bay-sunset-portrait.jpg", "rizal-monument-night-portrait.jpg"]);
+    assert.deepEqual(files, ["fort-santiago-gate-portrait.jpg", "lapulapu-monument-portrait.jpg", "mount-apo-portrait.jpg", "rizal-monument-night-portrait.jpg"]);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []);
     await context.close();
@@ -110,7 +110,7 @@ try {
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(`${origin}/`, { waitUntil: "load" });
     await page.waitForSelector(".ph-hero-slides.is-playing", { timeout: 15000 });
-    assert.equal(await active(page), "malacanang");
+    assert.equal(await active(page), "lapulapu_monument");
     const seen = new Set();
     for (let tick = 0; tick < 24; tick++) { seen.add(await active(page)); await page.waitForTimeout(1000); }
     assert.ok(!seen.has("rizal_monument"), "the photo that failed never shows");

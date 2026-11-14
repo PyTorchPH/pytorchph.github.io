@@ -1,0 +1,49 @@
+# SPIKE (spike/research-first): the PyTorch Foundation's hosted projects, placed where they sit in a
+# model's life, from training to a phone. Each line paraphrases the project's page on
+# pytorch.org/projects/ and its docs (read 2026-11-13); keep them to one short line.
+#
+# The Foundation hosts six projects: PyTorch, vLLM, DeepSpeed, Ray, Helion, and Safetensors ("Today, the
+# Foundation hosts six projects", pytorch.org/blog/driving-the-future-of-open-source-ai-an-update-from-
+# pytorch-foundation-projects/, 2026-07-22). ExecuTorch is part of PyTorch, not a seventh hosted project
+# ("ExecuTorch is becoming part of PyTorch Core", pytorch.org/blog/executorch-becomes-part-of-pytorch-core/,
+# 2026-04-07), though the pytorch.org Projects menu lists it. Every one appears below.
+
+- stage: Train
+  projects:
+    - name: PyTorch
+      url: "https://pytorch.org/projects/pytorch/"
+      line: "Eager autograd for research, torch.compile and torch.export for speed and deployment."
+
+- stage: Scale
+  projects:
+    - name: DeepSpeed
+      url: "https://pytorch.org/projects/deepspeed/"
+      line: "Training and inference past one GPU's memory."
+    - name: Ray
+      url: "https://pytorch.org/projects/ray/"
+      line: "Distributed Python for data, training, and serving."
+
+- stage: Write kernels
+  projects:
+    - name: Helion
+      url: "https://pytorch.org/projects/helion/"
+      line: "Kernels written in Python, compiled to Triton and autotuned."
+
+- stage: Store
+  projects:
+    - name: Safetensors
+      url: "https://pytorch.org/projects/safetensors/"
+      line: "Model weights that load without running code."
+
+- stage: Serve
+  projects:
+    - name: vLLM
+      url: "https://pytorch.org/projects/vllm/"
+      line: "High-throughput LLM serving on GPUs, TPUs, Trainium, and CPUs."
+
+- stage: Run on device
+  projects:
+    - name: ExecuTorch
+      part_of: PyTorch
+      url: "https://pytorch.org/projects/executorch/"
+      line: "PyTorch models on phones, wearables, and microcontrollers."

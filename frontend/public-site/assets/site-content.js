@@ -51,28 +51,38 @@
   function startOfToday() { const today = new Date(); today.setHours(0, 0, 0, 0); return today; }
   function byStart(a, b) { return (date(a.startsAt)?.getTime() ?? Infinity) - (date(b.startsAt)?.getTime() ?? Infinity); }
 
+  // One event as an open column, after PyTorch Korea's home page: a meta line (type, date, place),
+  // the title, what it covers, and a link to register when there is one.
+  // The dot is hidden from screen readers; the spaces around it stay, so the words do not run together.
+  function separator() { const node = element("span", "·", "ph-event-separator"); node.setAttribute("aria-hidden", "true"); return node; }
   function eventCard(row) {
-    const node = element("article", null, "ph-card ph-event");
+    const node = element("article", null, "ph-event");
     node.id = `event-${row.id}`;
     const photo = image(row.photoUrl, row.title);
     if (photo) node.append(photo);
-    const when = element("p", null, "ph-event-when");
-    if (row.dateStatus === "tentative") when.append(element("span", "Tentative", "ph-status"), " ");
-    when.append(element("span", scheduleDateLabel(row), "ph-event-date"));
-    node.append(when, element("h3", row.title));
+    const meta = element("p", null, "ph-event-meta");
+    const type = humanize(row.eventType);
+    if (type) meta.append(element("span", type, "ph-event-type"), " ", separator(), " ");
+    if (row.dateStatus === "tentative") meta.append(element("span", "Tentative", "ph-status"), " ");
+    meta.append(element("span", scheduleDateLabel(row), "ph-event-date"));
+    if (row.venue) meta.append(" ", separator(), " ", element("span", row.venue, "ph-event-venue"));
+    node.append(meta, element("h3", row.title));
     if (row.isDemo) node.append(element("p", "Demo/Test event — sample data", "ph-demo-label"));
     if (row.series && row.series !== row.title) paragraph(node, "", row.series, "ph-event-series");
-    paragraph(node, "", row.description);
+    paragraph(node, "", row.description, "ph-event-description");
     const modules = String(row.modules || row.topic || "").split(";").map(item => item.trim()).filter(Boolean);
     if (modules.length) {
       const list = element("ul", null, "ph-event-modules");
       modules.forEach(item => list.append(element("li", item)));
       node.append(list);
     }
-    const facts = [humanize(row.eventType), row.venue].filter(Boolean).join(" · ");
-    paragraph(node, "", facts, "ph-event-facts");
-    const registration = link("Registration details", row.registrationUrl, "ph-profile-link");
-    if (registration) node.append(registration);
+    const registration = link("Registration details", row.registrationUrl, "ph-event-link");
+    if (registration) {
+      const arrow = element("span", " →");
+      arrow.setAttribute("aria-hidden", "true");
+      registration.append(arrow);
+      node.append(registration);
+    }
     return node;
   }
 
@@ -128,9 +138,189 @@
     // one button is always marked as selected.
     const series = showFilters && activeSeries.has(previous) ? previous : "";
     selectSeries(series);
+    renderHomeEvents(today);
     const shown = upcoming.filter(row => !series || row.series === series);
     replace("events", shown.map(eventCard), series ? "No upcoming events match this learning series." : "No upcoming programs are published right now. New sessions are announced here and on our community pages.");
     renderPastSessions(today);
+  }
+
+  // The home page's events, in two parts of equal weight. Community events: three equal dark tiles, one
+  // per series, each with its next session: a published one for that series when there is one, else
+  // the planned one from _data/community_events.yml (embedded in the page). Training:
+  // a line per upcoming course (published sessions sharing a title), with its modules one click away,
+  // and recently finished courses behind a small toggle. Nothing is shown that the data does not say:
+  // no date means no date line, and module names appear as published.
+  function communityEventsConfig() {
+    const node = document.querySelector("[data-community-events]");
+    if (!node) return null;
+    try { const value = JSON.parse(node.textContent); return value && typeof value === "object" ? value : null; } catch { return null; }
+  }
+  const hasDay = row => /^\d{4}-\d{2}-\d{2}/.test(String(row.startsAt ?? "")) && Boolean(date(row.startsAt));
+  const isMonth = row => /^\d{4}-\d{2}$/.test(String(row.startsAt ?? ""));
+  const manila = (value, options) => value.toLocaleDateString("en-PH", { timeZone: "Asia/Manila", ...options });
+  const monthStart = row => new Date(Number(row.startsAt.slice(0, 4)), Number(row.startsAt.slice(5, 7)) - 1, 1);
+  // "A", "A and B", "A, B, and C".
+  function joinList(items) {
+    if (items.length < 3) return items.join(" and ");
+    return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
+  }
+  // One phrase for a column's dates, each date once: "Saturday, January 16, 2027", "October 25 and
+  // November 8, 2026", "November and December 2026".
+  function datesPhrase(rows) {
+    if (rows.length === 1 && hasDay(rows[0])) return manila(date(rows[0].startsAt), { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+    const label = (row, year) => (isMonth(row) ? monthStart(row).toLocaleDateString("en-PH", { month: "long", ...(year && { year: "numeric" }) })
+      : hasDay(row) ? manila(date(row.startsAt), { month: "long", day: "numeric", ...(year && { year: "numeric" }) }) : scheduleDateLabel(row));
+    const dated = rows.every(row => isMonth(row) || hasDay(row));
+    const years = new Set(rows.map(row => (isMonth(row) ? row.startsAt.slice(0, 4) : hasDay(row) ? manila(date(row.startsAt), { year: "numeric" }) : "")));
+    const sameKind = rows.every(isMonth) || rows.every(hasDay);
+    if (dated && sameKind && years.size === 1) {
+      const parts = [...new Set(rows.map(row => label(row, false)))];
+      return `${joinList(parts)}${rows.every(hasDay) ? "," : ""} ${[...years][0]}`;
+    }
+    return joinList([...new Set(rows.map(row => label(row, true)))]);
+  }
+  function arrowLink(text, href) {
+    const node = link(text, href, "ph-event-link");
+    if (!node) return null;
+    const arrow = element("span", " →");
+    arrow.setAttribute("aria-hidden", "true");
+    node.append(arrow);
+    return node;
+  }
+  function addPoster(node, rows, title) {
+    const poster = image(rows.find(row => row.photoUrl)?.photoUrl, `Poster: ${title}`);
+    if (!poster) return;
+    poster.className = "ph-event-poster";
+    node.append(poster);
+  }
+  // A course card: its title and dates. It opens to its sessions, which are separate events: each with
+  // its own date, its modules as published (the list numbers them through the course, so "Module N:" is
+  // dropped; none twice), and its registration link.
+  function courseRow(rows, today) {
+    const [first] = rows;
+    const body = element("div", null, "ph-course-body");
+    const sessions = element("div", null, "ph-course-sessions");
+    const seen = new Set();
+    for (const row of rows) {
+      const modules = String(row.modules || row.topic || "").split(";").map(value => value.trim().replace(/^Module\s+\d+\s*:\s*/i, "")).filter(item => item && !seen.has(item) && Boolean(seen.add(item)));
+      const more = isUpcomingSchedule(row, today) ? arrowLink("Learn more", row.registrationUrl) : null;
+      if (!modules.length && !more) continue;
+      const session = element("div", null, "ph-session");
+      session.append(element("p", `${datesPhrase([row]).replace(/^\w+day, /, "")}${row.dateStatus === "tentative" ? " (tentative)" : ""}`, "ph-session-when"));
+      if (modules.length) {
+        const list = element("ol", null, "ph-event-modules");
+        modules.forEach(item => list.append(element("li", item)));
+        session.append(list);
+      }
+      if (more) session.append(more);
+      sessions.append(session);
+    }
+    if (sessions.childNodes.length) body.append(sessions);
+    const expandable = body.childNodes.length > 0;
+    const node = element(expandable ? "details" : "div", null, "ph-course");
+    const head = element(expandable ? "summary" : "div", null, "ph-course-head");
+    head.append(element("h4", first.title));
+    if (rows.some(row => row.isDemo)) head.append(element("span", "Demo/Test", "ph-demo-label"));
+    head.append(element("span", `${datesPhrase(rows)}${rows.some(row => row.dateStatus === "tentative") ? " (tentative)" : ""}`, "ph-course-when"));
+    node.append(head);
+    if (expandable) node.append(body);
+    return node;
+  }
+  // The Manila calendar day as "2026-11-20", to compare with the data file's dates.
+  const manilaDay = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
+  function callForProposals(cfp) {
+    if (!cfp?.opens || !cfp?.closes) return null;
+    const day = manilaDay();
+    if (day > cfp.closes) return null;
+    const monthDay = value => new Date(Number(value.slice(0, 4)), Number(value.slice(5, 7)) - 1, Number(value.slice(8, 10))).toLocaleDateString("en-PH", { month: "long", day: "numeric" });
+    const node = element("p", day < cfp.opens ? `Call for proposals opens ${monthDay(cfp.opens)}.` : `Call for proposals open until ${monthDay(cfp.closes)}.`, "ph-event-note");
+    const submit = day >= cfp.opens ? arrowLink("Submit a talk", cfp.url) : null;
+    if (submit) node.append(" ", submit);
+    return node;
+  }
+  // A community event as a dark tile, after the Linux Foundation's event pages: the kind (and place),
+  // the name, one sentence, the call for proposals, a link, and at the foot the date, large, said once.
+  // A series with no date shows none.
+  function eventTile(item, sessions) {
+    const [next] = sessions;
+    const title = next?.title || item.name;
+    const node = element("article", null, "ph-tile");
+    const poster = image(next?.photoUrl, `Poster: ${title}`);
+    if (poster) {
+      poster.className = "ph-tile-poster";
+      node.append(poster);
+    }
+    const kind = element("p", null, "ph-tile-kind");
+    [item.kind, next?.venue].filter(Boolean).forEach((part, index) => {
+      if (index) kind.append(" ", separator(), " ");
+      kind.append(part);
+    });
+    node.append(kind, element("h4", title));
+    if (next?.isDemo) node.append(element("p", "Demo/Test event — sample data", "ph-demo-label"));
+    paragraph(node, "", next?.description || item.blurb, "ph-tile-blurb");
+    const cfp = callForProposals(item.cfp);
+    if (cfp) node.append(cfp);
+    const more = next ? arrowLink("Learn more", next.registrationUrl) : null;
+    if (more) node.append(more);
+    if (next) {
+      // A small line (the weekday, or "Tentative"), then the date, large: the dates line up across tiles.
+      const when = element("p", null, "ph-tile-date");
+      const note = [hasDay(next) ? manila(date(next.startsAt), { weekday: "long" }) : "", next.dateStatus === "tentative" ? "Tentative" : ""].filter(Boolean).join(", ");
+      when.append(element("span", note || "\u00a0", "ph-tile-weekday"), " ");
+      // A month-only date stays a month: never an invented day.
+      when.append(element("span", hasDay(next) ? manila(date(next.startsAt), { month: "long", day: "numeric", year: "numeric" })
+        : isMonth(next) ? monthStart(next).toLocaleDateString("en-PH", { month: "long", year: "numeric" }) : scheduleDateLabel(next), "ph-tile-day"));
+      node.append(when);
+    }
+    return node;
+  }
+  let homeEventsKey = null;
+  function renderHomeEvents(today) {
+    const config = communityEventsConfig();
+    if (!config) return;
+    // An unchanged refresh leaves everything alone, so keyboard focus and opened courses stay as they are.
+    const key = JSON.stringify([latestEvents, manilaDay(), today.getTime()]);
+    if (key === homeEventsKey) return;
+    homeEventsKey = key;
+    const upcoming = row => isUpcomingSchedule(row, today);
+    const recent = row => hasDay(row) && row.dateStatus === "confirmed" && scheduleEnd(row) >= new Date(today.getTime() - PAST_SESSION_DAYS * 86400000);
+    const trainingType = config.training?.event_type;
+    const groupBy = (rows, name) => {
+      const groups = new Map();
+      for (const row of rows) {
+        const group = name(row);
+        if (!groups.has(group)) groups.set(group, []);
+        groups.get(group).push(row);
+      }
+      return [...groups.values()].map(list => list.sort(byStart)).sort((a, b) => byStart(a[0], b[0]));
+    };
+    const show = (program, visible) => document.querySelectorAll(`[data-program="${program}"]`).forEach(node => { node.hidden = !visible; });
+
+    // Community events: the named series, then any other published series, one tile each. A planned
+    // session gives way to a published one with the same title, also after that one has passed.
+    const community = latestEvents.filter(row => row.eventType !== trainingType);
+    const configured = Array.isArray(config.events?.series) ? config.events.series : [];
+    const entries = configured.map(item => {
+      const published = community.filter(row => row.series === item.name);
+      const titles = new Set(published.map(row => row.title));
+      const planned = (Array.isArray(item.sessions) ? item.sessions : []).filter(row => !titles.has(row.title));
+      return { item, sessions: [...published, ...planned].filter(upcoming).sort(byStart) };
+    });
+    const named = new Set(configured.map(item => item.name));
+    for (const rows of groupBy(community.filter(row => !named.has(row.series) && upcoming(row)), row => row.series || row.title)) {
+      entries.push({ item: { name: rows[0].series || rows[0].title, kind: humanize(rows[0].eventType), blurb: "" }, sessions: rows });
+    }
+    replace("program-events", entries.map(entry => eventTile(entry.item, entry.sessions)));
+    show("events", entries.length > 0);
+
+    // Training: upcoming courses as lines; recently finished ones behind the toggle.
+    const courses = groupBy(latestEvents.filter(row => trainingType && row.eventType === trainingType), row => `${row.series ?? ""}\u0000${row.title ?? ""}`);
+    const ahead = courses.filter(rows => rows.some(upcoming));
+    const finished = courses.filter(rows => !rows.some(upcoming) && rows.some(recent));
+    replace("program-training", ahead.map(rows => courseRow(rows, today)));
+    replace("program-previous", finished.map(rows => courseRow(rows, today)));
+    document.querySelectorAll("[data-previous-count]").forEach(node => { node.textContent = finished.length ? `(${finished.length})` : ""; });
+    show("training", ahead.length + finished.length > 0);
   }
 
   function renderPastSessions(today) {

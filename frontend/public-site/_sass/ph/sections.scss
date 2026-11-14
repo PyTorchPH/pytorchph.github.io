@@ -60,8 +60,8 @@ button.main-menu-close-button {
 
   .ph-lede {
     max-width: 44rem;
-    font-size: rem(18px);
-    line-height: rem(30px);
+    @include ph-text(18px);
+    line-height: 1.6;
     color: $ph_muted;
   }
 }
@@ -88,10 +88,10 @@ button.main-menu-close-button {
 // Buttons on the dark nationwide band.
 .btn.ph-btn-light,
 .btn.ph-btn-outline {
-  border-radius: 0;
+  border-radius: $ph_radius;
   padding: rem(9px) rem(36px) rem(9px) rem(16px);
   background-position: right rem(14px) center;
-  font-size: rem(18px);
+  @include ph-text(18px);
 }
 
 .btn.ph-btn-light {
@@ -149,14 +149,14 @@ button.main-menu-close-button {
 
   p {
     color: $ph_muted;
-    font-size: rem(17px);
-    line-height: rem(27px);
+    @include ph-text(17px);
+    line-height: 1.6;
     margin-bottom: rem(14px);
   }
 
   a {
     color: $orange;
-    font-size: rem(16px);
+    @include ph-text(16px);
     background-position: right center;
     padding-right: rem(20px);
   }
@@ -177,12 +177,12 @@ button.main-menu-close-button {
 
   button {
     border: 1px solid $not_quite_black;
-    border-radius: 0;
+    border-radius: $ph_radius;
     background: transparent;
     color: $not_quite_black;
     padding: rem(7px) rem(14px);
     font: inherit;
-    font-size: rem(15px);
+    @include ph-text(15px);
     cursor: pointer;
 
     &[hidden] {
@@ -202,124 +202,505 @@ button.main-menu-close-button {
   }
 }
 
-.ph-event-grid {
-  margin-top: rem(16px);
+// Events (home page). Each kind has its own form: community events are a dark banner for the next dated
+// event and short open columns (after PyTorch Korea's) for the other series; training is a slim list.
+.ph-events {
+  padding-top: rem(12px); // the hero's waves already leave white above
+
+  @include desktop {
+    padding-top: rem(14px);
+  }
 }
 
-.ph-card.ph-event {
+.ph-program {
+  &[hidden] {
+    display: none;
+  }
+
+  & + & {
+    margin-top: rem(56px);
+
+    @include desktop {
+      margin-top: rem(64px);
+    }
+  }
+}
+
+// Community events: equal dark tiles, after the Linux Foundation's event pages. The kind, the name, one
+// sentence, then the date at the foot, large and letter-spaced as theirs are.
+.ph-tile-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(16px);
+
+  @include desktop {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: rem(20px);
+  }
+}
+
+.ph-tile {
   display: flex;
   flex-direction: column;
-  border-top: 3px solid $pytorch_orange;
+  min-width: 0;
+  padding: rem(24px) rem(22px) rem(26px);
+  overflow-wrap: anywhere;
+  background: $not_quite_black;
+  color: $white;
 
-  h3 {
-    margin-bottom: rem(6px);
+  @include desktop {
+    min-height: rem(250px);
+    padding: rem(28px) rem(28px) rem(30px);
   }
 
-  .ph-event-when {
-    margin: 0 0 rem(10px);
-    font-size: rem(15px);
+  .ph-tile-poster {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    margin: 0 0 rem(18px);
+    object-fit: cover;
+  }
+
+  .ph-tile-kind {
+    margin: 0 0 rem(8px);
+    color: $orange_on_dark;
+    @include ph-text(13px);
     font-weight: 600;
-    color: $orange;
   }
 
-  .ph-event-series {
-    font-size: rem(15px);
-    color: $ph_muted;
-    margin-bottom: rem(12px);
+  h4 {
+    margin: 0 0 rem(12px);
+    color: $white;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: rem(26px);
+    font-weight: 600;
+    line-height: 1.2;
   }
 
-  .ph-event-modules {
-    list-style: none;
-    margin: rem(4px) 0 rem(16px);
-    padding: 0;
+  .ph-tile-blurb {
+    margin: 0;
+    color: #d6d7dc;
+    @include ph-text(16px);
+    line-height: 1.6;
+  }
 
-    li {
-      position: relative;
-      padding-left: rem(16px);
-      font-size: rem(15px);
-      line-height: rem(22px);
-      color: $slate;
+  .ph-demo-label {
+    margin: 0 0 rem(8px);
+    color: $orange_on_dark;
+    @include ph-text(13px);
+    font-weight: 600;
+  }
 
-      & + li {
-        margin-top: rem(6px);
-      }
+  .ph-event-note {
+    margin: rem(12px) 0 0;
+    color: $white;
+    @include ph-text(14px);
+    font-weight: 600;
+  }
 
-      &::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: rem(9px);
-        width: 6px;
-        height: 6px;
-        background: $pytorch_orange;
-      }
+  .ph-event-link {
+    display: inline-block;
+    margin-top: rem(12px);
+    color: $orange_on_dark;
+    @include ph-text(14px);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
     }
   }
 
-  .ph-event-facts {
-    margin-top: auto;
-    padding-top: rem(12px);
-    border-top: 1px solid $ph_rule;
-    font-size: rem(14px);
-    color: $ph_muted;
+  .ph-event-note .ph-event-link {
+    margin-top: 0;
+  }
+
+  // The date sits at the foot of every tile, on one baseline across the row.
+  .ph-tile-date {
+    margin: auto 0 0;
+    padding-top: rem(22px);
+    font-family: Montserrat, "Open Sans", sans-serif;
+
+    span {
+      display: block;
+      font-family: inherit;
+    }
+
+    .ph-tile-weekday,
+    .ph-tile-status {
+      color: #c9cad0;
+      @include ph-text(13px);
+      letter-spacing: 0.3px;
+    }
+
+    .ph-tile-day {
+      color: $white;
+      font-size: rem(28px);
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      line-height: 1.3;
+      text-transform: uppercase;
+    }
   }
 }
 
-.ph-status {
-  display: inline-block;
-  margin-right: rem(4px);
-  padding: 0 rem(6px);
-  border: 1px solid currentColor;
-  font-size: rem(12px);
-  font-weight: 600;
-  line-height: rem(20px);
-  letter-spacing: 0.3px;
-  vertical-align: 1px;
+// Training: light cards, one per course (its dates, then its title), each opening to its modules.
+// Cards like the community events above, but light, so the two parts read as a pair and stay distinct.
+// Finished courses wait behind a small toggle.
+.ph-course-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(16px);
+  align-items: start;
+
+  // Two courses share the width in halves, three in thirds.
+  @include desktop {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: rem(20px);
+  }
 }
 
-.ph-past {
-  margin-top: rem(40px);
+.ph-course {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  background: $light_grey;
+
+  .ph-course-head {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: rem(6px);
+    padding: rem(24px) rem(22px);
+    list-style: none;
+
+    @include desktop {
+      padding: rem(26px) rem(28px);
+    }
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  summary.ph-course-head {
+    padding-right: rem(56px);
+    cursor: pointer;
+
+    // A small chevron on the right of the card.
+    &::after {
+      content: "";
+      position: absolute;
+      right: rem(28px);
+      top: rem(34px);
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid $orange;
+      border-bottom: 2px solid $orange;
+      transform: rotate(45deg);
+    }
+
+    &:hover h4 {
+      color: $orange;
+    }
+  }
+
+  &[open] > summary.ph-course-head::after {
+    transform: translateY(4px) rotate(225deg);
+  }
+
+  // The dates first, small; then the title. Opened, the sessions below carry the dates instead.
+  .ph-course-when {
+    order: -1;
+    color: $ph_muted;
+    @include ph-text(13px);
+  }
+
+  &[open] .ph-course-head .ph-course-when {
+    display: none;
+  }
+
+  h4 {
+    margin: 0;
+    color: $slate;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: rem(22px);
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .ph-demo-label {
+    color: $orange;
+    @include ph-text(13px);
+    font-weight: 600;
+  }
+
+  .ph-course-body {
+    padding: 0 rem(22px) rem(24px);
+    counter-reset: ph-module; // modules are numbered through the course, across its sessions
+
+    @include desktop {
+      padding: 0 rem(28px) rem(26px);
+    }
+  }
+
+  // The course's sessions, side by side across the card: each its date, then its modules.
+  .ph-course-sessions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: rem(20px) rem(32px);
+    padding-top: rem(18px);
+    border-top: 1px solid $ph_rule;
+
+    @media (min-width: 576px) {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+  }
+
+  .ph-session {
+    min-width: 0;
+
+    .ph-session-when {
+      margin: 0 0 rem(8px);
+      color: $slate;
+      @include ph-text(14px);
+      font-weight: 600;
+    }
+
+    .ph-event-modules {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: $ph_muted;
+      @include ph-text(15px);
+      line-height: 1.6;
+
+      li {
+        position: relative;
+        padding: 0 0 rem(6px) rem(26px);
+        counter-increment: ph-module;
+
+        &::before {
+          content: counter(ph-module);
+          position: absolute;
+          left: 0;
+          color: $slate;
+          font-family: Montserrat, "Open Sans", sans-serif;
+          @include ph-text(13px);
+          font-weight: 600;
+        }
+      }
+    }
+
+    .ph-event-link {
+      display: inline-block;
+      margin-top: rem(6px);
+      color: $orange;
+      @include ph-text(14px);
+      font-weight: 600;
+      text-decoration: none;
+    }
+  }
+}
+
+.ph-previous {
+  margin-top: rem(14px);
 
   &[hidden] {
     display: none;
   }
 
-  .ph-past-heading {
-    font-size: rem(18px);
-    margin-bottom: rem(12px);
+  > summary {
+    display: inline-block;
+    color: $ph_muted;
+    @include ph-text(14px);
+    text-decoration: underline;
+    list-style: none;
+    cursor: pointer;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &:hover {
+      color: $orange;
+    }
+  }
+
+  .ph-course-list {
+    margin-top: rem(12px);
+  }
+}
+
+// A quiet label over each row, with a short orange mark.
+.ph-program-label {
+  display: flex;
+  align-items: center;
+  gap: rem(12px);
+  margin: 0 0 rem(16px);
+  color: $slate;
+  @include ph-text(15px);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+
+  &::before {
+    content: "";
+    width: rem(24px);
+    height: 2px;
+    background: $pytorch_orange;
+  }
+}
+
+.ph-event-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: rem(40px) rem(56px);
+
+  // Two series share the width in halves, three in thirds.
+  @include desktop {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  > .ph-empty {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+}
+
+.ph-event {
+  min-width: 0;
+  overflow-wrap: anywhere; // a long word wraps rather than widening the page
+
+  .ph-event-poster,
+  .ph-managed-photo {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    margin: 0 0 rem(18px);
+    object-fit: cover;
+  }
+
+  .ph-event-meta {
+    margin: 0 0 rem(10px);
+    color: $ph_muted;
+    @include ph-text(13px);
+    line-height: 1.45;
+  }
+
+  h3,
+  h4 {
+    margin: 0 0 rem(16px);
+    color: $slate;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: rem(22px);
+    font-weight: 400;
+    line-height: 1.35;
+  }
+
+  .ph-event-excerpt {
+    margin: 0;
+    color: $ph_muted;
+    @include ph-text(16px);
+    line-height: 1.6;
+  }
+
+  // A course's modules: small grey numerals, one module a line.
+  .ph-event-modules {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: ph-module;
+    color: $ph_muted;
+    @include ph-text(16px);
+    line-height: 1.6;
+
+    li {
+      position: relative;
+      padding-left: rem(28px);
+      counter-increment: ph-module;
+
+      & + li {
+        margin-top: rem(8px);
+      }
+
+      &::before {
+        content: counter(ph-module);
+        position: absolute;
+        left: 0;
+        color: $slate;
+        font-family: Montserrat, "Open Sans", sans-serif;
+        @include ph-text(13px);
+        font-weight: 600;
+      }
+    }
+  }
+
+  .ph-event-note {
+    margin: rem(14px) 0 0;
+    color: $slate;
+    @include ph-text(14px);
+    font-weight: 600;
+  }
+
+  .ph-demo-label {
+    margin: 0 0 rem(10px);
+    color: $orange;
+    @include ph-text(13px);
+    font-weight: 600;
+  }
+
+  .ph-event-link {
+    display: inline-block;
+    margin-top: rem(18px);
+    color: $orange;
+    @include ph-text(14px);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
+    }
+  }
+
+  .ph-event-note .ph-event-link {
+    margin-top: 0;
+  }
+
+  .ph-status {
+    color: $orange;
+    font-weight: 600;
   }
 }
 
 .ph-past-list {
-  list-style: none;
   margin: 0;
   padding: 0;
-  border-top: 1px solid $ph_rule;
+  list-style: none;
 
   li {
     display: grid;
     grid-template-columns: 1fr;
-    gap: rem(2px) rem(24px);
-    padding: rem(12px) 0;
-    border-bottom: 1px solid $ph_rule;
-    font-size: rem(15px);
+    gap: 0 rem(20px);
+    padding: rem(4px) 0;
+    color: $ph_muted;
+    @include ph-text(14px);
+    line-height: 1.45;
 
     @include desktop {
-      grid-template-columns: rem(190px) rem(260px) 1fr;
+      grid-template-columns: rem(170px) auto 1fr;
     }
   }
 
-  .ph-past-date {
-    color: $ph_muted;
-  }
-
   .ph-past-title {
-    font-weight: 600;
     color: $slate;
   }
 
-  .ph-past-detail {
-    color: $ph_muted;
+  .ph-status {
+    color: $orange;
+    font-weight: 600;
   }
 }
 
@@ -344,8 +725,8 @@ button.main-menu-close-button {
 
   p {
     color: #e3e3e3;
-    font-size: rem(18px);
-    line-height: rem(30px);
+    @include ph-text(18px);
+    line-height: 1.6;
     max-width: 34rem;
   }
 }
@@ -389,12 +770,12 @@ button.main-menu-close-button {
   border: 1px solid rgba(238, 76, 44, 0.65);
   color: $white;
   font-family: Montserrat, "Open Sans", sans-serif;
-  font-size: rem(14px);
+  @include ph-text(14px);
   letter-spacing: 0.4px;
   white-space: nowrap;
 
   @include desktop {
-    font-size: rem(16px);
+    @include ph-text(16px);
   }
 }
 
@@ -463,8 +844,8 @@ button.main-menu-close-button {
   p {
     margin: 0;
     color: $slate;
-    font-size: rem(17px);
-    line-height: rem(28px);
+    @include ph-text(17px);
+    line-height: 1.6;
 
     & + p {
       margin-top: rem(8px);
@@ -505,8 +886,8 @@ button.main-menu-close-button {
   p {
     margin: 0;
     color: $ph_muted;
-    font-size: rem(16px);
-    line-height: rem(26px);
+    @include ph-text(16px);
+    line-height: 1.6;
   }
 }
 
@@ -525,7 +906,7 @@ button.main-menu-close-button {
     margin-bottom: rem(4px);
     color: $ph_muted;
     font-family: "Open Sans", sans-serif;
-    font-size: rem(15px);
+    @include ph-text(15px);
   }
 }
 
@@ -534,74 +915,249 @@ button.main-menu-close-button {
   margin: 0;
   padding: 0;
   color: $ph_muted;
-  font-size: rem(16px);
-  line-height: rem(26px);
+  @include ph-text(16px);
+  line-height: 1.6;
 }
 
-// Ambassadors: official portrait beside the official biography.
+// Ambassadors (About page): large portrait cards after the Foundation's own directory, beside the
+// section's text on wide screens. The official biography opens in a panel (.ph-bio, a popover).
+.ph-ambassadors-layout {
+  @include full-nav-menu-desktop {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: rem(56px);
+    align-items: start;
+  }
+
+  .ph-ambassadors-intro .ph-source:first-of-type {
+    margin-top: rem(20px);
+  }
+}
+
 .ph-ambassador-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: rem(24px);
-  margin-top: rem(32px);
+  grid-template-columns: minmax(0, 360px); // px: the root font size is smaller on phones
+  gap: rem(20px);
+  margin-top: rem(28px);
+
+  @media (min-width: 576px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
   @include full-nav-menu-desktop {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: rem(8px);
   }
 }
 
 .ph-ambassador {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: rem(20px);
-  align-content: start;
-  padding: rem(28px);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   background: $white;
-  border-top: 3px solid $pytorch_orange;
-
-  @media (min-width: 576px) {
-    grid-template-columns: rem(128px) minmax(0, 1fr);
-    gap: rem(28px);
-  }
+  border: 1px solid #e4e5ea;
 
   .ph-ambassador-photo {
     display: block;
-    width: rem(128px);
-    height: rem(128px);
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
     object-fit: cover;
     object-position: center 20%;
     background: $light_grey;
   }
 
+  .ph-ambassador-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: rem(18px) rem(16px) rem(20px);
+    text-align: center;
+  }
+
   h3 {
-    margin: 0 0 rem(4px);
-    font-size: rem(24px);
+    margin: 0 0 rem(6px);
+    color: $slate;
+    font-size: rem(21px);
     line-height: 1.25;
   }
 
-  .ph-ambassador-meta {
-    margin: 0 0 rem(14px);
+  .ph-ambassador-role {
+    margin: 0;
     color: $orange;
-    font-size: rem(15px);
+    @include ph-text(14px);
     font-weight: 600;
+    line-height: 1.45;
   }
 
-  p {
+  .ph-ambassador-term {
+    display: inline-block;
+    margin-left: rem(4px);
+    padding: 0 rem(6px);
+    border: 1px solid $ph_rule;
     color: $ph_muted;
-    font-size: rem(16px);
-    line-height: rem(26px);
-    margin: 0 0 rem(12px);
+    @include ph-text(12px);
+    line-height: 1.45;
+    vertical-align: 1px;
   }
 
-  .ph-person-links {
+  .ph-ambassador-place {
+    margin: rem(4px) 0 0;
+    color: $ph_muted;
+    @include ph-text(14px);
+  }
+
+  .ph-ambassador-actions {
     display: flex;
-    gap: rem(16px);
-    list-style: none;
-    margin: rem(16px) 0 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: rem(8px) rem(14px);
+    margin-top: auto;
+    padding-top: rem(16px);
+  }
+
+  .ph-ambassador-bio-button {
+    display: none; // shown under @supports selector(:popover-open) below
+    padding: rem(6px) rem(14px);
+    border: 1px solid $not_quite_black;
+    border-radius: $ph_radius;
+    background: transparent;
+    color: $not_quite_black;
+    font: inherit;
+    @include ph-text(15px);
+    cursor: pointer;
+
+    &:hover {
+      border-color: $orange;
+      color: $orange;
+    }
+  }
+
+  .ph-ambassador-links {
+    display: flex;
+    gap: rem(4px);
+    margin: 0;
     padding: 0;
+    list-style: none;
 
     a {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      color: $slate;
+
+      &:hover {
+        color: $orange;
+      }
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+  }
+}
+
+// The biography. Where the browser has the Popover API (Chromium 114, Firefox 125, Safari 17 and
+// later) it is a panel centered over the page, opened by the card's "Read bio" button and closed
+// with Close, Escape, or a click outside. Elsewhere it shows in the card, under the links, and the
+// buttons stay hidden.
+.ph-bio {
+  padding: 0 rem(16px) rem(8px);
+  text-align: left;
+
+  .ph-bio-head {
+    display: none;
+  }
+
+  .ph-bio-text {
+    margin: 0 0 rem(14px);
+    color: $ph_muted;
+    @include ph-text(15px);
+    line-height: 1.6;
+  }
+}
+
+// libsass cannot parse selector() in @supports, so the condition is passed through as a string.
+@supports #{"selector(:popover-open)"} {
+  .ph-ambassador .ph-ambassador-bio-button {
+    display: inline-block;
+  }
+
+  // With the biography in a panel, the cards' buttons line up at the bottom.
+  .ph-ambassador .ph-ambassador-body {
+    flex: 1;
+  }
+
+  .ph-bio[popover] {
+    width: calc(100vw - 32px);
+    max-width: 40rem;
+    max-height: calc(100vh - 64px);
+    overflow: auto;
+    padding: rem(24px) rem(28px) rem(12px);
+    border: 0;
+    border-top: 4px solid $pytorch_orange;
+    background: $white;
+    color: $slate;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+
+    &::backdrop {
+      background: rgba(38, 38, 38, 0.6);
+    }
+
+    .ph-bio-head {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: rem(16px);
+      align-items: center;
+      margin-bottom: rem(18px);
+    }
+
+    .ph-bio-photo {
+      display: block;
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      object-position: center 20%;
+    }
+
+    .ph-bio-name {
+      margin: 0;
+      color: $slate;
+      font-family: Montserrat, "Open Sans", sans-serif;
+      font-size: rem(22px);
+      line-height: 1.25;
+    }
+
+    .ph-bio-role {
+      margin: rem(2px) 0 0;
       color: $orange;
+      @include ph-text(14px);
+      font-weight: 600;
+    }
+
+    .ph-bio-close {
+      align-self: start;
+      padding: rem(4px) rem(12px);
+      border: 1px solid $not_quite_black;
+      border-radius: $ph_radius;
+      background: transparent;
+      color: $not_quite_black;
+      font: inherit;
+      @include ph-text(15px);
+      cursor: pointer;
+
+      &:hover {
+        border-color: $orange;
+        color: $orange;
+      }
+    }
+
+    .ph-bio-text {
+      @include ph-text(16px);
+      line-height: 1.6;
     }
   }
 }
@@ -622,7 +1178,7 @@ button.main-menu-close-button {
   .ph-island-count {
     color: $ph_muted;
     font-family: "Open Sans", sans-serif;
-    font-size: rem(15px);
+    @include ph-text(15px);
     font-weight: 400;
     white-space: nowrap;
   }
@@ -636,7 +1192,7 @@ button.main-menu-close-button {
   gap: rem(6px) rem(24px);
   margin: 0 0 rem(28px);
   color: $ph_muted;
-  font-size: rem(16px);
+  @include ph-text(16px);
 
   &[hidden] {
     display: none;
@@ -744,8 +1300,8 @@ button.main-menu-close-button {
 
   p {
     margin: 0;
-    font-size: rem(14px);
-    line-height: rem(21px);
+    @include ph-text(14px);
+    line-height: 1.45;
     color: $ph_muted;
   }
 }
@@ -753,7 +1309,7 @@ button.main-menu-close-button {
 .ph-lead-name {
   margin: 0 0 rem(4px);
   color: $slate;
-  font-size: rem(17px);
+  @include ph-text(17px);
   font-weight: 600;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -762,7 +1318,7 @@ button.main-menu-close-button {
 .ph-lead-role {
   .ph-lead-body & {
     color: $orange;
-    font-size: rem(13px);
+    @include ph-text(13px);
     font-weight: 600;
   }
 
@@ -773,25 +1329,83 @@ button.main-menu-close-button {
   }
 }
 
-// Batch tag beside the title, and a short recognition note under the university.
+// Hovering a profile sweeps PyTorch orange across it: a line under the photo grows from the left and
+// the name fills from the left; on leaving, both slide out toward the right. Only where there is a
+// pointer that hovers, and without the motion for people who prefer less of it.
+article.ph-lead:not(.ph-lead-pending) {
+  .ph-lead-badge {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 4px;
+      background: $pytorch_orange;
+      transform: scaleX(0);
+      transform-origin: right center;
+      transition: transform 0.35s ease;
+    }
+  }
+
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .ph-lead-name {
+      // Two layers clipped to the letters: the orange one on top grows over the usual color.
+      background:
+        linear-gradient($orange, $orange) no-repeat right center / 0% 100%,
+        linear-gradient($slate, $slate);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      transition: background-size 0.35s ease;
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover .ph-lead-badge::after {
+      transform: scaleX(1);
+      transform-origin: left center;
+    }
+
+    &:hover .ph-lead-name {
+      background-position: left center, 0 0;
+      background-size: 100% 100%, auto;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ph-lead-badge::after,
+    .ph-lead-name {
+      transition: none;
+    }
+  }
+
+  // High-contrast modes draw text in their own colors: give the name back its plain color there.
+  @media (forced-colors: active) {
+    .ph-lead-name {
+      background: none;
+      color: CanvasText;
+    }
+  }
+}
+
+// The batch: one quiet line under the university. Then a short recognition note where there is one.
 .ph-lead-batch {
-  display: inline-block;
-  margin-left: rem(4px);
-  padding: 0 rem(6px);
-  border: 1px solid $ph_rule;
-  color: $ph_muted;
-  font-size: rem(12px);
-  font-weight: 600;
-  line-height: rem(18px);
-  vertical-align: 1px;
+  .ph-lead-body & {
+    margin-top: rem(2px);
+    color: $ph_muted;
+    @include ph-text(13px);
+  }
 }
 
 .ph-lead-note {
   .ph-lead-body & {
     margin-top: rem(8px);
     color: $slate;
-    font-size: rem(13px);
-    line-height: rem(19px);
+    @include ph-text(13px);
+    line-height: 1.45;
 
     &::before {
       content: "";
@@ -829,7 +1443,7 @@ a.ph-lead-invite {
 
   .ph-lead-role {
     color: $ph_muted;
-    font-size: rem(14px);
+    @include ph-text(14px);
   }
 
   &:hover,
@@ -862,8 +1476,8 @@ a.ph-lead-invite {
 .ph-source {
   margin-top: rem(24px);
   color: $ph_muted;
-  font-size: rem(15px);
-  line-height: rem(24px);
+  @include ph-text(15px);
+  line-height: 1.6;
   max-width: 48rem;
 }
 
@@ -880,9 +1494,7 @@ a.ph-lead-invite {
 // above the grid. The controls stay hidden without JavaScript.
 // ---------------------------------------------------------------------------------------------
 .ph-directory-tools {
-  margin: rem(36px) 0 0;
-  padding-top: rem(24px);
-  border-top: 1px solid $ph_rule;
+  margin: rem(28px) 0 0;
 
   &[hidden] {
     display: none;
@@ -909,7 +1521,7 @@ a.ph-lead-invite {
     display: block;
     margin-bottom: rem(6px);
     color: $slate;
-    font-size: rem(14px);
+    @include ph-text(14px);
     font-weight: 600;
   }
 
@@ -917,7 +1529,7 @@ a.ph-lead-invite {
     width: 100%;
     padding: rem(7px) rem(12px);
     border: 1px solid $not_quite_black;
-    border-radius: 0;
+    border-radius: $ph_radius_field;
     background: $white;
     color: $slate;
     font: inherit;
@@ -931,15 +1543,38 @@ a.ph-lead-invite {
   }
 }
 
-.ph-directory-islands {
-  &.ph-filter {
-    margin: 0;
-  }
-
-  .ph-directory-island-count {
-    margin-left: rem(2px);
+// The region and batch selectors, labeled like the search.
+.ph-directory-select {
+  label {
+    display: block;
+    margin-bottom: rem(6px);
+    color: $slate;
+    @include ph-text(14px);
     font-weight: 600;
   }
+
+  select {
+    min-width: rem(170px);
+    padding: rem(7px) rem(36px) rem(7px) rem(12px);
+    border: 1px solid $not_quite_black;
+    border-radius: $ph_radius_field;
+    background: $white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23be2c10' stroke-width='2'/%3E%3C/svg%3E") no-repeat right rem(12px) center / 12px 8px;
+    color: $slate;
+    font: inherit;
+    font-size: 16px; // 16px or more, so phones do not zoom in on focus
+    line-height: 1.4;
+    appearance: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid $orange;
+      outline-offset: 2px;
+    }
+  }
+}
+
+.ph-directory-clear[hidden] {
+  display: none;
 }
 
 .ph-directory-clear,
@@ -949,7 +1584,7 @@ a.ph-lead-invite {
   background: none;
   color: $orange;
   font: inherit;
-  font-size: rem(15px);
+  @include ph-text(15px);
   text-decoration: underline;
   cursor: pointer;
 
@@ -961,7 +1596,7 @@ a.ph-lead-invite {
 .ph-directory-count {
   margin: rem(16px) 0;
   color: $ph_muted;
-  font-size: rem(15px);
+  @include ph-text(15px);
 
   &[hidden] {
     display: none;
@@ -971,7 +1606,7 @@ a.ph-lead-invite {
 .ph-directory-none {
   margin: rem(8px) 0 0;
   color: $slate;
-  font-size: rem(16px);
+  @include ph-text(16px);
 
   &[hidden] {
     display: none;
@@ -1038,7 +1673,7 @@ a.ph-lead-invite {
   .ph-hero-prompt {
     margin: rem(8px) 0 rem(12px);
     color: $slate;
-    font-size: rem(17px);
+    @include ph-text(17px);
   }
 
   .ph-hero-actions .btn {
@@ -1047,7 +1682,7 @@ a.ph-lead-invite {
 
     &:hover,
     &:focus-visible {
-      background-color: #444;
+      background-color: $orange;
       color: $white;
     }
   }
@@ -1128,7 +1763,7 @@ a.ph-lead-invite {
       border: 2px solid $pytorch_orange;
       color: $orange;
       font-family: Montserrat, "Open Sans", sans-serif;
-      font-size: rem(18px);
+      @include ph-text(18px);
       font-weight: 600;
       line-height: rem(36px);
       text-align: center;
@@ -1136,14 +1771,14 @@ a.ph-lead-invite {
   }
 
   h3 {
-    font-size: rem(19px);
+    @include ph-text(18px);
     margin-bottom: rem(8px);
   }
 
   p {
     color: $ph_muted;
-    font-size: rem(16px);
-    line-height: rem(26px);
+    @include ph-text(16px);
+    line-height: 1.6;
     margin: 0;
   }
 }
@@ -1177,7 +1812,7 @@ a.ph-lead-invite {
     display: block;
     margin-bottom: rem(8px);
     color: $orange;
-    font-size: rem(15px);
+    @include ph-text(15px);
     font-weight: 600;
   }
 
@@ -1189,8 +1824,8 @@ a.ph-lead-invite {
 
   > p {
     color: $ph_muted;
-    font-size: rem(16px);
-    line-height: rem(26px);
+    @include ph-text(16px);
+    line-height: 1.6;
   }
 
   ul {
@@ -1206,7 +1841,7 @@ a.ph-lead-invite {
 
   a {
     color: $slate;
-    font-size: rem(16px);
+    @include ph-text(16px);
 
     &:hover,
     &:focus-visible {
@@ -1239,8 +1874,8 @@ a.ph-lead-invite {
 
   p {
     color: $ph_muted;
-    font-size: rem(16px);
-    line-height: rem(26px);
+    @include ph-text(16px);
+    line-height: 1.6;
   }
 
   .ph-code {

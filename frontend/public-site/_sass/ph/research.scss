@@ -1,0 +1,145 @@
+// SPIKE (spike/research-first): the research-first home page sections.
+// The stack: the stages of a model's life, with the Foundation projects for each. Brand colors only:
+// $slate, white, PyTorch orange for marks, $orange for text on light backgrounds.
+
+// ---------------------------------------------------------------------------------------------
+// The stack: the stages a model goes through, from training to a phone. On wide screens they read
+// left to right along one line; below that, a thread runs down them.
+// ---------------------------------------------------------------------------------------------
+$flow_dot: 14px;
+$flow_gap: 28px;
+
+.ph-stack {
+  padding-top: rem(40px);
+}
+
+.ph-flow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  @include full-nav-menu-desktop {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    column-gap: rem($flow_gap);
+  }
+}
+
+.ph-flow-stage {
+  position: relative;
+  padding: 0 0 rem(28px) rem(32px);
+
+  // The line, and a mark where each stage sits on it.
+  &::before {
+    content: "";
+    position: absolute;
+    left: rem(6px);
+    top: rem(6px);
+    bottom: rem(-6px); // reaches under the next stage's mark
+    width: 2px;
+    background: $pytorch_orange;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: rem(4px);
+    width: rem($flow_dot);
+    height: rem($flow_dot);
+    border-radius: 50%;
+    background: $white;
+    border: 2px solid $pytorch_orange;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  @include desktop {
+    display: grid;
+    grid-template-columns: rem(170px) minmax(0, 1fr);
+    gap: rem(24px);
+  }
+
+  @include full-nav-menu-desktop {
+    display: block;
+    padding: rem(32px) 0 0;
+
+    &::before {
+      left: rem(6px);
+      right: rem(-$flow_gap);
+      top: rem(6px);
+      bottom: auto;
+      width: auto;
+      height: 2px;
+    }
+
+    &::after {
+      top: 0;
+    }
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
+}
+
+.ph-flow-verb {
+  margin: 0 0 rem(6px);
+  font-family: Montserrat, "Open Sans", sans-serif;
+  font-size: rem(20px);
+  font-weight: 600;
+  line-height: 1.2;
+  color: $slate;
+
+  @include full-nav-menu-desktop {
+    margin-bottom: rem(14px);
+  }
+}
+
+.ph-flow-projects {
+  h3 {
+    margin: 0;
+    @include ph-text(18px);
+    line-height: 1.3;
+
+    a {
+      color: $orange;
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  p {
+    margin: rem(4px) 0 rem(14px);
+    color: $dark_grey;
+    @include ph-text(16px);
+    line-height: 1.45;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .ph-flow-part {
+    margin: 0;
+    color: $slate;
+    @include ph-text(13px);
+  }
+}
+
+.ph-stack-note {
+  margin: rem(32px) 0 0;
+  color: $dark_grey;
+  @include ph-text(15px);
+  max-width: 48rem;
+}

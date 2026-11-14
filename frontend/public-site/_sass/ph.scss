@@ -1,3 +1,27 @@
+// Corners, after pytorch.org (measured there on 2026-11-14): 8px on buttons and cards, 6px on form
+// fields, and none on full-width bands (the hero, section backgrounds, the header and footer).
+$ph_radius: 8px;
+$ph_radius_field: 6px;
+
+// The text scale for the community pages. The upstream base sets the root font size to 12px on phones
+// and 14px on desktops, so sizes written in rem render smaller than they read: rem(16px) is 14px on a
+// desktop. Small text is hard to read and easy to skip, so body text and labels use fixed sizes with a
+// floor instead (pytorch.org is the reference): nothing under 15px on phones or 16px on desktops, and
+// paragraphs at 18 to 19px on desktops. ph-text takes the size the design calls for and maps it up.
+@mixin ph-text($px) {
+  $mobile: 17px;
+  $desktop: 19px;
+  @if $px <= 14px { $mobile: 15px; $desktop: 16px; }
+  @else if $px == 15px { $mobile: 16px; $desktop: 17px; }
+  @else if $px == 16px { $mobile: 16px; $desktop: 18px; }
+  @else if $px == 17px { $mobile: 17px; $desktop: 18px; }
+  font-size: $mobile;
+
+  @include desktop {
+    font-size: $desktop;
+  }
+}
+
 // PyTorch Philippines additions on top of the forked pytorch.kr / pytorch.github.io styles.
 
 // The wordmark adds "PHILIPPINES" beside the PyTorch logo, so it needs a wider box than upstream.
@@ -68,7 +92,7 @@
   padding: rem(25px) rem(30px);
   background-color: $light_grey;
   border: 0;
-  border-radius: 0;
+  border-radius: $ph_radius;
   @include animated_border_hover_state;
 
   .ph-section-grey & {
@@ -86,8 +110,8 @@
   p,
   li {
     color: $dark_grey;
-    font-size: rem(16px);
-    line-height: rem(24px);
+    @include ph-text(16px);
+    line-height: 1.6;
   }
 
   p:last-child {
@@ -97,7 +121,7 @@
   .ph-card-meta {
     display: block;
     color: $dark_grey;
-    font-size: rem(14px);
+    @include ph-text(14px);
     margin-bottom: rem(8px);
   }
 
@@ -139,7 +163,7 @@
 
   time {
     display: block;
-    font-size: rem(13px);
+    @include ph-text(13px);
     color: $dark_grey;
   }
 }
@@ -174,7 +198,7 @@
     padding: rem(8px) rem(16px);
     border: 1px solid $slate;
     color: $slate;
-    font-size: rem(15px);
+    @include ph-text(15px);
     text-decoration: none;
 
     &:hover,
@@ -191,10 +215,10 @@
   padding: rem(2px) rem(8px);
   border: 1px solid $slate;
   color: $slate;
-  font-size: rem(12px);
+  @include ph-text(12px);
   font-weight: 600;
   letter-spacing: 0.6px;
-  line-height: rem(18px);
+  line-height: 1.45;
   text-transform: uppercase;
 
   &.ph-tag-sample {
@@ -205,7 +229,7 @@
 .ph-sample-note {
   margin: rem(20px) 0 0;
   color: $dark_grey;
-  font-size: rem(15px);
+  @include ph-text(15px);
 
   .ph-tag {
     margin-right: rem(6px);
@@ -232,8 +256,8 @@
   padding: rem(20px);
   margin: 0;
   overflow-x: auto;
-  font-size: rem(14px);
-  line-height: rem(20px);
+  @include ph-text(14px);
+  line-height: 1.45;
 }
 
 // Accessibility: a skip link for keyboard users and visible focus for interactive elements.
@@ -362,10 +386,10 @@ $hero_kicker: #ffb59e;
   }
 
   &.ph-hero-with-wave {
-    padding-bottom: rem(96px);
+    padding-bottom: 104px;
 
     @include desktop {
-      padding-bottom: rem(150px);
+      padding-bottom: 176px;
     }
   }
 
@@ -406,8 +430,8 @@ $hero_kicker: #ffb59e;
   .lead {
     max-width: 38rem;
     margin: 0 0 rem(24px);
-    font-size: rem(18px);
-    line-height: rem(28px);
+    @include ph-text(18px);
+    line-height: 1.6;
     font-weight: 400;
     color: $white;
   }
@@ -420,7 +444,7 @@ $hero_kicker: #ffb59e;
     .btn {
       margin: 0;
       padding: rem(9px) rem(36px) rem(9px) rem(16px);
-      border-radius: 0;
+      border-radius: $ph_radius;
       background-color: $white;
       color: $not_quite_black;
       background-position: right rem(14px) center;
@@ -516,10 +540,10 @@ $hero_kicker: #ffb59e;
   left: 0;
   right: 0;
   bottom: -1px;
-  height: rem(48px);
+  height: 64px;
 
   @include desktop {
-    height: rem(90px);
+    height: 120px;
   }
 
   svg {
@@ -573,7 +597,7 @@ $hero_kicker: #ffb59e;
     border-left: 2px solid rgba(255, 255, 255, 0.2);
 
     li a {
-      font-size: rem(17px);
+      @include ph-text(17px);
       line-height: rem(36px);
       color: #d6d6d6;
     }
@@ -582,8 +606,8 @@ $hero_kicker: #ffb59e;
 
 .ph-article {
   max-width: 46rem;
-  font-size: rem(18px);
-  line-height: rem(30px);
+  @include ph-text(18px);
+  line-height: 1.6;
 }
 
 // Get Started tabs wrap instead of pushing the page wider than small screens.
@@ -622,3 +646,425 @@ $hero_kicker: #ffb59e;
 
 @import "ph/people";
 @import "ph/sections";
+@import "ph/research";
+
+// The header over the home page hero (front matter header_over_hero), after PyTorch Korea's: the hero
+// starts at the top of the page under the header, which is a light tint over the photo and darkens to
+// solid as the hero scrolls away (assets/header-over-hero.js sets --ph-header-alpha).
+.ph-header-over-hero {
+  .header-holder.ph-header {
+    background-color: rgba(38, 38, 38, var(--ph-header-alpha, 0.165));
+    transition: background-color 0.2s ease;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+
+    // Over the photo the menu stays white: the light orange used for the current page and on hover
+    // ($orange_on_dark) needs a near-solid header for 4.5:1. The orange dot under the current page's
+    // link still marks it, and hover underlines.
+    .main-menu ul li.active > a,
+    .main-menu ul li a:hover,
+    .main-menu ul li a.with-down-orange-arrow {
+      color: $white;
+    }
+
+    .main-menu > ul > li > a:hover,
+    .main-menu > ul > li > a:focus-visible {
+      text-decoration: underline;
+      text-underline-offset: 6px;
+    }
+
+    // With the link white, the dot under it is the current page's only marker: white too, so it keeps
+    // 3:1 or more (WCAG 2.2, 1.4.11) wherever the white text keeps 4.5:1.
+    .main-menu ul li.active::after {
+      color: $white;
+    }
+  }
+
+  // The dark overlay eases off over the last stretch of the hero, below the text, so the photo is
+  // light under the see-through wave layers and they read as frosted glass, as on pytorch.kr.
+  .ph-hero-slides::after {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 150px), rgba(0, 0, 0, 0.3) 100%);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 150px), rgba(0, 0, 0, 0.3) 100%);
+  }
+
+  // A darker band at the top of the photo, behind the header, keeps the white menu at 4.5:1 or more
+  // over the brightest photo (the header itself stays a light tint). The second layer is the usual
+  // overlay (.ph-hero-slides::after above).
+  .ph-hero-slides::after {
+    @include desktop {
+      background:
+        linear-gradient(180deg, rgba(26, 26, 26, 0.6) 0, rgba(26, 26, 26, 0.6) #{$desktop_header_height}, rgba(26, 26, 26, 0) 220px),
+        linear-gradient(90deg, rgba(26, 26, 26, 0.84) 0%, rgba(26, 26, 26, 0.76) 45%, rgba(26, 26, 26, 0.4) 80%, rgba(26, 26, 26, 0.32) 100%);
+    }
+  }
+
+  .ph-hero {
+    margin-top: 0;
+    padding-top: calc(#{$mobile_header_height} + 44px);
+
+    @include desktop {
+      padding-top: calc(#{$mobile_header_height} + 40px);
+    }
+
+    @include full-nav-menu-desktop {
+      padding-top: calc(#{$desktop_header_height} + 40px);
+    }
+
+    // On short laptop screens the hero gives up a little more room, so the first event's title is in view.
+    @media (min-width: 768px) and (max-height: 820px) {
+      padding-top: calc(#{$mobile_header_height} + 24px);
+    }
+
+    @media (min-width: 1100px) and (max-height: 820px) {
+      padding-top: calc(#{$desktop_header_height} + 24px);
+    }
+
+    // On tablets and wider the hero is tighter, so the first events show without scrolling, as on
+    // pytorch.kr: less room above the headline and above the waves, and the lead on one line. Phones
+    // keep their layout.
+    &.ph-hero-with-wave {
+      @include desktop {
+        padding-bottom: 136px;
+      }
+    }
+
+    // The subtitle on tablets and wider: two lines of medium length, as on pytorch.kr, never one long
+    // line, at a size that reads easily. Phones keep their layout.
+    .lead {
+      @include desktop {
+        max-width: 33rem;
+        margin-bottom: rem(20px);
+        font-size: 20px;
+        line-height: 1.5;
+        text-wrap: balance;
+      }
+    }
+  }
+}
+
+// A staggered headline (front matter hero_title_lines), after PyTorch Korea's "From / Research To /
+// Production": one line per phrase, the middle one indented, larger on wide screens.
+.ph-hero h1.ph-hero-staggered {
+  max-width: none;
+  font-size: rem(38px);
+  font-weight: 600; // heavier than the other heroes' light titles, at the site owner's request
+
+  // The narrowest phones: small enough that "Archipelago to" keeps to one line.
+  @media (max-width: 359.98px) {
+    font-size: 26px;
+  }
+
+  @include desktop {
+    font-size: rem(60px);
+    line-height: 1.02; // short phrases, one per line: set close, as on pytorch.kr
+  }
+
+  @include full-nav-menu-desktop {
+    font-size: rem(76px);
+  }
+
+  // base_styles.scss sets Open Sans 400 on every element (*), spans included: the lines take the
+  // heading's typeface and weight instead.
+  .ph-hero-line {
+    display: block;
+    font: inherit;
+  }
+
+  // One line in the brand's orange (front matter hero_title_accent): large text, 3:1 or more on the
+  // darkened photo.
+  .ph-hero-accent {
+    color: $pytorch_orange;
+  }
+
+  .ph-hero-line:nth-child(2) {
+    padding-left: 0.6em;
+
+    @include desktop {
+      padding-left: 1.9em;
+    }
+  }
+}
+
+// The same floor for pieces styled by the upstream sheets: buttons, the line under a section heading,
+// and the footer's links.
+.ph-page {
+  .btn.btn-lg,
+  .ph-hero .ph-hero-actions .btn,
+  .docs-tutorials-resources a.with-right-arrow {
+    @include ph-text(17px);
+  }
+
+  .ph-section-header p,
+  .docs-tutorials-resources p {
+    @include ph-text(18px);
+  }
+
+  .site-footer {
+    a,
+    li {
+      @include ph-text(16px);
+    }
+
+    // A column title that is not a link ("Connect") looks like the ones that are.
+    .footer-links-col li.list-title {
+      color: $white;
+    }
+  }
+
+  // The install selector and its notes on the Learn page (upstream markup).
+  .start-locally-col p,
+  .start-locally-col li,
+  .cloud-options-col p,
+  .cloud-option-body,
+  .cloud-option-body p,
+  .cloud-option-body a,
+  .cloud-option-body li {
+    @include ph-text(16px);
+  }
+
+  .quick-start-module .option-text,
+  #quick-start-module .option-text {
+    @include ph-text(14px);
+  }
+}
+
+// Links inside the footer notice read at the notice's own size.
+.ph-page .site-footer .trademark-disclaimer {
+  a,
+  li {
+    font-size: inherit;
+  }
+}
+
+// The phone menu, with the site's own motifs. It wipes in from the left behind an orange edge and
+// out to the right (assets/mobile-menu.js waits for the way out), its links arrive one after another,
+// the archipelago network sits in its lower corner, the current section carries an orange line, and it
+// ends with the tagline, the way to join, and the contact links.
+@keyframes ph-menu-in {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes ph-menu-out {
+  from { clip-path: inset(0 0 0 0); }
+  to { clip-path: inset(0 0 0 100%); }
+}
+
+@keyframes ph-menu-edge {
+  from { transform: translateX(0); opacity: 1; }
+  90% { opacity: 1; }
+  to { transform: translateX(100vw); opacity: 0; }
+}
+
+@keyframes ph-menu-item {
+  from { opacity: 0; transform: translateX(-18px); }
+  to { opacity: 1; transform: none; }
+}
+
+.mobile-main-menu.open {
+  display: flex;
+  flex-direction: column;
+  animation: ph-menu-in 0.35s ease both;
+
+  &.closing {
+    animation: ph-menu-out 0.28s ease both;
+  }
+
+  // The orange edge that leads the wipe.
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    left: -4px;
+    width: 4px;
+    background: $pytorch_orange;
+    animation: ph-menu-edge 0.35s ease both;
+    pointer-events: none;
+  }
+
+  // The archipelago, faint, in the lower corner.
+  &::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 62%;
+    height: 60%;
+    background: url($baseurl + "/assets/images/ph-network.svg") no-repeat right -40px bottom / auto 100%;
+    opacity: 0.22;
+    pointer-events: none;
+  }
+
+  .mobile-main-menu-links-container,
+  .ph-menu-foot {
+    position: relative;
+    z-index: 1;
+  }
+
+  .mobile-main-menu-links-container {
+    flex: 1 0 auto;
+    padding-bottom: rem(24px);
+  }
+
+  .main-menu > ul > li {
+    animation: ph-menu-item 0.4s ease both;
+
+    @for $index from 1 through 10 {
+      &:nth-child(#{$index}) {
+        animation-delay: #{80 + $index * 45}ms;
+      }
+    }
+  }
+
+  // The current section: its links hang from an orange line.
+  li.active > .ph-mobile-submenu {
+    border-left-color: $pytorch_orange;
+  }
+
+  .ph-menu-foot {
+    padding: rem(20px) rem(30px) rem(28px);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    animation: ph-menu-item 0.4s ease 0.45s both;
+  }
+
+  .ph-menu-tagline {
+    margin: 0 0 rem(16px);
+    color: $white;
+    font-family: Montserrat, "Open Sans", sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+
+    span {
+      color: $pytorch_orange;
+      font: inherit;
+    }
+  }
+
+  .ph-menu-foot .btn {
+    margin: 0;
+    padding: rem(9px) rem(36px) rem(9px) rem(16px);
+    border-radius: $ph_radius;
+    background-color: $white;
+    background-position: right rem(14px) center;
+    color: $not_quite_black;
+  }
+
+  .ph-menu-contacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem(6px) rem(22px);
+    margin: rem(18px) 0 0;
+
+    a {
+      color: #d6d6d6;
+      font-size: 16px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &,
+    &.closing,
+    &::before,
+    .main-menu > ul > li,
+    .ph-menu-foot {
+      animation: none;
+    }
+
+    &::before {
+      display: none;
+    }
+  }
+}
+
+// Cards: one radius, and what is inside (a portrait, a poster, an opened list) is clipped to it.
+.ph-tile,
+.ph-course,
+.ph-lead,
+.ph-ambassador,
+.ph-callout,
+.ph-about-item {
+  border-radius: $ph_radius;
+}
+
+.ph-tile,
+.ph-course,
+.ph-lead,
+.ph-ambassador {
+  overflow: hidden;
+}
+
+.ph-bio[popover],
+.ph-event-poster,
+.ph-agenda-poster,
+.ph-managed-photo {
+  border-radius: $ph_radius;
+}
+
+// Buttons styled by the upstream sheets.
+.ph-page {
+  .btn,
+  .ph-feature-cta {
+    border-radius: $ph_radius;
+  }
+}
+
+// Smaller boxed pieces: the Learn page's stages and code samples take the card radius; small tags (the
+// map's island labels, an ambassador's term) take the field radius. The install selector on the Learn
+// page stays square: it is a grid of touching cells, as on pytorch.org.
+.ph-path-stage,
+pre.ph-code {
+  border-radius: $ph_radius;
+}
+
+.ph-archipelago-label,
+.ph-ambassador-term {
+  border-radius: $ph_radius_field;
+}
+
+// Buttons answer a hover by changing color (to the brand's text orange, white on it at 6:1), with the
+// arrow turning white. The upstream line that grows under a button is for square corners: off here.
+.ph-page {
+  .btn,
+  a.btn {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+    &::after {
+      display: none;
+    }
+
+    &:hover,
+    &:focus-visible {
+      background-color: $orange;
+      color: $white;
+
+      &.with-right-arrow {
+        background-image: url($baseurl + "/assets/images/chevron-right-white.svg");
+      }
+    }
+  }
+
+  // The outlined button on the dark band fills with white instead.
+  .btn.ph-btn-outline {
+    &:hover,
+    &:focus-visible {
+      background-color: $white;
+      border-color: $white;
+      color: $not_quite_black;
+      background-image: url($baseurl + "/assets/images/chevron-right-orange.svg");
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn,
+    a.btn {
+      transition: none;
+    }
+  }
+}

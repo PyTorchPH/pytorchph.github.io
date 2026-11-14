@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ site.lang }}">
   {% include head.html %}
-  <body class="ph-page {{ page.body-class }}">
+  <body class="ph-page {{ page.body-class }}{% if page.header_over_hero %} ph-header-over-hero{% endif %}">
     <div class="container-fluid header-holder ph-header" role="banner">
       <div class="container">
         {% include nav.html %}
@@ -12,5 +12,8 @@
       {{ content }}
     </main>
     {% include footer.html %}
+    {%- if page.header_over_hero %}
+    <script src="{{ site.baseurl }}/assets/header-over-hero.js" defer></script>
+    {%- endif %}
   </body>
 </html>

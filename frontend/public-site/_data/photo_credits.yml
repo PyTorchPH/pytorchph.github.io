@@ -5,12 +5,12 @@
 # The home page hero crossfades these photos in the order of `hero_photos:` in index.html's front
 # matter (see _includes/ph/hero.html and assets/hero-slides.js).
 #
-# All four were checked on 2026-11-10 at their source pages (three on Wikimedia Commons, the
-# Malacañang photo on English Wikipedia): author, license, and the copyright status of the place
-# shown. The Philippines has no freedom of panorama, so a recent building or monument can still be
-# under copyright: the Rizal Monument, Fort Santiago and the Manila Bay view are clear; the
-# Malacañang Palace building is not (see its `status`). `sha1` is the original file's SHA-1 as its
-# source reports it; our downloads matched it.
+# The two Manila photos were checked on 2026-11-10 and the Lapulapu Monument and Mount Apo photos on
+# 2026-11-14, at their pages on Wikimedia Commons: author, license, and the copyright status of the place shown. The
+# Philippines has no freedom of panorama, so a recent building or monument can still be under
+# copyright: the Rizal Monument and Fort Santiago are clear, and Mount Apo is a natural landmark; the Lapulapu
+# Monument is not (see its `status`). `sha1` is the original file's SHA-1 as its source reports it;
+# our downloads matched it.
 #
 # Our copies in assets/images/hero/ are cropped (a 2:1 `image` for wide screens and a 3:4
 # `image_portrait` for phones), resized, converted to black and white, and carry no metadata.
@@ -21,37 +21,6 @@
 # design is still under copyright), status (copyright status of the place shown, for maintainers),
 # sha1, image, image_portrait, position (vertical background position on wide screens),
 # position_wide (on screens 1800 px and wider, where the photo is scaled up most).
-
-malacanang:
-  title: "Facade of the Malacañang Palace as seen from Pasig River"
-  author: Official Gazette of the Philippines
-  author_url: "https://en.wikipedia.org/wiki/Official_Gazette_(Philippines)"
-  source_url: "https://en.wikipedia.org/wiki/File:Malaca%C3%B1ang_Palace_(local_img).jpg"
-  license: Public domain
-  license_url: "https://commons.wikimedia.org/wiki/Template:PD-PhilippinesGov"
-  changes: "cropped, resized, and converted to black and white"
-  architect: Jorge Ramos
-  status: >-
-    Taken 2016-05-26 by the Official Gazette of the Philippines. The photo is a Philippine
-    government work, so no copyright subsists in it (RA 8293 sec. 176; the Official Gazette:
-    "All content is in the public domain unless otherwise stated"). The building is not: the palace
-    as it stands is the 1979 reconstruction overseen by architect Jorge Ramos (died 2015), whose
-    design is presumed under copyright until 2065, and the Philippines has no freedom of panorama.
-    For that reason Wikimedia Commons deleted this photo (2021) and English Wikipedia hosts it only
-    as {{FoP-USonly}}. Ownership is less clear than Commons assumed: the river facade is a
-    1978-79 design ("new façades built", Presidential Museum and Library, "Malacañan Palace: A
-    Quick Guide"), and the law then in force (PD 49 sec. 6) gave a paid commission's copyright to
-    the commissioner and the creator jointly unless a contract said otherwise, which RA 8293
-    sec. 239.3 does not take away. So the Philippine government most likely co-owns the design
-    with Ramos's heirs; Commons applied RA 8293 sec. 178.4 instead. Not settled without the 1978
-    contract, and no court or IPOPHL ruling covers it. Used here at the site owner's decision on
-    2026-11-10, accepting that risk. Replace it with a photo used with written permission from
-    the Office of the President (and the architect's heirs, if they hold rights) if one is obtained.
-  sha1: b0ec78b8392ae359db8cd0ec5ad69d762af88406
-  image: /assets/images/hero/malacanang-palace-river.jpg
-  image_portrait: /assets/images/hero/malacanang-palace-river-portrait.jpg
-  position: "85%"
-  position_wide: "70%"
 
 rizal_monument:
   title: "DSC 0733 Rizal Monument"
@@ -84,18 +53,35 @@ fort_santiago:
   position: "45%"
   position_wide: "40%"
 
-manila_bay_sunset:
-  title: "Majestic sunset in Manila Bay, Manila, Philippines"
-  author: Vyacheslav Argenberg
-  author_url: "https://commons.wikimedia.org/wiki/User:Argenberg"
-  attribution: "© Vyacheslav Argenberg"
-  source_url: "https://commons.wikimedia.org/wiki/File:Majestic_sunset_in_Manila_Bay,_Manila,_Philippines.jpg"
-  license: CC BY 4.0
-  license_url: "https://creativecommons.org/licenses/by/4.0/"
+lapulapu_monument:
+  title: "LAPU LAPU MONUMENT"
+  author: Claudio monceda
+  author_url: "https://commons.wikimedia.org/wiki/User:Claudio_monceda"
+  source_url: "https://commons.wikimedia.org/wiki/File:LAPU_LAPU_MONUMENT.jpg"
+  license: CC BY-SA 4.0
+  license_url: "https://creativecommons.org/licenses/by-sa/4.0/"
   changes: "cropped, resized, and converted to black and white"
-  status: "Taken 2009-01-21 on the Baywalk, Roxas Boulevard. Two people are seen from behind, in silhouette."
-  sha1: 9fb3aa5f2a7b392ff9abb66db2702465f4fec18e
-  image: /assets/images/hero/manila-bay-sunset.jpg
-  image_portrait: /assets/images/hero/manila-bay-sunset-portrait.jpg
-  position: "40%"
-  position_wide: "35%"
+  status: "Taken 2026-10-29 at Mactan Shrine (Liberty Shrine), Lapu-Lapu City, Cebu, for Wiki Loves Monuments. The photo is freely licensed, but the bronze Lapulapu statue it shows was erected in 1981 (English Wikipedia, 'Mactan Shrine') and Commons files it under NoFoP-Philippines: the statue's design is most likely still under copyright, and its sculptor was not identified in the sources read. Used at the site owner's request (2026-11-14), who was told of this; replace it if the rights holder objects. The 1866 Magellan marker behind it is in the public domain."
+  sha1: eb8708664a7e3054f0c261680d85c6cb63ff7734
+  image: /assets/images/hero/lapulapu-monument.jpg
+  image_portrait: /assets/images/hero/lapulapu-monument-portrait.jpg
+  # Framed from the top, so the statue's head shows under the header.
+  position: "0%"
+  position_wide: "0%"
+
+mount_apo:
+  title: "Mount apo"
+  author: Robert Anton Pimentel Aparente
+  author_url: "https://commons.wikimedia.org/wiki/User:AntonNawalangMalay"
+  source_url: "https://commons.wikimedia.org/wiki/File:Mount_apo.jpg"
+  license: CC BY-SA 4.0
+  license_url: "https://creativecommons.org/licenses/by-sa/4.0/"
+  changes: "cropped, resized, and converted to black and white"
+  status: "Taken 2012-04-07: Mount Apo, the country's highest peak, on the boundary of Davao City, Davao del Sur and Cotabato, at dawn with mist at its foot. A natural landmark: no copyright in the subject. Uploaded as the author's own work."
+  sha1: 27f2e645ce0695345f896a719e54f25120d1ff82
+  image: /assets/images/hero/mount-apo.jpg
+  image_portrait: /assets/images/hero/mount-apo-portrait.jpg
+  # Framed from the bottom, so the peak and the mist at its foot sit just above the hero's waves.
+  position: "100%"
+  position_wide: "100%"
+

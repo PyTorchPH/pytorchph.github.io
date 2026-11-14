@@ -1,7 +1,7 @@
 {% assign display_title = include.title | default: page.hero_title | default: page.title | default: site.title %}
 {% assign display_lead = include.lead | default: page.hero_lead %}
-{% if page.body-class == "ph-home" and include.title == nil %}{% assign display_title = site.data.community_identity.tagline | default: site.title %}{% endif %}
-{% if page.body-class == "ph-home" or page.body-class == "ph-about" %}{% assign display_lead = site.data.community_identity.description %}{% endif %}
+{% if page.body-class == "ph-home" and include.title == nil and page.hero_title == nil %}{% assign display_title = site.data.community_identity.tagline | default: site.title %}{% endif %}
+{% if page.hero_lead == nil %}{% if page.body-class == "ph-home" or page.body-class == "ph-about" %}{% assign display_lead = site.data.community_identity.description %}{% endif %}{% endif %}
 {%- comment -%}
   Page hero. It sizes to its content, so long headings never collide with the header on small screens.
   Front matter: hero_kicker (a short Filipino phrase), hero_kicker_meaning (its English meaning, for
@@ -9,7 +9,11 @@
   hero_photos (keys in _data/photo_credits.yml: background photos that crossfade, credited in the footer).
   A light hero (hero_style: light, after the PyTorch Foundation's program pages) also takes
   hero_subtitle, hero_prompt (a line above the actions), and hero_aside: archipelago (the island map,
-  whose labels filter the Campus Labs directory).
+  whose labels filter the Campus Labs directory). hero_title_lines breaks the title into staggered
+  lines (the home page, after PyTorch Korea's "From / Research To / Production"); hero_title stays the
+  plain text, and hero_title_accent is the number of the line set in PyTorch orange. hero_title_lang and hero_lead_lang mark a title or lead in another language (fil), and
+  hero_title_meaning and hero_lead_meaning give its English meaning: read by screen readers after the
+  text, and shown on hover for the title.
   The first photo is in the page; assets/hero-slides.js loads the others after the page and starts
   the crossfade, unless the visitor prefers reduced motion.
 {%- endcomment -%}
@@ -32,12 +36,17 @@
       {%- if page.hero_kicker %}
       <p class="ph-hero-kicker"><span lang="fil"{% if page.hero_kicker_meaning %} title="{{ page.hero_kicker_meaning }}"{% endif %}>{{ page.hero_kicker }}</span>{% if page.hero_kicker_meaning %}<span class="ph-visually-hidden"> ({{ page.hero_kicker_meaning }})</span>{% endif %}</p>
       {%- endif %}
+      {%- if page.hero_title_lines %}
+      {%- comment -%} The lines carry the title's language; the heading keeps the page's (English), so its English tooltip and meaning are pronounced as English. {%- endcomment -%}
+      <h1 id="hero-heading" class="ph-hero-staggered"{% if page.hero_title_meaning %} title="{{ page.hero_title_meaning | escape }}"{% endif %}>{% for line in page.hero_title_lines %}<span class="ph-hero-line{% if forloop.index == page.hero_title_accent %} ph-hero-accent{% endif %}"{% if page.hero_title_lang %} lang="{{ page.hero_title_lang | escape }}"{% endif %}>{{ line | escape }}{% unless forloop.last %}&#32;{% endunless %}</span>{% endfor %}{% if page.hero_title_meaning %}<span class="ph-visually-hidden">&#32;({{ page.hero_title_meaning | escape }})</span>{% endif %}</h1>
+      {%- else %}
       <h1 id="hero-heading">{{ display_title | escape }}</h1>
+      {%- endif %}
       {%- if page.hero_subtitle %}
       <p class="ph-hero-subtitle">{{ page.hero_subtitle | escape }}</p>
       {%- endif %}
       {%- if display_lead %}
-      <p class="lead">{{ display_lead | escape }}</p>
+      <p class="lead"{% if page.hero_lead_lang %} lang="{{ page.hero_lead_lang | escape }}"{% endif %}>{{ display_lead | escape }}{% if page.hero_lead_meaning %}<span class="ph-visually-hidden" lang="en">&#32;({{ page.hero_lead_meaning | escape }})</span>{% endif %}</p>
       {%- endif %}
       {%- if page.hero_prompt %}
       <p class="ph-hero-prompt">{{ page.hero_prompt | escape }}</p>
@@ -60,9 +69,12 @@
   <script src="{{ site.baseurl }}/assets/hero-slides.js" defer></script>
   {%- endif %}
   {%- if page.hero_wave %}
+  {%- comment -%} The three wave layers are PyTorch Korea's (pytorch.kr, BSD 3-Clause; credited in the footer). {%- endcomment -%}
   <div class="ph-hero-wave" aria-hidden="true">
     <svg viewBox="0 0 1200 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
-      <path d="M0,95C220,70 420,62 640,80C860,98 1040,104 1200,88L1200,120L0,120Z" fill="#ffffff"></path>
+      <path d="M0,50L60,45C120,40 240,30 360,35C480,40 600,60 720,70C840,80 960,80 1080,75C1140,72.5 1170,67.5 1185,65L1200,62.5L1200,200L0,200Z" fill="#ffffff" fill-opacity="0.3"></path>
+      <path d="M0,20L80,25C160,30 320,40 480,50C640,60 800,70 960,65C1040,62.5 1120,52.5 1160,47.5L1200,42.5L1200,200L0,200Z" fill="#ffffff" fill-opacity="0.5"></path>
+      <path d="M0,90L50,88C100,86 200,82 300,85C400,88 500,95 600,92C700,89 800,77 900,82C1000,87 1100,93 1150,96L1200,100L1200,200L0,200Z" fill="#ffffff"></path>
     </svg>
   </div>
   {%- endif %}

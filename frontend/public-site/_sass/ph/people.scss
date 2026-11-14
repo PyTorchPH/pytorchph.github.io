@@ -85,7 +85,7 @@
 .ph-person .ph-person-eyebrow {
   margin: 0 0 rem(8px);
   color: $orange_on_dark;
-  font-size: rem(14px);
+  @include ph-text(14px);
   font-weight: 600;
   letter-spacing: 0.06em;
   line-height: 1.5;
@@ -117,7 +117,7 @@
     border: 1px solid #77777c;
     border-radius: rem(4px);
     color: $white;
-    font-size: rem(16px);
+    @include ph-text(16px);
     line-height: 1.5;
   }
 }
@@ -125,7 +125,7 @@
 .ph-person .ph-person-meta {
   margin: rem(12px) 0 0;
   color: #e0e0e3;
-  font-size: rem(16px);
+  @include ph-text(16px);
   line-height: 1.5;
 }
 
@@ -141,8 +141,8 @@
   max-width: 46rem;
   margin: 0;
   color: $dark_grey;
-  font-size: rem(18px);
-  line-height: rem(30px);
+  @include ph-text(18px);
+  line-height: 1.6;
   white-space: pre-line;
 }
 

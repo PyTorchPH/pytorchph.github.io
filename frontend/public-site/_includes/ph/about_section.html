@@ -29,36 +29,71 @@
 </section>
 
 <section class="ph-section ph-section-grey" id="ambassadors" aria-labelledby="ambassadors-heading">
-  <div class="container">
-    <h2 id="ambassadors-heading">PyTorch Foundation Ambassadors</h2>
-    <p class="ph-lede">The <a href="https://pytorch.org/programs/ambassadors/">PyTorch Foundation Ambassador Program</a> recognizes community members who promote, teach, and contribute to PyTorch Foundation projects. Ambassadors build local communities, host events, share what they learn, and mentor new users.</p>
+  {%- comment -%}
+    Ambassadors as large portrait cards, after the Foundation's own directory
+    (pytorch.org/programs/ambassadors): the official portrait, name, term, place, and profile links,
+    with the official biography in a panel the "Read bio" button opens (the Popover API: no script;
+    Escape or a click outside closes it, and focus returns to the button).
+  {%- endcomment -%}
+  <div class="container ph-ambassadors-layout">
+    <div class="ph-ambassadors-intro">
+      <h2 id="ambassadors-heading">PyTorch Foundation Ambassadors</h2>
+      <p class="ph-lede">The <a href="https://pytorch.org/programs/ambassadors/">PyTorch Foundation Ambassador Program</a> recognizes community members who promote, teach, and contribute to PyTorch Foundation projects. Ambassadors build local communities, host events, share what they learn, and mentor new users.</p>
+      {%- if ambassadors.people.size > 0 %}
+      <p class="ph-source">Ambassadors located in the Philippines, with photos and biographies as published in the <a href="https://pytorch.org/programs/ambassadors/">official ambassador directory</a> (checked {{ ambassadors.checked | date: "%B %-d, %Y" }}). The Foundation recognizes ambassadors as individuals; PyTorch Philippines is not operated by the PyTorch Foundation.</p>
+      {%- else %}
+      <p class="ph-empty">See the <a href="https://pytorch.org/programs/ambassadors/">official ambassador directory</a> for current PyTorch Foundation Ambassadors.</p>
+      {%- endif %}
+      <p class="ph-source">Applications for the 2026 cohort closed on June 18, 2026. The <a href="https://pytorch.org/programs/ambassadors/application-process/">application process</a> page explains the requirements and announces future cycles.</p>
+    </div>
     {%- if ambassadors.people.size > 0 %}
     <div class="ph-ambassador-grid">
       {%- for person in ambassadors.people %}
+      {%- assign term = site.data.ambassador_terms[person.id] %}
+      {%- capture bio_id %}bio-{{ person.id | escape }}{% endcapture %}
       <article class="ph-ambassador" id="ambassador-{{ person.id | escape }}">
         {%- if person.photo != "" %}
-        <img class="ph-ambassador-photo" src="{{ site.baseurl }}{{ person.photo | escape }}" alt="{{ person.name | escape }}" width="160" height="160" loading="lazy">
+        <img class="ph-ambassador-photo" src="{{ site.baseurl }}{{ person.photo | escape }}" alt="" width="480" height="480" loading="lazy" decoding="async">
         {%- endif %}
         <div class="ph-ambassador-body">
           <h3>{{ person.name | escape }}</h3>
-          {%- assign term = site.data.ambassador_terms[person.id] %}
-          <p class="ph-ambassador-meta">PyTorch Foundation Ambassador{% if term %}, {{ term | escape }}{% endif %}<span aria-hidden="true"> · </span><span class="ph-visually-hidden">, </span>{{ person.location | escape }}</p>
-          {%- for paragraph in person.bio %}
-          <p>{{ paragraph | escape }}</p>
-          {%- endfor %}
-          <ul class="ph-person-links">
-            {%- if person.github != "" %}<li><a href="{{ person.github | escape }}" rel="noopener noreferrer">GitHub<span class="ph-visually-hidden"> profile of {{ person.name | escape }}</span></a></li>{% endif %}
-            {%- if person.linkedin != "" %}<li><a href="{{ person.linkedin | escape }}" rel="noopener noreferrer">LinkedIn<span class="ph-visually-hidden"> profile of {{ person.name | escape }}</span></a></li>{% endif %}
-          </ul>
+          <p class="ph-ambassador-role">PyTorch Foundation Ambassador{% if term %} <span class="ph-ambassador-term"><span class="ph-visually-hidden">, </span>{{ term | escape }}</span>{% endif %}</p>
+          <p class="ph-ambassador-place">{{ person.location | escape }}</p>
+          <div class="ph-ambassador-actions">
+            {%- if person.bio.size > 0 %}
+            <button type="button" class="ph-ambassador-bio-button" popovertarget="{{ bio_id }}">Read bio<span class="ph-visually-hidden"> of {{ person.name | escape }}</span></button>
+            {%- endif %}
+            <ul class="ph-ambassador-links">
+              {%- if person.github != "" %}
+              <li><a href="{{ person.github | escape }}" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.34-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22v3.29c0 .32.21.7.82.58A12 12 0 0 0 12 .3"/></svg><span class="ph-visually-hidden">GitHub profile of {{ person.name | escape }}</span></a></li>
+              {%- endif %}
+              {%- if person.linkedin != "" %}
+              <li><a href="{{ person.linkedin | escape }}" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.86-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.23 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg><span class="ph-visually-hidden">LinkedIn profile of {{ person.name | escape }}</span></a></li>
+              {%- endif %}
+            </ul>
+          </div>
         </div>
+        {%- if person.bio.size > 0 %}
+        <div class="ph-bio" id="{{ bio_id }}" popover role="dialog" aria-labelledby="{{ bio_id }}-name">
+          <div class="ph-bio-head">
+            {%- if person.photo != "" %}
+            <img class="ph-bio-photo" src="{{ site.baseurl }}{{ person.photo | escape }}" alt="" width="64" height="64" loading="lazy" decoding="async">
+            {%- endif %}
+            <div>
+              <p class="ph-bio-name" id="{{ bio_id }}-name">{{ person.name | escape }}</p>
+              <p class="ph-bio-role">PyTorch Foundation Ambassador{% if term %}, {{ term | escape }}{% endif %}<span aria-hidden="true"> · </span><span class="ph-visually-hidden">, </span>{{ person.location | escape }}</p>
+            </div>
+            <button type="button" class="ph-bio-close" popovertarget="{{ bio_id }}" popovertargetaction="hide" autofocus>Close</button>
+          </div>
+          {%- for paragraph in person.bio %}
+          <p class="ph-bio-text">{{ paragraph | escape }}</p>
+          {%- endfor %}
+        </div>
+        {%- endif %}
       </article>
       {%- endfor %}
     </div>
-    <p class="ph-source">Ambassadors located in the Philippines, with photos and biographies as published in the <a href="https://pytorch.org/programs/ambassadors/">official ambassador directory</a> (checked {{ ambassadors.checked | date: "%B %-d, %Y" }}). The Foundation recognizes ambassadors as individuals; PyTorch Philippines is not operated by the PyTorch Foundation.</p>
-    {%- else %}
-    <p class="ph-empty">See the <a href="https://pytorch.org/programs/ambassadors/">official ambassador directory</a> for current PyTorch Foundation Ambassadors.</p>
     {%- endif %}
-    <p class="ph-source">Applications for the 2026 cohort closed on June 18, 2026. The <a href="https://pytorch.org/programs/ambassadors/application-process/">application process</a> page explains the requirements and announces future cycles.</p>
   </div>
 </section>
 
@@ -74,9 +109,6 @@
     {% include ph/campus_islands.html %}
     {%- if campus_count == 0 %}
     <p class="ph-empty" data-show-when-all-empty="chapters-Luzon chapters-Visayas chapters-Mindanao">No Campus Labs are listed yet. See <a href="{{ site.baseurl }}/campus-labs/#start">how to start one</a>.</p>
-    {%- endif %}
-    {%- if campus_count > 0 %}
-    <p class="ph-source">As announced by PyTorch Philippines in its Campus Labs posters, Batch 1 and Batch 2. Is something out of date? {% if site.data.public_contacts.email %}Email <a href="mailto:{{ site.data.public_contacts.email | escape }}?subject=Campus%20Labs%20listing">{{ site.data.public_contacts.email | escape }}</a>.{% else %}Tell the organizers through the <a href="{{ site.baseurl }}/portal/">member portal</a>.{% endif %}</p>
     {%- endif %}
   </div>
 </section>

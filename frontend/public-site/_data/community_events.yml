@@ -1,0 +1,59 @@
+# The home page's events. Each kind has its own form: the next dated community event is a banner, the
+# other series are short open columns, and training is a slim list.
+#
+# `training`: one line per training course. Nothing is written here: the courses, dates, and
+# module names all come from the sessions officers publish in the portal (/portal/admin/website/) with
+# this event type.
+#
+# `events`: the community event series, one sentence each. The descriptions and dates below are from the
+# organizers' planning document "PyTorch PH Events" (read 2026-11-14), in its own words where possible.
+# Rules:
+#   - Only what that document or the organizer states. A date the document calls proposed is `tentative`
+#     and month-only; a series with no date has no session here and shows no date.
+#   - No venues until one is confirmed, no budgets, and no organizer names: every series is a
+#     PyTorch Philippines program.
+#   - A session published in the portal with the same `series` name replaces the sessions listed here.
+#   - `cfp` is a call for proposals: the page says when it opens, links to `url` while it is open (add
+#     the Sessionize link when there is one), and says nothing once it has closed.
+events:
+  label: Community events
+  series:
+    - name: Tensor Talks
+      kind: Talks
+      blurb: "Technical talks on how modern AI systems are built: training, inference, the mathematics underneath, and agentic systems."
+      cfp:
+        opens: "2026-11-18"
+        closes: "2026-12-06"
+        url: ""
+      sessions:
+        - title: "Tensor Talks: Initialized"
+          startsAt: "2027-01-16"
+          dateStatus: confirmed
+        # "Sat, Mar 13, 2027 (proposed)" in the document.
+        - title: "Tensor Talks #2"
+          startsAt: "2027-03"
+          dateStatus: tentative
+
+    - name: ML & Coffee
+      kind: Meetup
+      blurb: "Short talks and a networking session for people interested in machine learning."
+      sessions:
+        # February 20, 2027, tentative: given by the organizer on 2026-11-14 (it replaces the document's
+        # "February 2027 (tab lists Thu, Feb 4)").
+        - title: "ML & Coffee"
+          startsAt: "2027-02-20"
+          dateStatus: tentative
+
+    - name: Torch Trials
+      kind: Hackathon
+      blurb: "A hackathon where teams run experiments, benchmark results, and present their findings."
+      sessions:
+        # March 20, 2027: given by the organizer on 2026-11-14 (the document has no date). Shown as
+        # tentative until the organizer confirms it.
+        - title: "Torch Trials"
+          startsAt: "2027-03-20"
+          dateStatus: tentative
+
+training:
+  label: Training
+  event_type: training

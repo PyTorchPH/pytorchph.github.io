@@ -1,6 +1,6 @@
 {%- comment -%}
   The Campus Labs directory: everyone in one grid of portrait cards, after the PyTorch Foundation's
-  ambassador directory, with a filter by island group and a search by name or university
+  ambassador directory, with a search by name or university and two selectors, region and batch
   (assets/campus-directory.js, which also says how many show). Cards come from _data/campus_labs.yml
   (the data-campus-list set) and from chapters officers publish in the portal: site-content.js renders
   those into the chapters-<island> targets and hides the listed entry for the same university, and
@@ -11,20 +11,28 @@
 {%- assign campus = site.data.campus_labs -%}
 {%- assign island_groups = "Luzon,Visayas,Mindanao" | split: "," -%}
 {%- assign campus_count = campus.chapters | size -%}
-<div class="ph-directory-tools" data-campus-filters hidden>
-  <h3 class="ph-directory-heading">Filter the list</h3>
+<div class="ph-directory-tools" role="group" aria-label="Filter the list" data-campus-filters hidden>
   <div class="ph-directory-controls">
     <div class="ph-directory-search">
       <label for="campus-search">Search by name or university</label>
       <input id="campus-search" type="search" autocomplete="off" spellcheck="false" data-campus-search>
     </div>
-    <div class="ph-filter ph-directory-islands" role="group" aria-label="Island group">
-      <button type="button" aria-pressed="true" data-island-filter="">All</button>
-      {%- for island in island_groups %}
-      <button type="button" aria-pressed="false" data-island-filter="{{ island }}">{{ island }} <span class="ph-directory-island-count" data-island-people="{{ island }}"></span></button>
-      {%- endfor %}
+    <div class="ph-directory-select">
+      <label for="campus-region">Region</label>
+      <select id="campus-region" data-campus-region>
+        <option value="">All regions</option>
+        {%- for island in island_groups %}
+        <option value="{{ island }}" data-label="{{ island }}">{{ island }}</option>
+        {%- endfor %}
+      </select>
     </div>
-    <button type="button" class="ph-directory-clear" data-campus-clear>Clear filters</button>
+    <div class="ph-directory-select">
+      <label for="campus-batch">Batch</label>
+      <select id="campus-batch" data-campus-batch>
+        <option value="">All batches</option>
+      </select>
+    </div>
+    <button type="button" class="ph-directory-clear" data-campus-clear hidden>Clear filters</button>
   </div>
 </div>
 <p class="ph-directory-count" data-campus-count role="status" hidden></p>

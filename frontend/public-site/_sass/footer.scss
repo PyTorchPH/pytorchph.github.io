@@ -46,14 +46,68 @@
     }
   }
 
+  // The notice under the footer links: two short lines, then the credits behind a closed toggle.
   .trademark-disclaimer {
     background: #000000;
-    display: flex;
-    li {
-      font-size: rem(14px);
-      line-height: rem(15px);
-      // display: inline-flex;
-      color: white;
+
+    .ph-footer-notice {
+      margin: 0 0 rem(4px);
+      color: #c9cad0;
+      font-size: 15px;
+
+      @include desktop {
+        font-size: 16px;
+      }
+      line-height: 1.5;
+
+      a {
+        color: #c9cad0;
+        text-decoration: underline;
+      }
+    }
+
+    // "Credits" ends the trademark line; opened, the list drops below it.
+    .ph-footer-credits {
+      display: inline;
+
+      > summary {
+        display: inline;
+        list-style: none;
+
+        &::-webkit-details-marker {
+          display: none;
+        }
+
+        color: #c9cad0;
+        font-size: 15px;
+
+      @include desktop {
+        font-size: 16px;
+      }
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      ul {
+        margin: rem(10px) 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      li {
+        margin-bottom: rem(6px);
+        color: #c9cad0;
+        font-size: 15px;
+
+      @include desktop {
+        font-size: 16px;
+      }
+        line-height: 1.5;
+      }
+
+      a {
+        color: #c9cad0;
+      }
     }
   }
 

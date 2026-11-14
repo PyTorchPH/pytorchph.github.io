@@ -1,0 +1,30 @@
+{%- comment -%}
+  SPIKE (spike/research-first). The Foundation's projects in the order a model meets them, from
+  training to a phone: one flow across wide screens, a thread down narrow ones.
+  Data: _data/foundation_stack.yml.
+{%- endcomment -%}
+<section class="ph-section ph-section-grey ph-stack" id="stack" aria-labelledby="stack-heading">
+  <div class="container">
+    <div class="ph-section-header">
+      <div>
+        <h2 id="stack-heading">More than the training loop</h2>
+        <p>The PyTorch Foundation's projects cover a model's whole life, from training to a phone. Our sessions work across all of them.</p>
+      </div>
+    </div>
+    <ol class="ph-flow" role="list">
+      {%- for stage in site.data.foundation_stack %}
+      <li class="ph-flow-stage">
+        <p class="ph-flow-verb">{{ stage.stage }}</p>
+        <div class="ph-flow-projects">
+          {%- for project in stage.projects %}
+          <h3><a href="{{ project.url }}">{{ project.name }}</a></h3>
+          {%- if project.part_of %}<p class="ph-flow-part">Part of {{ project.part_of }}</p>{% endif %}
+          <p>{{ project.line }}</p>
+          {%- endfor %}
+        </div>
+      </li>
+      {%- endfor %}
+    </ol>
+    <p class="ph-stack-note">PyTorch Philippines is a community group. It is not part of the PyTorch Foundation or of these projects, and nothing here is endorsed by them.</p>
+  </div>
+</section>

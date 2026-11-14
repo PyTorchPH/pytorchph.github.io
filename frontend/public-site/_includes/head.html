@@ -10,4 +10,8 @@
   <script src="{{ site.baseurl }}/assets/vendor/popper.min.js"></script>
   <script src="{{ site.baseurl }}/assets/vendor/bootstrap.min.js"></script>
   <script src="{{ site.baseurl }}/assets/vendor/anchor.min.js"></script>
+  {%- if page.header_over_hero %}
+  {%- comment -%} assets/header-over-hero.js tints the header over the hero; without it, keep it solid. {%- endcomment -%}
+  <noscript><style>.ph-header-over-hero .header-holder.ph-header { background-color: #262626; }</style></noscript>
+  {%- endif %}
 </head>

@@ -1,5 +1,5 @@
 /* Campus Labs directory (_includes/ph/campus_directory.html): everyone in alphabetical order, a
-   filter by island group, and a search by name or university. site-content.js renders the chapters
+   search by name or university, and two selectors: region (island group) and batch. site-content.js renders the chapters
    officers publish into its chapters-<island> targets on every load and refresh, and hides listed
    entries they replace; after each render this script moves those cards into the one list and
    reorders it, so the page reads (also with a screen reader) in the order it shows. Never interprets
@@ -14,7 +14,10 @@
   const count = document.querySelector("[data-campus-count]");
   const none = document.querySelector("[data-campus-none]");
   const collator = new Intl.Collator("en-PH", { sensitivity: "base" });
+  const region = tools.querySelector("[data-campus-region]");
+  const batchSelect = tools.querySelector("[data-campus-batch]");
   let island = "";
+  let batch = "";
 
   // Case, accents, and spacing do not matter: "mapua" finds "Mapúa University".
   const fold = value => String(value ?? "").normalize("NFKD").replace(/[̀-ͯ]/g, "").toLocaleLowerCase("en-PH").replace(/\s+/g, " ").trim();
@@ -57,21 +60,33 @@
   function filter() {
     const query = fold(search.value);
     const people = new Map();
+    const batches = new Map();
     let shownPeople = 0;
     let shownCards = 0;
     // Cards site-content.js hid (a listed entry that gave way to the same published university) stay hidden.
     for (const card of cards().filter(node => !node.hidden)) {
       const where = card.dataset.island;
       if (isPerson(card)) people.set(where, (people.get(where) ?? 0) + 1);
-      const matches = (!island || where === island) && (isInvite(card) ? !query : !query || fold(card.textContent).includes(query));
+      if (isPerson(card) && card.dataset.batch) batches.set(card.dataset.batch, (batches.get(card.dataset.batch) ?? 0) + 1);
+      const matches = (!island || where === island) && (!batch || card.dataset.batch === batch)
+        && (isInvite(card) ? !query && !batch : !query || fold(card.textContent).includes(query));
       card.toggleAttribute("data-filtered-out", !matches);
       if (matches) shownCards++;
       if (matches && isPerson(card)) shownPeople++;
     }
-    document.querySelectorAll("[data-island-people]").forEach(node => { node.textContent = String(people.get(node.dataset.islandPeople) ?? 0); });
-    document.querySelectorAll("button[data-island-filter]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.islandFilter === island)));
+    // The selectors: each option says how many people it holds; batches come from the cards themselves.
+    region.querySelectorAll("option[data-label]").forEach(option => { option.textContent = `${option.dataset.label} (${people.get(option.value) ?? 0})`; });
+    const known = [...batches.keys()].sort((a, b) => Number(a) - Number(b));
+    if (known.join() !== [...batchSelect.options].slice(1).map(option => option.value).join() || [...batchSelect.options].slice(1).some(option => option.textContent !== `Batch ${option.value} (${batches.get(option.value)})`)) {
+      batchSelect.replaceChildren(batchSelect.options[0], ...known.map(value => new Option(`Batch ${value} (${batches.get(value)})`, value)));
+      if (batch && !known.includes(batch)) batch = "";
+    }
+    region.value = island;
+    batchSelect.value = batch;
     count.textContent = `Showing ${shownPeople} ${shownPeople === 1 ? "person" : "people"}`;
     none.hidden = shownCards > 0;
+    // "Clear filters" beside the controls shows only while a filter is on.
+    tools.querySelectorAll("[data-campus-clear]").forEach(button => { button.hidden = !island && !batch && !query; });
     // A control that just disappeared (a filtered card's link, the no-match "Clear filters") hands
     // keyboard focus to the search instead of dropping it.
     const active = document.activeElement;
@@ -96,17 +111,20 @@
     return match ? match[1][0].toUpperCase() + match[1].slice(1) : null;
   }
 
-  // Island buttons, and the island labels on the map (which also bring the list into view).
+  // The island labels on the map set the region (and bring the list into view).
   document.addEventListener("click", event => {
     const target = event.target.closest("[data-island-filter]");
-    if (target) choose(target.dataset.islandFilter, { reveal: !target.matches("button") });
+    if (target) choose(target.dataset.islandFilter, { reveal: true });
   });
   document.querySelectorAll("[data-campus-clear]").forEach(button => button.addEventListener("click", () => {
     search.value = "";
+    batch = "";
     choose("");
     search.focus();
   }));
   search.addEventListener("input", filter);
+  region.addEventListener("change", () => choose(region.value));
+  batchSelect.addEventListener("change", () => { batch = batchSelect.value; filter(); });
   document.addEventListener("site-content:rendered", update);
   // An island link filters; going back to the address without a fragment shows everyone again, as a
   // reload would. Other in-page links (#start) leave the filter alone.
